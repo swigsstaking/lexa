@@ -9,13 +9,14 @@
 
 | Catégorie | Documents prévus | Déjà ingérés | % |
 |---|---|---|---|
-| Fédéral — lois | 5 (LIFD, LHID, LTVA, CO, LP) | **4 (LIFD, LTVA, CO, LHID)** | **80%** |
+| Fédéral — lois | 5 (LIFD, LHID, LTVA, CO, LP) | **5 (LIFD, LTVA, CO, LHID, LP)** | **100% ✓** |
+| Fédéral — ordonnances | 2 (OIFD, OLTVA) | 0 (URLs à retrouver) | 0% |
 | Fédéral — circulaires AFC IFD | ~40 | **14 (sélection prioritaire)** | **~35%** |
 | Fédéral — notices AFC | ~15 | **1 (Notice A 1995 entreprises commerciales, complète)** | ~7% |
-| Fédéral — Info TVA (webpublications) | ~15 | 0 (HTML — scraper à faire session 04) | 0% |
-| Fédéral — CSI circulaires | 2 (Circ 28 + commentaire) | 0 | 0% |
+| Fédéral — Info TVA (webpublications) | ~15 | 0 (JSF allemand — scraper complexe, reporté) | 0% |
+| Fédéral — CSI circulaires | 2 (Circ 28 + commentaire) | **2 (Circ 28 2022 + commentaire 2023)** | **100% ✓** |
 | Fédéral — jurisprudence TF | 0 (à décider scope) | 0 | — |
-| Cantonal VS — loi fiscale | 1 | 0 (lex.vs.ch Cloudflare) | 0% |
+| Cantonal VS — **loi fiscale** | 1 | **1 (RSVS 642.1 via Playwright, 175 articles)** | **100% ✓** |
 | Cantonal VS — directives / guides | ~10 | **4 (Guide 2024, barème 2026, déductions, impôt source)** | ~40% |
 | Autres cantons SR | 6 | 0 | 0% |
 | Standards techniques | 4 (eCH-0217, Swissdec, CAMT.053, QR) | 0 | 0% |
@@ -23,7 +24,11 @@
 
 *existe mais pas en format ingéré/requêtable
 
-**Total Qdrant collection `swiss_law`** : **3007 points** (session 01 : 791 / session 02 : +108 LHID → 899 / session 03 : +1880 AFC + 228 VS → 3007)
+**Total Qdrant collection `swiss_law`** : **4058 points**
+- Session 01 : 791 (LIFD + LTVA + CO + résumés manuels)
+- Session 02 : +108 LHID → 899
+- Session 03 : +1880 AFC + 228 VS docs → 3007
+- Session 04 : +397 LP + 479 CSI + 175 VS Loi fiscale → 4058
 
 Voir [`federal/circulaires-afc-index.md`](federal/circulaires-afc-index.md) pour le détail des documents AFC ingérés.
 

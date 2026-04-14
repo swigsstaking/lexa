@@ -1,7 +1,7 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 03 — 2026-04-14](2026-04-14-session-03.md)
-**Prochaine session** : Session 04
+**Dernière session** : [Session 04 — 2026-04-14](2026-04-14-session-04.md)
+**Prochaine session** : Session 05
 
 > **Lecture obligatoire au début de la prochaine session.** Ce fichier est écrasé à chaque fin de session.
 
@@ -9,21 +9,24 @@
 
 ## Où on en est
 
-**Phase** : 0 — Fondations documentaires + enrichissement KB fédérale et cantonale (avance rapide)
+**Phase** : 0 — Fondations documentaires, **KB fédérale quasi-complète**
 
-**Progrès sessions 01-03** :
-- ✅ Whitepaper v0.1, architecture, agent system, roadmap, KB index (session 01)
-- ✅ 7 questions stratégiques tranchées (session 02)
-- ✅ Repo Git initialisé et poussé sur **github.com/swigsstaking/lexa**
-- ✅ Infrastructure backend cadrée (serveur .59, port 3010, Postgres à installer)
-- ✅ LHID ingérée (108 articles, session 02)
-- ✅ **15 documents AFC ingérés** (Notice A 1995 + 14 circulaires IFD) = 1880 chunks (session 03)
-- ✅ **4 documents Valais ingérés** (Guide PP 2024, barème 2026, déductions, impôt source) = 228 chunks (session 03)
-- ✅ Catalogue AFC complet dans `01-knowledge-base/federal/circulaires-afc-index.md`
+**Progrès cumulés sessions 01-04** :
 
-**Collection Qdrant `swiss_law` : 3007 points**
+| Session | Livrables clés | Qdrant |
+|---|---|---|
+| 01 | Whitepaper, archi, roadmap, KB index | 791 |
+| 02 | Git init + push, LHID ingérée, décisions user | 899 |
+| 03 | 15 docs AFC + 4 docs VS (Notice A, 14 Circ IFD, Guide PP, barème 2026...) | 3007 |
+| 04 | **LP + CSI 28 + Loi fiscale VS** (via Playwright) | **4058** |
 
-**Aucun code applicatif encore écrit.** Le backend et le frontend Lexa n'existent toujours pas. On est en phase d'enrichissement KB, qui avance plus vite que prévu.
+**Collection Qdrant `swiss_law` : 4058 points**
+
+**KB fédérale : 5/5 lois clés ingérées** (LIFD, LTVA, LHID, CO, LP) + 14 circulaires IFD + Notice A 1995 + CSI Circulaire 28 + commentaire.
+
+**KB cantonale Valais** : Loi fiscale (175 articles) + Guide PP 2024 + barème 2026 + déductions forfaitaires + directives impôt source. **Premier canton SR couvert.**
+
+**Aucun code applicatif écrit.** Backend et frontend Lexa pas encore commencés. La KB avance nettement plus vite que prévu dans la roadmap initiale.
 
 ---
 
@@ -31,116 +34,94 @@
 
 | Machine | Rôle | Status |
 |---|---|---|
-| **DGX Spark** 192.168.110.103 | Qdrant (3007 pts) + Ollama + BGE-M3 (CPU) + scripts Python | ✅ Actif |
-| **Serveur .59** 192.168.110.59 | Backend Lexa futur (port 3010) | ⚠️ **Postgres toujours à installer (bloqué sudo)** |
+| **DGX Spark** 192.168.110.103 | Qdrant (4058 pts) + Ollama + BGE-M3 + Playwright/Chromium + scripts | ✅ Actif |
+| **Serveur .59** 192.168.110.59 | Backend Lexa futur (port 3010) | ⚠️ **Postgres toujours pas installé (password refusé)** |
 | **Mac local** | Dev docs + git | ✅ Actif |
 | **GitHub** [swigsstaking/lexa](https://github.com/swigsstaking/lexa) | Source control | ✅ Actif |
 
-**À noter** : BGE-M3 tourne en CPU sur le Spark (torch+CUDA indispo sur aarch64). Ingestion 1880 chunks = ~22 min. Les futures grosses ingestions (7 cantons × ~500 chunks) prendront ~1.5h à 2h chacune. Pas bloquant mais à planifier.
+**Performance BGE-M3 sur Spark** : en CPU uniquement (torch+CUDA indispo aarch64). ~1.25 chunks/s. Pour ingestions moyennes (200-500 chunks) : 3-8 min. Pour grosses (1500+) : 20-25 min. **Pas bloquant mais à budgéter**.
 
 ---
 
-## Ce qu'il faut lire AVANT de démarrer la session 04
+## Ce qu'il faut lire AVANT de démarrer la session 05
 
-Dans cet ordre :
-
-1. **`06-sessions/2026-04-14-session-03.md`** — journal complet (15 min) — **essentiel**
-2. **`01-knowledge-base/INDEX.md`** — statut KB global (5 min)
-3. **`01-knowledge-base/federal/circulaires-afc-index.md`** — ce qui est ingéré et ce qui reste (5 min)
+1. **`06-sessions/2026-04-14-session-04.md`** — journal session 04 (15 min) — **essentiel**
+2. **`01-knowledge-base/INDEX.md`** — statut global KB (5 min)
+3. **`01-knowledge-base/federal/circulaires-afc-index.md`** — documents AFC + statut (5 min)
 
 **Total : ~25 min**
-
-Les docs de fond (whitepaper, architecture, roadmap) n'ont pas changé — pas besoin de les relire.
 
 ---
 
 ## Questions en attente de réponse du user
 
-⚠️ **7 questions à trancher en début de session 04** :
+⚠️ **6 questions à trancher en début de session 05** :
 
-1. **Postgres sur .59** — Tu lances toi-même (besoin sudo), ou on défère en T2 2026 ?
-   ```bash
-   sudo apt-get update && sudo apt-get install -y postgresql-16 postgresql-contrib-16
-   sudo systemctl enable postgresql && sudo systemctl start postgresql
-   ```
-   *Reco Claude : défer en T2 2026, on a encore plein de KB à faire avant le code*
+1. **Postgres sur .59** — Le password `Labo 2-6` testé (avec espace) a été refusé par sudo (`Sorry, try again`). **Peux-tu confirmer l'orthographe exacte ?** (Labo2-6 sans espace ? lowercase ? autre variante ?) Ou préfères-tu lancer toi-même l'install ?
 
-2. **Scraper HTML pour les Info TVA webpublications** — On investit en session 04 ? BeautifulSoup + requests, ~1-2h.
-   *Reco Claude : oui, les Info TVA sont critiques pour la compta TVA quotidienne*
+2. **Info TVA webpublications** — Portail JSF `gate.estv.admin.ch` en allemand par défaut, navigation par session, complexe à scraper. Options :
+   - (a) Scraper Playwright avec click section par section (3-4h, fragile)
+   - (b) PDFs historiques 2010 kmu.admin.ch (FR, mais obsolètes — avant changement taux 2024)
+   - (c) Skip temporairement pour v1
+   - *Reco Claude : (c) — on a déjà LTVA + circulaires, les Info TVA peuvent attendre*
 
-3. **Loi fiscale VS complète via Playwright** — Contourner Cloudflare de lex.vs.ch. Install Playwright + Chrome headless (~100 MB). OK ?
-   *Reco Claude : oui, c'est le document cantonal VS le plus important*
+3. **OIFD + OLTVA** — on déléguer à un subagent pour trouver les vraies URLs XML Fedlex (30 min investigation) ?
+   - *Reco Claude : oui, c'est important pour l'agent Fiscal d'avoir les ordonnances d'exécution*
 
-4. **LP (281.1)** — Session 04 ou plus tard ?
-   *Reco Claude : session 04, c'est rapide (pattern XML AkomaNtoso similaire à LHID)*
+4. **Amélioration parser VS Loi fiscale** — actuellement 175/285 articles extraits (61% couverture). On affine (1-2h) ou on accepte ?
+   - *Reco Claude : affiner — les articles manquants sont probablement les articles avec numérotation inhabituelle (5a, 6a) et les articles avec heading sur la même ligne. Debug rapide*
 
-5. **CSI Circulaire 28** (estimation titres non cotés) — Session 04 ?
-   *Reco Claude : oui, c'est le doc de référence pour les SA/Sàrl non cotées*
+5. **Canton 2 — Genève** — on démarre session 05 ou on attend ?
+   - *Reco Claude : session 05 si on finit vite les 3 premières tâches, sinon session 06*
 
-6. **OIFD + OLTVA** (ordonnances d'exécution) — Priorité ?
-   *Reco Claude : session 05 (après Info TVA + Circ 28)*
-
-7. **Accélération roadmap** — La KB avance plus vite que prévu. On démarre le scaffold backend en session 05 ou 06 ? On raccourcit la phase KB ?
-   *Reco Claude : finir proprement la couverture fédérale + cantonale VS en sessions 04-06, puis attaquer le backend session 07*
+6. **Session backend** — ma reco session 04 : **session 06 = scaffold backend** (event store Postgres + premier agent TypeScript). OK ou on retarde ?
+   - *Reco Claude : session 06 si Postgres est installé d'ici là, sinon on pousse à session 07*
 
 ---
 
-## Plan détaillé de la session 04 (si recommandations Claude acceptées)
+## Plan détaillé de la session 05 (si recommandations Claude acceptées)
 
-### Étape 1 — LP (RS 281.1) (30 min)
-
-Pattern LHID : télécharger XML Fedlex + adapter le script `ingest_lhid_lexa.py`.
+### Étape 1 — Postgres (5 min si password correct)
 
 ```bash
-# Trouver l'URL LHID pattern — essayer xml-1 à xml-10
-ssh swigs@192.168.110.103 'for n in 1 2 3 4 5 6 7 8 9 10; do url="https://fedlex.data.admin.ch/filestore/fedlex.data.admin.ch/eli/cc/11/529_488_529/20250101/fr/xml/fedlex-data-admin-ch-eli-cc-11-529_488_529-20250101-fr-xml-${n}.xml"; code=$(curl -s -o /dev/null -w "%{http_code}" "$url"); echo "xml-${n}: HTTP $code"; if [ "$code" = "200" ]; then echo "FOUND"; break; fi; done'
+ssh swigs@192.168.110.59
+sudo apt-get update
+sudo apt-get install -y postgresql postgresql-contrib
+sudo systemctl enable postgresql && sudo systemctl start postgresql
+sudo -u postgres createdb lexa
+sudo -u postgres psql -c "CREATE USER lexa_app WITH PASSWORD '<strong-random-pwd>'"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE lexa TO lexa_app"
 ```
 
-(ELI path LP à vérifier — 281.1 publié en 1889, mais consolidation date de 1992 : `/cc/11/529_488_529/`)
+Password généré côté Claude, stocké dans un `.env` local non-commit.
 
-Puis copier `ingest_lhid_lexa.py` → `ingest_lp_lexa.py`, remplacer les métadonnées, lancer.
+### Étape 2 — OIFD + OLTVA via subagent (45 min)
 
-### Étape 2 — Scraper HTML Info TVA webpublications (1-2h)
+Déléguer à un subagent : trouver les URLs XML Fedlex canoniques pour :
+- OIFD (RS 642.116) — Ordonnance sur l'impôt fédéral direct
+- OLTVA (RS 641.201) — Ordonnance sur la TVA
+- Bonus si rapide : OIA (642.21) — Ordonnance sur l'impôt anticipé
 
-Créer `ingest_afc_webpublications_lexa.py` :
+Puis créer `ingest_oifd_lexa.py` + `ingest_oltva_lexa.py` (clones de LHID).
 
-1. Télécharger chaque page HTML depuis `gate.estv.admin.ch/mwst-webpublikationen/public/pages/taxInfos/...`
-2. Parser avec BeautifulSoup — chaque section HTML devient un chunk
-3. Métadonnées : `law: "AFC-Info-TVA-12"`, `category: "info-tva-webpub"`, `source: "afc-gate"`
-4. Upsert Qdrant UUID4
+### Étape 3 — Amélioration parser VS Loi fiscale (1-2h)
 
-URLs cibles :
-- Info TVA 12 TDFN : publicationId `1004992`
-- Info TVA 15 Décompte : publicationId `1013189`
-- Info TVA secteur 17 Immeubles : publicationId `1041941`
-- Info TVA secteur 04 Bâtiment : publicationId `1000849`
+Debug du regex de parsing :
+- Détecter les articles avec numéro + titre sur la même ligne
+- Gérer les articles supplémentaires (5a, 6a, etc.)
+- Gérer les articles abrogés (marqueurs "* ...")
+- Re-exécuter l'ingestion (le cache `vs_loi_fiscale_642.1.txt` existe déjà — pas besoin de re-scraper)
 
-### Étape 3 — CSI Circulaire 28 (15 min)
+Si amélioration donne 250+ articles, re-upsert dans Qdrant (upsert = update pour les UUIDs déjà là, mais comme on utilise `str(uuid.uuid4())` chaque fois, ça crée des nouveaux points — il faut soit gérer l'upsert par article_num, soit delete le subset VS-Loi-fiscale avant re-upsert).
 
-Télécharger les 2 PDFs :
-- https://www.ssk-csi.ch/fileadmin/dokumente/kreisschreiben/KS_28_f_2022.pdf
-- https://www.ssk-csi.ch/fileadmin/dokumente/kreisschreiben/KS_28_Kommentar_f_2023.pdf
+### Étape 4 — Canton 2 : Genève (2-3h si temps restant)
 
-Ajouter à `ingest_afc_pdfs_lexa.py` ou créer `ingest_csi_lexa.py` dédié. Le 2ème est plus propre.
+Scraper Playwright sur lexfind.ch ou ge.ch pour :
+- LCP — Loi générale sur les contributions publiques
+- LIPP — Loi sur l'imposition des personnes physiques
+- LIPM — Loi sur l'imposition des personnes morales
 
-### Étape 4 — Loi fiscale VS via Playwright (1-2h)
-
-Install Playwright + Chromium sur le Spark (~100 MB) :
-
-```bash
-ssh swigs@192.168.110.103
-pip install --user --break-system-packages playwright
-python3 -m playwright install chromium --with-deps  # ~100 MB
-```
-
-Puis créer `ingest_vs_loi_fiscale_lexa.py` :
-1. Playwright ouvre `https://lex.vs.ch/app/fr/texts_of_law/642.1`
-2. Attend que la page rende (Cloudflare clear)
-3. Extrait le HTML structuré
-4. Parse les articles
-5. Upsert Qdrant avec `jurisdiction: "cantonal-VS"`, `topic: "loi_fiscale_vs"`
-
-Si Playwright est trop lourd, alternative : utiliser un User-Agent + cookies valides capturés manuellement. Moins fiable.
+Créer `ingest_ge_laws_lexa.py` avec pattern similaire à `ingest_vs_loi_fiscale_lexa.py`.
 
 ### Étape 5 — Journal + commit + push (30 min)
 
@@ -148,51 +129,37 @@ Si Playwright est trop lourd, alternative : utiliser un User-Agent + cookies val
 
 ## État actuel de la collection Qdrant `swiss_law`
 
-**3007 points total**
+**4058 points total**
 
-### Session 01 (791 points)
-- LTVA (641.20) : 131 articles XML Fedlex
-- LIFD (642.11) : 224 articles XML Fedlex
-- CO (220) : 421 articles XML Fedlex (titres 30-32 + parties SA/Sàrl/Société simple)
-- Articles enrichis manuels : 15 résumés
+### Fédéral (lois) ✅ 100% des lois clés
+- **LTVA (641.20)** : 131 articles — Fedlex XML
+- **LIFD (642.11)** : 224 articles — Fedlex XML
+- **CO (220)** : 421 articles — Fedlex XML (titres 30-32 + SA/Sàrl/Société simple)
+- **LHID (642.14)** : 108 articles — Fedlex XML
+- **LP (281.1)** : 397 articles — Fedlex XML *(session 04)*
 
-### Session 02 (+108 → 899)
-- LHID (642.14) : 108 articles XML Fedlex (script `ingest_lhid_lexa.py`)
+### Fédéral (administratif AFC/IFD)
+- Notice A 1995 entreprises commerciales : ~16 chunks
+- 14 circulaires IFD (Circ 3, 5a, 6a, 15, 18a, 25, 26, 29c, 32a, 37, 44, 45, 49, 50a) : ~1864 chunks
 
-### Session 03 (+2108 → 3007)
+### Fédéral (CSI) ✅ *session 04*
+- CSI Circulaire 28 2022 : ~300 chunks
+- CSI Circulaire 28 Commentaire 2023 : ~179 chunks
 
-**Fédéral AFC (+1880)** :
-- AFC-Notice-A-1995-entreprises-commerciales : 16 chunks
-- AFC-IFD-Circ-3 Sylviculture/Agriculture : 45 chunks
-- AFC-IFD-Circ-5a Restructurations : ~500 chunks (circulaire très volumineuse)
-- AFC-IFD-Circ-6a Capital propre dissimulé : ~50 chunks
-- AFC-IFD-Circ-15 Obligations/Dérivés : 110 chunks
-- AFC-IFD-Circ-18a Pilier 3a : ~50 chunks
-- AFC-IFD-Circ-25 Placements collectifs : 83 chunks
-- AFC-IFD-Circ-26 Activité indépendante : ~130 chunks
-- AFC-IFD-Circ-29c Apport de capital : ~30 chunks
-- AFC-IFD-Circ-32a Assainissement : ~50 chunks
-- AFC-IFD-Circ-37 Participations collaborateurs : 137 chunks
-- AFC-IFD-Circ-44 Imposition dépense : 47 chunks
-- AFC-IFD-Circ-45 Impôt à la source : 296 chunks
-- AFC-IFD-Circ-49 Étranger-étranger : ~100 chunks
-- AFC-IFD-Circ-50a Commissions occultes : ~40 chunks
+### Cantonal Valais ✅ premier canton SR
+- **Loi fiscale (RSVS 642.1)** : 175 articles *(session 04, via Playwright)*
+- Guide déclaration PP 2024 : 169 chunks
+- Barème 2026 : 5 chunks
+- Déductions forfaitaires 2025 : 14 chunks
+- Directives impôt source 2025 : 40 chunks
 
-**Cantonal VS (+228)** :
-- VS-Guide-declaration-2024 : 169 chunks
-- VS-Bareme-2026 : 5 chunks
-- VS-Deductions-forfaitaires-2025 : 14 chunks
-- VS-Directives-impot-source-2025 : 40 chunks
-
-### Manquant (priorité session 04+)
-- LP (281.1) — XML Fedlex facile (30 min)
-- OIFD + OLTVA — XML Fedlex faciles
-- Info TVA webpublications — HTML scraping (1-2h)
-- CSI Circulaire 28 + commentaire — PDFs (15 min)
-- **Loi fiscale VS complète** — Playwright + Cloudflare (1-2h)
-- Règlement d'exécution VS (RELF)
-- Autres cantons SR (GE, VD, FR, NE, JU, BE-Jura)
-- Standards techniques (eCH-0217, Swissdec, CAMT.053, QR)
+### Manquant (priorité session 05+)
+- **OIFD** (642.116) et **OLTVA** (641.201) — ordonnances d'exécution
+- **Info TVA webpublications** (Info TVA 12 TDFN, Info TVA 15 Décompte, Info TVA secteur 17 Immeubles) — JSF complexe
+- **Règlement d'exécution de la loi fiscale VS** (RELF)
+- **Autres cantons SR** : GE, VD, FR, NE, JU, BE-Jura
+- **Standards techniques** : eCH-0217, Swissdec, CAMT.053, QR-facture
+- **Plan comptable Käfer** structuré (à extraire du system prompt)
 
 ---
 
@@ -200,47 +167,75 @@ Si Playwright est trop lourd, alternative : utiliser un User-Agent + cookies val
 
 | Script | Rôle | Destructif ? | Pattern |
 |---|---|---|---|
-| `~/ingest_swiss_law.py` | Parser Fedlex XML (LTVA + LIFD + CO) | ⚠️ **OUI** (delete_collection) — **ne pas relancer** | XML |
-| `~/ollama-compta/scripts/ingest_laws_v2.py` | Articles hardcodés additifs | ❌ Non | manuel |
-| `~/ollama-compta/scripts/ingest_lhid_lexa.py` | LHID uniquement | ❌ Non (UUID4) | XML |
-| `~/ollama-compta/scripts/ingest_afc_pdfs_lexa.py` | Notice A + 14 circulaires IFD | ❌ Non (UUID4) | PDF |
-| `~/ollama-compta/scripts/ingest_vs_pdfs_lexa.py` | 4 documents fiscaux Valais | ❌ Non (UUID4) | PDF |
+| `~/ingest_swiss_law.py` | Parser Fedlex XML LTVA+LIFD+CO (session 01) | ⚠️ OUI (delete_collection) — **ne jamais relancer** | XML |
+| `~/ollama-compta/scripts/ingest_laws_v2.py` | Articles hardcodés additifs (session 01) | ❌ Non | manuel |
+| `~/ollama-compta/scripts/ingest_lhid_lexa.py` | LHID (session 02) | ❌ Non (UUID4) | XML |
+| `~/ollama-compta/scripts/ingest_afc_pdfs_lexa.py` | Notice A + 14 circulaires IFD (session 03) | ❌ Non (UUID4) | PDF (pymupdf) |
+| `~/ollama-compta/scripts/ingest_vs_pdfs_lexa.py` | 4 PDFs fiscaux Valais (session 03) | ❌ Non (UUID4) | PDF |
+| `~/ollama-compta/scripts/ingest_lp_lexa.py` | LP (session 04) | ❌ Non (UUID4) | XML |
+| `~/ollama-compta/scripts/ingest_csi_lexa.py` | CSI Circ 28 + commentaire (session 04) | ❌ Non (UUID4) | PDF |
+| `~/ollama-compta/scripts/ingest_vs_loi_fiscale_lexa.py` | Loi fiscale VS (session 04) | ❌ Non (UUID4) | **HTML via Playwright** |
 
 **Règle absolue** : tout nouveau script d'ingestion Lexa doit suivre `ingest_*_lexa.py` (upsert UUID4 pur).
 
-**Stack Python sur le Spark** :
-- Python 3.12 system + `~/.local/lib/python3.12/site-packages/`
-- Packages : `FlagEmbedding`, `qdrant-client`, `requests`, `pdfplumber`, `pymupdf` (fitz), `packaging`, `yaml`, `tqdm`, `huggingface_hub`
-- BGE-M3 : `use_fp16=True`, `device="cuda"` (mais fallback silencieux en CPU car torch+CUDA indispo aarch64)
+**Stack Python sur le Spark** (`~/.local/lib/python3.12/site-packages/`) :
+- `FlagEmbedding`, `qdrant-client`, `requests`, `pdfplumber`, `pymupdf` (fitz), `playwright`, `packaging`, `yaml`, `tqdm`, `huggingface_hub`
+- BGE-M3 : `use_fp16=True`, `device="cuda"` mais fallback silencieux en CPU
+- Chromium headless : `~/.cache/ms-playwright/chromium_headless_shell-1208/`
 - PEP 668 bypassé via `--break-system-packages`
+
+---
+
+## Pattern Playwright (validé session 04)
+
+```python
+from playwright.sync_api import sync_playwright
+
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True)
+    context = browser.new_context(
+        user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+        viewport={"width": 1280, "height": 900},
+    )
+    page = context.new_page()
+    page.goto(URL, wait_until="networkidle", timeout=60000)
+    page.wait_for_timeout(3000)  # Cloudflare clear + JS render
+    body_text = page.evaluate("() => document.body.innerText")
+    browser.close()
+```
+
+**Cloudflare bypass** : headless Chromium + UA standard suffit. Pas besoin de plugins stealth.
+
+**Pour les portails JSF (PrimeFaces)** : plus complexe, il faut simuler des clicks + gérer `ViewState`. À explorer session 05.
 
 ---
 
 ## Modèles sur le DGX Spark (rappel)
 
-| Modèle | Taille | Usage prévu dans Lexa |
+| Modèle | Taille | Usage prévu |
 |---|---|---|
-| `comptable-suisse` | 29 GB (Q8) | Agents fiscal (TVA, PP, PM, Clôture), haute précision, batch |
-| `comptable-suisse-fast` | 17 GB (Q4) | Agent Classifier, chat interactif, 11 tok/s |
-| `qwen3-vl-ocr` | 6.1 GB | OCR principal (factures, reçus) |
+| `comptable-suisse` | 29 GB (Q8) | Agents fiscal (TVA, PP, PM, Clôture), batch |
+| `comptable-suisse-fast` | 17 GB (Q4) | Classifier, chat interactif |
+| `qwen3-vl-ocr` | 6.1 GB | OCR principal (factures) |
 | `deepseek-ocr` | 6.7 GB | OCR fallback |
 | `qwen3-vl:8b` | 6.1 GB | Vision générale |
-| `qwen3.5:9b-optimized` | 10 GB | Tâches légères, routage |
+| `qwen3.5:9b-optimized` | 10 GB | Tâches légères |
 | BGE-M3 | ~2 GB | Embeddings RAG multilingue (CPU) |
 
 Ollama config : `OLLAMA_FLASH_ATTENTION=1`, `KEEP_ALIVE=-1`, KV cache Q4.
 
 ---
 
-## Avertissements importants (rappel)
+## Avertissements importants
 
-1. **Ne jamais toucher aux 3 processus Ollama actifs sur le Spark** — ils servent à d'autres projets en prod.
-2. **Ne pas supprimer le prototype `~/ollama-compta/`** — utilisé par le user pour du consulting.
-3. **Ne jamais relancer `ingest_swiss_law.py`** — il détruit la collection.
-4. **Toujours UUID4** pour les nouveaux scripts Lexa.
+1. **Ne jamais toucher aux 3 processus Ollama actifs sur le Spark** — prod autres projets.
+2. **Ne pas supprimer le prototype `~/ollama-compta/`** — utilisé pour consulting.
+3. **Ne jamais relancer `~/ingest_swiss_law.py`** — destructif (delete_collection).
+4. **Toujours UUID4** pour les nouveaux scripts d'ingestion Lexa.
 5. **BGE-M3 est sur CPU** — prévoir du temps pour les grosses ingestions.
-6. **Playwright/Chromium** sera nécessaire pour `lex.vs.ch` (Cloudflare).
+6. **Playwright + Chromium sont installés** sur le Spark, prêts à l'emploi.
 7. **Pas de secrets dans le repo** — `.env` git-ignoré.
+8. **Le sudo password partagé dans le chat session 04 n'a pas fonctionné** — demander au user de confirmer la bonne forme ou de lancer lui-même l'install Postgres.
 
 ---
 
@@ -255,4 +250,4 @@ Ollama config : `OLLAMA_FLASH_ATTENTION=1`, `KEEP_ALIVE=-1`, KV cache Q4.
 
 ---
 
-**Dernière mise à jour** : 2026-04-14 (fin session 03)
+**Dernière mise à jour** : 2026-04-14 (fin session 04)
