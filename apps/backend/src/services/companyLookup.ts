@@ -13,34 +13,40 @@ import { XMLParser } from "fast-xml-parser";
 
 const UID_ENDPOINT = "https://www.uid-wse.admin.ch/V5.0/PublicServices.svc";
 
-/** eCH-0097 legal form codes → internal values (Swiss canonical) */
+/**
+ * Mapping empirique des codes legalForm retournés par l'API BFS UID V5.
+ * Validé live contre /V5.0/PublicServices.svc le 2026-04-14 :
+ *   0101 → Raison individuelle (Gianadda Pierre)
+ *   0106 → SA (SWIGS SA, Nestlé SA, UBS AG)
+ *   0107 → Sàrl (Kozelsky Sàrl)
+ *   0108 → Coopérative (Migros-Genossenschafts-Bund)
+ *   0109 → Association (Croix-Rouge suisse, Bauernverband)
+ *   0110 → Fondation (Pierre Gianadda)
+ *
+ * Les codes non validés (SNC, société simple, KmdAG, succursale étrangère…)
+ * tombent dans le fallback `autre` et déclenchent un warn côté backend pour
+ * permettre d'enrichir le mapping après observation.
+ */
 const LEGAL_FORM_MAP: Record<string, string> = {
-  "0101": "raison_individuelle", // Einzelunternehmen / Entreprise individuelle
-  "0103": "societe_simple", // Société simple
-  "0104": "snc", // Société en nom collectif
-  "0105": "senc", // Société en commandite
-  "0106": "sa", // SA — Aktiengesellschaft
-  "0107": "sca", // Société en commandite par actions
-  "0108": "sarl", // Sàrl — GmbH
-  "0109": "cooperative", // Coopérative
-  "0110": "fondation", // Fondation
-  "0116": "association", // Association
-  "0221": "sa_etrangere", // Succursale SA étrangère
+  "0101": "raison_individuelle",
+  "0106": "sa",
+  "0107": "sarl",
+  "0108": "cooperative",
+  "0109": "association",
+  "0110": "fondation",
 };
 
 const LEGAL_FORM_LABEL: Record<string, string> = {
   raison_individuelle: "Raison individuelle",
-  societe_simple: "Société simple",
-  snc: "Société en nom collectif (SNC)",
-  senc: "Société en commandite (SCom)",
   sa: "Société anonyme (SA)",
-  sca: "Société en commandite par actions",
   sarl: "Société à responsabilité limitée (Sàrl)",
   cooperative: "Coopérative",
-  fondation: "Fondation",
   association: "Association",
-  sa_etrangere: "Succursale suisse d'une entité étrangère",
+  fondation: "Fondation",
+  autre: "Autre forme juridique",
 };
+
+const seenUnknownCodes = new Set<string>();
 
 export type CompanyLookupResult = {
   uid: string; // CHE-XXX.XXX.XXX
@@ -176,7 +182,13 @@ function parseItem(item: Record<string, unknown>): CompanyLookupResult | null {
     if (!name) return null;
 
     const legalFormCode = val(ident?.legalForm);
-    const legalForm = LEGAL_FORM_MAP[legalFormCode] ?? "raison_individuelle";
+    const legalForm = LEGAL_FORM_MAP[legalFormCode] ?? "autre";
+    if (legalForm === "autre" && legalFormCode && !seenUnknownCodes.has(legalFormCode)) {
+      seenUnknownCodes.add(legalFormCode);
+      console.warn(
+        `[companyLookup] Unknown BFS legalForm code '${legalFormCode}' for ${val(ident?.organisationName)} — add to LEGAL_FORM_MAP`,
+      );
+    }
     const legalFormLabel = LEGAL_FORM_LABEL[legalForm] ?? legalForm;
 
     const address = organisation.address as Record<string, unknown> | undefined;

@@ -1,15 +1,11 @@
 export type LegalForm =
   | 'raison_individuelle'
-  | 'societe_simple'
-  | 'snc'
-  | 'senc'
   | 'sa'
-  | 'sca'
   | 'sarl'
   | 'cooperative'
-  | 'fondation'
   | 'association'
-  | 'sa_etrangere';
+  | 'fondation'
+  | 'autre';
 
 export interface CompanyLookupResult {
   uid: string;

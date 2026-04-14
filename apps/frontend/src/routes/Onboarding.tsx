@@ -15,10 +15,10 @@ const legalForms: Array<{ value: LegalForm; label: string }> = [
   { value: 'raison_individuelle', label: 'Raison individuelle' },
   { value: 'sarl', label: 'Société à responsabilité limitée (Sàrl)' },
   { value: 'sa', label: 'Société anonyme (SA)' },
-  { value: 'snc', label: 'Société en nom collectif' },
   { value: 'association', label: 'Association' },
   { value: 'cooperative', label: 'Coopérative' },
   { value: 'fondation', label: 'Fondation' },
+  { value: 'autre', label: 'Autre forme juridique' },
 ];
 
 export function Onboarding() {
