@@ -1,0 +1,402 @@
+name: Plan comptable PME suisse (Käfer)
+version: 2024
+source: Käfer / Swiss GAAP RPC-compatible
+language: fr
+
+classes:
+  "1":
+    label: Actifs
+    description: Éléments du patrimoine de l'entreprise (actifs circulants et immobilisés)
+  "2":
+    label: Passifs
+    description: Engagements et capitaux propres
+  "3":
+    label: Produits d'exploitation
+  "4":
+    label: Charges de matériel et de marchandises
+  "5":
+    label: Charges de personnel
+  "6":
+    label: Autres charges d'exploitation
+  "7":
+    label: Résultat accessoire
+  "8":
+    label: Résultat extraordinaire, unique, hors exploitation
+  "9":
+    label: Clôture et résultat
+
+accounts:
+  # === Classe 1 - Actifs ===
+  - id: "1000"
+    label: Caisse
+    class: 1
+    type: balance_sheet_asset
+    nature: liquid
+    description: Espèces en caisse (CHF, devises)
+  - id: "1020"
+    label: Banque - compte courant
+    class: 1
+    type: balance_sheet_asset
+    nature: liquid
+    description: Comptes courants auprès des banques
+  - id: "1021"
+    label: Compte de virement postal
+    class: 1
+    type: balance_sheet_asset
+    nature: liquid
+  - id: "1060"
+    label: Titres et placements financiers à court terme
+    class: 1
+    type: balance_sheet_asset
+    nature: investment
+  - id: "1100"
+    label: Créances clients (débiteurs)
+    class: 1
+    type: balance_sheet_asset
+    nature: receivable
+    description: Créances sur ventes, facturées mais non encore encaissées
+  - id: "1109"
+    label: Ducroire
+    class: 1
+    type: balance_sheet_asset
+    nature: valuation_adjustment
+    description: Provision pour créances douteuses
+  - id: "1170"
+    label: Impôt préalable (TVA déductible sur biens et services)
+    class: 1
+    type: balance_sheet_asset
+    nature: tax
+    description: TVA payée en amont récupérable (Art. 28 LTVA)
+  - id: "1171"
+    label: Impôt préalable (TVA déductible sur investissements)
+    class: 1
+    type: balance_sheet_asset
+    nature: tax
+  - id: "1200"
+    label: Stock de marchandises
+    class: 1
+    type: balance_sheet_asset
+    nature: inventory
+  - id: "1210"
+    label: Stock de matières premières
+    class: 1
+    type: balance_sheet_asset
+    nature: inventory
+  - id: "1280"
+    label: Travaux en cours
+    class: 1
+    type: balance_sheet_asset
+    nature: inventory
+  - id: "1300"
+    label: Actifs de régularisation
+    class: 1
+    type: balance_sheet_asset
+    nature: accrual
+    description: Charges payées d'avance et produits à recevoir
+  - id: "1400"
+    label: Immobilisations financières
+    class: 1
+    type: balance_sheet_asset
+    nature: fixed_asset
+  - id: "1500"
+    label: Machines et appareils
+    class: 1
+    type: balance_sheet_asset
+    nature: fixed_asset
+    depreciation_rate_afc: 30
+    source: Notice A 1995 AFC
+  - id: "1510"
+    label: Mobilier et installations d'exploitation
+    class: 1
+    type: balance_sheet_asset
+    nature: fixed_asset
+    depreciation_rate_afc: 25
+  - id: "1520"
+    label: Matériel informatique (hardware)
+    class: 1
+    type: balance_sheet_asset
+    nature: fixed_asset
+    depreciation_rate_afc: 40
+    source: Notice A 1995 AFC
+  - id: "1521"
+    label: Logiciels et licences
+    class: 1
+    type: balance_sheet_asset
+    nature: intangible
+    depreciation_rate_afc: 40
+  - id: "1530"
+    label: Véhicules d'entreprise
+    class: 1
+    type: balance_sheet_asset
+    nature: fixed_asset
+    depreciation_rate_afc: 40
+    source: Notice A 1995 AFC
+  - id: "1600"
+    label: Immeubles d'exploitation
+    class: 1
+    type: balance_sheet_asset
+    nature: fixed_asset
+    depreciation_rate_afc: 7
+    description: Taux moyen bâtiments commerciaux
+  - id: "1700"
+    label: Droits et immobilisations incorporelles
+    class: 1
+    type: balance_sheet_asset
+    nature: intangible
+
+  # === Classe 2 - Passifs ===
+  - id: "2000"
+    label: Créanciers fournisseurs
+    class: 2
+    type: balance_sheet_liability
+    nature: payable
+  - id: "2030"
+    label: Acomptes de clients
+    class: 2
+    type: balance_sheet_liability
+    nature: payable
+  - id: "2100"
+    label: Dettes bancaires à court terme
+    class: 2
+    type: balance_sheet_liability
+    nature: debt
+  - id: "2200"
+    label: TVA due (décompte AFC)
+    class: 2
+    type: balance_sheet_liability
+    nature: tax
+    description: TVA collectée à reverser à l'AFC (Art. 86 LTVA)
+  - id: "2201"
+    label: Décompte TVA (compte courant AFC)
+    class: 2
+    type: balance_sheet_liability
+    nature: tax
+  - id: "2206"
+    label: Acomptes reçus pour TVA
+    class: 2
+    type: balance_sheet_liability
+    nature: tax
+  - id: "2270"
+    label: Impôts directs dus (IFD, ICC)
+    class: 2
+    type: balance_sheet_liability
+    nature: tax
+    description: Impôt fédéral direct et cantonal à payer
+  - id: "2300"
+    label: Emprunts à long terme
+    class: 2
+    type: balance_sheet_liability
+    nature: debt
+  - id: "2400"
+    label: Passifs de régularisation
+    class: 2
+    type: balance_sheet_liability
+    nature: accrual
+  - id: "2600"
+    label: Provisions
+    class: 2
+    type: balance_sheet_liability
+    nature: provision
+    description: Provisions justifiées par l'usage commercial
+  - id: "2800"
+    label: Capital social / Capital
+    class: 2
+    type: equity
+    nature: capital
+    description: Capital-actions (SA) ou parts (Sàrl)
+  - id: "2900"
+    label: Réserves générales légales
+    class: 2
+    type: equity
+    nature: reserve
+  - id: "2950"
+    label: Réserves libres / Réserves facultatives
+    class: 2
+    type: equity
+    nature: reserve
+  - id: "2970"
+    label: Bénéfice (perte) reporté
+    class: 2
+    type: equity
+    nature: retained_earnings
+  - id: "2979"
+    label: Bénéfice (perte) de l'exercice
+    class: 2
+    type: equity
+    nature: current_result
+
+  # === Classe 3 - Produits ===
+  - id: "3000"
+    label: Ventes de marchandises
+    class: 3
+    type: revenue
+    default_tva_rate: 8.1
+    default_tva_code: TVA-8.1-standard
+  - id: "3200"
+    label: Prestations de services
+    class: 3
+    type: revenue
+    default_tva_rate: 8.1
+  - id: "3400"
+    label: Autres produits d'exploitation
+    class: 3
+    type: revenue
+  - id: "3800"
+    label: Rabais et escomptes accordés
+    class: 3
+    type: revenue_adjustment
+    description: Diminution des produits
+
+  # === Classe 4 - Charges de matériel et marchandises ===
+  - id: "4000"
+    label: Achats de marchandises destinées à la revente
+    class: 4
+    type: expense
+    default_tva_rate: 8.1
+    default_tva_code: TVA-8.1-deductible
+  - id: "4200"
+    label: Charges de sous-traitance / prestations de tiers
+    class: 4
+    type: expense
+    default_tva_rate: 8.1
+  - id: "4400"
+    label: Variation de stocks
+    class: 4
+    type: expense_adjustment
+  - id: "4900"
+    label: Frais d'achat / frais accessoires
+    class: 4
+    type: expense
+
+  # === Classe 5 - Charges de personnel ===
+  - id: "5000"
+    label: Salaires
+    class: 5
+    type: expense
+    nature: personnel
+    default_tva_rate: 0
+    description: Salaires bruts (hors TVA)
+  - id: "5700"
+    label: Charges sociales AVS/AI/APG/AC/AM
+    class: 5
+    type: expense
+    nature: personnel
+    default_tva_rate: 0
+    description: Part employeur AVS 5.3% + AI 0.7% + APG 0.275% + AC 1.1% (2024)
+  - id: "5710"
+    label: Prestations LPP (2ème pilier)
+    class: 5
+    type: expense
+    nature: personnel
+    default_tva_rate: 0
+  - id: "5720"
+    label: Assurance accident LAA
+    class: 5
+    type: expense
+    nature: personnel
+    default_tva_rate: 0
+  - id: "5800"
+    label: Autres charges de personnel
+    class: 5
+    type: expense
+    nature: personnel
+    description: Repas, formations, frais professionnels personnel
+
+  # === Classe 6 - Autres charges d'exploitation ===
+  - id: "6000"
+    label: Loyers
+    class: 6
+    type: expense
+    default_tva_rate: 8.1
+    default_tva_code: TVA-8.1-deductible-immeuble-pro
+    description: Location de locaux commerciaux (déductible si option TVA)
+  - id: "6100"
+    label: Entretien, réparation, remplacement
+    class: 6
+    type: expense
+    default_tva_rate: 8.1
+  - id: "6200"
+    label: Primes d'assurance choses
+    class: 6
+    type: expense
+    default_tva_rate: 0
+    description: Assurances exonérées (Art. 21 ch. 18 LTVA)
+  - id: "6300"
+    label: Énergie, eau, gaz, chauffage
+    class: 6
+    type: expense
+    default_tva_rate: 8.1
+  - id: "6400"
+    label: Frais de télécommunication
+    class: 6
+    type: expense
+    default_tva_rate: 8.1
+  - id: "6500"
+    label: Frais administratifs (fournitures, abonnements)
+    class: 6
+    type: expense
+    default_tva_rate: 8.1
+  - id: "6510"
+    label: Honoraires fiduciaires / conseillers
+    class: 6
+    type: expense
+    default_tva_rate: 8.1
+  - id: "6600"
+    label: Publicité et relations publiques
+    class: 6
+    type: expense
+    default_tva_rate: 8.1
+  - id: "6640"
+    label: Frais de repas et représentation
+    class: 6
+    type: expense
+    default_tva_rate: 8.1
+    description: Déductibles à 50% (Art. 33 LIFD - charges justifiées par l'usage commercial)
+  - id: "6700"
+    label: Amortissements
+    class: 6
+    type: expense
+    default_tva_rate: 0
+    description: Amortissements sur immobilisations selon Notice A AFC
+  - id: "6800"
+    label: Charges financières (intérêts et frais bancaires)
+    class: 6
+    type: expense
+    default_tva_rate: 0
+    description: Exonérés TVA (Art. 21 ch. 19 LTVA)
+
+  # === Classe 7 - Résultat accessoire ===
+  - id: "7000"
+    label: Produits accessoires
+    class: 7
+    type: revenue
+  - id: "7500"
+    label: Produits financiers (intérêts bancaires perçus)
+    class: 7
+    type: revenue
+    default_tva_rate: 0
+  - id: "7900"
+    label: Produits immobiliers (loyers reçus)
+    class: 7
+    type: revenue
+    default_tva_rate: 0
+
+  # === Classe 8 - Résultat extraordinaire ===
+  - id: "8000"
+    label: Charges extraordinaires / uniques
+    class: 8
+    type: expense
+  - id: "8100"
+    label: Produits extraordinaires / uniques
+    class: 8
+    type: revenue
+
+  # === Classe 9 - Clôture ===
+  - id: "9000"
+    label: Compte de résultat
+    class: 9
+    type: closing
+  - id: "9100"
+    label: Bilan
+    class: 9
+    type: closing
