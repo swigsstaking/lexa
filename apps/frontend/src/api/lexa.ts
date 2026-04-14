@@ -55,4 +55,42 @@ export const lexa = {
 
   ledgerList: (limit = 20) =>
     api.get<LedgerListResponse>('/ledger', { params: { limit } }).then((r) => r.data),
+
+  // Execution layer — formulaires officiels
+  generateTvaDecompte: (input: {
+    quarter: 1 | 2 | 3 | 4;
+    year: number;
+    method?: 'effective' | 'tdfn';
+  }) =>
+    api
+      .post<{
+        streamId: string;
+        eventId: number;
+        form: {
+          formId: string;
+          version: string;
+          method: 'effective' | 'tdfn';
+          period: { quarter: 1 | 2 | 3 | 4; year: number; start: string; end: string };
+          company: {
+            tenantId: string;
+            uid: string | null;
+            name: string;
+            vatNumber: string | null;
+            canton: string | null;
+            legalForm: string;
+          };
+          projection: {
+            caHt: { standard: number; reduced: number; lodging: number };
+            tvaDue: { standard: number; reduced: number; lodging: number; total: number };
+            impotPrealable: { operating: number; capex: number; total: number };
+            solde: number;
+            caExonere: number;
+            eventCount: number;
+          };
+          generatedAt: string;
+        };
+        pdf: string;
+        xml: string;
+      }>('/forms/tva-decompte', input)
+      .then((r) => r.data),
 };

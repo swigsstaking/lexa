@@ -8,6 +8,7 @@ import { ledgerRouter } from "./routes/ledger.js";
 import { connectorsRouter } from "./routes/connectors.js";
 import { agentsRouter } from "./routes/agents.js";
 import { onboardingRouter } from "./routes/onboarding.js";
+import { formsRouter } from "./routes/forms.js";
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use("/ledger", ledgerRouter);
 app.use("/connectors", connectorsRouter);
 app.use("/agents", agentsRouter);
 app.use("/onboarding", onboardingRouter);
+app.use("/forms", formsRouter);
 
 // 404
 app.use((_req, res) => {

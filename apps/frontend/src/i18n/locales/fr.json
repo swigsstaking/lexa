@@ -108,7 +108,8 @@
     "toggle_expert": "Mode expert (Grand livre)",
     "shortcut_chat": "Chat IA",
     "services_up": "Services OK",
-    "services_down": "Services KO"
+    "services_down": "Services KO",
+    "services_checking": "Vérification…"
   },
   "ledger": {
     "title": "Grand livre",
@@ -121,6 +122,23 @@
     "detailed": "Écritures détaillées",
     "balanced": "Équilibrée",
     "imbalanced": "Déséquilibre"
+  },
+  "forms": {
+    "tva_title": "Décompte TVA AFC",
+    "tva_cta": "Générer décompte TVA trimestriel",
+    "tva_generating": "Génération en cours…",
+    "tva_quarter": "Trimestre",
+    "tva_year": "Année",
+    "tva_method": "Méthode",
+    "tva_method_effective": "Effective",
+    "tva_method_tdfn": "TDFN",
+    "tva_success": "Décompte Q{{quarter}} {{year}} généré — event {{streamId}}",
+    "tva_error": "Échec de la génération du décompte",
+    "tva_download_pdf": "PDF téléchargé",
+    "tva_download_xml": "XML téléchargé",
+    "tva_total_due": "TVA due totale",
+    "tva_input_tax": "Impôt préalable",
+    "tva_solde": "Solde à payer"
   },
   "chat": {
     "title": "Agents IA",

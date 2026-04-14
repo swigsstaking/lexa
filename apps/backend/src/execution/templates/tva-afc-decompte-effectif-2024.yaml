@@ -1,0 +1,160 @@
+# Lexa — Template formulaire officiel
+# Décompte TVA AFC trimestriel, méthode effective
+#
+# Source légale : Loi fédérale régissant la TVA (LTVA, RS 641.20)
+# Formulaire officiel : https://www.estv.admin.ch/estv/fr/accueil/tva/decompte-tva.html
+# Standard échange : eCH-0217 (échange fiscal CH)
+#
+# Cette v1 couvre les champs critiques. Les champs additionnels (acquisitions
+# intra-groupe, diminutions de la contre-prestation, prestations à soi-même...)
+# sont marqués TODO pour sessions ultérieures.
+
+form_id: TVA-AFC-decompte-effectif
+version: "2024-01-01"
+title: Décompte TVA — méthode effective (trimestriel)
+jurisdiction: federal
+authority: AFC
+legal_reference:
+  law: LTVA
+  rs: "641.20"
+  articles: ["36", "37", "71"]
+
+periodicity: quarterly
+method: effective
+
+# ───────────────────────────────────────────────────────────
+# Taux TVA applicables depuis le 2024-01-01
+# (hausse 7.7% → 8.1%, 2.5% → 2.6%, 3.7% → 3.8%)
+# ───────────────────────────────────────────────────────────
+vat_rates:
+  - code: standard
+    rate: 8.1
+    label: Taux normal
+  - code: reduced
+    rate: 2.6
+    label: Taux réduit (denrées, livres, médicaments)
+  - code: lodging
+    rate: 3.8
+    label: Taux spécial hébergement
+
+# ───────────────────────────────────────────────────────────
+# Champs du formulaire — source = projection calculée par TvaFormBuilder
+# ───────────────────────────────────────────────────────────
+fields:
+  # Identité entreprise
+  - id: entreprise_uid
+    label: Numéro IDE / UID
+    source: company.uid
+    validation: required
+  - id: entreprise_name
+    label: Raison sociale
+    source: company.name
+    validation: required
+  - id: entreprise_vat_number
+    label: Numéro TVA
+    source: company.vat_number
+    validation: required
+
+  # Période
+  - id: periode_quarter
+    label: Trimestre
+    source: input.quarter
+    validation: required
+  - id: periode_year
+    label: Année
+    source: input.year
+    validation: required
+  - id: periode_start
+    label: Début de période
+    source: computed.period_start
+  - id: periode_end
+    label: Fin de période
+    source: computed.period_end
+
+  # Chiffre d'affaires imposable par taux
+  - id: ca_imposable_81
+    label: Chiffre d'affaires imposable à 8.1%
+    source: projection.tva.ca_ht.standard
+    validation: optional
+    format: currency_chf
+  - id: ca_imposable_26
+    label: Chiffre d'affaires imposable à 2.6%
+    source: projection.tva.ca_ht.reduced
+    validation: optional
+    format: currency_chf
+  - id: ca_imposable_38
+    label: Chiffre d'affaires imposable à 3.8%
+    source: projection.tva.ca_ht.lodging
+    validation: optional
+    format: currency_chf
+
+  # TVA due (collectée sur ventes)
+  - id: tva_due_81
+    label: TVA due à 8.1%
+    source: projection.tva.tva_due.standard
+    format: currency_chf
+  - id: tva_due_26
+    label: TVA due à 2.6%
+    source: projection.tva.tva_due.reduced
+    format: currency_chf
+  - id: tva_due_38
+    label: TVA due à 3.8%
+    source: projection.tva.tva_due.lodging
+    format: currency_chf
+  - id: tva_due_total
+    label: TVA due totale
+    source: projection.tva.tva_due.total
+    format: currency_chf
+    validation: required
+
+  # Prestations exonérées / non imposables (TODO v2 : zero-rated, export)
+  - id: ca_exonere
+    label: Prestations exonérées ou hors champ TVA
+    source: projection.tva.ca_exonere
+    format: currency_chf
+    todo: true
+
+  # Impôt préalable (récupérable sur achats)
+  - id: impot_prealable_materiel
+    label: Impôt préalable sur achats de matériel et prestations
+    source: projection.tva.impot_prealable.operating
+    format: currency_chf
+  - id: impot_prealable_investissements
+    label: Impôt préalable sur investissements et autres charges d'exploitation
+    source: projection.tva.impot_prealable.capex
+    format: currency_chf
+    todo: true
+  - id: impot_prealable_total
+    label: Impôt préalable total
+    source: projection.tva.impot_prealable.total
+    format: currency_chf
+    validation: required
+
+  # Solde
+  - id: tva_a_payer
+    label: Montant à payer à l'AFC (ou à recevoir)
+    source: projection.tva.solde
+    format: currency_chf
+    validation: required
+    note: "Si négatif, l'AFC doit remboursement."
+
+# ───────────────────────────────────────────────────────────
+# Sortie
+# ───────────────────────────────────────────────────────────
+output:
+  pdf:
+    renderer: pdfkit
+    disclaimer: >
+      PRÉPARÉ AUTOMATIQUEMENT PAR LEXA — à vérifier et valider par votre
+      fiduciaire avant dépôt. Lexa prépare, l'humain signe (whitepaper §6).
+  xml:
+    schema: eCH-0217
+    version: "1.0"
+    note: v1 minimal, schéma complet TODO session 13+
+
+# ───────────────────────────────────────────────────────────
+# Validation humaine obligatoire (whitepaper §6 phase 1)
+# ───────────────────────────────────────────────────────────
+validation:
+  human_signature_required: true
+  lexa_liability: preparation_only

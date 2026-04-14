@@ -51,6 +51,24 @@ export type LexaEvent =
           tvaRate?: number;
         };
       };
+    }
+  | {
+      type: "DeclarationGenerated";
+      payload: {
+        formId: string;
+        version: string;
+        method: "effective" | "tdfn";
+        period: { quarter: 1 | 2 | 3 | 4; year: number; start: string; end: string };
+        totals: {
+          caHt: { standard: number; reduced: number; lodging: number };
+          tvaDueTotal: number;
+          impotPrealableTotal: number;
+          solde: number;
+        };
+        eventCount: number;
+        generatedBy: "lexa";
+        liability: "preparation_only";
+      };
     };
 
 export type LexaEventType = LexaEvent["type"];
