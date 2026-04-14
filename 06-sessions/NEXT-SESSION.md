@@ -1,248 +1,305 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 07 — 2026-04-14](2026-04-14-session-07.md)
-**Prochaine session** : Session 08 — Agents + projections event store + CAMT.053
+**Dernière session** : [Session 08 — 2026-04-14](2026-04-14-session-08.md)
+**Prochaine session** : Session 09 — Hook Swigs Pro + Agent TVA + tests automatisés
 
 > **Lecture obligatoire au début de la prochaine session.**
 
 ---
 
-## Où on en est — bilan session 07
+## Bilan sessions 06-08
 
-**Session 07 = session la plus ambitieuse à ce jour**. Gains mesurés :
-
-| Métrique | Session 06 | Session 07 | Gain |
-|---|---|---|---|
-| `/rag/ask` | 797s | **43s** | **18.5×** |
-| `/transactions` (event-sourced) | — | **9.8s** | créé |
-| BGE-M3 embedding | ~10s | **28ms** | **357×** |
-| BGE-M3 ingestion 66 chunks | ~53s | **0.58s** | **91×** |
-| Ollama tok/s | 0.8 | **11.5-22** | **14-27×** |
-
-**Le pipeline Lexa complet est production-ready pour MVP** :
-- `POST /transactions` → classify Käfer + citations LTVA → event store → audit trail en **10 secondes**
-- `GET /transactions/:streamId` → replay historique
-- `GET /transactions/stats/summary` → stats events
-
----
-
-## Infrastructure actuelle (sécurisée)
-
-| Host | Service | Port | Systemd | Notes |
-|---|---|---|---|---|
-| **.59** | lexa-backend (Express TS) | 3010 | PM2 | Event-sourced OK |
-| **.59** | Postgres 14.22 (base `lexa`) | 5432 | systemd | events + ai_decisions |
-| **.59** | MongoDB | 27017 | systemd | (pas encore utilisé par Lexa) |
-| **.59** | Redis | 6379 | systemd | (pas encore utilisé) |
-| **.103** | Ollama | 11434 | systemd | Config optimale, MAX_LOADED=2 |
-| **.103** | llama-server BGE-M3 GPU | **8082** | **systemd (lexa-llama-embed)** | 200× gain |
-| **.103** | Qdrant (swiss_law 5388 pts) | 6333 | Docker | |
-| **.103** | ~~lexa-embed Python (8001)~~ | — | ~~killed~~ | Remplacé par 8082 |
-
-**Backend .59** :
-```bash
-curl http://192.168.110.59:3010/health
-# → {"ok":true, "qdrantPoints":5388, 5 services verts}
+Backend Lexa **MVP fonctionnellement complet** pour le cycle de base :
+```
+Email bancaire Swigs Pro (parseur existant)
+  → POST /connectors/bank/ingest
+  → TransactionIngested event
+  → lexa-classifier (JSON + citations LTVA)
+  → TransactionClassified event
+  → ai_decisions audit row
+  → Materialized view ledger_entries (double-entry auto)
+  → GET /ledger/balance (balance de vérification)
 ```
 
----
-
-## Modèles Ollama résidents actuels
-
-| Modèle | Taille | Usage |
-|---|---|---|
-| `deepseek-ocr` | 9.7 GB | ⚠️ **PROD autre projet** — ne jamais toucher |
-| `comptable-suisse-fast` | 22 GB Q4 | `/rag/ask` Lexa (reasoning + citations) |
-| `lexa-classifier` | 10 GB | **Classifier Lexa** (JSON parfait, 22 tok/s) |
-
-Unloaded mais reloadables auto : `comptable-suisse` Q8, `qwen3.5:9b-nothink`, `qwen3-vl*`, autres.
+**Chiffres clés session 08** :
+- `/rag/ask` : **7.4s** (vs 797s session 06, **108× gain**)
+- `/transactions` end-to-end : **~10s**
+- 14 events persistés, 7 comptes ledger, balance **équilibrée** 13'103.80 CHF
+- 3 Modelfiles Lexa : `lexa-classifier`, `lexa-reasoning`, (+ comptable-suisse-fast pour prose longue)
+- Collection Qdrant : 5388 points (session 07)
 
 ---
 
-## Ce qu'il faut lire AVANT de démarrer la session 08
+## Infrastructure actuelle
 
-1. **`06-sessions/2026-04-14-session-07.md`** — journal complet (15 min) — **essentiel**
-2. **`apps/backend/src/routes/transactions.ts`** — event-sourced flow (5 min)
-3. **`apps/backend/src/agents/classifier/ClassifierAgent.ts`** — pattern agent (5 min)
-4. **`01-knowledge-base/plan_kafer.yaml`** — structure Käfer (3 min)
+| Host | Service | Port | Status | Notes |
+|---|---|---|---|---|
+| **.59** | lexa-backend Express TS | 3010 | ✅ PM2 | 7 routes |
+| **.59** | Postgres 14.22 (base `lexa`) | 5432 | ✅ | events + ai_decisions + ledger_entries matview |
+| **.103** | Ollama | 11434 | ✅ systemd | MAX_LOADED=2, KV q8_0, NUM_PARALLEL=1 |
+| **.103** | llama-server BGE-M3 GPU | 8082 | ✅ systemd (lexa-llama-embed) | 357× gain vs CPU |
+| **.103** | Qdrant (swiss_law 5388 pts) | 6333 | ✅ Docker | |
 
-**Total : ~30 min**
+**Modèles Ollama résidents normalement** :
+- `deepseek-ocr` (PROD autre projet, **ne pas toucher**)
+- `comptable-suisse-fast` (fallback reasoning, pas utilisé par Lexa pour l'instant)
+- `lexa-classifier` (classification Käfer + TVA + citations)
+- `lexa-reasoning` (questions juridiques prose + citations)
+
+---
+
+## Endpoints backend disponibles (sécurisés par design)
+
+```
+GET  /health                          # 5 services check
+POST /rag/ask                         # RAG question → prose + citations (lexa-reasoning, ~7-8s)
+POST /rag/classify                    # Classify single tx (lexa-classifier, ~10s)
+POST /transactions                    # Full event-sourced flow (ingest + classify)
+GET  /transactions/:streamId          # Replay event history
+GET  /transactions/stats/summary      # Event count by type
+GET  /ledger                          # All ledger entries
+GET  /ledger/account/:prefix          # Entries for account prefix
+GET  /ledger/balance                  # Trial balance (balance de vérification)
+POST /ledger/refresh                  # Refresh materialized view
+POST /connectors/bank/ingest          # Batch Swigs Pro BankTransactions
+GET  /connectors/bank/formats         # List supported formats
+```
 
 ---
 
 ## Questions en attente de réponse du user
 
-⚠️ **4 questions à trancher en début de session 08** :
+⚠️ **5 questions à trancher en début de session 09** :
 
-1. **CAMT.053 parser** — priorité #1 pour session 08 ? Permet d'importer un fichier bancaire XML ISO 20022 → déclencher le flow `/transactions` pour chaque ligne. **C'est le connecteur qui rend Lexa utilisable en vrai**.
-   - *Reco Claude : oui, priorité absolue*
+1. **Hook dans Swigs Pro** — j'ajoute un patch dans `swigs-workflow/backend/src/services/bankImapFetcher.service.js` qui appelle `POST http://192.168.110.59:3010/connectors/bank/ingest` après classification Pro ? Ça ferme la boucle Pro → Lexa automatique.
+   - *Reco Claude : oui, c'est 20 lignes de code dans Pro*
 
-2. **Agent TVA** — créer le 2ème agent qui utilise Info TVA 12/15 ingérés + Modelfile `lexa-tva` dédié ?
-   - *Reco Claude : oui, après CAMT.053*
+2. **Agent TVA dédié** — créer `lexa-tva` Modelfile spécialisé pour les questions TVA complexes (TDFN/effectif/option/secteurs) ? Utilisera en priorité Info TVA 12/15/secteur 17/secteur 04.
+   - *Reco Claude : oui, ça valide le pattern "un Modelfile par rôle"*
 
-3. **Optim `/rag/ask`** — créer `lexa-reasoning` Modelfile (qwen3.5:9b + SYSTEM cite lois) pour passer de 43s à ~15s ?
-   - *Reco Claude : oui, facile (30 min)*
+3. **Tests automatisés** (qa-lexa, perf-lexa, corpus-validator) — créer les 3 subagents pour valider la régression à chaque session ?
+   - *Reco Claude : oui, priorité haute pour la stabilité*
 
-4. **Projections event store** — premières projections (grand livre, balance, compte résultat) à partir des events ?
-   - *Reco Claude : commencer par grand livre simple en SQL vue, les autres plus tard*
+4. **Webhook retour Lexa → Pro** — quand Lexa classifie, notifier Pro pour mettre à jour `BankTransaction.expenseCategory` côté Pro ?
+   - *Reco Claude : oui mais session 10 (après que le hook Pro → Lexa soit validé)*
+
+5. **Frontend ?** — on commence à scaffold en parallèle des agents (session 10) ou on attend que les 3-4 agents backend soient stables (session 12) ?
+   - *Reco Claude : attendre session 12 — priorité à la stabilité backend*
 
 ---
 
-## Plan détaillé de la session 08
+## Plan détaillé de la session 09
 
-### Étape 1 — Agents de test (qa-lexa + perf-lexa) — 45 min
+### Étape 1 — Hook Swigs Pro (30 min)
 
-Créer 2 subagents réutilisables :
-- **qa-lexa** : frappe les endpoints avec un dataset de test et vérifie les réponses
-- **perf-lexa** : mesure p50/p95 des endpoints et compare avant/après
+Patch `swigs-workflow/backend/src/services/bankImapFetcher.service.js` :
 
-Usage : lancés en fin de session pour valider la régression.
-
-### Étape 2 — Parser CAMT.053 — 1h30
-
-Créer `apps/backend/src/connectors/camt053.ts` :
-- Parse XML ISO 20022 CAMT.053.001.xx
-- Extrait les lignes de transaction (`<Ntry>`)
-- Convertit en `BankTransaction[]` compatible `POST /transactions`
-- Endpoint `POST /connectors/camt053` → batch import
-
-Test avec un fichier CAMT.053 réel (à demander au user ou générer un échantillon).
-
-### Étape 3 — Agent TVA — 1h
-
-Modelfile `lexa-tva` basé sur qwen3.5:9b avec SYSTEM spécialisé TVA :
-- Connaît LTVA + Info TVA 12 (TDFN) + Info TVA 15 (décompte)
-- Retourne JSON avec : taux applicable, code TVA, exonération éventuelle, citation
-- Input : transaction + contexte (secteur, destination, type de prestation)
-
-Endpoint `POST /agents/tva/classify` : retourne la classification TVA détaillée.
-
-### Étape 4 — Projection Grand Livre — 45 min
-
-Migration `002_grand_livre.sql` :
-```sql
-CREATE MATERIALIZED VIEW grand_livre_current AS
-SELECT
-  tenant_id,
-  (payload->>'debitAccount') AS account,
-  occurred_at::date AS entry_date,
-  (payload->>'description') AS description,
-  (payload->>'amountHt')::numeric AS amount_ht,
-  (payload->>'amountTtc')::numeric AS amount_ttc,
-  payload
-FROM events
-WHERE type = 'TransactionClassified'
-ORDER BY occurred_at DESC;
+```javascript
+// Après classifyTransaction(...)
+if (process.env.LEXA_ENABLED === 'true') {
+  try {
+    await axios.post(`${process.env.LEXA_URL}/connectors/bank/ingest`, {
+      transactions: [{
+        txId: tx.txId,
+        amount: tx.amount,
+        currency: tx.currency,
+        creditDebit: tx.creditDebit,
+        counterpartyName: tx.counterpartyName,
+        counterpartyIban: tx.counterpartyIban,
+        reference: tx.reference,
+        unstructuredReference: tx.unstructuredReference,
+        bookingDate: tx.bookingDate.toISOString().split('T')[0],
+        importFilename: tx.importFilename,
+        source: 'swigs-pro-email',
+        userId: tx.userId,
+      }],
+    }, { timeout: 60_000 });
+    logger.info(`Lexa ingested tx ${tx.txId}`);
+  } catch (err) {
+    logger.warn(`Lexa ingestion failed for ${tx.txId}: ${err.message}`);
+  }
+}
 ```
 
-Endpoint `GET /ledger/:account` → lignes filtrées par compte.
+Variables env sur .59 dans `/home/swigs/swigs-workflow/.env` :
+```
+LEXA_ENABLED=true
+LEXA_URL=http://192.168.110.59:3010
+```
 
-### Étape 5 — Optim `/rag/ask` via `lexa-reasoning` — 30 min
+Test : envoyer un email de test banque, vérifier que Lexa a un event correspondant dans `/transactions/stats/summary`.
+
+### Étape 2 — Agent TVA (`lexa-tva` Modelfile) — 45 min
 
 ```
 FROM qwen3.5:9b-optimized
-PARAMETER num_ctx 8192
-PARAMETER num_predict 600
-SYSTEM """Tu es un assistant juridique fiscal suisse pour Lexa.
-Tu reponds en prose naturelle mais cites TOUJOURS les articles de loi
-(format: Art. XX LTVA, Art. XX LIFD).
-Tu termines par: Information a titre indicatif - verifiez avec votre fiduciaire."""
+
+PARAMETER temperature 0.2
+PARAMETER num_ctx 16384
+PARAMETER num_predict 800
+
+SYSTEM """Tu es un agent TVA suisse pour Lexa. Tu reponds aux questions
+sur la TVA suisse (LTVA, OLTVA, Info TVA de l'AFC).
+
+Expertise:
+- Methodes de decompte: effective (Art. 36 LTVA) vs TDFN (Art. 37)
+- Taux: 8.1% standard, 2.6% reduit, 3.8% hebergement, 0% exonere
+- Secteur immeubles (Info TVA secteur 17): locations commerciales, option TVA, changements affectation
+- Secteur batiment (Info TVA secteur 04): facturation, sous-traitance, chantiers
+- Decompte trimestriel vs semestriel
+- Imposition des acquisitions (art. 45 LTVA)
+- Prestations exclues (Art. 21) vs exonerees (Art. 23)
+- Changement de methode TDFN <-> effective
+
+Regles de reponse:
+1. Citation obligatoire: Art. XX LTVA (RS 641.20) ou Info TVA YY
+2. Prose claire, pas de markdown, pas de thinking
+3. Disclaimer obligatoire en fin"""
 ```
 
-Switch `MODEL_REASONING=lexa-reasoning` dans `.env` + restart.
+Nouveau endpoint `POST /agents/tva/ask` → utilise `lexa-tva` au lieu de `lexa-reasoning`.
 
-### Étape 6 — Journal + commit + push — 30 min
+Test : "Puis-je deduire la TVA sur les repas d'affaires ?" → doit citer Art. 29 LTVA (exclusion).
+
+### Étape 3 — Subagents de test (1h)
+
+**Format** : chacun est un sub-agent Claude avec un prompt précis + un dataset.
+
+**`qa-lexa`** :
+```
+Dataset de 10 transactions avec classification attendue (compte Käfer cible)
+Dataset de 10 questions RAG avec article de loi cible
+Frappe les endpoints, compare aux attendus, retourne pass/fail per test
+```
+
+**`perf-lexa`** :
+```
+Mesure p50/p95/p99 sur 20 requêtes de chaque endpoint
+Compare avec la baseline précédente (stockée dans un fichier)
+Alerte si régression > 20%
+```
+
+**`corpus-validator`** :
+```
+50 queries ground-truth sur la KB
+Vérifie que le top-3 Qdrant contient la source attendue
+Retourne recall@3 et score moyen
+```
+
+Ces agents vivent dans `apps/backend/tests/agents/` et sont lancés manuellement par Claude à la fin de chaque session.
+
+### Étape 4 — Journal + commit + push (30 min)
 
 ---
 
-## Scripts / assets sur le Spark (rappel)
+## Contexte backend actuel
 
-### Services systemd Lexa
-- `ollama.service` (stock + override.conf optimisé)
-- `lexa-llama-embed.service` (llama-server BGE-M3 GPU port 8082)
+### Structure `apps/backend/src/`
 
-### Scripts d'ingestion Lexa
-Tous dans `~/ollama-compta/scripts/` (additifs, UUID4) :
-- `ingest_lhid_lexa.py` (session 02)
-- `ingest_afc_pdfs_lexa.py` (session 03)
-- `ingest_vs_pdfs_lexa.py` (session 03)
-- `ingest_lp_lexa.py` (session 04)
-- `ingest_csi_lexa.py` (session 04)
-- `ingest_vs_loi_fiscale_lexa.py` + `_v2.py` (session 04-05)
-- `ingest_federal_ordonnances_lexa.py` (session 05)
-- `ingest_afc_info_tva_lexa.py` (session 05)
-- **`ingest_kafer_lexa.py` (session 07) — utilise llama-server 8082**
+```
+src/
+├── app.ts                    # Express entry + 5 routers montés
+├── config/index.ts           # Zod config
+├── db/
+│   ├── postgres.ts           # pg Pool
+│   ├── migrate.ts            # Migration runner
+│   └── migrations/
+│       ├── 001_events.sql    # events + ai_decisions
+│       └── 002_ledger.sql    # ledger_entries matview + balance view
+├── events/
+│   ├── types.ts              # LexaEvent discriminated union
+│   └── EventStore.ts         # append/read
+├── rag/
+│   ├── EmbedderClient.ts     # llama-server /v1/embeddings
+│   ├── QdrantClient.ts       # HTTP 6333
+│   └── ragQuery.ts           # Pipeline canonique
+├── llm/
+│   └── OllamaClient.ts       # think:false default
+├── agents/
+│   └── classifier/
+│       └── ClassifierAgent.ts  # lexa-classifier
+├── routes/
+│   ├── health.ts             # /health
+│   ├── rag.ts                # /rag/ask, /rag/classify
+│   ├── transactions.ts       # event-sourced flow
+│   ├── ledger.ts             # grand livre + balance
+│   └── connectors.ts         # /connectors/bank/ingest
+└── scripts/
+    └── test-classify.ts      # test manuel
+```
 
-### Modelfiles Ollama
-- `comptable-suisse` / `comptable-suisse-fast` (session 01, legacy fine-tuning)
-- **`lexa-classifier` (session 07)** — base qwen3.5:9b-optimized, Käfer inline, JSON strict
-- **À créer session 08** : `lexa-tva`, `lexa-reasoning`, puis `lexa-fiscal-pp`, `lexa-fiscal-pm`
-
-### Binaires
-- `~/llama.cpp/build/bin/llama-server` — built for sm_121a
-- `~/llama.cpp/build/bin/llama-embedding` — CLI alternatif
-- `~/models/bge-m3/bge-m3-Q8_0.gguf` — 606 MB
-
-### Fichier legacy à cleaner
-- `~/lexa-embed-service/` — Python FastAPI plus utilisé, peut être supprimé session 08
+**À créer session 09** :
+- `src/agents/tva/TvaAgent.ts`
+- `src/routes/agents.ts` ou similaire
+- `tests/agents/qa-lexa/`, `tests/agents/perf-lexa/`, `tests/agents/corpus-validator/`
 
 ---
 
 ## État de la collection Qdrant `swiss_law`
 
-**5388 points total** (session 07 +66 Käfer)
+**5388 points** (inchangé session 08)
 
-- **Fédéral lois** (5/5) : LIFD, LTVA, CO, LHID, LP — **1281 articles**
-- **Fédéral ordonnances** (4/4) : OIFD, OLTVA, OIA, ORC — **448 articles**
-- **Fédéral AFC** : Notice A + 14 circulaires IFD — **~1880 chunks**
-- **Fédéral CSI** : Circ 28 + commentaire — **479 chunks**
-- **Fédéral Info TVA** : TVA 12 + 15 + secteur 17 + secteur 04 — **652 chunks**
-- **Cantonal VS** : Loi fiscale 339 articles + 4 guides/directives — **567 chunks**
-- **Plan comptable Käfer** : 66 comptes structurés — **66 chunks** ✨ nouveau
-- Total approximatif : 5373 + overhead = **5388**
+Voir `01-knowledge-base/INDEX.md` pour le détail complet des 5 sessions d'ingestion.
 
 ---
 
-## Avertissements importants
+## Scripts disponibles sur le Spark
 
-1. **deepseek-ocr est en prod** (autre projet user) → ne jamais décharger manuellement, ne jamais toucher
-2. **lexa-llama-embed.service tourne via systemd** — pour restart : `sudo systemctl restart lexa-llama-embed`
-3. **Backup Ollama config** : `/etc/systemd/system/ollama.service.d/override.conf.backup-20260414-134716` si besoin de rollback
-4. **`think: false` par défaut** dans OllamaClient.ts → tous les futurs agents héritent
-5. **UUID4 strict** pour tout nouvel upsert Qdrant (règle sacrée)
-6. **Password Postgres lexa_app** dans `~/.lexa_db_pass_temp` sur Mac + `/home/swigs/lexa-backend/.env` (mode 600) sur .59
-7. **Pas de secrets dans git**
+Tous dans `~/ollama-compta/scripts/` :
+- `ingest_lhid_lexa.py`, `ingest_afc_pdfs_lexa.py`, `ingest_vs_pdfs_lexa.py`, `ingest_lp_lexa.py`, `ingest_csi_lexa.py`, `ingest_vs_loi_fiscale_lexa.py`, `ingest_vs_loi_fiscale_lexa_v2.py`, `ingest_federal_ordonnances_lexa.py`, `ingest_afc_info_tva_lexa.py`, `ingest_kafer_lexa.py`
+
+**Modelfiles** :
+- `Modelfile-comptable` / `Modelfile-comptable-fast` (legacy fine-tuning)
+- **`Modelfile-lexa-classifier`** (session 07)
+- **`Modelfile-lexa-reasoning`** (session 08)
 
 ---
 
-## Vérification rapide en début de session 08
+## Avertissements importants (toujours valables)
+
+1. **deepseek-ocr en prod** (autre projet user) → ne jamais décharger manuellement
+2. **Backup Ollama config** si besoin rollback : `/etc/systemd/system/ollama.service.d/override.conf.backup-20260414-134716`
+3. **Passwords** dans `~/.lexa_db_pass_temp` (Mac) + `/home/swigs/lexa-backend/.env` (.59, mode 600). Sudo Spark : `SW45id-445-332`. Sudo .59 : `Labo`.
+4. **UUID4 strict** pour tout upsert Qdrant
+5. **`think: false` par défaut** dans OllamaClient pour tous les futurs agents
+6. **Pas de secrets dans git**
+7. **Materialized view ledger_entries** nécessite `REFRESH` manuel ou trigger (à mettre en place session 09+)
+
+---
+
+## Vérification rapide début session 09
 
 ```bash
-# 1. Backend up ?
+# 1. Backend up
 ssh swigs@192.168.110.59 'curl -s http://localhost:3010/health | python3 -m json.tool'
-# → ok: true, 5 services verts, ~5388 points
 
-# 2. llama-server BGE-M3 up ?
-ssh swigs@192.168.110.103 'systemctl is-active lexa-llama-embed; curl -s http://localhost:8082/health'
-# → active, {"status":"ok"}
+# 2. llama-server up (systemd)
+ssh swigs@192.168.110.103 'systemctl is-active lexa-llama-embed'
 
-# 3. Ollama modèles ?
-ssh swigs@192.168.110.103 'ollama ps'
-# → deepseek-ocr + comptable-suisse-fast + lexa-classifier
+# 3. Ollama modèles
+ssh swigs@192.168.110.103 'ollama list | grep lexa-'
+# → lexa-classifier, lexa-reasoning au minimum
 
-# 4. Event store ?
+# 4. Ledger balance (doit être balanced)
+ssh swigs@192.168.110.59 'curl -s http://localhost:3010/ledger/balance | python3 -c "import sys,json;d=json.load(sys.stdin);print(\"balanced:\",d[\"totals\"][\"balanced\"],\"| D:\",d[\"totals\"][\"debit\"],\"C:\",d[\"totals\"][\"credit\"])"'
+
+# 5. Events count
 ssh swigs@192.168.110.59 'curl -s http://localhost:3010/transactions/stats/summary | python3 -m json.tool'
-# → total: 6+, byType: {TransactionIngested: X, TransactionClassified: X}
 ```
 
 ---
 
-## Contexte Claude (auto-surveillance)
+## Contexte Claude — mon auto-évaluation
 
-Session 07 a été **très dense** (5h+ de travail, ~30 tool calls complexes, 2 subagents, plusieurs rebonds). Le contexte commence à se remplir — la session 09 devra probablement démarrer sur une instance fraîche qui lit simplement ce `NEXT-SESSION.md`. Session 08 est encore faisable dans cette instance.
+Session 08 consommée : ~2h de travail dense. **Session 09 est encore faisable** dans cette instance si le scope reste raisonnable (hook Pro + agent TVA + tests = ~3h).
 
-**En cas de reprise sur instance fraîche** : ce document + le session-07.md + `plan_kafer.yaml` + le code backend suffisent à reprendre n'importe quel fil.
+**Session 10 et au-delà** : probablement temps de passer sur une instance fraîche. Ce `NEXT-SESSION.md` + le session-08.md + le code backend + les modelfiles suffisent à repartir avec 0 contexte perdu.
+
+**Indicateurs pour le user** :
+- Si mes réponses commencent à devenir génériques → temps de repartir
+- Si je commence à re-chercher des infos que j'ai déjà → temps de repartir
+- Si je perds le cap principal → STOP et repartir
 
 ---
 
-**Dernière mise à jour** : 2026-04-14 (fin session 07)
+**Dernière mise à jour** : 2026-04-14 (fin session 08)

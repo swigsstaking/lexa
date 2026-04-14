@@ -21,6 +21,7 @@ Historique chronologique des sessions de travail.
 | 05 | 2026-04-14 | ~3h | Postgres 14 installé, parser VS fix (175→339 articles), OIFD+OLTVA+OIA+ORC via SPARQL subagent, Info TVA 4 publications via flow JSF PDF | +164 VS +448 ordonnances +652 Info TVA → **5322 pts**. Tests RAG Info TVA jusqu'à 0.778 (record) | [lien](2026-04-14-session-05.md) |
 | 06 | 2026-04-14 | ~3h30 | **PIVOT MAJEUR** : scaffold backend Lexa (TypeScript + Express + Postgres event store + micro-service BGE-M3 + RAG pipeline + ClassifierAgent). Deployed sur .59:3010 via PM2 | Backend en production, 5 services verts, premier RAG /rag/ask validé end-to-end (Art. 10 al. 2 let. a LTVA) | [lien](2026-04-14-session-06.md) |
 | 07 | 2026-04-14 | ~4h | **OPTIMISATION MASSIVE** : config Ollama (KV q8_0, NUM_PARALLEL=1), Modelfile `lexa-classifier` JSON, BGE-M3 sur GPU via llama.cpp (build sm_121a), event-sourced flow POST /transactions, plan Käfer 66 comptes, systemd lexa-llama-embed | `/rag/ask` 797s→43s (18×), `/transactions` 9.8s end-to-end, BGE-M3 ×200, Käfer ingéré (5388 pts) | [lien](2026-04-14-session-07.md) |
+| 08 | 2026-04-14 | ~2h | Modelfile `lexa-reasoning` (`/rag/ask` → 7.4s, 108× vs initial), projection Grand Livre (materialized view + /ledger/balance), connecteur Swigs Pro `POST /connectors/bank/ingest` (compatible format BankTransaction) | 14 events, 7 comptes, balance équilibrée 13'103.80 CHF, MVP fonctionnellement complet | [lien](2026-04-14-session-08.md) |
 
 ---
 
