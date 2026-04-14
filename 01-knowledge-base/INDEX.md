@@ -10,19 +10,22 @@
 | Catégorie | Documents prévus | Déjà ingérés | % |
 |---|---|---|---|
 | Fédéral — lois | 5 (LIFD, LHID, LTVA, CO, LP) | **4 (LIFD, LTVA, CO, LHID)** | **80%** |
-| Fédéral — circulaires AFC | ~40 (TVA + directe) | 0 | 0% |
-| Fédéral — notices AFC | ~15 | 1 (Notice A amortissements, partielle) | ~5% |
+| Fédéral — circulaires AFC IFD | ~40 | **14 (sélection prioritaire)** | **~35%** |
+| Fédéral — notices AFC | ~15 | **1 (Notice A 1995 entreprises commerciales, complète)** | ~7% |
+| Fédéral — Info TVA (webpublications) | ~15 | 0 (HTML — scraper à faire session 04) | 0% |
+| Fédéral — CSI circulaires | 2 (Circ 28 + commentaire) | 0 | 0% |
 | Fédéral — jurisprudence TF | 0 (à décider scope) | 0 | — |
-| Cantonal — lois fiscales SR | 7 | 0 | 0% |
-| Cantonal — règlements | ~30 | 0 | 0% |
-| Cantonal — barèmes | 7 (annuels) | 0 | 0% |
-| Cantonal — formulaires | 7 × 2 (PP + PM) = 14 | 0 | 0% |
+| Cantonal VS — loi fiscale | 1 | 0 (lex.vs.ch Cloudflare) | 0% |
+| Cantonal VS — directives / guides | ~10 | **4 (Guide 2024, barème 2026, déductions, impôt source)** | ~40% |
+| Autres cantons SR | 6 | 0 | 0% |
 | Standards techniques | 4 (eCH-0217, Swissdec, CAMT.053, QR) | 0 | 0% |
 | Plan comptable Käfer | 1 (structuré) | 1 (dans system prompt, à extraire) | 100%* |
 
 *existe mais pas en format ingéré/requêtable
 
-**Total Qdrant collection `swiss_law`** : **899 points** (session 02 : +108 articles LHID)
+**Total Qdrant collection `swiss_law`** : **3007 points** (session 01 : 791 / session 02 : +108 LHID → 899 / session 03 : +1880 AFC + 228 VS → 3007)
+
+Voir [`federal/circulaires-afc-index.md`](federal/circulaires-afc-index.md) pour le détail des documents AFC ingérés.
 
 ---
 
