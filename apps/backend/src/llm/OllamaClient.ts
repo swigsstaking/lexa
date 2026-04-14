@@ -13,6 +13,13 @@ export type OllamaGenerateOptions = {
   stream?: false;
   timeoutMs?: number;
   format?: "json";
+  /**
+   * Disable Qwen3 thinking mode. Default: false (= thinking OFF).
+   * Qwen3 models consume num_predict tokens inside hidden <think>...</think>
+   * blocks which leaves the response field empty. Lexa always wants direct
+   * answers, so we default to no-think.
+   */
+  think?: boolean;
 };
 
 export class OllamaClient {
@@ -30,6 +37,8 @@ export class OllamaClient {
       prompt: opts.prompt,
       system: opts.system,
       stream: false,
+      // Qwen3 thinking OFF by default (otherwise response field is empty).
+      think: opts.think ?? false,
       options: {
         temperature: opts.temperature ?? 0.3,
         top_p: opts.topP ?? 0.9,

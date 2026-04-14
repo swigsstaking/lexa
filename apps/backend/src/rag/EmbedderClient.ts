@@ -1,6 +1,26 @@
 import axios, { type AxiosInstance } from "axios";
 import { config } from "../config/index.js";
 
+type OpenAIEmbeddingResponse = {
+  object: string;
+  data: Array<{
+    object: string;
+    index: number;
+    embedding: number[];
+  }>;
+  model: string;
+  usage?: {
+    prompt_tokens: number;
+    total_tokens: number;
+  };
+};
+
+/**
+ * EmbedderClient — talks to a llama.cpp llama-server running in --embedding mode
+ * on the DGX Spark, serving BGE-M3 GGUF on GPU.
+ *
+ * Uses the OpenAI-compatible `/v1/embeddings` endpoint.
+ */
 export class EmbedderClient {
   private http: AxiosInstance;
 
@@ -11,16 +31,22 @@ export class EmbedderClient {
     });
   }
 
-  /**
-   * Encode texts with BGE-M3 (multilingual, 1024-dim dense).
-   * The embedding service runs on the DGX Spark (:8001).
-   */
   async embed(texts: string[]): Promise<number[][]> {
-    const { data } = await this.http.post<{ vectors: number[][] }>("/embed", { texts });
-    if (!Array.isArray(data.vectors) || data.vectors.length !== texts.length) {
-      throw new Error(`Embedder returned ${data.vectors?.length} vectors for ${texts.length} inputs`);
+    if (texts.length === 0) return [];
+    const { data } = await this.http.post<OpenAIEmbeddingResponse>(
+      "/v1/embeddings",
+      { input: texts },
+    );
+    if (!Array.isArray(data.data) || data.data.length !== texts.length) {
+      throw new Error(
+        `Embedder returned ${data.data?.length ?? 0} vectors for ${texts.length} inputs`,
+      );
     }
-    return data.vectors;
+    // Sort by index to keep input order
+    return data.data
+      .slice()
+      .sort((a, b) => a.index - b.index)
+      .map((item) => item.embedding);
   }
 
   async embedOne(text: string): Promise<number[]> {

@@ -2,6 +2,7 @@ import express from "express";
 import { config } from "./config/index.js";
 import { healthRouter } from "./routes/health.js";
 import { ragRouter } from "./routes/rag.js";
+import { transactionsRouter } from "./routes/transactions.js";
 
 const app = express();
 
@@ -10,6 +11,7 @@ app.use(express.json({ limit: "2mb" }));
 // Routes
 app.use(healthRouter);
 app.use("/rag", ragRouter);
+app.use("/transactions", transactionsRouter);
 
 // 404
 app.use((_req, res) => {
