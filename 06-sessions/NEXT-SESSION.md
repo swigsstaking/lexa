@@ -1,204 +1,210 @@
 # NEXT SESSION — Point de reprise
 
 **Dernière session** : [Session 11 — 2026-04-14](2026-04-14-session-11.md)
-**Prochaine session** : Session 12 — **Deploy frontend + webhook retour + tests auto + code-splitting**
+**Prochaine session** : Session 12 — **Casser le 0% Execution layer + polish canvas**
 
-> Le pivot UX whitepaper est **terminé** (session 11). Session 12 = remettre en prod + fermer les derniers gaps opérationnels.
+> Session 12 est la session qui transforme la démo en produit. Le canvas/chat/onboarding sont séduisants mais non fonctionnels sans formulaires sortants. **Priorité #1 absolue : décompte TVA AFC.**
 
 ---
 
-## État stable à emporter
+## Audit session 11 par l'instance mère — ce qui marche
 
-| Couche | État | Notes |
+Validé live via chrome-devtools sur `localhost:5190` :
+
+| Test | Résultat |
+|---|---|
+| `/workspace` canvas react-flow | ✅ 7 nodes Käfer + 7 edges animées avec CHF + TVA |
+| Dark mode `class="dark"` | ✅ palette cohérente |
+| Header tenant switcher | ✅ "Tenant Seed (démo) VS" + Services OK + 5388 KB |
+| Panel AGENTS top-left | ✅ 3 dots (classifier/reasoning/tva) |
+| Timeline vivante | ✅ EXERCICE 2026, slider 104/365, Passé/Présent/Futur |
+| `⌘K` → ChatOverlay | ✅ overlay non-modal, 3 tabs, input autofocus |
+| Agent TVA live | ✅ 12.9s, Art. 25 al. 1 + Art. 29 al. 2 LTVA, 5 citations fedlex cliquables |
+| `⌘⇧L` → LedgerModal | ✅ mode expert tabulaire, Esc ferme |
+| `/onboarding` 4 steps | ✅ wizard dark mode, stepper, autofill UID |
+| Middleware `X-Tenant-Id` | ✅ req.tenantId propagé backend |
+| localStorage `lexa.companies` | ✅ Kozelsky Sàrl + Tenant Seed, activeCompanyId |
+| Balance équilibrée | ✅ 13 103,80 CHF débit = crédit |
+| TypeScript strict | ✅ tsc -b clean |
+
+**Verdict mère** : *"Le canvas spatial + le chat overlay + le mode expert + la timeline + les agents visibles sont tous présents. Les 10 premières secondes d'interaction prouvent le '2 ans d'avance' du whitepaper de manière tangible. C'est démontable à un fiduciaire ou à un investisseur aujourd'hui."*
+
+---
+
+## Bugs à corriger début session 12 (priorité UX)
+
+### P1 — MiniMap blanche casse le dark mode
+`<MiniMap>` par défaut de React Flow apparaît en fond blanc/gris clair en bas à droite du workspace. **Option A (reco session 12)** : supprimer complètement `<MiniMap />` de `LedgerCanvas.tsx`. Un plan comptable à 7 nodes n'en a pas besoin, et quand il en aura 50-100 la minimap par défaut casserait encore plus le visuel. **Option B (session 13+)** : styliser avec props dark :
+```tsx
+<MiniMap
+  style={{ background: 'rgb(11 11 15)', border: '1px solid rgb(38 38 42)' }}
+  maskColor="rgba(11, 11, 15, 0.6)"
+  nodeColor={(n) => n.data?.classColor ?? '#71717a'}
+  nodeStrokeColor="#ef4444"
+  pannable
+  zoomable
+/>
+```
+**Effort** : 5 min.
+
+### P2 — Flicker "Services KO" au premier mount
+`HealthIndicator` affiche rouge pendant le fetch initial avant de passer vert. Cause : `services: undefined` interprété comme down. **Fix** : ajouter un état "loading" distinct qui affiche "Vérification…" en neutre, puis bascule OK/KO seulement après résolution de la query.
+**Effort** : 15 min.
+
+### P3 — "Chargement du canvas..." 1-2s → skeleton
+React Query loading state mais visuellement pas propre. **Fix** : remplacer le texte par un skeleton canvas — 6 placeholders ronds gris qui pulsent aux positions approximatives des futurs nodes (peut réutiliser `buildCanvas` avec données mock).
+**Effort** : 20 min.
+
+### P4 — Warning a11y IBAN Step Bank
+Identifié déjà dans NEXT-SESSION session 10 P2 : "form field element should have an id or name attribute". **Fix** : ajouter `id` et `name` sur les inputs IBAN / QR-IBAN de `StepBank`.
+**Effort** : 5 min.
+
+**Total fixes P1-P4 : ~45 min.**
+
+---
+
+## Priorité #1 absolue — Execution layer (décompte TVA AFC)
+
+> *"Un fiduciaire qui voit la démo actuelle dira 'joli mais où est ma déclaration TVA ?'. Sans Execution layer, Lexa reste une démo, pas un produit."*
+
+**Cible session 12** : générer le **décompte TVA AFC trimestriel** à partir des events `TransactionClassified` du trimestre courant, filtré par `tvaCode` et `tvaRate`.
+
+### Livrables session 12
+
+1. **Template YAML** `01-knowledge-base/forms/tva-afc-decompte-effectif-2024.yaml`
+   - Structure conforme à la couche 4 du whitepaper §3
+   - Champs : `ca_imposable_81`, `ca_imposable_26`, `ca_imposable_38`, `impot_prealable`, `tva_due`, etc.
+   - Source par champ : `projection.tva.XYZ` (référence au builder)
+   - Validation requise/optionnelle par champ
+   - Output : `pdf: template.tex` (ou simple pdfkit), `xml: eCH-0217-schema`
+
+2. **Service `apps/backend/src/execution/TvaFormBuilder.ts`**
+   - `buildDecompteTva(tenantId, quarter, year)` → `FilledForm`
+   - Projette les events `TransactionClassified` du quarter → group by `tvaRate` + `tvaCode` + `debit/credit`
+   - Somme HT / TTC / impôt préalable
+   - Respecte le template YAML comme contrat
+   - Pas de parsing YAML manuel : utiliser `yaml` npm package
+
+3. **Endpoint `POST /forms/tva-decompte`**
+   - Input : `{ quarter: 1-4, year: 2026, method?: 'effective' | 'tdfn' }`
+   - Lit `tenantId` depuis `req.tenantId` (middleware déjà en place)
+   - Retour : `{ pdf: base64, xml: string, form: filledTemplate }`
+   - Stocker un event `DeclarationGenerated` dans l'event store pour audit trail
+
+4. **Button frontend dans LedgerModal**
+   - "Générer décompte TVA trimestriel" dans un header du modal
+   - Select quarter (Q1/Q2/Q3/Q4) + year
+   - Click → spinner → download PDF + XML automatique via blob
+   - Toast de confirmation avec le streamId de l'event `DeclarationGenerated`
+
+5. **PDF generation** : `@react-pdf/renderer` ou `pdfkit`
+   - **Reco** : `pdfkit` côté backend Node (plus simple, pas de LaTeX, pas de React dans le serveur)
+   - Template minimal : header AFC, champs tabulaires, signature placeholder
+   - Marquage "PRÉPARÉ AUTOMATIQUEMENT PAR LEXA — à vérifier et valider par votre fiduciaire avant dépôt" explicite (whitepaper §6)
+
+6. **Structure XML eCH-0217 minimale**
+   - Schéma officiel à valider avec xsd
+   - Ne viser que les champs critiques v1 : entreprise, periode, ca_imposable_par_taux, impot_prealable, tva_due
+   - Reste des champs en TODO pour session 13+
+
+### Pourquoi c'est la priorité
+
+Une fois ce flow terminé, Lexa a son **premier artefact comptablement exploitable** : un PDF prérempli qu'un fiduciaire peut signer et déposer. C'est ce qui transforme la démo en produit. Score MVP "vendable" passerait de **~42% à ~55-60%**.
+
+---
+
+## État des lieux par layer (audit mère)
+
+| Layer | % | Gap critique |
 |---|---|---|
-| 1. Knowledge | ✅ 5388 pts Qdrant | stable |
-| 2. Data | ✅ event store + grand livre + **multi-tenant middleware** | req.tenantId partout |
-| 3. Reasoning | ✅ 3 agents (classifier 10s, reasoning 7.4s, tva 6.9-10.6s) | stable |
-| 4. Execution | ❌ | templates déclaratifs à venir |
-| 5. Interface | ✅ **alignée whitepaper** | workspace canvas + chat cmd+k + timeline + dark mode |
+| 1. Knowledge | ~60% | Manquent 6 cantons SR + jurisprudence TF |
+| 2. Data | ~50% | Manquent projections bilan + compte résultat, RLS Postgres |
+| 3. Reasoning | ~25% | 3/7 agents (classifier/reasoning/tva). Manquent fiscal-PP, fiscal-PM, clôture, conseiller, audit |
+| 4. **Execution** | **0%** | **Aucune génération de formulaire AFC — c'est LE trou majeur** |
+| 5. Interface | ~40% | Manquent animations agents-au-travail, briefing proactif, multi-modal (voice/photo/drag), vues Documents/Conversations, mobile |
+| 6. Infrastructure | ~75% | Manquent deploy frontend prod, auth, webhook retour Pro, monitoring |
 
-**Backend routes (11)** :
-```
-GET  /health
-POST /rag/ask, /rag/classify
-POST /agents/tva/ask
-GET  /agents
-POST /transactions, GET /transactions/:streamId, /transactions/stats/summary
-GET  /ledger, /ledger/account/:a, /ledger/balance, POST /ledger/refresh
-POST /connectors/bank/ingest, GET /connectors/bank/formats
-GET  /onboarding/company/search
-POST /onboarding/company
-GET  /onboarding/company/:tenantId
-PATCH /onboarding/company/:tenantId
-```
-Toutes les GETs tenant-aware lisent `req.tenantId` (header `X-Tenant-Id` → query `tenantId` → DEFAULT).
-
-**Frontend routes (3)** :
-```
-/             → Home (landing, redirect /workspace si activeCompany)
-/onboarding   → Wizard 4 steps
-/workspace    → Canvas hero + ChatOverlay cmd+k + Timeline + LedgerModal toggle (protégé)
-```
-
-**Stack frontend** :
-- React 19.2 + Vite 8 + TS 6 strict
-- Tailwind 3.4 darkMode class + CSS variables sémantiques
-- @xyflow/react 12 pour le canvas
-- Zustand (`companiesStore` pluriel persist, `chatStore` non-persist, `onboardingStore` éphémère)
-- TanStack Query 5 (staleTime 30s)
-- framer-motion, lucide-react
-- i18next + react-i18next, `fr.json` seul
-
-**Build** : 700 KB JS (225 KB gzip), 40 KB CSS (7.5 KB gzip), build 880 ms.
+**Score global pondéré MVP** : ~42% vendable / ~75% démo impressionnante.
 
 ---
 
-## Infrastructure actuelle
+## Plan session 12 (~5h)
 
-| Host | Service | Port | Status |
-|---|---|---|---|
-| **.59** | lexa-backend (Express TS + tsx watch) | 3010 | ✅ PM2, tenant middleware actif |
-| **.59** | Postgres 14.22 (base lexa) | 5432 | ✅ 3 migrations |
-| **.59** | swigs-workflow | 3004 | ✅ PM2, LEXA_ENABLED=true, **mapping eCH-0097 corrigé** |
-| **.103** | Ollama (lexa-classifier/reasoning/tva) | 11434 | ✅ systemd |
-| **.103** | llama-server BGE-M3 GPU | 8082 | ✅ systemd |
-| **.103** | Qdrant (5388 pts) | 6333 | ✅ Docker |
-| **local** | Frontend dev (Vite) | 5190 | **pas encore deployé** |
+| # | Action | Temps |
+|---|---|---|
+| 1 | Fix P1 MiniMap blanche (Option A : retirer) | 5 min |
+| 2 | Fix P2 flicker Services KO | 15 min |
+| 3 | Fix P3 skeleton canvas | 20 min |
+| 4 | Fix P4 a11y IBAN inputs | 5 min |
+| 5 | Push commits session 10 + 11 vers origin/main (après confirmation user) | 5 min |
+| 6 | **Execution layer — décompte TVA AFC trimestriel** (template YAML + builder + endpoint + PDF + UI) | **3-4h** |
+| 7 | Validation live pont Pro→Lexa (lire logs lexa-backend pour premières tx IMAP) | 15 min |
+| 8 | Webhook retour Lexa→Pro (optionnel, si temps) | 45 min |
+| 9 | Journal session 12 + commit + push | 30 min |
+
+**Si ça déborde** : couper 7-8 vers session 13, garder 1-6 + 9 comme noyau.
 
 ---
 
-## Plan session 12
+## Décisions tranchées par l'instance mère (ne plus réinterpréter)
 
-### Étape 1 — Validation live du pont Pro→Lexa (15 min)
+1. **Canvas lib** → `react-flow` définitif. Pas de benchmark tldraw (nodes métier avec handles, pas whiteboard libre).
+2. **Dark mode** → déjà livré session 11 ✓
+3. **Multi-tenant** → multi-company dans un seul user, **fiduciaire mode natif**. `companiesStore` avec `activeCompanyId` ✓ déjà en place.
+4. **Autonomie IA** → **toujours validation humaine en v1**. Pas de seuil d'auto-validation. Shortcuts clavier pour valider vite.
+5. **Langue v1** → **FR uniquement**, infra i18next posée mais un seul `fr.json`.
+6. **Auth frontend session 12** → **JWT simple** côté backend, login/logout basique. **Pas de SSO Hub avant session 14+**.
+7. **Déploiement frontend** → **subdomain dédié** : `lexa.swigs.local` en dev, `lexa.swigs.online` en prod avec cert Let's Encrypt. **Pas de path-based, pas de port exotique.**
+8. **Webhook retour Pro** → **HMAC shared secret** dans header `X-Lexa-Signature`. Pas de JWT pour éviter la complexité. Shared secret dans env var des deux côtés.
+9. **Bug mapping eCH-0097 côté Pro** → déjà corrigé fin session 11 (commit `5cc5b8c` branche `v2-refresh` dans swigs-workflow). À vérifier qu'il est bien déployé.
 
-Le cron IMAP de swigs-workflow tourne toutes les heures à :30. Depuis
-l'activation `LEXA_ENABLED=true` en session 10, aucun log de POST
-`/connectors/bank/ingest` n'est encore apparu — soit parce qu'aucune transaction
-n'a été récupérée, soit parce que le cron n'a pas tourné au moment où j'ai
-regardé.
+---
+
+## Messages positifs (mère)
+
+- Mono-repo propre
+- `tsc -b` clean
+- Fichiers bien nommés et organisés
+- Usage Zustand + TanStack Query canonique
+- `CompanySearchField` debounce 350ms parfaitement dimensionné
+- `LedgerModal` overlay + Esc = exactement la bonne UX mode expert
+- `ChatOverlay` sur le côté (pas plein écran) = intelligent : canvas reste visible, chat complémentaire pas bloquant
+
+---
+
+## Infrastructure — vérification début session 12
 
 ```bash
-ssh swigs@192.168.110.59 'pm2 logs lexa-backend --lines 500 --nostream 2>&1 | grep -iE "connectors/bank|ingest"'
+# 1. Backend health
+ssh swigs@192.168.110.59 'curl -s http://localhost:3010/health | python3 -m json.tool'
+
+# 2. llama-server BGE-M3
+ssh swigs@192.168.110.103 'systemctl is-active lexa-llama-embed'
+
+# 3. Modèles Lexa
+ssh swigs@192.168.110.103 'ollama list | grep lexa-'
+# → lexa-classifier, lexa-reasoning, lexa-tva
+
+# 4. Balance ledger
+ssh swigs@192.168.110.59 'curl -s http://localhost:3010/ledger/balance | python3 -c "import sys,json;d=json.load(sys.stdin);print(\"balanced:\",d[\"totals\"][\"balanced\"])"'
+
+# 5. LEXA_ENABLED actif dans .env Pro
+ssh swigs@192.168.110.59 'grep LEXA /home/swigs/swigs-workflow/.env'
 ```
 
-Si toujours rien, forcer manuellement un `fetchBankEmails()` côté swigs-workflow
-via un endpoint debug ou via la shell MongoDB pour simuler une nouvelle
-transaction → vérifier que le POST sort bien.
-
-### Étape 2 — Deploy frontend sur .59 (1h30)
-
-**Option A — Subdomain `lexa.swigs.online`** (reco)
-- DNS : A record `lexa.swigs.online` → IP publique .59
-- Nginx : nouveau vhost sur port 80/443 avec cert Let's Encrypt (certbot)
-- rsync `dist/` sur `.59:/home/swigs/lexa-frontend/dist/`
-- Nginx sert statique + proxy `/api` → `localhost:3010` (ou laisser CORS via `X-Tenant-Id` header déjà en place)
-- `VITE_LEXA_URL=/api` en production (pareil que dev)
-
-**Option B — Path `/lexa/` sur un vhost existant** (plus simple mais moins propre)
-- `location /lexa { alias /home/swigs/lexa-frontend/dist; try_files $uri /index.html; }`
-- `location /lexa/api { proxy_pass http://localhost:3010; }`
-- `base` dans `vite.config.ts` → `/lexa/`
-
-**Option C — Port dédié 3011** (dev simple)
-- Serveur Express minimal servant `dist/` sur `3011`
-- Pas de TLS, usage interne only
-
-**Ma reco** : A si domaine public voulu, sinon B pour aller vite.
-
-### Étape 3 — Webhook retour Lexa → Pro (1h)
-
-Quand Lexa classifie (event `TransactionClassified`), notifier swigs-workflow
-pour updater `BankTransaction.lexaClassification` :
-
-- Nouveau flag `LEXA_CALLBACK_URL=http://localhost:3004/api/lexa-callback` dans `.env` Lexa backend
-- Dans `ClassifierAgent` : fire-and-forget HTTP POST après classification réussie
-- Auth : HMAC SHA-256 shared secret header `X-Lexa-Signature`
-- Nouveau endpoint `POST /api/lexa-callback` dans swigs-workflow :
-  - Vérifier signature HMAC
-  - Match `BankTransaction` par `streamId` stocké dans `metadata`
-  - Update `lexaClassification: { account, tvaCode, tvaRate, confidence, citations }`
-- Pattern identique au hook Pro→Lexa : **jamais throw**, logs en cas d'erreur
-
-### Étape 4 — Code-splitting Vite (30 min)
-
-Build actuel 700 KB, warning 500 KB. Plan :
-
-```tsx
-// App.tsx
-const Onboarding = lazy(() => import('@/routes/Onboarding'));
-const Workspace = lazy(() => import('@/routes/Workspace'));
-
-// Workspace.tsx
-const LedgerModal = lazy(() => import('@/components/ledger/LedgerModal'));
-```
-
-Objectif : descendre la route principale sous 200 KB gzippé, le canvas
-chargé uniquement après onboarding.
-
-### Étape 5 — Tests automatisés (2h)
-
-- **`scripts/qa-lexa.ts`** : fixture de 20 transactions Pro (Migros, Fiduciaire,
-  Loyer, CFF, Achat hardware, etc.) → POST `/connectors/bank/ingest?classify=true`
-  → assert `account` matche attendu, `tvaCode` correct, `confidence > 0.7`.
-  Output : rapport markdown + JSON.
-- **`scripts/perf-lexa.ts`** : 50 requêtes en série sur `/rag/ask`, `/agents/tva/ask`,
-  `/transactions`. Mesurer p50/p95/p99. Targets : p50 < 10s, p95 < 20s.
-- **`scripts/corpus-validator.ts`** : 50 questions juridiques avec l'article
-  attendu → embedding BGE-M3 → Qdrant top-3 → assert article dans les 3 premiers
-  (recall@3). Target > 90%.
-
-Intégration : GitHub Actions déclenché manuellement sur tag ou push main.
-
-### Étape 6 — Polish UX (si temps)
-
-- Layout canvas : remplacer grid 4-col naïf par `elkjs` (elkAlgorithm `layered`)
-  pour un vrai dagre-like layout
-- Loading skeletons quand `balance.isLoading` / `entries.isLoading`
-- Empty state quand canvas vide (tenant neuf comme Kozelsky) : "Aucune
-  transaction. Envoyez-en une via Swigs Pro ou `/connectors/bank/ingest`."
-- Toasts notifications (reco : `sonner` en remplacement de `react-hot-toast`)
-- Animation entrée/sortie des nodes quand une nouvelle transaction tombe
-
-### Étape 7 — Commit + journal session 12 (30 min)
+Si tout vert : attaque direct fix MiniMap + Execution layer TVA.
 
 ---
 
-## Questions à trancher début session 12
+## Commits locaux à pousser
 
-1. **Deploy frontend : sous-domaine `lexa.swigs.online` avec cert Let's Encrypt (reco), path `/lexa/`, ou port interne 3011 ?**
-2. **Webhook retour : HMAC SHA-256 shared secret (reco), ou auth JWT partagée avec Swigs Hub v2 ?**
-3. **Tests automatisés : session 12 entière, ou juste qa-lexa et reporter perf/corpus ?**
-4. **Layout canvas : elkjs maintenant ou grid naïf suffit pour session 12 ?**
-5. **Briefing quotidien agent conseiller : session 12 ou 13 ?**
-
----
-
-## Dette technique à traiter
-
-| Priorité | Item | Effort |
-|---|---|---|
-| P1 | Code-splitting (700 KB → < 500 KB) | 30 min |
-| P1 | Layout canvas elkjs (vs grid naïf) | 45 min |
-| P2 | Empty state canvas quand tenant neuf | 15 min |
-| P2 | Loading skeletons dashboard/ledger | 30 min |
-| P2 | SSO Swigs Hub v2 (remplacer localStorage naïf) | 2h |
-| P3 | Toasts + form validation Zod onboarding | 45 min |
-| P3 | Gestion backend des POST `/ledger/refresh`, `/rag/classify` côté tenant | déjà OK |
-| P4 | Animation live canvas quand nouvelle transaction ingérée | 1h |
-| P4 | Dark mode toggle (actuellement forced dark — ajouter preference `.light`) | 20 min |
-
----
-
-## Commits session 11 (local, non pushés)
-
-Repo `lexa/` branche `main`, 4 commits restent d'avant + les nouveaux de session 11 :
+Repo `lexa/` branche `main` — **5 commits** ahead de origin/main :
 ```
-(session 11) feat(frontend+backend): session 11 — pivot whitepaper (canvas + dark + multi-tenant + i18n + cmd+k)
-(session 11) fix(onboarding): return a full Company shape with id/tenantId from POST
-5647848 docs(session-10): update NEXT-SESSION with smoke test results + dette P1-P4
-1609b42 feat(frontend): session 10 — React 19 + Vite + Tailwind scaffold
-48a9afc docs(session-11): refactor brief
-74b7b47 fix(companyLookup): eCH-0097 legal form mapping
+b788fcf feat(session-11): pivot UX whitepaper — canvas spatial + dark mode + multi-tenant + cmd+k
+48a9afc docs(session-11): refactor brief — pivot UX for whitepaper alignment
+74b7b47 fix(companyLookup): eCH-0097 legal form mapping alignment with BFS V5 reality
+5647848 docs(session-10): update NEXT-SESSION with smoke test results + dette technique P1-P4
+1609b42 feat(frontend): session 10 — React 19 + Vite + Tailwind scaffold + onboarding wizard
 ```
 
 Repo `swigs-workflow/` branche `v2-refresh` :
@@ -207,7 +213,7 @@ Repo `swigs-workflow/` branche `v2-refresh` :
 98b6c1b feat(bridge): non-blocking hook to push bank transactions to Lexa
 ```
 
-**À pousser début session 12** (après confirmation user).
+**À pousser dès début session 12** (décision tranchée par l'instance mère).
 
 ---
 
@@ -216,34 +222,31 @@ Repo `swigs-workflow/` branche `v2-refresh` :
 ```bash
 # 1. Sync repos
 cd ~/CascadeProjects/lexa
-git log --oneline -8   # vérifier commits session 11
-git push origin main   # (après confirmation)
+git log --oneline -8
+git push origin main   # pousser session 10+11 (5 commits)
 
 cd ~/CascadeProjects/swigs-workflow
 git log --oneline -3
-git push origin v2-refresh   # (après confirmation)
+git push origin v2-refresh   # pousser 5cc5b8c
 
-# 2. Vérifier backend + pont
-ssh swigs@192.168.110.59 'curl -s http://localhost:3010/health'
-ssh swigs@192.168.110.59 'pm2 logs lexa-backend --lines 200 --nostream | grep -iE "ingest|connectors/bank"'
+# 2. Vérifier infra (commandes ci-dessus)
 
-# 3. Rebuild frontend pour deploy
-cd apps/frontend && npm run build && ls -lh dist/assets/
+# 3. Relancer frontend dev
+cd ~/CascadeProjects/lexa/apps/frontend && npm run dev   # http://localhost:5190
 
-# 4. Attaquer étape 1 (validation pont) puis étape 2 (deploy)
+# 4. Attaquer les 4 fixes P1-P4 (45 min), puis l'Execution layer TVA (3-4h)
 ```
 
 ---
 
-## Avertissements importants
+## Avertissements
 
-1. **Session 11 n'a pas encore été committée** dans le repo lexa (les fichiers modifiés attendent le commit final). Le commit est prévu dans la foulée par l'instance qui a fait le refactor. Si tu lis ça sur une instance fraîche, `git status` pour voir l'état.
-2. **Le bug shape Company `/onboarding/company` POST est corrigé** — mais si tu testes avec un vieil localStorage `lexa.companies` sans `tenantId` dans les Company, vide-le.
-3. **La persistence localStorage utilise `lexa.companies`** (pluriel) — l'ancienne clé `lexa.company` (singulier) est abandonnée.
-4. **Multi-tenant middleware backend** : toutes les GET tenant-aware utilisent maintenant `req.tenantId` au lieu de hardcoded seed. Si tu rajoutes une route, pense au tenant.
-5. **Dark mode forcé** : `<html class="dark">`. Pour ajouter un toggle, retirer `class="dark"` de `index.html` et ajouter un state dans un thème store + CSS fallback `.light`.
-6. **Sudo .59** : `Labo`, sudo Spark : `SW45id-445-332`, password Postgres : `~/.lexa_db_pass_temp`.
+1. **Le canvas est la partie la plus séduisante mais l'Execution layer est ce qui transforme en produit**. Si tu n'as que 3h, sacrifie les polish mais pas l'Execution layer.
+2. **Le marquage "préparé par Lexa, à vérifier/valider" est OBLIGATOIRE** sur le PDF généré (whitepaper §6 responsabilité phase 1).
+3. **L'XML eCH-0217 doit être valide** ou clairement marqué comme brouillon. Ne pas prétendre être prêt à déposer si le schéma n'est pas validé contre le xsd officiel.
+4. **Préférer `pdfkit` côté Node** à `@react-pdf/renderer` — plus simple pour un serveur, pas besoin de rendre du React dans le backend.
+5. **Sudo .59 `Labo`**, sudo Spark `SW45id-445-332`, password Postgres `~/.lexa_db_pass_temp`.
 
 ---
 
-**Dernière mise à jour** : 2026-04-14 (fin session 11)
+**Dernière mise à jour** : 2026-04-14 (fin session 11 + audit instance mère + brief session 12 complet)
