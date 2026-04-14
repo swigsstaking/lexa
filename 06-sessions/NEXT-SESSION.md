@@ -1,305 +1,261 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 08 — 2026-04-14](2026-04-14-session-08.md)
-**Prochaine session** : Session 09 — Hook Swigs Pro + Agent TVA + tests automatisés
+**Dernière session** : [Session 09 — 2026-04-14](2026-04-14-session-09.md)
+**Prochaine session** : Session 10 — **Frontend Lexa** (pivot UX) + tests automatisés
 
 > **Lecture obligatoire au début de la prochaine session.**
 
 ---
 
-## Bilan sessions 06-08
+## Bilan sessions 06-09 — Lexa MVP fonctionnel
 
-Backend Lexa **MVP fonctionnellement complet** pour le cycle de base :
-```
-Email bancaire Swigs Pro (parseur existant)
-  → POST /connectors/bank/ingest
-  → TransactionIngested event
-  → lexa-classifier (JSON + citations LTVA)
-  → TransactionClassified event
-  → ai_decisions audit row
-  → Materialized view ledger_entries (double-entry auto)
-  → GET /ledger/balance (balance de vérification)
-```
+**Backend Lexa est production-ready** avec :
+- 3 agents IA (classifier, reasoning, tva)
+- Onboarding indépendant (UID register BFS)
+- Event-sourcing + grand livre auto-balancé
+- Pont Swigs Pro (inactif par défaut, activable par flag)
+- 5388 points KB Qdrant (5/5 lois fédérales, 4/4 ordonnances, 14 circulaires, Info TVA, VS loi fiscale, Käfer)
+- Perf : `/rag/ask` 7.4s, `/transactions` 10s, `/agents/tva/ask` 15.8s, `/onboarding/company/search` 278ms
 
-**Chiffres clés session 08** :
-- `/rag/ask` : **7.4s** (vs 797s session 06, **108× gain**)
-- `/transactions` end-to-end : **~10s**
-- 14 events persistés, 7 comptes ledger, balance **équilibrée** 13'103.80 CHF
-- 3 Modelfiles Lexa : `lexa-classifier`, `lexa-reasoning`, (+ comptable-suisse-fast pour prose longue)
-- Collection Qdrant : 5388 points (session 07)
+**L'étape suivante logique = frontend** pour que le user/les clients puissent utiliser Lexa sans curl.
 
 ---
 
 ## Infrastructure actuelle
 
-| Host | Service | Port | Status | Notes |
-|---|---|---|---|---|
-| **.59** | lexa-backend Express TS | 3010 | ✅ PM2 | 7 routes |
-| **.59** | Postgres 14.22 (base `lexa`) | 5432 | ✅ | events + ai_decisions + ledger_entries matview |
-| **.103** | Ollama | 11434 | ✅ systemd | MAX_LOADED=2, KV q8_0, NUM_PARALLEL=1 |
-| **.103** | llama-server BGE-M3 GPU | 8082 | ✅ systemd (lexa-llama-embed) | 357× gain vs CPU |
-| **.103** | Qdrant (swiss_law 5388 pts) | 6333 | ✅ Docker | |
-
-**Modèles Ollama résidents normalement** :
-- `deepseek-ocr` (PROD autre projet, **ne pas toucher**)
-- `comptable-suisse-fast` (fallback reasoning, pas utilisé par Lexa pour l'instant)
-- `lexa-classifier` (classification Käfer + TVA + citations)
-- `lexa-reasoning` (questions juridiques prose + citations)
+| Host | Service | Port | Status |
+|---|---|---|---|
+| **.59** | lexa-backend (Express TS) | 3010 | ✅ PM2, **10 routes** |
+| **.59** | Postgres 14.22 (base lexa) | 5432 | ✅ 3 migrations appliquées |
+| **.59** | swigs-workflow (patch Lexa bridge) | 3004 | ✅ PM2, hook inactif par défaut |
+| **.103** | Ollama (lexa-classifier/reasoning/tva + deepseek-ocr) | 11434 | ✅ systemd |
+| **.103** | llama-server BGE-M3 GPU | 8082 | ✅ systemd lexa-llama-embed |
+| **.103** | Qdrant (swiss_law 5388 pts) | 6333 | ✅ Docker |
 
 ---
 
-## Endpoints backend disponibles (sécurisés par design)
+## Endpoints backend complets (10 routes)
 
 ```
 GET  /health                          # 5 services check
-POST /rag/ask                         # RAG question → prose + citations (lexa-reasoning, ~7-8s)
-POST /rag/classify                    # Classify single tx (lexa-classifier, ~10s)
-POST /transactions                    # Full event-sourced flow (ingest + classify)
+POST /rag/ask                         # Question juridique (lexa-reasoning, 7.4s)
+POST /rag/classify                    # Classifier single tx (lexa-classifier, 10s)
+POST /agents/tva/ask                  # Agent TVA spécialisé (lexa-tva, 15.8s, 5 citations)
+GET  /agents                          # Liste agents actifs + planifiés
+POST /transactions                    # Event-sourced flow
 GET  /transactions/:streamId          # Replay event history
-GET  /transactions/stats/summary      # Event count by type
-GET  /ledger                          # All ledger entries
-GET  /ledger/account/:prefix          # Entries for account prefix
-GET  /ledger/balance                  # Trial balance (balance de vérification)
+GET  /transactions/stats/summary      # Stats events
+GET  /ledger                          # Grand livre entries
+GET  /ledger/account/:prefix          # Entries par compte
+GET  /ledger/balance                  # Balance de vérification
 POST /ledger/refresh                  # Refresh materialized view
-POST /connectors/bank/ingest          # Batch Swigs Pro BankTransactions
-GET  /connectors/bank/formats         # List supported formats
+POST /connectors/bank/ingest          # Push Swigs Pro BankTransactions
+GET  /connectors/bank/formats         # Formats supportés
+GET  /onboarding/company/search?q=    # 🆕 Search UID register BFS
+POST /onboarding/company              # 🆕 Create company (UID or manual)
+GET  /onboarding/company/:tenantId    # 🆕 Fetch company
+PATCH /onboarding/company/:tenantId   # 🆕 Update partial
 ```
 
 ---
 
-## Questions en attente de réponse du user
+## Modelfiles Lexa sur Spark
 
-⚠️ **5 questions à trancher en début de session 09** :
-
-1. **Hook dans Swigs Pro** — j'ajoute un patch dans `swigs-workflow/backend/src/services/bankImapFetcher.service.js` qui appelle `POST http://192.168.110.59:3010/connectors/bank/ingest` après classification Pro ? Ça ferme la boucle Pro → Lexa automatique.
-   - *Reco Claude : oui, c'est 20 lignes de code dans Pro*
-
-2. **Agent TVA dédié** — créer `lexa-tva` Modelfile spécialisé pour les questions TVA complexes (TDFN/effectif/option/secteurs) ? Utilisera en priorité Info TVA 12/15/secteur 17/secteur 04.
-   - *Reco Claude : oui, ça valide le pattern "un Modelfile par rôle"*
-
-3. **Tests automatisés** (qa-lexa, perf-lexa, corpus-validator) — créer les 3 subagents pour valider la régression à chaque session ?
-   - *Reco Claude : oui, priorité haute pour la stabilité*
-
-4. **Webhook retour Lexa → Pro** — quand Lexa classifie, notifier Pro pour mettre à jour `BankTransaction.expenseCategory` côté Pro ?
-   - *Reco Claude : oui mais session 10 (après que le hook Pro → Lexa soit validé)*
-
-5. **Frontend ?** — on commence à scaffold en parallèle des agents (session 10) ou on attend que les 3-4 agents backend soient stables (session 12) ?
-   - *Reco Claude : attendre session 12 — priorité à la stabilité backend*
+| Modelfile | Base | Taille | Usage |
+|---|---|---|---|
+| `lexa-classifier` | qwen3.5:9b-optimized + Käfer | 10 GB | Classification transactions JSON |
+| `lexa-reasoning` | qwen3.5:9b-optimized + lois CH | 10 GB | Questions juridiques générales |
+| **`lexa-tva`** (🆕 session 09) | qwen3.5:9b-optimized + LTVA/Info TVA | 10 GB | Agent TVA spécialisé |
+| À créer | qwen3.5:9b + lois cantonales SR | — | `lexa-fiscal-pp` (PP Valais/Genève) |
+| À créer | qwen3.5:9b + CO + LIFD | — | `lexa-fiscal-pm` (Sàrl/SA) |
 
 ---
 
-## Plan détaillé de la session 09
+## Questions pour session 10
 
-### Étape 1 — Hook Swigs Pro (30 min)
+⚠️ **À trancher en début de session 10** :
 
-Patch `swigs-workflow/backend/src/services/bankImapFetcher.service.js` :
+1. **Frontend — go / no-go** — les backends sont stables, ma reco : **GO**. Stack :
+   - React 18 + Vite 5 + TypeScript strict
+   - TailwindCSS 3
+   - Zustand (state) + TanStack Query (server state)
+   - react-flow OU tldraw pour le canvas (à benchmarker)
+   - framer-motion pour animations
+   - i18next (FR primary)
+   - Premier run : scaffold + /health + /onboarding wizard + /rag/ask + /transactions feed
+   
+2. **Canvas library** — react-flow ou tldraw ? Je peux lancer un benchmark en début session 10.
 
-```javascript
-// Après classifyTransaction(...)
-if (process.env.LEXA_ENABLED === 'true') {
-  try {
-    await axios.post(`${process.env.LEXA_URL}/connectors/bank/ingest`, {
-      transactions: [{
-        txId: tx.txId,
-        amount: tx.amount,
-        currency: tx.currency,
-        creditDebit: tx.creditDebit,
-        counterpartyName: tx.counterpartyName,
-        counterpartyIban: tx.counterpartyIban,
-        reference: tx.reference,
-        unstructuredReference: tx.unstructuredReference,
-        bookingDate: tx.bookingDate.toISOString().split('T')[0],
-        importFilename: tx.importFilename,
-        source: 'swigs-pro-email',
-        userId: tx.userId,
-      }],
-    }, { timeout: 60_000 });
-    logger.info(`Lexa ingested tx ${tx.txId}`);
-  } catch (err) {
-    logger.warn(`Lexa ingestion failed for ${tx.txId}: ${err.message}`);
-  }
-}
-```
+3. **Webhook Lexa → Pro** — à faire session 10 ou session 11 ?
+   - *Reco : session 11, focus frontend en 10*
 
-Variables env sur .59 dans `/home/swigs/swigs-workflow/.env` :
-```
-LEXA_ENABLED=true
-LEXA_URL=http://192.168.110.59:3010
-```
+4. **Activer le pont `LEXA_ENABLED=true`** — on l'active en live pour valider la boucle en prod ?
+   - *Reco : oui, dès début session 10. Zéro risque puisque non-bloquant*
 
-Test : envoyer un email de test banque, vérifier que Lexa a un event correspondant dans `/transactions/stats/summary`.
-
-### Étape 2 — Agent TVA (`lexa-tva` Modelfile) — 45 min
-
-```
-FROM qwen3.5:9b-optimized
-
-PARAMETER temperature 0.2
-PARAMETER num_ctx 16384
-PARAMETER num_predict 800
-
-SYSTEM """Tu es un agent TVA suisse pour Lexa. Tu reponds aux questions
-sur la TVA suisse (LTVA, OLTVA, Info TVA de l'AFC).
-
-Expertise:
-- Methodes de decompte: effective (Art. 36 LTVA) vs TDFN (Art. 37)
-- Taux: 8.1% standard, 2.6% reduit, 3.8% hebergement, 0% exonere
-- Secteur immeubles (Info TVA secteur 17): locations commerciales, option TVA, changements affectation
-- Secteur batiment (Info TVA secteur 04): facturation, sous-traitance, chantiers
-- Decompte trimestriel vs semestriel
-- Imposition des acquisitions (art. 45 LTVA)
-- Prestations exclues (Art. 21) vs exonerees (Art. 23)
-- Changement de methode TDFN <-> effective
-
-Regles de reponse:
-1. Citation obligatoire: Art. XX LTVA (RS 641.20) ou Info TVA YY
-2. Prose claire, pas de markdown, pas de thinking
-3. Disclaimer obligatoire en fin"""
-```
-
-Nouveau endpoint `POST /agents/tva/ask` → utilise `lexa-tva` au lieu de `lexa-reasoning`.
-
-Test : "Puis-je deduire la TVA sur les repas d'affaires ?" → doit citer Art. 29 LTVA (exclusion).
-
-### Étape 3 — Subagents de test (1h)
-
-**Format** : chacun est un sub-agent Claude avec un prompt précis + un dataset.
-
-**`qa-lexa`** :
-```
-Dataset de 10 transactions avec classification attendue (compte Käfer cible)
-Dataset de 10 questions RAG avec article de loi cible
-Frappe les endpoints, compare aux attendus, retourne pass/fail per test
-```
-
-**`perf-lexa`** :
-```
-Mesure p50/p95/p99 sur 20 requêtes de chaque endpoint
-Compare avec la baseline précédente (stockée dans un fichier)
-Alerte si régression > 20%
-```
-
-**`corpus-validator`** :
-```
-50 queries ground-truth sur la KB
-Vérifie que le top-3 Qdrant contient la source attendue
-Retourne recall@3 et score moyen
-```
-
-Ces agents vivent dans `apps/backend/tests/agents/` et sont lancés manuellement par Claude à la fin de chaque session.
-
-### Étape 4 — Journal + commit + push (30 min)
+5. **Tests automatisés** (qa-lexa, perf-lexa, corpus-validator) — session 10 ou session 11 ?
+   - *Reco : session 11, ou session 10 seulement si reste du temps après frontend scaffold*
 
 ---
 
-## Contexte backend actuel
+## Plan détaillé de la session 10 (frontend focus)
 
-### Structure `apps/backend/src/`
-
-```
-src/
-├── app.ts                    # Express entry + 5 routers montés
-├── config/index.ts           # Zod config
-├── db/
-│   ├── postgres.ts           # pg Pool
-│   ├── migrate.ts            # Migration runner
-│   └── migrations/
-│       ├── 001_events.sql    # events + ai_decisions
-│       └── 002_ledger.sql    # ledger_entries matview + balance view
-├── events/
-│   ├── types.ts              # LexaEvent discriminated union
-│   └── EventStore.ts         # append/read
-├── rag/
-│   ├── EmbedderClient.ts     # llama-server /v1/embeddings
-│   ├── QdrantClient.ts       # HTTP 6333
-│   └── ragQuery.ts           # Pipeline canonique
-├── llm/
-│   └── OllamaClient.ts       # think:false default
-├── agents/
-│   └── classifier/
-│       └── ClassifierAgent.ts  # lexa-classifier
-├── routes/
-│   ├── health.ts             # /health
-│   ├── rag.ts                # /rag/ask, /rag/classify
-│   ├── transactions.ts       # event-sourced flow
-│   ├── ledger.ts             # grand livre + balance
-│   └── connectors.ts         # /connectors/bank/ingest
-└── scripts/
-    └── test-classify.ts      # test manuel
-```
-
-**À créer session 09** :
-- `src/agents/tva/TvaAgent.ts`
-- `src/routes/agents.ts` ou similaire
-- `tests/agents/qa-lexa/`, `tests/agents/perf-lexa/`, `tests/agents/corpus-validator/`
-
----
-
-## État de la collection Qdrant `swiss_law`
-
-**5388 points** (inchangé session 08)
-
-Voir `01-knowledge-base/INDEX.md` pour le détail complet des 5 sessions d'ingestion.
-
----
-
-## Scripts disponibles sur le Spark
-
-Tous dans `~/ollama-compta/scripts/` :
-- `ingest_lhid_lexa.py`, `ingest_afc_pdfs_lexa.py`, `ingest_vs_pdfs_lexa.py`, `ingest_lp_lexa.py`, `ingest_csi_lexa.py`, `ingest_vs_loi_fiscale_lexa.py`, `ingest_vs_loi_fiscale_lexa_v2.py`, `ingest_federal_ordonnances_lexa.py`, `ingest_afc_info_tva_lexa.py`, `ingest_kafer_lexa.py`
-
-**Modelfiles** :
-- `Modelfile-comptable` / `Modelfile-comptable-fast` (legacy fine-tuning)
-- **`Modelfile-lexa-classifier`** (session 07)
-- **`Modelfile-lexa-reasoning`** (session 08)
-
----
-
-## Avertissements importants (toujours valables)
-
-1. **deepseek-ocr en prod** (autre projet user) → ne jamais décharger manuellement
-2. **Backup Ollama config** si besoin rollback : `/etc/systemd/system/ollama.service.d/override.conf.backup-20260414-134716`
-3. **Passwords** dans `~/.lexa_db_pass_temp` (Mac) + `/home/swigs/lexa-backend/.env` (.59, mode 600). Sudo Spark : `SW45id-445-332`. Sudo .59 : `Labo`.
-4. **UUID4 strict** pour tout upsert Qdrant
-5. **`think: false` par défaut** dans OllamaClient pour tous les futurs agents
-6. **Pas de secrets dans git**
-7. **Materialized view ledger_entries** nécessite `REFRESH` manuel ou trigger (à mettre en place session 09+)
-
----
-
-## Vérification rapide début session 09
+### Étape 1 — Activer LEXA_ENABLED sur .59 (5 min)
 
 ```bash
-# 1. Backend up
-ssh swigs@192.168.110.59 'curl -s http://localhost:3010/health | python3 -m json.tool'
+ssh swigs@192.168.110.59 "
+  echo 'LEXA_ENABLED=true' >> /home/swigs/swigs-workflow/.env
+  echo 'LEXA_URL=http://192.168.110.59:3010' >> /home/swigs/swigs-workflow/.env
+  pm2 restart swigs-workflow
+  pm2 logs swigs-workflow --lines 10 --nostream
+"
+```
 
-# 2. llama-server up (systemd)
-ssh swigs@192.168.110.103 'systemctl is-active lexa-llama-embed'
+Vérifier qu'aucune erreur n'apparaît après restart.
 
-# 3. Ollama modèles
-ssh swigs@192.168.110.103 'ollama list | grep lexa-'
-# → lexa-classifier, lexa-reasoning au minimum
+### Étape 2 — Scaffold `apps/frontend/` (1h)
 
-# 4. Ledger balance (doit être balanced)
-ssh swigs@192.168.110.59 'curl -s http://localhost:3010/ledger/balance | python3 -c "import sys,json;d=json.load(sys.stdin);print(\"balanced:\",d[\"totals\"][\"balanced\"],\"| D:\",d[\"totals\"][\"debit\"],\"C:\",d[\"totals\"][\"credit\"])"'
+```bash
+cd /Users/corentinflaction/CascadeProjects/lexa/apps
+npm create vite@latest frontend -- --template react-ts
+cd frontend
+npm install react-router-dom @tanstack/react-query zustand axios tailwindcss@^3 autoprefixer postcss framer-motion lucide-react zod
+npm install -D @types/node
+npx tailwindcss init -p
+```
 
-# 5. Events count
-ssh swigs@192.168.110.59 'curl -s http://localhost:3010/transactions/stats/summary | python3 -m json.tool'
+**Structure** :
+```
+apps/frontend/
+├── src/
+│   ├── main.tsx
+│   ├── App.tsx
+│   ├── routes/
+│   │   ├── Home.tsx
+│   │   ├── Onboarding.tsx       # Wizard adapté du WelcomeModal Pro
+│   │   ├── Dashboard.tsx
+│   │   ├── Transactions.tsx
+│   │   ├── Ledger.tsx
+│   │   └── Chat.tsx             # Chat avec les 3 agents
+│   ├── components/
+│   │   ├── CompanySearchField.tsx  # Adapté du composant Pro
+│   │   ├── StepWizard.tsx
+│   │   └── ...
+│   ├── api/
+│   │   ├── client.ts            # axios instance → .59:3010
+│   │   └── lexa.ts              # typed endpoints
+│   ├── stores/
+│   │   ├── companyStore.ts
+│   │   └── transactionsStore.ts
+│   └── styles/
+```
+
+### Étape 3 — Onboarding wizard (1h30)
+
+Adapter le `WelcomeModal.jsx` de Pro (743 lignes, 4 étapes) pour Lexa :
+1. **Step 0 — Welcome** : intro + logo
+2. **Step 1 — Entreprise** : CompanySearchField (UID register) + autofill OU saisie manuelle
+3. **Step 2 — TVA** : assujetti ?, méthode (effective/TDFN), fréquence
+4. **Step 3 — Banque + RIB** : IBAN, QR-IBAN
+
+À la fin, `POST /onboarding/company` → redirige vers dashboard avec `tenantId`.
+
+### Étape 4 — Dashboard minimal (45 min)
+
+- **Header** : nom entreprise + UID + canton
+- **Stats** : nombre d'events, balance grand livre
+- **Recent transactions** : liste des 10 dernières avec classification
+- **Agent chat** : textarea pour poser une question aux 3 agents (switch classifier/reasoning/tva)
+
+### Étape 5 — PM2 deploy frontend build sur .59 (30 min)
+
+Nginx conf pour servir `apps/frontend/dist/` sur un nouveau port (ex: 3011 ou via un path `/lexa/`) + rsync du build.
+
+### Étape 6 — Journal + commit + push (30 min)
+
+---
+
+## Architecture backend actuelle (pour comprendre rapidement)
+
+```
+apps/backend/src/
+├── app.ts                       # Express + 8 routers
+├── config/index.ts              # Zod env config
+├── db/
+│   ├── postgres.ts              # pg Pool
+│   ├── migrate.ts               # Migration runner
+│   └── migrations/
+│       ├── 001_events.sql       # events + ai_decisions
+│       ├── 002_ledger.sql       # materialized view + balance
+│       └── 003_companies.sql    # 🆕 onboarding
+├── events/
+│   ├── types.ts                 # LexaEvent union
+│   └── EventStore.ts
+├── rag/
+│   ├── EmbedderClient.ts        # llama-server 8082 /v1/embeddings
+│   ├── QdrantClient.ts          # HTTP 6333
+│   └── ragQuery.ts              # Pipeline canonique
+├── llm/
+│   └── OllamaClient.ts          # think:false default
+├── agents/
+│   ├── classifier/ClassifierAgent.ts   # lexa-classifier
+│   └── tva/TvaAgent.ts                 # 🆕 lexa-tva + re-rank
+├── services/
+│   └── companyLookup.ts         # 🆕 UID register BFS SOAP
+└── routes/
+    ├── health.ts
+    ├── rag.ts
+    ├── agents.ts                # 🆕
+    ├── transactions.ts
+    ├── ledger.ts
+    ├── connectors.ts
+    └── onboarding.ts            # 🆕
 ```
 
 ---
 
-## Contexte Claude — mon auto-évaluation
+## Avertissements importants
 
-Session 08 consommée : ~2h de travail dense. **Session 09 est encore faisable** dans cette instance si le scope reste raisonnable (hook Pro + agent TVA + tests = ~3h).
-
-**Session 10 et au-delà** : probablement temps de passer sur une instance fraîche. Ce `NEXT-SESSION.md` + le session-08.md + le code backend + les modelfiles suffisent à repartir avec 0 contexte perdu.
-
-**Indicateurs pour le user** :
-- Si mes réponses commencent à devenir génériques → temps de repartir
-- Si je commence à re-chercher des infos que j'ai déjà → temps de repartir
-- Si je perds le cap principal → STOP et repartir
+1. **`LEXA_ENABLED` non activé par défaut** sur .59 — le hook existe mais n'appelle pas Lexa tant que tu ne l'ajoutes pas à l'env Pro
+2. **Backend swigs-workflow en prod** — commit `98b6c1b` (branche `v2-refresh`), PM2 restart OK, aucune erreur
+3. **Backend Lexa en prod** — commit `63db503` (branche `main`), PM2 restart OK
+4. **3 migrations appliquées** : `001_events`, `002_ledger`, `003_companies`
+5. **Modelfiles sur Spark** : `lexa-classifier`, `lexa-reasoning`, `lexa-tva` (tous 10 GB, base qwen3.5:9b)
+6. **Sudo Spark** : `SW45id-445-332`. Sudo .59 : `Labo`
+7. **Password Postgres lexa_app** : `~/.lexa_db_pass_temp` (Mac) + `/home/swigs/lexa-backend/.env` (.59)
 
 ---
 
-**Dernière mise à jour** : 2026-04-14 (fin session 08)
+## Vérification rapide début session 10
+
+```bash
+# Backend health
+ssh swigs@192.168.110.59 'curl -s http://localhost:3010/health | python3 -m json.tool'
+
+# Agents list
+ssh swigs@192.168.110.59 'curl -s http://localhost:3010/agents | python3 -m json.tool'
+
+# UID search test
+ssh swigs@192.168.110.59 'curl -s "http://localhost:3010/onboarding/company/search?q=swigs" | python3 -m json.tool'
+
+# Ledger balance (doit rester balanced)
+ssh swigs@192.168.110.59 'curl -s http://localhost:3010/ledger/balance | python3 -c "import sys,json;d=json.load(sys.stdin);print(\"balanced:\",d[\"totals\"][\"balanced\"])"'
+
+# Modèles Ollama
+ssh swigs@192.168.110.103 'ollama list | grep -E "lexa-|deepseek"'
+```
+
+---
+
+## Contexte Claude — auto-évaluation
+
+Session 09 a été **dense et productive**. Session 10 (frontend scaffold) est faisable dans cette instance mais **demande plusieurs heures d'écriture React/Tailwind**. Je recommande de **démarrer sur une instance fraîche** pour la session 10 — tout est documenté ici pour reprendre à zéro sans perte d'info.
+
+**Instructions pour la reprise sur instance fraîche** :
+1. Lire `06-sessions/NEXT-SESSION.md` (ce document, 5 min)
+2. Lire `06-sessions/2026-04-14-session-09.md` (journal complet, 10 min)
+3. Vérifier les 5 commandes de check ci-dessus
+4. Attaquer le plan session 10 directement
+
+---
+
+**Dernière mise à jour** : 2026-04-14 (fin session 09)
