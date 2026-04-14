@@ -7,12 +7,6 @@ import { query } from "../db/postgres.js";
 
 export const transactionsRouter = Router();
 
-/**
- * Lexa default tenant — for now a single hardcoded tenant.
- * Will be replaced by SSO-provided tenant_id from Swigs Hub (session 08+).
- */
-const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
-
 const IngestSchema = z.object({
   date: z.string(),
   description: z.string().min(3).max(500),
@@ -20,7 +14,7 @@ const IngestSchema = z.object({
   currency: z.string().length(3).default("CHF"),
   counterpartyIban: z.string().optional(),
   source: z.enum(["camt053", "ocr", "manual", "swigs-pro"]).default("manual"),
-  tenantId: z.string().uuid().default(DEFAULT_TENANT_ID),
+  tenantId: z.string().uuid().optional(),
 });
 
 /**
@@ -37,7 +31,8 @@ transactionsRouter.post("/", async (req, res) => {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
   }
 
-  const { tenantId, source, date, description, amount, currency, counterpartyIban } = parsed.data;
+  const { source, date, description, amount, currency, counterpartyIban } = parsed.data;
+  const tenantId = parsed.data.tenantId ?? req.tenantId;
   const streamId = randomUUID();
 
   try {
@@ -163,7 +158,7 @@ transactionsRouter.get("/:streamId", async (req, res) => {
   }
 
   const events = await eventStore.readStream({
-    tenantId: DEFAULT_TENANT_ID,
+    tenantId: req.tenantId,
     streamId,
   });
 
@@ -188,14 +183,14 @@ transactionsRouter.get("/:streamId", async (req, res) => {
  * GET /transactions/stats/:tenantId?
  * Basic stats: event count per type.
  */
-transactionsRouter.get("/stats/summary", async (_req, res) => {
+transactionsRouter.get("/stats/summary", async (req, res) => {
   const result = await query<{ type: string; count: string }>(
     `SELECT type, COUNT(*)::text AS count
      FROM events
      WHERE tenant_id = $1
      GROUP BY type
      ORDER BY type`,
-    [DEFAULT_TENANT_ID],
+    [req.tenantId],
   );
 
   const byType: Record<string, number> = {};
@@ -203,10 +198,10 @@ transactionsRouter.get("/stats/summary", async (_req, res) => {
     byType[row.type] = Number(row.count);
   }
 
-  const total = await eventStore.count(DEFAULT_TENANT_ID);
+  const total = await eventStore.count(req.tenantId);
 
   res.json({
-    tenantId: DEFAULT_TENANT_ID,
+    tenantId: req.tenantId,
     total,
     byType,
   });

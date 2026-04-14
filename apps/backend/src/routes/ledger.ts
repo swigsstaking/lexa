@@ -1,10 +1,7 @@
 import { Router } from "express";
-import { z } from "zod";
 import { query } from "../db/postgres.js";
 
 export const ledgerRouter = Router();
-
-const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
 type LedgerEntryRow = {
   event_id: string;
@@ -45,11 +42,11 @@ ledgerRouter.get("/", async (req, res) => {
      WHERE tenant_id = $1
      ORDER BY occurred_at DESC, line_type
      LIMIT $2`,
-    [DEFAULT_TENANT_ID, limit],
+    [req.tenantId, limit],
   );
 
   res.json({
-    tenantId: DEFAULT_TENANT_ID,
+    tenantId: req.tenantId,
     count: result.rows.length,
     entries: result.rows.map((r) => ({
       eventId: Number(r.event_id),
@@ -86,13 +83,13 @@ ledgerRouter.get("/account/:account", async (req, res) => {
      WHERE tenant_id = $1 AND account LIKE $2
      ORDER BY occurred_at DESC, line_type
      LIMIT $3`,
-    [DEFAULT_TENANT_ID, account, limit],
+    [req.tenantId, account, limit],
   );
 
   const balanceResult = await query<AccountBalanceRow>(
     `SELECT * FROM account_balance
      WHERE tenant_id = $1 AND account LIKE $2`,
-    [DEFAULT_TENANT_ID, account],
+    [req.tenantId, account],
   );
 
   const summaryAccounts = balanceResult.rows.map((r) => ({
@@ -105,7 +102,7 @@ ledgerRouter.get("/account/:account", async (req, res) => {
   }));
 
   res.json({
-    tenantId: DEFAULT_TENANT_ID,
+    tenantId: req.tenantId,
     accountPrefix: accountParam,
     count: result.rows.length,
     summary: summaryAccounts,
@@ -127,12 +124,12 @@ ledgerRouter.get("/account/:account", async (req, res) => {
 });
 
 /** GET /ledger/balance — full trial balance (balance de vérification) */
-ledgerRouter.get("/balance", async (_req, res) => {
+ledgerRouter.get("/balance", async (req, res) => {
   const result = await query<AccountBalanceRow>(
     `SELECT * FROM account_balance
      WHERE tenant_id = $1
      ORDER BY account`,
-    [DEFAULT_TENANT_ID],
+    [req.tenantId],
   );
 
   const accounts = result.rows.map((r) => ({
@@ -148,7 +145,7 @@ ledgerRouter.get("/balance", async (_req, res) => {
   const totalCredit = accounts.reduce((s, a) => s + a.totalCredit, 0);
 
   res.json({
-    tenantId: DEFAULT_TENANT_ID,
+    tenantId: req.tenantId,
     accountsCount: accounts.length,
     accounts,
     totals: {
@@ -160,12 +157,12 @@ ledgerRouter.get("/balance", async (_req, res) => {
 });
 
 /** POST /ledger/refresh — manually refresh the materialized view */
-ledgerRouter.post("/refresh", async (_req, res) => {
+ledgerRouter.post("/refresh", async (req, res) => {
   const started = Date.now();
   await query("SELECT refresh_ledger_entries()");
   const countResult = await query<{ count: string }>(
     `SELECT COUNT(*)::text AS count FROM ledger_entries WHERE tenant_id = $1`,
-    [DEFAULT_TENANT_ID],
+    [req.tenantId],
   );
   res.json({
     refreshedIn: Date.now() - started,

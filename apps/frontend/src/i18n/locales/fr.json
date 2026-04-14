@@ -1,0 +1,139 @@
+{
+  "app": {
+    "name": "Lexa",
+    "tagline": "Comptabilité IA suisse"
+  },
+  "common": {
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "save": "Enregistrer",
+    "finish": "Terminer",
+    "loading": "Chargement...",
+    "search": "Rechercher",
+    "error": "Erreur",
+    "empty": "—",
+    "optional": "optionnel",
+    "yes": "Oui",
+    "no": "Non",
+    "close": "Fermer"
+  },
+  "home": {
+    "badge": "Backend v0.1 prêt — {{points}} points KB",
+    "title_l1": "La compta PME suisse,",
+    "title_l2": "pilotée par l'IA.",
+    "subtitle": "Lexa classifie vos transactions, gère votre grand livre et répond à vos questions TVA et fiscales avec citations légales à l'appui.",
+    "cta": "Commencer l'onboarding",
+    "feature_classify": "Classification auto",
+    "feature_classify_text": "lexa-classifier mappe chaque transaction au plan comptable Käfer",
+    "feature_ledger": "Grand livre auto-balancé",
+    "feature_ledger_text": "Event-sourced, chaque écriture est traçable et reversible",
+    "feature_vat": "Conformité LTVA",
+    "feature_vat_text": "Réponses citées LTVA, OLTVA, Info TVA, circulaires AFC"
+  },
+  "onboarding": {
+    "steps": {
+      "welcome": "Bienvenue",
+      "company": "Entreprise",
+      "vat": "TVA",
+      "bank": "Banque"
+    },
+    "welcome": {
+      "title": "Bienvenue sur Lexa",
+      "text": "Configurons votre entreprise en 3 étapes : identité, régime TVA, banque. Vous pourrez tout modifier ensuite."
+    },
+    "company": {
+      "title": "Votre entreprise",
+      "sub": "Recherchez dans le registre fédéral suisse (UID) ou saisissez manuellement.",
+      "search_label": "Recherche registre fédéral",
+      "search_placeholder": "Nom de votre entreprise ou UID...",
+      "or_manual": "ou manuellement",
+      "name": "Raison sociale",
+      "name_placeholder": "Mon Entreprise SA",
+      "legal_form": "Forme juridique",
+      "uid": "UID (optionnel)",
+      "zip": "NPA",
+      "city": "Ville",
+      "canton": "Canton",
+      "country": "Pays",
+      "no_results": "Aucun résultat. Vous pouvez saisir manuellement."
+    },
+    "vat": {
+      "title": "Régime TVA",
+      "sub": "Seuil d'assujettissement obligatoire : CHF 100'000 de chiffre d'affaires annuel.",
+      "not_subject": "Non assujetti",
+      "not_subject_sub": "CA < CHF 100'000",
+      "subject": "Assujetti",
+      "subject_sub": "N° TVA requis",
+      "number": "Numéro TVA",
+      "number_placeholder": "CHE-XXX.XXX.XXX TVA",
+      "method": "Méthode",
+      "method_effective": "Effective (standard)",
+      "method_tdfn": "TDFN (taux de la dette fiscale nette)",
+      "method_forfaitaire": "Forfaitaire",
+      "frequency": "Fréquence",
+      "frequency_monthly": "Mensuelle",
+      "frequency_quarterly": "Trimestrielle",
+      "frequency_semesterly": "Semestrielle",
+      "frequency_yearly": "Annuelle"
+    },
+    "bank": {
+      "title": "Coordonnées bancaires",
+      "sub": "Optionnel : permet l'import automatique des relevés bancaires plus tard.",
+      "iban": "IBAN",
+      "iban_placeholder": "CH93 0076 2011 6238 5295 7",
+      "qr_iban": "QR-IBAN ({{optional}})",
+      "qr_iban_placeholder": "CH44 3199 9123 0008 8901 2",
+      "note": "Vous pourrez ajouter plus de comptes bancaires et connecter l'import IMAP depuis les paramètres ensuite."
+    },
+    "errors": {
+      "name_required": "Nom et forme juridique requis"
+    },
+    "submitting": "Création..."
+  },
+  "legal_forms": {
+    "raison_individuelle": "Raison individuelle",
+    "sa": "Société anonyme (SA)",
+    "sarl": "Société à responsabilité limitée (Sàrl)",
+    "cooperative": "Coopérative",
+    "association": "Association",
+    "fondation": "Fondation",
+    "autre": "Autre forme juridique"
+  },
+  "workspace": {
+    "title": "Workspace",
+    "empty_canvas": "Le canvas se chargera ici — comptes, transactions, agents.",
+    "toggle_expert": "Mode expert (Grand livre)",
+    "shortcut_chat": "Chat IA",
+    "services_up": "Services OK",
+    "services_down": "Services KO"
+  },
+  "ledger": {
+    "title": "Grand livre",
+    "sub": "Écritures event-sourced, balance par compte",
+    "balance_by_account": "Balance par compte",
+    "account": "Compte",
+    "debit": "Débit",
+    "credit": "Crédit",
+    "balance_col": "Solde",
+    "detailed": "Écritures détaillées",
+    "balanced": "Équilibrée",
+    "imbalanced": "Déséquilibre"
+  },
+  "chat": {
+    "title": "Agents IA",
+    "sub": "Posez vos questions comptables, fiscales ou TVA. Réponses citées par sources légales.",
+    "placeholder": "Posez votre question...",
+    "placeholder_classifier": "Ex: FIDUCIAIRE DUPONT | 450",
+    "thinking": "L'agent réfléchit...",
+    "citations": "Citations",
+    "agent_reasoning": "Raisonnement",
+    "agent_reasoning_desc": "Questions juridiques/fiscales générales",
+    "agent_tva": "TVA",
+    "agent_tva_desc": "LTVA, OLTVA, Info TVA",
+    "agent_classifier": "Classifier",
+    "agent_classifier_desc": "Classification d'une transaction"
+  }
+}

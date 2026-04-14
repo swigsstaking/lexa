@@ -1,5 +1,6 @@
 import express from "express";
 import { config } from "./config/index.js";
+import { tenantMiddleware } from "./middleware/tenant.js";
 import { healthRouter } from "./routes/health.js";
 import { ragRouter } from "./routes/rag.js";
 import { transactionsRouter } from "./routes/transactions.js";
@@ -11,6 +12,21 @@ import { onboardingRouter } from "./routes/onboarding.js";
 const app = express();
 
 app.use(express.json({ limit: "2mb" }));
+
+// CORS — frontend dev server peut appeler le backend en direct avec X-Tenant-Id
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", req.header("Origin") ?? "*");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PATCH,PUT,DELETE,OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Tenant-Id, x-tenant-id",
+  );
+  res.header("Access-Control-Max-Age", "600");
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
+
+app.use(tenantMiddleware);
 
 // Routes
 app.use(healthRouter);

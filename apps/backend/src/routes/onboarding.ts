@@ -121,11 +121,15 @@ onboardingRouter.post("/company", async (req, res) => {
       ],
     );
 
+    const createdAt = result.rows[0]!.created_at;
     res.status(201).json({
-      id: result.rows[0]!.id,
-      tenantId: result.rows[0]!.tenant_id,
-      createdAt: result.rows[0]!.created_at,
-      company: data,
+      company: {
+        id: result.rows[0]!.id,
+        tenantId: result.rows[0]!.tenant_id,
+        ...data,
+        createdAt,
+        updatedAt: createdAt,
+      },
     });
   } catch (err) {
     const pgErr = err as { code?: string; message: string };

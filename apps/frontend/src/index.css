@@ -2,41 +2,106 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Semantic tokens driven by CSS variables.
+ * Dark is the default per whitepaper §5. Light is a fallback mode.
+ * Values expressed as "R G B" triplets (alpha-value syntax in tailwind.config.js).
+ */
+
+:root,
+.light {
+  --bg: 247 247 245;
+  --surface: 255 255 255;
+  --elevated: 252 252 250;
+  --border: 229 229 224;
+  --border-strong: 209 209 202;
+  --ink: 11 15 20;
+  --muted: 107 107 107;
+  --subtle: 153 153 148;
+  --accent: 212 52 44;
+  --accent-fg: 255 255 255;
+  --success: 22 163 74;
+  --warning: 217 119 6;
+  --danger: 220 38 38;
+}
+
+.dark {
+  --bg: 10 11 14;
+  --surface: 16 18 22;
+  --elevated: 22 25 31;
+  --border: 34 38 46;
+  --border-strong: 54 59 70;
+  --ink: 237 238 242;
+  --muted: 148 153 165;
+  --subtle: 96 102 115;
+  --accent: 232 84 76;
+  --accent-fg: 255 255 255;
+  --success: 74 222 128;
+  --warning: 251 191 36;
+  --danger: 248 113 113;
+}
+
 @layer base {
-  html, body, #root {
+  html,
+  body,
+  #root {
     height: 100%;
   }
   body {
-    @apply bg-lexa-bg text-lexa-ink font-sans antialiased;
+    @apply bg-bg text-ink font-sans antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
-  h1, h2, h3 {
-    @apply font-display tracking-tight;
+  ::selection {
+    @apply bg-accent/25 text-ink;
+  }
+  /* Scrollbars (WebKit) */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border-strong rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-subtle;
   }
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors select-none disabled:opacity-40 disabled:cursor-not-allowed;
   }
   .btn-primary {
-    @apply btn bg-lexa-primary text-white hover:bg-lexa-primaryDark;
+    @apply btn bg-accent text-accent-fg hover:brightness-110 active:brightness-95;
   }
   .btn-secondary {
-    @apply btn bg-lexa-surface border border-lexa-border text-lexa-ink hover:bg-lexa-bg;
+    @apply btn bg-surface border border-border text-ink hover:bg-elevated hover:border-border-strong;
   }
   .btn-ghost {
-    @apply btn text-lexa-muted hover:text-lexa-ink;
+    @apply btn text-muted hover:text-ink hover:bg-elevated;
   }
   .card {
-    @apply bg-lexa-surface border border-lexa-border rounded-xl shadow-soft;
+    @apply bg-surface border border-border rounded-xl;
+  }
+  .card-elevated {
+    @apply bg-elevated border border-border rounded-xl shadow-soft;
   }
   .input {
-    @apply w-full rounded-lg border border-lexa-border bg-lexa-surface px-3 py-2.5 text-sm placeholder:text-lexa-muted focus:outline-none focus:ring-2 focus:ring-lexa-primary/20 focus:border-lexa-primary;
+    @apply w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors;
   }
   .label {
-    @apply block text-xs font-medium uppercase tracking-wider text-lexa-muted mb-1.5;
+    @apply block text-2xs font-medium uppercase tracking-wider text-muted mb-1.5;
   }
   .chip {
-    @apply inline-flex items-center gap-1 rounded-full bg-lexa-bg border border-lexa-border px-2.5 py-1 text-xs text-lexa-muted;
+    @apply inline-flex items-center gap-1 rounded-full bg-elevated border border-border px-2 py-0.5 text-2xs text-muted font-mono;
+  }
+  .kbd {
+    @apply inline-flex items-center justify-center rounded border border-border bg-elevated px-1.5 py-0.5 text-2xs font-mono text-muted;
+  }
+  .mono-num {
+    @apply font-mono tabular-nums;
   }
 }

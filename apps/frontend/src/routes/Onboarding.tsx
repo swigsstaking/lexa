@@ -1,32 +1,51 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Loader2, Sparkles, Building2, Receipt, Landmark, Check } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Loader2,
+  Sparkles,
+  Building2,
+  Receipt,
+  Landmark,
+  Check,
+} from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { lexa } from '@/api/lexa';
-import { useCompanyStore } from '@/stores/companyStore';
+import { useCompaniesStore } from '@/stores/companiesStore';
 import { useOnboardingStore } from '@/stores/onboardingStore';
 import { StepIndicator } from '@/components/StepIndicator';
 import { CompanySearchField } from '@/components/CompanySearchField';
 import type { CreateCompanyInput, LegalForm } from '@/api/types';
 
-const steps = ['Bienvenue', 'Entreprise', 'TVA', 'Banque'];
-
-const legalForms: Array<{ value: LegalForm; label: string }> = [
-  { value: 'raison_individuelle', label: 'Raison individuelle' },
-  { value: 'sarl', label: 'Société à responsabilité limitée (Sàrl)' },
-  { value: 'sa', label: 'Société anonyme (SA)' },
-  { value: 'association', label: 'Association' },
-  { value: 'cooperative', label: 'Coopérative' },
-  { value: 'fondation', label: 'Fondation' },
-  { value: 'autre', label: 'Autre forme juridique' },
+const LEGAL_FORM_ORDER: LegalForm[] = [
+  'raison_individuelle',
+  'sarl',
+  'sa',
+  'association',
+  'cooperative',
+  'fondation',
+  'autre',
 ];
 
 export function Onboarding() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { step, draft, setStep, update, reset } = useOnboardingStore();
-  const setCompany = useCompanyStore((s) => s.setCompany);
+  const addCompany = useCompaniesStore((s) => s.addCompany);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const steps = useMemo(
+    () => [
+      t('onboarding.steps.welcome'),
+      t('onboarding.steps.company'),
+      t('onboarding.steps.vat'),
+      t('onboarding.steps.bank'),
+    ],
+    [t],
+  );
 
   const canNext = useMemo(() => {
     if (step === 0) return true;
@@ -41,7 +60,7 @@ export function Onboarding() {
 
   const finish = async () => {
     if (!draft.name || !draft.legalForm) {
-      setError('Nom et forme juridique requis');
+      setError(t('onboarding.errors.name_required'));
       return;
     }
     setSubmitting(true);
@@ -67,13 +86,13 @@ export function Onboarding() {
         fiscalYearStartMonth: draft.fiscalYearStartMonth ?? 1,
       };
       const company = await lexa.createCompany(payload);
-      setCompany(company);
+      addCompany(company);
       reset();
-      navigate('/dashboard');
+      navigate('/workspace');
     } catch (e: unknown) {
       const msg =
         (e as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        (e instanceof Error ? e.message : 'Erreur inconnue');
+        (e instanceof Error ? e.message : t('common.error'));
       setError(msg);
     } finally {
       setSubmitting(false);
@@ -86,7 +105,7 @@ export function Onboarding() {
         <div className="flex items-center justify-between mb-8">
           <button onClick={() => navigate('/')} className="btn-ghost">
             <ArrowLeft className="w-4 h-4" />
-            Retour
+            {t('common.back')}
           </button>
           <StepIndicator steps={steps} current={step} />
         </div>
@@ -109,7 +128,7 @@ export function Onboarding() {
         </div>
 
         {error && (
-          <div className="mt-4 p-3 rounded-lg bg-lexa-danger/10 border border-lexa-danger/30 text-sm text-lexa-danger">
+          <div className="mt-4 p-3 rounded-lg bg-danger/10 border border-danger/30 text-sm text-danger">
             {error}
           </div>
         )}
@@ -117,11 +136,11 @@ export function Onboarding() {
         <div className="flex items-center justify-between mt-6">
           <button onClick={prev} disabled={step === 0} className="btn-secondary">
             <ArrowLeft className="w-4 h-4" />
-            Précédent
+            {t('common.previous')}
           </button>
           {step < steps.length - 1 ? (
             <button onClick={next} disabled={!canNext} className="btn-primary">
-              Suivant
+              {t('common.next')}
               <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
@@ -129,12 +148,12 @@ export function Onboarding() {
               {submitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Création...
+                  {t('onboarding.submitting')}
                 </>
               ) : (
                 <>
                   <Check className="w-4 h-4" />
-                  Terminer
+                  {t('common.finish')}
                 </>
               )}
             </button>
@@ -147,18 +166,17 @@ export function Onboarding() {
   function StepWelcome() {
     return (
       <div className="text-center py-6">
-        <div className="w-14 h-14 rounded-2xl bg-lexa-primary/10 text-lexa-primary grid place-items-center mx-auto mb-5">
+        <div className="w-14 h-14 rounded-2xl bg-accent/10 text-accent grid place-items-center mx-auto mb-5">
           <Sparkles className="w-7 h-7" />
         </div>
-        <h2 className="text-3xl mb-3">Bienvenue sur Lexa</h2>
-        <p className="text-lexa-muted max-w-md mx-auto">
-          Configurons votre entreprise en 3 étapes : identité, régime TVA, banque.
-          Vous pourrez tout modifier ensuite.
-        </p>
+        <h2 className="text-3xl mb-3 font-semibold tracking-tight">
+          {t('onboarding.welcome.title')}
+        </h2>
+        <p className="text-muted max-w-md mx-auto">{t('onboarding.welcome.text')}</p>
         <div className="mt-8 grid grid-cols-3 gap-3 text-left">
-          <Mini icon={Building2} label="Entreprise" />
-          <Mini icon={Receipt} label="TVA" />
-          <Mini icon={Landmark} label="Banque" />
+          <Mini icon={Building2} label={t('onboarding.steps.company')} />
+          <Mini icon={Receipt} label={t('onboarding.steps.vat')} />
+          <Mini icon={Landmark} label={t('onboarding.steps.bank')} />
         </div>
       </div>
     );
@@ -168,15 +186,16 @@ export function Onboarding() {
     return (
       <div className="space-y-5">
         <div>
-          <h2 className="text-2xl mb-1">Votre entreprise</h2>
-          <p className="text-sm text-lexa-muted">
-            Recherchez dans le registre fédéral suisse (UID) ou saisissez manuellement.
-          </p>
+          <h2 className="text-2xl mb-1 font-semibold tracking-tight">
+            {t('onboarding.company.title')}
+          </h2>
+          <p className="text-sm text-muted">{t('onboarding.company.sub')}</p>
         </div>
 
         <div>
-          <label className="label">Recherche registre fédéral</label>
+          <label className="label">{t('onboarding.company.search_label')}</label>
           <CompanySearchField
+            placeholder={t('onboarding.company.search_placeholder')}
             onSelect={(c) => {
               update({
                 source: 'uid-register',
@@ -196,43 +215,56 @@ export function Onboarding() {
         </div>
 
         <div className="flex items-center gap-3 my-2">
-          <div className="flex-1 h-px bg-lexa-border" />
-          <span className="text-xs text-lexa-muted uppercase">ou manuellement</span>
-          <div className="flex-1 h-px bg-lexa-border" />
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-2xs text-muted uppercase tracking-wider">
+            {t('onboarding.company.or_manual')}
+          </span>
+          <div className="flex-1 h-px bg-border" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="label">Raison sociale</label>
+            <label className="label" htmlFor="lexa-onb-name">
+              {t('onboarding.company.name')}
+            </label>
             <input
+              id="lexa-onb-name"
+              name="name"
               className="input"
               value={draft.name ?? ''}
               onChange={(e) => update({ name: e.target.value, source: draft.source ?? 'manual' })}
-              placeholder="Mon Entreprise SA"
+              placeholder={t('onboarding.company.name_placeholder')}
             />
           </div>
           <div>
-            <label className="label">Forme juridique</label>
+            <label className="label" htmlFor="lexa-onb-legal">
+              {t('onboarding.company.legal_form')}
+            </label>
             <select
+              id="lexa-onb-legal"
+              name="legalForm"
               className="input"
               value={draft.legalForm ?? ''}
               onChange={(e) => {
                 const lf = e.target.value as LegalForm;
-                const found = legalForms.find((x) => x.value === lf);
-                update({ legalForm: lf, legalFormLabel: found?.label });
+                update({ legalForm: lf, legalFormLabel: t(`legal_forms.${lf}`) });
               }}
             >
-              <option value="">—</option>
-              {legalForms.map((lf) => (
-                <option key={lf.value} value={lf.value}>
-                  {lf.label}
+              <option value="">{t('common.empty')}</option>
+              {LEGAL_FORM_ORDER.map((lf) => (
+                <option key={lf} value={lf}>
+                  {t(`legal_forms.${lf}`)}
                 </option>
               ))}
             </select>
           </div>
           <div className="md:col-span-2">
-            <label className="label">UID (optionnel)</label>
+            <label className="label" htmlFor="lexa-onb-uid">
+              {t('onboarding.company.uid')}
+            </label>
             <input
+              id="lexa-onb-uid"
+              name="uid"
               className="input font-mono"
               value={draft.uid ?? ''}
               onChange={(e) => update({ uid: e.target.value })}
@@ -240,24 +272,36 @@ export function Onboarding() {
             />
           </div>
           <div>
-            <label className="label">NPA</label>
+            <label className="label" htmlFor="lexa-onb-zip">
+              {t('onboarding.company.zip')}
+            </label>
             <input
+              id="lexa-onb-zip"
+              name="zip"
               className="input"
               value={draft.zip ?? ''}
               onChange={(e) => update({ zip: e.target.value })}
             />
           </div>
           <div>
-            <label className="label">Ville</label>
+            <label className="label" htmlFor="lexa-onb-city">
+              {t('onboarding.company.city')}
+            </label>
             <input
+              id="lexa-onb-city"
+              name="city"
               className="input"
               value={draft.city ?? ''}
               onChange={(e) => update({ city: e.target.value })}
             />
           </div>
           <div>
-            <label className="label">Canton</label>
+            <label className="label" htmlFor="lexa-onb-canton">
+              {t('onboarding.company.canton')}
+            </label>
             <input
+              id="lexa-onb-canton"
+              name="canton"
               className="input uppercase"
               maxLength={2}
               value={draft.canton ?? ''}
@@ -266,8 +310,16 @@ export function Onboarding() {
             />
           </div>
           <div>
-            <label className="label">Pays</label>
-            <input className="input" value={draft.country ?? 'CH'} disabled />
+            <label className="label" htmlFor="lexa-onb-country">
+              {t('onboarding.company.country')}
+            </label>
+            <input
+              id="lexa-onb-country"
+              name="country"
+              className="input"
+              value={draft.country ?? 'CH'}
+              disabled
+            />
           </div>
         </div>
       </div>
@@ -279,56 +331,68 @@ export function Onboarding() {
     return (
       <div className="space-y-5">
         <div>
-          <h2 className="text-2xl mb-1">Régime TVA</h2>
-          <p className="text-sm text-lexa-muted">
-            Seuil d'assujettissement obligatoire : CHF 100'000 de chiffre d'affaires annuel.
-          </p>
+          <h2 className="text-2xl mb-1 font-semibold tracking-tight">
+            {t('onboarding.vat.title')}
+          </h2>
+          <p className="text-sm text-muted">{t('onboarding.vat.sub')}</p>
         </div>
 
         <div className="flex gap-3">
           <Toggle
             active={!subject}
             onClick={() => update({ isVatSubject: false })}
-            label="Non assujetti"
-            sub="CA < CHF 100'000"
+            label={t('onboarding.vat.not_subject')}
+            sub={t('onboarding.vat.not_subject_sub')}
           />
           <Toggle
             active={subject}
             onClick={() => update({ isVatSubject: true })}
-            label="Assujetti"
-            sub="N° TVA requis"
+            label={t('onboarding.vat.subject')}
+            sub={t('onboarding.vat.subject_sub')}
           />
         </div>
 
         {subject && (
           <div className="space-y-4 pt-2">
             <div>
-              <label className="label">Numéro TVA</label>
+              <label className="label" htmlFor="lexa-onb-vatnum">
+                {t('onboarding.vat.number')}
+              </label>
               <input
+                id="lexa-onb-vatnum"
+                name="vatNumber"
                 className="input font-mono"
                 value={draft.vatNumber ?? ''}
                 onChange={(e) => update({ vatNumber: e.target.value })}
-                placeholder="CHE-XXX.XXX.XXX TVA"
+                placeholder={t('onboarding.vat.number_placeholder')}
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="label">Méthode</label>
+                <label className="label" htmlFor="lexa-onb-vatmethod">
+                  {t('onboarding.vat.method')}
+                </label>
                 <select
+                  id="lexa-onb-vatmethod"
+                  name="vatMethod"
                   className="input"
                   value={draft.vatMethod ?? 'effective'}
                   onChange={(e) =>
                     update({ vatMethod: e.target.value as 'effective' | 'tdfn' | 'forfaitaire' })
                   }
                 >
-                  <option value="effective">Effective (standard)</option>
-                  <option value="tdfn">TDFN (taux de la dette fiscale nette)</option>
-                  <option value="forfaitaire">Forfaitaire</option>
+                  <option value="effective">{t('onboarding.vat.method_effective')}</option>
+                  <option value="tdfn">{t('onboarding.vat.method_tdfn')}</option>
+                  <option value="forfaitaire">{t('onboarding.vat.method_forfaitaire')}</option>
                 </select>
               </div>
               <div>
-                <label className="label">Fréquence</label>
+                <label className="label" htmlFor="lexa-onb-vatfreq">
+                  {t('onboarding.vat.frequency')}
+                </label>
                 <select
+                  id="lexa-onb-vatfreq"
+                  name="vatFrequency"
                   className="input"
                   value={draft.vatDeclarationFrequency ?? 'quarterly'}
                   onChange={(e) =>
@@ -338,10 +402,10 @@ export function Onboarding() {
                     })
                   }
                 >
-                  <option value="monthly">Mensuelle</option>
-                  <option value="quarterly">Trimestrielle</option>
-                  <option value="semesterly">Semestrielle</option>
-                  <option value="yearly">Annuelle</option>
+                  <option value="monthly">{t('onboarding.vat.frequency_monthly')}</option>
+                  <option value="quarterly">{t('onboarding.vat.frequency_quarterly')}</option>
+                  <option value="semesterly">{t('onboarding.vat.frequency_semesterly')}</option>
+                  <option value="yearly">{t('onboarding.vat.frequency_yearly')}</option>
                 </select>
               </div>
             </div>
@@ -355,35 +419,42 @@ export function Onboarding() {
     return (
       <div className="space-y-5">
         <div>
-          <h2 className="text-2xl mb-1">Coordonnées bancaires</h2>
-          <p className="text-sm text-lexa-muted">
-            Optionnel : permet l'import automatique des relevés bancaires plus tard.
-          </p>
+          <h2 className="text-2xl mb-1 font-semibold tracking-tight">
+            {t('onboarding.bank.title')}
+          </h2>
+          <p className="text-sm text-muted">{t('onboarding.bank.sub')}</p>
         </div>
 
         <div>
-          <label className="label">IBAN</label>
+          <label className="label" htmlFor="lexa-onb-iban">
+            {t('onboarding.bank.iban')}
+          </label>
           <input
+            id="lexa-onb-iban"
+            name="iban"
             className="input font-mono"
             value={draft.iban ?? ''}
             onChange={(e) => update({ iban: e.target.value.replace(/\s/g, '').toUpperCase() })}
-            placeholder="CH93 0076 2011 6238 5295 7"
+            placeholder={t('onboarding.bank.iban_placeholder')}
           />
         </div>
 
         <div>
-          <label className="label">QR-IBAN (optionnel)</label>
+          <label className="label" htmlFor="lexa-onb-qriban">
+            {t('onboarding.bank.qr_iban', { optional: t('common.optional') })}
+          </label>
           <input
+            id="lexa-onb-qriban"
+            name="qrIban"
             className="input font-mono"
             value={draft.qrIban ?? ''}
             onChange={(e) => update({ qrIban: e.target.value.replace(/\s/g, '').toUpperCase() })}
-            placeholder="CH44 3199 9123 0008 8901 2"
+            placeholder={t('onboarding.bank.qr_iban_placeholder')}
           />
         </div>
 
-        <div className="p-4 rounded-lg bg-lexa-bg border border-lexa-border text-sm text-lexa-muted">
-          Vous pourrez ajouter plus de comptes bancaires et connecter l'import IMAP
-          depuis les paramètres ensuite.
+        <div className="p-4 rounded-lg bg-elevated border border-border text-sm text-muted">
+          {t('onboarding.bank.note')}
         </div>
       </div>
     );
@@ -393,7 +464,7 @@ export function Onboarding() {
 function Mini({ icon: Icon, label }: { icon: typeof Sparkles; label: string }) {
   return (
     <div className="card p-4 text-center">
-      <Icon className="w-5 h-5 mx-auto mb-2 text-lexa-primary" />
+      <Icon className="w-5 h-5 mx-auto mb-2 text-accent" />
       <div className="text-xs font-medium">{label}</div>
     </div>
   );
@@ -416,12 +487,12 @@ function Toggle({
       onClick={onClick}
       className={`flex-1 rounded-xl border-2 p-4 text-left transition-colors ${
         active
-          ? 'border-lexa-primary bg-lexa-primary/5'
-          : 'border-lexa-border bg-lexa-surface hover:bg-lexa-bg'
+          ? 'border-accent bg-accent/5'
+          : 'border-border bg-surface hover:bg-elevated'
       }`}
     >
       <div className="font-medium">{label}</div>
-      <div className="text-xs text-lexa-muted mt-0.5">{sub}</div>
+      <div className="text-xs text-muted mt-0.5">{sub}</div>
     </button>
   );
 }

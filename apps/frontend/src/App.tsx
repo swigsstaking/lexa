@@ -1,14 +1,11 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { AppShell } from '@/components/AppShell';
 import { Home } from '@/routes/Home';
 import { Onboarding } from '@/routes/Onboarding';
-import { Dashboard } from '@/routes/Dashboard';
-import { Chat } from '@/routes/Chat';
-import { Ledger } from '@/routes/Ledger';
-import { useCompanyStore } from '@/stores/companyStore';
+import { Workspace } from '@/routes/Workspace';
+import { useActiveCompany } from '@/stores/companiesStore';
 
 function RequireCompany({ children }: { children: React.ReactNode }) {
-  const company = useCompanyStore((s) => s.company);
+  const company = useActiveCompany();
   if (!company) return <Navigate to="/onboarding" replace />;
   return <>{children}</>;
 }
@@ -19,16 +16,13 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/onboarding" element={<Onboarding />} />
       <Route
+        path="/workspace"
         element={
           <RequireCompany>
-            <AppShell />
+            <Workspace />
           </RequireCompany>
         }
-      >
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/ledger" element={<Ledger />} />
-        <Route path="/chat" element={<Chat />} />
-      </Route>
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -53,7 +53,7 @@ export function CompanySearchField({ onSelect, placeholder }: Props) {
   return (
     <div className="relative">
       <div className="relative">
-        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-lexa-muted pointer-events-none" />
+        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
         <input
           type="text"
           value={query}
@@ -63,15 +63,15 @@ export function CompanySearchField({ onSelect, placeholder }: Props) {
           className="input pl-10 pr-10"
         />
         {loading && (
-          <Loader2 className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-lexa-muted animate-spin" />
+          <Loader2 className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted animate-spin" />
         )}
       </div>
 
       {open && (
         <div className="absolute z-20 mt-1 w-full card max-h-80 overflow-auto">
-          {error && <div className="p-3 text-sm text-lexa-danger">{error}</div>}
+          {error && <div className="p-3 text-sm text-danger">{error}</div>}
           {!error && results.length === 0 && !loading && (
-            <div className="p-3 text-sm text-lexa-muted">
+            <div className="p-3 text-sm text-muted">
               Aucun résultat. Vous pouvez saisir manuellement.
             </div>
           )}
@@ -80,19 +80,19 @@ export function CompanySearchField({ onSelect, placeholder }: Props) {
               key={r.uid}
               type="button"
               onClick={() => handleSelect(r)}
-              className="w-full text-left px-4 py-3 hover:bg-lexa-bg border-b border-lexa-border last:border-0 transition-colors"
+              className="w-full text-left px-4 py-3 hover:bg-elevated border-b border-border last:border-0 transition-colors"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="font-medium text-sm truncate">{r.name}</div>
-                  <div className="text-xs text-lexa-muted mt-0.5 flex items-center gap-1">
+                  <div className="text-xs text-muted mt-0.5 flex items-center gap-1">
                     <MapPin className="w-3 h-3 flex-shrink-0" />
                     {[r.zip, r.city, r.canton].filter(Boolean).join(' ')}
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <div className="text-xs font-mono text-lexa-muted">{r.uid}</div>
-                  <div className="text-xs text-lexa-muted mt-0.5">{r.legalFormLabel}</div>
+                  <div className="text-xs font-mono text-muted">{r.uid}</div>
+                  <div className="text-xs text-muted mt-0.5">{r.legalFormLabel}</div>
                 </div>
               </div>
             </button>
