@@ -48,11 +48,14 @@ export function Workspace() {
     navigate('/');
   };
 
-  const allServicesUp =
-    health.data?.services.postgres &&
-    health.data?.services.qdrant &&
-    health.data?.services.ollama &&
-    health.data?.services.embedder;
+  const servicesState: 'checking' | 'up' | 'down' = health.data
+    ? health.data.services.postgres &&
+      health.data.services.qdrant &&
+      health.data.services.ollama &&
+      health.data.services.embedder
+      ? 'up'
+      : 'down'
+    : 'checking';
 
   return (
     <div className="h-screen w-screen flex flex-col bg-bg text-ink">
@@ -82,11 +85,19 @@ export function Workspace() {
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-elevated border border-border">
             <span
               className={`w-1.5 h-1.5 rounded-full ${
-                allServicesUp ? 'bg-success' : 'bg-danger'
+                servicesState === 'up'
+                  ? 'bg-success'
+                  : servicesState === 'down'
+                    ? 'bg-danger'
+                    : 'bg-muted animate-pulse'
               }`}
             />
             <span className="text-2xs text-muted">
-              {allServicesUp ? t('workspace.services_up') : t('workspace.services_down')}
+              {servicesState === 'up'
+                ? t('workspace.services_up')
+                : servicesState === 'down'
+                  ? t('workspace.services_down')
+                  : t('workspace.services_checking')}
             </span>
             {health.data && (
               <span className="text-2xs text-subtle mono-num ml-1">

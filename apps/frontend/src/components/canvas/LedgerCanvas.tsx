@@ -3,7 +3,6 @@ import {
   Background,
   BackgroundVariant,
   Controls,
-  MiniMap,
   ReactFlow,
   type EdgeTypes,
   type NodeTypes,
@@ -11,9 +10,10 @@ import {
 import '@xyflow/react/dist/style.css';
 import { useQuery } from '@tanstack/react-query';
 import { lexa } from '@/api/lexa';
-import { AccountNode, type AccountNodeData } from './AccountNode';
+import { AccountNode } from './AccountNode';
 import { TransactionEdge } from './TransactionEdge';
 import { buildCanvas } from './layout';
+import { CanvasSkeleton } from './CanvasSkeleton';
 
 const nodeTypes: NodeTypes = { account: AccountNode };
 const edgeTypes: EdgeTypes = { transaction: TransactionEdge };
@@ -28,11 +28,7 @@ export function LedgerCanvas() {
   }, [balance.data, entries.data]);
 
   if (balance.isLoading || entries.isLoading) {
-    return (
-      <div className="h-full grid place-items-center text-muted text-sm">
-        Chargement du canvas...
-      </div>
-    );
+    return <CanvasSkeleton />;
   }
 
   return (
@@ -55,21 +51,6 @@ export function LedgerCanvas() {
         color="rgb(var(--border))"
       />
       <Controls className="!bg-surface !border !border-border !rounded-lg [&>button]:!bg-surface [&>button]:!text-ink [&>button]:!border-border [&>button:hover]:!bg-elevated" />
-      <MiniMap
-        pannable
-        zoomable
-        maskColor="rgba(10, 11, 14, 0.6)"
-        className="!bg-surface !border !border-border !rounded-lg"
-        nodeColor={(n) => {
-          const d = n.data as AccountNodeData | undefined;
-          if (!d) return 'rgb(var(--border-strong))';
-          if (d.category === 'actif') return 'rgb(var(--success))';
-          if (d.category === 'passif') return 'rgb(var(--warning))';
-          if (d.category === 'charge') return 'rgb(var(--danger))';
-          if (d.category === 'produit') return 'rgb(var(--accent))';
-          return 'rgb(var(--border-strong))';
-        }}
-      />
     </ReactFlow>
   );
 }
