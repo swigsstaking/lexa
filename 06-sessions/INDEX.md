@@ -15,6 +15,7 @@ Historique chronologique des sessions de travail.
 | # | Date | Durée | Thème | Livrables | Doc |
 |---|---|---|---|---|---|
 | 01 | 2026-04-13 | ~2h | Fondations documentaires, choix du nom, audit prototype Spark, création de l'arborescence | Whitepaper v0.1, archi v0.1, roadmap 24 mois, KB index, docs de relais | [lien](2026-04-13-session-01.md) |
+| 02 | 2026-04-14 | ~1h30 | Décisions user (7 questions), setup Git + GitHub, inspection .59, ingestion LHID | Docs mis à jour avec décisions (VS en premier canton, backend .59:3010), git init + push, 108 articles LHID → Qdrant (791→899 pts) | [lien](2026-04-14-session-02.md) |
 
 ---
 

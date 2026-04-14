@@ -1,190 +1,211 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 01 — 2026-04-13](2026-04-13-session-01.md)
-**Prochaine session** : Session 02
+**Dernière session** : [Session 02 — 2026-04-14](2026-04-14-session-02.md)
+**Prochaine session** : Session 03
 
-> **Lecture obligatoire au début de la prochaine session.** Ce fichier est écrasé et remis à jour à chaque fin de session. Il contient exactement ce qu'il faut savoir pour reprendre sans friction.
+> **Lecture obligatoire au début de la prochaine session.** Ce fichier est écrasé à chaque fin de session.
 
 ---
 
 ## Où on en est
 
-**Phase** : 0 — Fondations documentaires
+**Phase** : 0 — Fondations documentaires + début enrichissement KB fédérale
 
-**Statut global** : Le projet **Lexa** est lancé. Arborescence créée, whitepaper v0.1 écrit, architecture 5 couches documentée, système multi-agents spécifié sur les modèles réels du DGX Spark, base de connaissances indexée, roadmap 24 mois posée.
+**Progrès sessions 01-02** :
+- ✅ Whitepaper v0.1, architecture, agent system, roadmap, KB index (session 01)
+- ✅ 7 questions stratégiques tranchées (session 02)
+- ✅ Repo Git initialisé et poussé sur **github.com/swigsstaking/lexa**
+- ✅ Infrastructure backend cadrée (serveur .59, port 3010, Postgres à installer)
+- ✅ **LHID ingérée** (108 articles) → collection Qdrant `swiss_law` à **899 points**
+- ✅ **4/5 lois fédérales clés ingérées** (LIFD, LTVA, CO, LHID) — manque LP
 
-**Aucun code encore écrit.** Le backend et le frontend Lexa n'existent pas. En revanche, un prototype avancé existe sur le DGX Spark (`~/ollama-compta/`) avec Qdrant + BGE-M3 + modèle `comptable-suisse` fine-tuné + 776 articles Fedlex + dataset 501 exemples + OCR service. **C'est notre fondation technique.**
+**Aucun code applicatif encore écrit.** Le backend et le frontend Lexa n'existent toujours pas. On est en phase KB enrichment.
 
 ---
 
-## Ce qu'il faut lire AVANT de démarrer la session 02
+## Infrastructure utilisée
+
+| Machine | Rôle | Status |
+|---|---|---|
+| **DGX Spark** 192.168.110.103 | Qdrant + Ollama + BGE-M3 + scripts Python d'ingestion | ✅ Actif |
+| **Serveur .59** 192.168.110.59 | Backend Lexa futur (port 3010) | ⚠️ Postgres à installer |
+| **Mac local** | Dev docs + git | ✅ Actif |
+| **GitHub** [swigsstaking/lexa](https://github.com/swigsstaking/lexa) | Source control | ✅ Actif |
+
+---
+
+## Ce qu'il faut lire AVANT de démarrer la session 03
 
 Dans cet ordre :
 
-1. **`README.md`** — vue d'ensemble du projet (5 min)
-2. **`00-vision/north-star.md`** — la vision en 1 page (3 min)
-3. **`00-vision/whitepaper.md`** — document maître v0.1 (15 min)
-4. **`02-architecture/overview.md`** — architecture 5 couches (10 min)
-5. **`02-architecture/agent-system.md`** — système multi-agents (10 min)
-6. **`01-knowledge-base/INDEX.md`** — statut actuel de la base légale (5 min)
-7. **`05-roadmap/milestones.md`** — roadmap 24 mois (5 min)
-8. **`06-sessions/2026-04-13-session-01.md`** — journal complet de la session 01 (10 min)
+1. **`README.md`** — vue d'ensemble (3 min)
+2. **`06-sessions/2026-04-14-session-02.md`** — journal session 02 (10 min) — **essentiel pour comprendre l'état actuel**
+3. **`01-knowledge-base/INDEX.md`** — statut de la KB après ingestion LHID (5 min)
+4. **`05-roadmap/milestones.md`** — roadmap mise à jour avec VS en premier canton (5 min)
 
-**Total : ~1h de lecture pour reprendre en pleine conscience.**
+**Total : ~25 min de lecture pour reprendre en pleine conscience.**
+
+Les docs de fond (whitepaper, architecture) n'ont pas changé — pas besoin de les relire si déjà parcourus.
 
 ---
 
 ## Questions en attente de réponse du user
 
-⚠️ **Ces 7 questions doivent être tranchées au début de la session 02** avant toute action :
+⚠️ **Ces 4 questions doivent être tranchées au début de la session 03** :
 
-1. **Git** — Est-ce qu'on init un repo Git local dans `~/CascadeProjects/lexa/` dès maintenant ? Remote GitHub/GitLab privé ?
-   - *Reco Claude : oui, repo privé dédié, .gitignore bien configuré*
+1. **LP (Loi sur la poursuite et faillite, RS 281.1)** — On l'ingère en priorité session 03, ou on passe aux circulaires AFC ?
+   - *Reco Claude : circulaires/notices AFC d'abord, LP plus tard (procédures rares)*
 
-2. **Fine-tuning LoRA** — Est-ce qu'on investit 1-2 jours à l'exécuter sur une machine x86, ou on reste sur system prompt + RAG (97% déjà) ?
-   - *Reco Claude : skip fine-tuning pour l'instant, 97% suffit*
+2. **Circulaires AFC prioritaires** — OK pour cette liste : Info TVA 01 (méthode effective), Info TVA 03 (TDFN), Info TVA 14 (immeubles), Notice A complète (amortissements), Notice 1 (évaluation titres non cotés), Circulaires IFD 1 à 30 ?
+   - *Reco Claude : OK avec cette liste, à ajuster selon dispo*
 
-3. **Canvas library** — react-flow ou tldraw ? Je peux faire un benchmark concret en session 02.
-   - *Reco Claude : benchmark en session 02*
+3. **KB cantonale VS** — Démarrer en session 03 (en parallèle des AFC) ou en session 04 ?
+   - *Reco Claude : parallèle session 03, mais attention — la loi VS peut ne pas être en AkomaNtoso, il faudra peut-être un parser HTML/PDF dédié*
 
-4. **Premier canton à attaquer** — Genève (plus de ressources en ligne) ou Vaud (plus de fiduciaires) ?
-   - *Reco Claude : Genève*
-
-5. **Priorité session 02** — (a) KB legal, (b) Backend scaffold, (c) Canvas prototype, (d) Fine-tuning ?
-   - *Reco Claude : (a) en premier, KB est le fondement*
-
-6. **Expert fiduciaire** — Tu as quelqu'un en tête pour la validation externe ? À contacter quand ?
-   - *Reco Claude : identifier en T1 2026, premier contact T2 2026*
-
-7. **Swiss GAAP RPC** — On achète (~300-500 CHF) pour enrichir la KB, ou on s'en passe ?
-   - *Reco Claude : à décider selon budget — peut attendre*
+4. **Installation Postgres sur .59** — Maintenant (5 min, besoin de sudo) ou plus tard (T2 2026) ?
+   - *Reco Claude : maintenant, pour ne pas avoir de surprise plus tard*
 
 ---
 
-## Plan détaillé de la session 02 (si recommandations Claude acceptées)
+## Plan détaillé de la session 03 (si recommandations Claude acceptées)
 
-### Étape 1 — Initialisation Git (15 min)
+### Étape 1 — Installation Postgres sur .59 (5-10 min)
+
+```bash
+ssh swigs@192.168.110.59
+sudo apt-get update
+sudo apt-get install -y postgresql-16 postgresql-contrib-16
+sudo systemctl enable postgresql
+sudo systemctl start postgresql
+
+# Créer la base lexa + utilisateur
+sudo -u postgres psql <<SQL
+CREATE DATABASE lexa;
+CREATE USER lexa_app WITH PASSWORD 'TBD-generate-strong-password';
+GRANT ALL PRIVILEGES ON DATABASE lexa TO lexa_app;
+SQL
+```
+
+Stocker le password dans `.env` (jamais commit). Noter dans la KB.
+
+### Étape 2 — Catalogue et ingestion des circulaires AFC (1-2h)
+
+**Sources** :
+- TVA : https://www.estv.admin.ch/estv/fr/accueil/tva/publications-tva/info-tva.html
+- IFD : https://www.estv.admin.ch/estv/fr/accueil/impot-federal-direct/circulaires-ifd.html
+
+**Problème** : Les circulaires AFC sont en PDF, pas en AkomaNtoso. Il faut un parser PDF → texte. Options :
+- **pdfplumber** (Python, déjà possible d'installer)
+- **pymupdf / fitz**
+- **Qwen-VL** (déjà sur le Spark !) pour OCR/extraction structurée
+
+Créer un script `~/ollama-compta/scripts/ingest_afc_circulars_lexa.py` qui :
+1. Télécharge les PDFs depuis les URLs
+2. Extrait le texte
+3. Chunke par section / numéro de paragraphe (pas par article — les PDFs sont plus libres)
+4. Encode avec BGE-M3
+5. Upsert dans Qdrant avec UUIDs
+
+**Schéma de payload** pour les circulaires :
+```yaml
+text: "..."
+law: "AFC-TVA-Info-01"  # ou "AFC-IFD-Circ-17"
+label: "Info TVA 01 — Méthode effective de décompte"
+article: "section 2.3"  # numéro de section
+heading: "..."
+rs: null  # les circulaires n'ont pas de RS
+topic: "decompte_tva_effective"
+date_version: "2024-01-01"
+source: "afc"
+url: "https://www.estv.admin.ch/..."
+```
+
+### Étape 3 — Démarrage KB Valais (1h)
+
+**Source** : https://www.vs.ch/web/scc + https://lex.vs.ch/ (registre législatif valaisan)
+
+Chercher la loi fiscale VS (RSVS 642.1). Vérifier si disponible en XML structuré ou seulement HTML/PDF. Créer le script `ingest_vs_laws_lexa.py` adapté au format trouvé.
+
+Documents à cibler :
+- Loi fiscale VS (RSVS 642.1)
+- Règlement d'exécution (RELF)
+- Barème cantonal 2026 (si disponible publiquement)
+
+### Étape 4 — Extraction du plan comptable Käfer en format structuré (30 min)
+
+Actuellement dans le system prompt de `comptable-suisse` (texte libre). À extraire en YAML structuré :
+
+```yaml
+accounts:
+  - id: "1000"
+    label: "Caisse"
+    class: 1
+    type: "balance_sheet_asset"
+    nature: "liquid"
+  - id: "1020"
+    label: "Banque - compte courant"
+    class: 1
+    # ...
+```
+
+Puis ingérer en Qdrant avec un topic dédié `"plan_comptable_kafer"`.
+
+### Étape 5 — Commit + mise à jour NEXT-SESSION (15 min)
 
 ```bash
 cd /Users/corentinflaction/CascadeProjects/lexa
-git init
 git add .
-git commit -m "chore: initial documentation structure (session 01)"
-# Puis créer repo privé sur GitHub et pousser
+git commit -m "feat(kb): add AFC circulars, VS cantonal laws, structured Käfer plan"
+git push
 ```
 
-Créer `.gitignore` avec :
-```
-node_modules/
-.env
-.env.local
-*.log
-.DS_Store
-/dist/
-/build/
-/coverage/
-.vscode/
-.idea/
-```
-
-### Étape 2 — Compléter `competitive-analysis.md` (30 min)
-
-Analyse détaillée de chaque concurrent (Bexio, Abacus, Accounto, Banana, Run my Accounts) :
-- Positionnement tarifaire
-- Fonctionnalités clés
-- Forces et faiblesses
-- UX/UI
-- Niveau d'IA
-- Nos avantages différenciateurs
-
-### Étape 3 — Ingestion LHID dans Qdrant (1h)
-
-Sur le Spark :
-
-```bash
-ssh swigs@192.168.110.103
-
-# Télécharger LHID XML depuis Fedlex
-cd ~/ollama-compta/laws
-wget "https://fedlex.data.admin.ch/filestore/fedlex.data.admin.ch/eli/cc/1991/1256_1256_1256/20250101/fr/xml/fedlex-data-admin-ch-eli-cc-1991-1256_1256_1256-20250101-fr-xml-N.xml" -O lhid_2025-01-01.xml
-
-# Adapter ingest_laws_v2.py pour inclure LHID
-# Lancer l'ingestion
-python3 scripts/ingest_laws_v2.py --law LHID
-
-# Vérifier que c'est bien dans Qdrant
-python3 scripts/test_rag.py
-```
-
-Valider avec 3-4 requêtes LHID (ex : "principe d'harmonisation", "régime fiscal des fondations", "impôt sur la fortune").
-
-### Étape 4 — Catalogue des circulaires AFC critiques (45 min)
-
-Constituer un fichier `01-knowledge-base/federal/circulaires-afc-index.md` avec :
-- Liste des circulaires AFC-TVA (Info TVA 01 à 30)
-- Liste des circulaires AFC-IFD (Circulaires n° 1 à 50+)
-- Notices (Notice A, Notice 1, etc.)
-- Priorité d'ingestion
-- URLs officielles
-
-### Étape 5 — Journal de session + mise à jour NEXT-SESSION (15 min)
-
-Créer `06-sessions/2026-MM-DD-session-02.md` et mettre à jour ce fichier.
+Créer `06-sessions/2026-MM-DD-session-03.md` et réécrire ce fichier.
 
 ---
 
-## Plan alternatif (si priorité (b) backend scaffold retenue)
+## Plan alternatif (si priorité différente)
 
-Au lieu des étapes 3-4 ci-dessus :
-
-### Étape 3bis — Scaffold `lexa-backend` (2h)
-
-```bash
-cd ~/CascadeProjects
-mkdir lexa-backend && cd lexa-backend
-npm init -y
-npm install express typescript tsx @types/node @types/express pg pg-promise mongoose
-npm install -D nodemon eslint prettier
-# tsconfig.json, src/ structure, migrations Postgres
-```
-
-Créer :
-- `src/app.ts` (Express minimal)
-- `src/db/postgres.ts` (connexion event store)
-- `src/db/schema.sql` (migration initiale event store)
-- `src/events/EventStore.ts` (classe write/read events)
-- `src/routes/health.ts`
-
-Tester localement que l'event store accepte un event et peut le relire.
+Si le user préfère plutôt scaffolder le backend, voir **session 01 NEXT-SESSION.md** pour le plan backend scaffold. Mais ma reco reste de finir la KB fédérale avant de toucher au code.
 
 ---
 
-## Commandes utiles à garder sous la main
+## État de la collection Qdrant
 
-```bash
-# SSH DGX Spark
-ssh swigs@192.168.110.103
+**Collection `swiss_law`** : **899 points**
 
-# Liste des modèles Ollama dispo
-ollama list
+| Loi | Articles | % du total | Statut |
+|---|---|---|---|
+| LTVA (641.20) | 131 | 14.6% | ✅ Session 01 (Fedlex XML) |
+| LIFD (642.11) | 224 | 24.9% | ✅ Session 01 (Fedlex XML) |
+| CO (220, titre 32 + autres) | 421 | 46.8% | ✅ Session 01 (Fedlex XML) |
+| **LHID (642.14)** | **108** | **12.0%** | ✅ **Session 02 (Fedlex XML)** |
+| Résumés ciblés (ingest_laws_v2) | 15 | 1.7% | ✅ Session 01 (manuel) |
 
-# Test RAG existant
-cd ~/ollama-compta && python3 scripts/test_rag.py
-
-# Status Qdrant
-curl http://localhost:6333/collections/swiss_law
-
-# Nombre de points dans la collection
-curl http://localhost:6333/collections/swiss_law | jq '.result.points_count'
-
-# Depuis macOS
-cd /Users/corentinflaction/CascadeProjects/lexa
-ls -la
-```
+**Manquant (priorité session 03+)** :
+- LP (281.1) — procédures (~200 articles probablement)
+- OIFD + OLTVA — ordonnances d'exécution
+- Circulaires AFC-TVA (~15-20 documents PDF)
+- Circulaires AFC-IFD (~30-40 documents PDF)
+- Notices AFC (Notice A complète, Notice 1, etc.)
+- Plan comptable Käfer structuré
+- Standards techniques (eCH-0217, Swissdec, CAMT.053, QR)
+- Lois cantonales SR (VS d'abord, puis GE, VD, FR, NE, JU, BE-Jura)
 
 ---
 
-## État des modèles DGX Spark (rappel)
+## Scripts d'ingestion disponibles sur le Spark
+
+| Script | Rôle | Destructif ? |
+|---|---|---|
+| `~/ingest_swiss_law.py` | Parser Fedlex AkomaNtoso original (LTVA + LIFD + CO) | ⚠️ **OUI** (delete_collection) — **ne pas relancer** |
+| `~/ollama-compta/scripts/ingest_laws_v2.py` | Articles hardcodés additifs | ❌ Non (upsert UUID) |
+| `~/ollama-compta/scripts/ingest_lhid_lexa.py` | **Nouveau — LHID uniquement, additif** | ❌ Non (upsert UUID) |
+
+**Règle** : à partir de maintenant, tout nouveau script d'ingestion Lexa doit suivre le pattern `ingest_*_lexa.py` (upsert UUID pur, pas de delete_collection).
+
+---
+
+## Modèles sur le DGX Spark (rappel)
 
 | Modèle | Taille | Usage prévu dans Lexa |
 |---|---|---|
@@ -192,55 +213,39 @@ ls -la
 | `comptable-suisse-fast` | 17 GB (Q4) | Agent Classifier, chat interactif, 11 tok/s |
 | `qwen3-vl-ocr` | 6.1 GB | OCR principal (factures, reçus) |
 | `deepseek-ocr` | 6.7 GB | OCR fallback |
+| `qwen3-vl:8b` | 6.1 GB | Vision générale |
 | `qwen3.5:9b-optimized` | 10 GB | Tâches légères, routage |
 | BGE-M3 | ~2 GB | Embeddings RAG multilingue |
 
-**Ollama config** : `OLLAMA_FLASH_ATTENTION=1`, `KEEP_ALIVE=-1` (modèles permanents), KV cache Q4.
+Ollama config : `OLLAMA_FLASH_ATTENTION=1`, `KEEP_ALIVE=-1`, KV cache Q4.
 
 ---
 
-## État de la base de connaissances (rappel)
+## Avertissements importants (rappel)
 
-**Qdrant collection `swiss_law`** : 776 articles ingérés
-- LTVA : 131 articles (RS 641.20, version 2025-01-01) ✅
-- LIFD : 224 articles (RS 642.11, version 2025-01-01) ✅
-- CO : 421 articles (RS 220, version 2025-10-01) ✅
-- Notice A (amortissements) : partielle ⚠️
-- Plan Käfer : dans system prompt, à extraire 🟡
-
-**Manquant** (prioritaire) :
-- LHID (642.14) ❌
-- LP (281.1) ❌
-- Circulaires AFC ❌
-- Notices AFC complètes ❌
-- Lois cantonales SR (7 cantons) ❌
-- Règlements d'application cantonaux ❌
-- Barèmes cantonaux ❌
-- Formulaires officiels cantonaux ❌
-- Standards techniques (eCH-0217, Swissdec, CAMT.053, QR) ❌
+1. **Ne jamais toucher aux 3 processus Ollama actifs sur le Spark** — ils servent à d'autres projets en prod.
+2. **Ne pas supprimer le prototype `~/ollama-compta/`** — utilisé par le user pour du consulting.
+3. **Ne jamais relancer `ingest_swiss_law.py` tel quel** — il détruit la collection. Pour chaque nouvelle ingestion, créer un script `*_lexa.py` dédié en upsert.
+4. **Toujours citer la source** — règle absolue respectée par le modèle `comptable-suisse`.
+5. **Pas de secrets dans le repo** — `.env` git-ignoré.
+6. **Le fine-tuning est bloqué par aarch64** — ne pas perdre de temps à essayer sur le Spark.
 
 ---
 
-## Avertissements importants
+## Configuration serveur backend Lexa (à venir)
 
-1. **Ne jamais toucher aux 3 processus Ollama actifs** sur le Spark — ils servent à d'autres projets en prod. Utiliser seulement l'API Ollama (port 11434) sans redémarrer le daemon.
-
-2. **Ne pas supprimer le prototype `~/ollama-compta/`** — il est utilisé par le user pour du consulting. Travailler en lecture ou en copie, pas en modification destructive.
-
-3. **Respecter l'isolation cantonale** — ne pas mélanger les règles fiscales de plusieurs cantons dans le même namespace/topic Qdrant.
-
-4. **Toujours citer la source** — règle absolue du modèle `comptable-suisse`. Si tu construis un nouvel agent, respecte la même discipline dans le system prompt.
-
-5. **Pas de secrets dans le repo** — clés API, tokens, mots de passe → `.env` git-ignoré.
-
-6. **Le fine-tuning est bloqué par aarch64** — ne pas perdre de temps à essayer sur le Spark directement. Utiliser une machine x86 (cloud GPU ou locale).
-
----
-
-## Tâches en cours
-
-Voir la task list Claude (TaskList) — toutes les tâches de session 01 sont marquées completed. Session 02 démarrera avec une nouvelle task list.
+- **Hôte** : swigs@192.168.110.59 (sw6c-1)
+- **Port** : 3010
+- **Path install** : `/home/swigs/lexa-backend/` (cohérence avec les autres apps)
+- **PM2 name** : `lexa-backend`
+- **Stack** : Node 20.19, TypeScript, Express, pg (Postgres), mongoose (MongoDB), redis, ioredis
+- **Deploy pattern** (même que swigs-workflow) :
+  ```bash
+  rsync -avz --exclude='node_modules' --exclude='.git' --exclude='.env' \
+    backend/ swigs@192.168.110.59:/home/swigs/lexa-backend/
+  ssh swigs@192.168.110.59 'cd lexa-backend && npm ci --omit=dev && pm2 restart lexa-backend'
+  ```
 
 ---
 
-**Dernière mise à jour** : 2026-04-13 (fin session 01)
+**Dernière mise à jour** : 2026-04-14 (fin session 02)

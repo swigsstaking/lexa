@@ -9,7 +9,7 @@
 
 | Catégorie | Documents prévus | Déjà ingérés | % |
 |---|---|---|---|
-| Fédéral — lois | 5 (LIFD, LHID, LTVA, CO, LP) | 3 (LIFD, LTVA, CO) | 60% |
+| Fédéral — lois | 5 (LIFD, LHID, LTVA, CO, LP) | **4 (LIFD, LTVA, CO, LHID)** | **80%** |
 | Fédéral — circulaires AFC | ~40 (TVA + directe) | 0 | 0% |
 | Fédéral — notices AFC | ~15 | 1 (Notice A amortissements, partielle) | ~5% |
 | Fédéral — jurisprudence TF | 0 (à décider scope) | 0 | — |
@@ -22,6 +22,8 @@
 
 *existe mais pas en format ingéré/requêtable
 
+**Total Qdrant collection `swiss_law`** : **899 points** (session 02 : +108 articles LHID)
+
 ---
 
 ## Fédéral
@@ -31,7 +33,7 @@
 | Document | RS | Statut | URL Fedlex | Notes |
 |---|---|---|---|---|
 | **LIFD** — Loi fédérale sur l'impôt fédéral direct | 642.11 | ✅ Ingéré (224 articles) | [xml](https://fedlex.data.admin.ch/filestore/...) | Version 2025-01-01 déjà sur Spark |
-| **LHID** — Loi sur l'harmonisation des impôts directs | 642.14 | ❌ Manquant | À télécharger | **Priorité haute** : base du droit cantonal |
+| **LHID** — Loi sur l'harmonisation des impôts directs | 642.14 | ✅ **Ingéré (108 articles, session 02)** | [xml](https://fedlex.data.admin.ch/filestore/fedlex.data.admin.ch/eli/cc/1991/1256_1256_1256/20250101/fr/xml/fedlex-data-admin-ch-eli-cc-1991-1256_1256_1256-20250101-fr-xml-1.xml) | Version 2025-01-01 — script `~/ollama-compta/scripts/ingest_lhid_lexa.py` |
 | **LTVA** — Loi sur la TVA | 641.20 | ✅ Ingéré (131 articles) | [xml](https://fedlex.data.admin.ch/filestore/...) | Version 2025-01-01 |
 | **CO** — Code des obligations (titre 32, art. 957-963b) | 220 | ✅ Ingéré (421 articles — dont d'autres titres) | [xml](https://fedlex.data.admin.ch/filestore/...) | Version 2025-10-01. Filtrer sur 957-963b ? |
 | **LP** — Loi sur la poursuite pour dettes et la faillite | 281.1 | ❌ Manquant | À télécharger | Priorité moyenne (procédures) |
