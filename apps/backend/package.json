@@ -1,0 +1,34 @@
+{
+  "name": "lexa-backend",
+  "version": "0.1.0",
+  "description": "Lexa - Backend AI comptable suisse (event-sourced + RAG multi-agents)",
+  "main": "dist/app.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "migrate": "tsx src/db/migrate.ts",
+    "test:rag": "tsx src/scripts/test-rag.ts",
+    "test:classify": "tsx src/scripts/test-classify.ts"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pg": "^8.13.1",
+    "uuid": "^11.0.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.5",
+    "@types/pg": "^8.11.10",
+    "@types/uuid": "^10.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

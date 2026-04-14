@@ -1,7 +1,11 @@
 # Dépendances
 node_modules/
+**/node_modules/
 .pnp
 .pnp.js
+apps/*/node_modules/
+apps/*/dist/
+apps/*/.env
 
 # Build
 dist/
