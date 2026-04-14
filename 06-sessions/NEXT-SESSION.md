@@ -1,25 +1,40 @@
 # NEXT SESSION — Point de reprise
 
 **Dernière session** : [Session 10 — 2026-04-14](2026-04-14-session-10.md)
-**Prochaine session** : Session 11 — **Deploy frontend + validation pont Pro→Lexa live + polish UX**
+**Prochaine session** : Session 11 — **Deploy frontend + validation pont Pro→Lexa live + polish UX + tests auto**
 
 > **Lecture obligatoire au début de la prochaine session.**
 
 ---
 
-## Bilan sessions 06-10 — Lexa MVP fonctionnel + frontend scaffold
+## Bilan sessions 06-10 — Lexa MVP end-to-end fonctionnel
 
-**Backend + frontend prêts** :
+**Backend + frontend validés E2E** :
 - 10 routes backend (health, rag, agents, transactions, ledger, connectors, onboarding)
-- 3 agents IA (classifier 10s, reasoning 7.4s, tva 15.8s)
-- Event-sourcing + grand livre auto-balancé
-- Pont Swigs Pro → Lexa **ACTIF** (LEXA_ENABLED=true en prod depuis session 10)
+- 3 agents IA (classifier 10s, reasoning 7.4s, **tva 6.9-10.6s** mesuré session 10)
+- Event-sourcing + grand livre auto-balancé (14 events, 7 comptes, balance équilibrée CHF 13'103.80)
+- Pont Swigs Pro → Lexa **ACTIF** (LEXA_ENABLED=true sur .59 depuis session 10)
 - Frontend React 19 + Vite 8 + Tailwind 3.4 — 5 routes opérationnelles
-- Onboarding wizard 4 étapes avec UID register BFS autocomplete
-- Dashboard / Ledger / Chat multi-agents
+- Onboarding wizard 4 étapes : **flow SWIGS SA validé de bout en bout** via chrome-devtools
+- Dashboard / Ledger / Chat — tout le back rendu correctement côté UI
+
+**Smoke tests session 10 (via chrome-devtools MCP)** :
+- ✅ Home → /onboarding navigation
+- ✅ CompanySearchField autocomplete "swigs" → "SWIGS SA" retourné ~300ms
+- ✅ Click sur résultat hydrate tout le draft (name, UID, legalForm=sa, NPA, ville, canton VS, isVatSubject=true)
+- ✅ Step 3 TVA pré-rempli en "Assujetti" (BFS retourne vatStatus=2)
+- ✅ Step 4 Banque + IBAN CH93 0076 2011 6238 5295 7
+- ✅ Click "Terminer" → POST /onboarding/company → redirect /dashboard
+- ✅ Dashboard : 14 events, 7 comptes, CHF 13'103.80, Équilibrée, 4 services verts, 10 écritures colorisées
+- ✅ Ledger : balance par compte + 14 écritures détaillées
+- ✅ Chat TVA : "Taux TVA standard en Suisse ?" → réponse citant LTVA art. 25 en 6.9s avec 5 citations cliquables (liens fedlex)
+- ✅ Chat TVA : "Repas affaires TVA déductible ?" → Art. 29 al. 2 LTVA en 10.6s
 
 **Il reste à** : déployer le frontend sur .59, valider la boucle Pro→Lexa en live,
-ajouter le webhook retour Lexa→Pro, tests automatisés.
+ajouter le webhook retour Lexa→Pro, tests automatisés, polish UX.
+
+**Commit session 10** : `1609b42 feat(frontend): session 10 — React 19 + Vite + Tailwind scaffold + onboarding wizard`
+— local, **non pushé**. À pousser en début session 11.
 
 ---
 
@@ -132,11 +147,30 @@ Nécessite :
 
 ## Questions à trancher en début de session 11
 
-1. **Où déployer le frontend ?** (path, port, ou subdomain) — ma reco : subdomain `lexa.swigs.local` en dev, `lexa.swigs.online` en prod avec cert Let's Encrypt
-2. **Ordre des étapes** — validation pont → tests automatisés → deploy ? Ou deploy d'abord pour démo ?
-3. **Auth frontend** — multi-tenant JWT ou on reste single-tenant avec `companyStore` localStorage ?
-4. **Canvas visuel (react-flow vs tldraw)** — toujours à benchmarker
-5. **Webhook retour Pro** — HMAC auth ou basic shared secret dans header ?
+1. **Push session 10 sur origin/main maintenant ?** — commit local `1609b42` à envoyer (ma reco : oui)
+2. **Où déployer le frontend ?** (path, port, ou subdomain) — ma reco : subdomain `lexa.swigs.local` en dev, `lexa.swigs.online` en prod avec cert Let's Encrypt
+3. **Ordre des étapes** — validation pont → tests automatisés → deploy ? Ou deploy d'abord pour démo ?
+4. **Auth frontend** — multi-tenant JWT ou on reste single-tenant avec `companyStore` localStorage ?
+5. **Canvas visuel (react-flow vs tldraw)** — toujours à benchmarker
+6. **Webhook retour Pro** — HMAC auth ou basic shared secret dans header ?
+
+---
+
+## Dette technique identifiée en session 10 (à traiter en 11)
+
+| Priorité | Item | Où | Effort |
+|---|---|---|---|
+| P1 | Vérifier que le pont Pro→Lexa a bien reçu une transaction (logs lexa-backend `POST /connectors/bank/ingest`) | .59 logs | 5 min |
+| P2 | Warning a11y : "form field element should have an id or name attribute" | `StepBank` IBAN inputs, ajouter `id` / `name` | 5 min |
+| P2 | Le `companyStore` persist est global — si plusieurs users testent sur le même browser, ils partagent. À isoler en session 11 si on ajoute l'auth. | `stores/companyStore.ts` | 15 min si JWT |
+| P3 | Les `id`/`tenant_id` des writes ne sont pas filtrés côté UI — on affiche le tenant fixe `00000000-0000-0000-0000-000000000001` du seed. Quand on onboarde SWIGS, on crée un nouveau tenant mais le dashboard continue de fetcher le tenant par défaut. À corriger : passer `tenantId` dans les requêtes. | `api/client.ts` + routes backend | 30 min |
+| P3 | Loading skeletons au lieu de "Chargement..." | Dashboard, Ledger | 20 min |
+| P3 | Empty states élégants | Dashboard (écritures vides) | 10 min |
+| P4 | Toast notifications (react-hot-toast) pour succès/erreurs onboarding | global | 15 min |
+| P4 | Form validation Zod dans onboarding | `routes/Onboarding.tsx` | 30 min |
+| P4 | i18n (fr-CH seulement mais structure i18next prête) | global | 1h |
+
+**Note importante sur P3 "tenant isolation"** : actuellement le backend `GET /ledger`, `/transactions/stats/summary`, etc. retournent TOUJOURS les données du tenant `00000000-0000-0000-0000-000000000001` (le seed). Quand on a onboardé SWIGS SA en session 10, la company a été créée avec un nouveau `tenant_id` persisté dans `companyStore`, mais le dashboard continue de montrer les 14 events du tenant seed. **Pour une vraie UX multi-tenant il faut** : (a) passer `tenant_id` en header ou query param aux requêtes backend, (b) côté backend, lire ce tenant et filter. À trancher : est-ce session 11 ou plus tard ?
 
 ---
 
@@ -183,4 +217,25 @@ cd ~/CascadeProjects/lexa/apps/frontend && npx tsc -b && npm run build
 
 ---
 
-**Dernière mise à jour** : 2026-04-14 (fin session 10)
+## Quick-start session 11 (copier-coller)
+
+```bash
+# 1. Sync repo
+cd ~/CascadeProjects/lexa
+git log --oneline -3   # vérifier qu'on est sur 1609b42
+git push origin main   # (après confirmation user)
+
+# 2. Vérifier que rien n'a bougé côté backend + pont
+ssh swigs@192.168.110.59 'curl -s http://localhost:3010/health; echo; grep -E "^LEXA_" /home/swigs/swigs-workflow/.env'
+ssh swigs@192.168.110.59 'pm2 logs lexa-backend --lines 200 --nostream | grep -i "ingest\|classifier\|lexa-pro"'
+
+# 3. Relancer dev frontend
+cd apps/frontend && npm run dev   # → http://localhost:5190
+
+# 4. Fix rapide dette P2 a11y (AVANT le deploy) : ajouter id/name aux inputs
+# Fichier : src/routes/Onboarding.tsx StepBank
+```
+
+---
+
+**Dernière mise à jour** : 2026-04-14 (fin session 10, après smoke tests chrome-devtools + commit)
