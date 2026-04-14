@@ -18,6 +18,7 @@ Historique chronologique des sessions de travail.
 | 02 | 2026-04-14 | ~1h30 | Décisions user (7 questions), setup Git + GitHub, inspection .59, ingestion LHID | Docs mis à jour avec décisions (VS en premier canton, backend .59:3010), git init + push, 108 articles LHID → Qdrant (791→899 pts) | [lien](2026-04-14-session-02.md) |
 | 03 | 2026-04-14 | ~2h30 | Ingestion massive : 15 docs AFC (Notice A + 14 circ IFD) + 4 docs Valais (Guide PP 2024, barème 2026, déductions, impôt source) | Scripts `ingest_afc_pdfs_lexa.py` + `ingest_vs_pdfs_lexa.py`, +1880 AFC + 228 VS → **3007 pts**, 10/10 tests RAG OK | [lien](2026-04-14-session-03.md) |
 | 04 | 2026-04-14 | ~3h | LP + CSI 28 + Loi fiscale VS via Playwright. Installation Playwright+Chromium. Tentatives Postgres (password refusé) et Info TVA (JSF complexe, reporté) | +397 LP + 479 CSI + 175 VS-LF → **4058 pts**. Playwright validé sur lex.vs.ch (Cloudflare bypass) | [lien](2026-04-14-session-04.md) |
+| 05 | 2026-04-14 | ~3h | Postgres 14 installé, parser VS fix (175→339 articles), OIFD+OLTVA+OIA+ORC via SPARQL subagent, Info TVA 4 publications via flow JSF PDF | +164 VS +448 ordonnances +652 Info TVA → **5322 pts**. Tests RAG Info TVA jusqu'à 0.778 (record) | [lien](2026-04-14-session-05.md) |
 
 ---
 

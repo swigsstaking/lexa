@@ -55,14 +55,18 @@ Ce fichier liste tous les documents de l'Administration fédérale des contribut
 
 | ID | Titre | URL | Statut |
 |---|---|---|---|
-| `AFC-Info-TVA-12` | Info TVA 12 — Taux de la dette fiscale nette | [HTML](https://www.gate.estv.admin.ch/mwst-webpublikationen/public/pages/taxInfos/tableOfContent.xhtml?publicationId=1004992) | ❌ À ingérer (scraping HTML nécessaire) |
-| `AFC-Info-TVA-15` | Info TVA 15 — Décompte et paiement de l'impôt | [HTML](https://www.gate.estv.admin.ch/mwst-webpublikationen/public/pages/taxInfos/tableOfContent.xhtml?publicationId=1013189) | ❌ À ingérer |
-| `AFC-Info-TVA-secteur-17` | Info TVA secteur 17 — Immeubles | [HTML](https://www.gate.estv.admin.ch/mwst-webpublikationen/public/pages/sectorInfos/cipherDisplay.xhtml?publicationId=1041941) | ❌ À ingérer |
-| `AFC-Info-TVA-secteur-04` | Info TVA secteur 04 — Industrie du bâtiment | [HTML](https://www.gate.estv.admin.ch/mwst-webpublikationen/public/pages/sectorInfos/cipherDisplay.xhtml?publicationId=1000849) | ❌ À ingérer |
+| `AFC-Info-TVA-12` | Info TVA 12 — Taux de la dette fiscale nette | [HTML](https://www.gate.estv.admin.ch/mwst-webpublikationen/public/pages/taxInfos/tableOfContent.xhtml?publicationId=1004992) | ✅ Ingéré session 05 (via flow JSF → PDF FR) |
+| `AFC-Info-TVA-15` | Info TVA 15 — Décompte et paiement de l'impôt | [HTML](https://www.gate.estv.admin.ch/mwst-webpublikationen/public/pages/taxInfos/tableOfContent.xhtml?publicationId=1013189) | ✅ Ingéré session 05 |
+| `AFC-Info-TVA-secteur-17` | Info TVA secteur 17 — Immeubles | [HTML](https://www.gate.estv.admin.ch/mwst-webpublikationen/public/pages/sectorInfos/cipherDisplay.xhtml?publicationId=1041941) | ✅ Ingéré session 05 |
+| `AFC-Info-TVA-secteur-04` | Info TVA secteur 04 — Industrie du bâtiment | [HTML](https://www.gate.estv.admin.ch/mwst-webpublikationen/public/pages/sectorInfos/cipherDisplay.xhtml?publicationId=1000849) | ✅ Ingéré session 05 |
 
-**Fallback historique (2010)** : un PDF hébergé par kmu.admin.ch pour Info TVA 12 TDFN — https://www.kmu.admin.ch/dam/kmu/fr/dokumente/savoir-pratique/Financement/Mehrwertsteuer_Info_12_2010_Saldosteuersatze_F.pdf
+**Méthode d'ingestion** : flow JSF en 4 étapes qui génère un PDF complet en français :
+1. GET `tableOfContent.xhtml?publicationId=X` → récupérer cookies + ViewState
+2. POST changement de langue en français (ID `j_idt20:j_idt24` sur la page)
+3. GET `pdfSelectionList.xhtml?publicationId=X&lang=fr` → nouveau ViewState + N checkboxes
+4. POST avec toutes les checkboxes cochées → retourne directement `application/pdf` (FR)
 
-**TODO session 04+** : créer un script `ingest_afc_webpublications_lexa.py` avec un scraper HTML (BeautifulSoup ou le bouton "créer PDF" du portail).
+Script : `~/ollama-compta/scripts/ingest_afc_info_tva_lexa.py`
 
 ---
 
