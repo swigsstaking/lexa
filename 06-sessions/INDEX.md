@@ -23,6 +23,7 @@ Historique chronologique des sessions de travail.
 | 07 | 2026-04-14 | ~4h | **OPTIMISATION MASSIVE** : config Ollama (KV q8_0, NUM_PARALLEL=1), Modelfile `lexa-classifier` JSON, BGE-M3 sur GPU via llama.cpp (build sm_121a), event-sourced flow POST /transactions, plan Käfer 66 comptes, systemd lexa-llama-embed | `/rag/ask` 797s→43s (18×), `/transactions` 9.8s end-to-end, BGE-M3 ×200, Käfer ingéré (5388 pts) | [lien](2026-04-14-session-07.md) |
 | 08 | 2026-04-14 | ~2h | Modelfile `lexa-reasoning` (`/rag/ask` → 7.4s, 108× vs initial), projection Grand Livre (materialized view + /ledger/balance), connecteur Swigs Pro `POST /connectors/bank/ingest` (compatible format BankTransaction) | 14 events, 7 comptes, balance équilibrée 13'103.80 CHF, MVP fonctionnellement complet | [lien](2026-04-14-session-08.md) |
 | 09 | 2026-04-14 | ~2h | Agent TVA dédié (lexa-tva), onboarding UID register BFS (Lexa indépendante), hook Swigs Pro non-bloquant (flag LEXA_ENABLED), migration 003 companies | 10 routes backend, 3 agents, search company 278ms, Lexa 100% indépendante, Pro→Lexa bridge installé | [lien](2026-04-14-session-09.md) |
+| 10 | 2026-04-14 | ~1h30 | **FRONTEND** : scaffold React 19 + Vite 8 + Tailwind 3.4, routing + AppShell, onboarding wizard 4 étapes (framer-motion), dashboard + ledger + chat 3 agents, activation live du pont Pro→Lexa | 18 fichiers TS/TSX, 5 routes, build 465KB, proxy Vite /api validé, tsc clean | [lien](2026-04-14-session-10.md) |
 
 ---
 

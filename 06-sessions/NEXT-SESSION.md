@@ -1,23 +1,25 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 09 — 2026-04-14](2026-04-14-session-09.md)
-**Prochaine session** : Session 10 — **Frontend Lexa** (pivot UX) + tests automatisés
+**Dernière session** : [Session 10 — 2026-04-14](2026-04-14-session-10.md)
+**Prochaine session** : Session 11 — **Deploy frontend + validation pont Pro→Lexa live + polish UX**
 
 > **Lecture obligatoire au début de la prochaine session.**
 
 ---
 
-## Bilan sessions 06-09 — Lexa MVP fonctionnel
+## Bilan sessions 06-10 — Lexa MVP fonctionnel + frontend scaffold
 
-**Backend Lexa est production-ready** avec :
-- 3 agents IA (classifier, reasoning, tva)
-- Onboarding indépendant (UID register BFS)
+**Backend + frontend prêts** :
+- 10 routes backend (health, rag, agents, transactions, ledger, connectors, onboarding)
+- 3 agents IA (classifier 10s, reasoning 7.4s, tva 15.8s)
 - Event-sourcing + grand livre auto-balancé
-- Pont Swigs Pro (inactif par défaut, activable par flag)
-- 5388 points KB Qdrant (5/5 lois fédérales, 4/4 ordonnances, 14 circulaires, Info TVA, VS loi fiscale, Käfer)
-- Perf : `/rag/ask` 7.4s, `/transactions` 10s, `/agents/tva/ask` 15.8s, `/onboarding/company/search` 278ms
+- Pont Swigs Pro → Lexa **ACTIF** (LEXA_ENABLED=true en prod depuis session 10)
+- Frontend React 19 + Vite 8 + Tailwind 3.4 — 5 routes opérationnelles
+- Onboarding wizard 4 étapes avec UID register BFS autocomplete
+- Dashboard / Ledger / Chat multi-agents
 
-**L'étape suivante logique = frontend** pour que le user/les clients puissent utiliser Lexa sans curl.
+**Il reste à** : déployer le frontend sur .59, valider la boucle Pro→Lexa en live,
+ajouter le webhook retour Lexa→Pro, tests automatisés.
 
 ---
 
@@ -25,237 +27,160 @@
 
 | Host | Service | Port | Status |
 |---|---|---|---|
-| **.59** | lexa-backend (Express TS) | 3010 | ✅ PM2, **10 routes** |
-| **.59** | Postgres 14.22 (base lexa) | 5432 | ✅ 3 migrations appliquées |
-| **.59** | swigs-workflow (patch Lexa bridge) | 3004 | ✅ PM2, hook inactif par défaut |
-| **.103** | Ollama (lexa-classifier/reasoning/tva + deepseek-ocr) | 11434 | ✅ systemd |
-| **.103** | llama-server BGE-M3 GPU | 8082 | ✅ systemd lexa-llama-embed |
-| **.103** | Qdrant (swiss_law 5388 pts) | 6333 | ✅ Docker |
+| **.59** | lexa-backend (Express TS) | 3010 | ✅ PM2, 10 routes |
+| **.59** | Postgres 14.22 (base lexa) | 5432 | ✅ 3 migrations |
+| **.59** | swigs-workflow | 3004 | ✅ PM2, **LEXA_ENABLED=true** |
+| **.103** | Ollama (lexa-classifier/reasoning/tva) | 11434 | ✅ systemd |
+| **.103** | llama-server BGE-M3 GPU | 8082 | ✅ systemd |
+| **.103** | Qdrant (5388 pts) | 6333 | ✅ Docker |
+| **local** | Frontend dev (Vite) | 5190 | dev only, pas encore deployé |
 
 ---
 
-## Endpoints backend complets (10 routes)
+## Frontend — état actuel
+
+Stack : React 19.2 + Vite 8.0 + TypeScript 6 + Tailwind 3.4 + Zustand + TanStack Query + react-router 7 + framer-motion + lucide-react.
 
 ```
-GET  /health                          # 5 services check
-POST /rag/ask                         # Question juridique (lexa-reasoning, 7.4s)
-POST /rag/classify                    # Classifier single tx (lexa-classifier, 10s)
-POST /agents/tva/ask                  # Agent TVA spécialisé (lexa-tva, 15.8s, 5 citations)
-GET  /agents                          # Liste agents actifs + planifiés
-POST /transactions                    # Event-sourced flow
-GET  /transactions/:streamId          # Replay event history
-GET  /transactions/stats/summary      # Stats events
-GET  /ledger                          # Grand livre entries
-GET  /ledger/account/:prefix          # Entries par compte
-GET  /ledger/balance                  # Balance de vérification
-POST /ledger/refresh                  # Refresh materialized view
-POST /connectors/bank/ingest          # Push Swigs Pro BankTransactions
-GET  /connectors/bank/formats         # Formats supportés
-GET  /onboarding/company/search?q=    # 🆕 Search UID register BFS
-POST /onboarding/company              # 🆕 Create company (UID or manual)
-GET  /onboarding/company/:tenantId    # 🆕 Fetch company
-PATCH /onboarding/company/:tenantId   # 🆕 Update partial
-```
-
----
-
-## Modelfiles Lexa sur Spark
-
-| Modelfile | Base | Taille | Usage |
-|---|---|---|---|
-| `lexa-classifier` | qwen3.5:9b-optimized + Käfer | 10 GB | Classification transactions JSON |
-| `lexa-reasoning` | qwen3.5:9b-optimized + lois CH | 10 GB | Questions juridiques générales |
-| **`lexa-tva`** (🆕 session 09) | qwen3.5:9b-optimized + LTVA/Info TVA | 10 GB | Agent TVA spécialisé |
-| À créer | qwen3.5:9b + lois cantonales SR | — | `lexa-fiscal-pp` (PP Valais/Genève) |
-| À créer | qwen3.5:9b + CO + LIFD | — | `lexa-fiscal-pm` (Sàrl/SA) |
-
----
-
-## Questions pour session 10
-
-⚠️ **À trancher en début de session 10** :
-
-1. **Frontend — go / no-go** — les backends sont stables, ma reco : **GO**. Stack :
-   - React 18 + Vite 5 + TypeScript strict
-   - TailwindCSS 3
-   - Zustand (state) + TanStack Query (server state)
-   - react-flow OU tldraw pour le canvas (à benchmarker)
-   - framer-motion pour animations
-   - i18next (FR primary)
-   - Premier run : scaffold + /health + /onboarding wizard + /rag/ask + /transactions feed
-   
-2. **Canvas library** — react-flow ou tldraw ? Je peux lancer un benchmark en début session 10.
-
-3. **Webhook Lexa → Pro** — à faire session 10 ou session 11 ?
-   - *Reco : session 11, focus frontend en 10*
-
-4. **Activer le pont `LEXA_ENABLED=true`** — on l'active en live pour valider la boucle en prod ?
-   - *Reco : oui, dès début session 10. Zéro risque puisque non-bloquant*
-
-5. **Tests automatisés** (qa-lexa, perf-lexa, corpus-validator) — session 10 ou session 11 ?
-   - *Reco : session 11, ou session 10 seulement si reste du temps après frontend scaffold*
-
----
-
-## Plan détaillé de la session 10 (frontend focus)
-
-### Étape 1 — Activer LEXA_ENABLED sur .59 (5 min)
-
-```bash
-ssh swigs@192.168.110.59 "
-  echo 'LEXA_ENABLED=true' >> /home/swigs/swigs-workflow/.env
-  echo 'LEXA_URL=http://192.168.110.59:3010' >> /home/swigs/swigs-workflow/.env
-  pm2 restart swigs-workflow
-  pm2 logs swigs-workflow --lines 10 --nostream
-"
-```
-
-Vérifier qu'aucune erreur n'apparaît après restart.
-
-### Étape 2 — Scaffold `apps/frontend/` (1h)
-
-```bash
-cd /Users/corentinflaction/CascadeProjects/lexa/apps
-npm create vite@latest frontend -- --template react-ts
-cd frontend
-npm install react-router-dom @tanstack/react-query zustand axios tailwindcss@^3 autoprefixer postcss framer-motion lucide-react zod
-npm install -D @types/node
-npx tailwindcss init -p
-```
-
-**Structure** :
-```
-apps/frontend/
-├── src/
-│   ├── main.tsx
-│   ├── App.tsx
-│   ├── routes/
-│   │   ├── Home.tsx
-│   │   ├── Onboarding.tsx       # Wizard adapté du WelcomeModal Pro
-│   │   ├── Dashboard.tsx
-│   │   ├── Transactions.tsx
-│   │   ├── Ledger.tsx
-│   │   └── Chat.tsx             # Chat avec les 3 agents
-│   ├── components/
-│   │   ├── CompanySearchField.tsx  # Adapté du composant Pro
-│   │   ├── StepWizard.tsx
-│   │   └── ...
-│   ├── api/
-│   │   ├── client.ts            # axios instance → .59:3010
-│   │   └── lexa.ts              # typed endpoints
-│   ├── stores/
-│   │   ├── companyStore.ts
-│   │   └── transactionsStore.ts
-│   └── styles/
-```
-
-### Étape 3 — Onboarding wizard (1h30)
-
-Adapter le `WelcomeModal.jsx` de Pro (743 lignes, 4 étapes) pour Lexa :
-1. **Step 0 — Welcome** : intro + logo
-2. **Step 1 — Entreprise** : CompanySearchField (UID register) + autofill OU saisie manuelle
-3. **Step 2 — TVA** : assujetti ?, méthode (effective/TDFN), fréquence
-4. **Step 3 — Banque + RIB** : IBAN, QR-IBAN
-
-À la fin, `POST /onboarding/company` → redirige vers dashboard avec `tenantId`.
-
-### Étape 4 — Dashboard minimal (45 min)
-
-- **Header** : nom entreprise + UID + canton
-- **Stats** : nombre d'events, balance grand livre
-- **Recent transactions** : liste des 10 dernières avec classification
-- **Agent chat** : textarea pour poser une question aux 3 agents (switch classifier/reasoning/tva)
-
-### Étape 5 — PM2 deploy frontend build sur .59 (30 min)
-
-Nginx conf pour servir `apps/frontend/dist/` sur un nouveau port (ex: 3011 ou via un path `/lexa/`) + rsync du build.
-
-### Étape 6 — Journal + commit + push (30 min)
-
----
-
-## Architecture backend actuelle (pour comprendre rapidement)
-
-```
-apps/backend/src/
-├── app.ts                       # Express + 8 routers
-├── config/index.ts              # Zod env config
-├── db/
-│   ├── postgres.ts              # pg Pool
-│   ├── migrate.ts               # Migration runner
-│   └── migrations/
-│       ├── 001_events.sql       # events + ai_decisions
-│       ├── 002_ledger.sql       # materialized view + balance
-│       └── 003_companies.sql    # 🆕 onboarding
-├── events/
-│   ├── types.ts                 # LexaEvent union
-│   └── EventStore.ts
-├── rag/
-│   ├── EmbedderClient.ts        # llama-server 8082 /v1/embeddings
-│   ├── QdrantClient.ts          # HTTP 6333
-│   └── ragQuery.ts              # Pipeline canonique
-├── llm/
-│   └── OllamaClient.ts          # think:false default
-├── agents/
-│   ├── classifier/ClassifierAgent.ts   # lexa-classifier
-│   └── tva/TvaAgent.ts                 # 🆕 lexa-tva + re-rank
-├── services/
-│   └── companyLookup.ts         # 🆕 UID register BFS SOAP
+apps/frontend/src/
+├── main.tsx                 # QueryClient + Router + StrictMode
+├── App.tsx                  # routes + RequireCompany guard
+├── api/
+│   ├── client.ts            # axios /api
+│   ├── types.ts             # types miroirs backend
+│   └── lexa.ts              # 11 méthodes typées
+├── stores/
+│   ├── companyStore.ts      # zustand persist localStorage
+│   └── onboardingStore.ts
+├── components/
+│   ├── AppShell.tsx         # sidebar + NavLink
+│   ├── StepIndicator.tsx
+│   └── CompanySearchField.tsx   # debounced autocomplete BFS
 └── routes/
-    ├── health.ts
-    ├── rag.ts
-    ├── agents.ts                # 🆕
-    ├── transactions.ts
-    ├── ledger.ts
-    ├── connectors.ts
-    └── onboarding.ts            # 🆕
+    ├── Home.tsx             # landing
+    ├── Onboarding.tsx       # wizard 4 steps
+    ├── Dashboard.tsx        # stats + health + récents
+    ├── Ledger.tsx           # balance + détail
+    └── Chat.tsx             # 3 agents
+```
+
+**Commandes** :
+```bash
+cd apps/frontend
+npm run dev      # → http://localhost:5190 (port strict)
+npm run build    # → dist/ (465 KB JS, 16 KB CSS, gzip 150 KB)
+npx tsc -b       # typecheck (clean)
+```
+
+Proxy Vite : `/api/*` → `http://192.168.110.59:3010/*` en dev.
+
+---
+
+## Plan session 11
+
+### Étape 1 — Validation live du pont Pro→Lexa (15 min)
+
+La prochaine récupération IMAP bankImapFetcher est prévue à :30 chaque heure.
+Observer :
+
+```bash
+ssh swigs@192.168.110.59 'pm2 logs lexa-backend --lines 100 --nostream'
+# Chercher : "POST /connectors/bank/ingest" en provenance de swigs-workflow
+```
+
+Si rien : forcer un fetch IMAP manuel ou pousser une transaction de test via curl
+sur `/connectors/bank/ingest`.
+
+### Étape 2 — Deploy frontend sur .59 (1h)
+
+Options à trancher :
+- **Path-based** : Nginx reverse proxy sur `/lexa/` (port 80/443), serve `dist/` statique
+- **Port-based** : dédier le port 3011 ou 5190 au frontend via Nginx direct
+- **Subdomain** : `lexa.swigs.local` ou `lexa.swigs.online` avec cert Let's Encrypt
+
+Build + rsync + Nginx conf + test de bout en bout. Définir `VITE_LEXA_URL` à
+l'URL publique du backend (ou proxy Nginx aussi vers :3010).
+
+### Étape 3 — Webhook retour Lexa → Pro (45 min)
+
+Quand Lexa classifie une transaction :
+1. `POST http://.59:3004/api/lexa-callback` (nouveau endpoint dans swigs-workflow)
+2. Mise à jour `BankTransaction.lexaClassification` (compte Käfer, TVA code, citations)
+3. Idempotence via `eventId` (stream_id + version)
+
+Nécessite :
+- Nouveau hook dans `ClassifierAgent` → `notifyPro()`
+- Flag `LEXA_CALLBACK_URL` côté Lexa backend (default off)
+- Route `POST /api/lexa-callback` dans swigs-workflow
+- Auth simple via HMAC shared secret
+
+### Étape 4 — Tests automatisés (1h30 si temps)
+
+- **qa-lexa** : fixture de 20 transactions → assert classification `account` + `tvaCode` matche l'attendu
+- **perf-lexa** : p50/p95 sur /rag/ask, /agents/tva/ask, /transactions
+- **corpus-validator** : top-K recall sur corpus de 50 questions juridiques
+
+### Étape 5 — Polish UX frontend (si temps)
+
+- Loading skeletons sur dashboard/ledger
+- Empty states
+- Toast notifications (react-hot-toast ?)
+- Form validation zod dans onboarding
+- i18n (FR seulement pour l'instant, mais structure i18next prête)
+
+---
+
+## Questions à trancher en début de session 11
+
+1. **Où déployer le frontend ?** (path, port, ou subdomain) — ma reco : subdomain `lexa.swigs.local` en dev, `lexa.swigs.online` en prod avec cert Let's Encrypt
+2. **Ordre des étapes** — validation pont → tests automatisés → deploy ? Ou deploy d'abord pour démo ?
+3. **Auth frontend** — multi-tenant JWT ou on reste single-tenant avec `companyStore` localStorage ?
+4. **Canvas visuel (react-flow vs tldraw)** — toujours à benchmarker
+5. **Webhook retour Pro** — HMAC auth ou basic shared secret dans header ?
+
+---
+
+## Vérification rapide début session 11
+
+```bash
+# Backend health
+ssh swigs@192.168.110.59 'curl -s http://localhost:3010/health | python3 -m json.tool'
+
+# Pont actif ?
+ssh swigs@192.168.110.59 'grep -E "^LEXA_" /home/swigs/swigs-workflow/.env'
+
+# Classifications récentes côté Lexa
+ssh swigs@192.168.110.59 'curl -s http://localhost:3010/transactions/stats/summary'
+
+# Frontend build local
+cd ~/CascadeProjects/lexa/apps/frontend && npx tsc -b && npm run build
 ```
 
 ---
 
 ## Avertissements importants
 
-1. **`LEXA_ENABLED` non activé par défaut** sur .59 — le hook existe mais n'appelle pas Lexa tant que tu ne l'ajoutes pas à l'env Pro
-2. **Backend swigs-workflow en prod** — commit `98b6c1b` (branche `v2-refresh`), PM2 restart OK, aucune erreur
-3. **Backend Lexa en prod** — commit `63db503` (branche `main`), PM2 restart OK
-4. **3 migrations appliquées** : `001_events`, `002_ledger`, `003_companies`
-5. **Modelfiles sur Spark** : `lexa-classifier`, `lexa-reasoning`, `lexa-tva` (tous 10 GB, base qwen3.5:9b)
-6. **Sudo Spark** : `SW45id-445-332`. Sudo .59 : `Labo`
-7. **Password Postgres lexa_app** : `~/.lexa_db_pass_temp` (Mac) + `/home/swigs/lexa-backend/.env` (.59)
+1. **Frontend PAS encore déployé** — tout est local, dev server sur port 5190 strict
+2. **Pont Pro→Lexa ACTIF en prod** depuis session 10 — à surveiller pour éviter surcharge backend
+3. **`companyStore` en localStorage** — pas de vraie auth, multi-tenant non géré
+4. **Pas de tests automatisés** encore — validation manuelle uniquement
+5. **Sudo .59** : `Labo`, sudo Spark : `SW45id-445-332`, password Postgres : `~/.lexa_db_pass_temp`
+6. **Backend Lexa** commit `63db503` (main). Pas de nouveau commit côté backend en session 10.
+7. **Frontend** pas encore committé — à faire au début session 11 ou fin session 10 sur demande user.
 
 ---
 
-## Vérification rapide début session 10
+## Points ouverts (dette)
 
-```bash
-# Backend health
-ssh swigs@192.168.110.59 'curl -s http://localhost:3010/health | python3 -m json.tool'
-
-# Agents list
-ssh swigs@192.168.110.59 'curl -s http://localhost:3010/agents | python3 -m json.tool'
-
-# UID search test
-ssh swigs@192.168.110.59 'curl -s "http://localhost:3010/onboarding/company/search?q=swigs" | python3 -m json.tool'
-
-# Ledger balance (doit rester balanced)
-ssh swigs@192.168.110.59 'curl -s http://localhost:3010/ledger/balance | python3 -c "import sys,json;d=json.load(sys.stdin);print(\"balanced:\",d[\"totals\"][\"balanced\"])"'
-
-# Modèles Ollama
-ssh swigs@192.168.110.103 'ollama list | grep -E "lexa-|deepseek"'
-```
+- [ ] Deploy frontend .59
+- [ ] Webhook retour Lexa→Pro
+- [ ] Tests automatisés (qa, perf, corpus)
+- [ ] Modelfile `lexa-fiscal-pp` (déclaration PP Valais)
+- [ ] Canvas visuel flow (react-flow/tldraw benchmark)
+- [ ] i18next multi-langue
+- [ ] Auth multi-tenant frontend
+- [ ] Commit frontend (pas encore fait — à trancher avec user)
 
 ---
 
-## Contexte Claude — auto-évaluation
-
-Session 09 a été **dense et productive**. Session 10 (frontend scaffold) est faisable dans cette instance mais **demande plusieurs heures d'écriture React/Tailwind**. Je recommande de **démarrer sur une instance fraîche** pour la session 10 — tout est documenté ici pour reprendre à zéro sans perte d'info.
-
-**Instructions pour la reprise sur instance fraîche** :
-1. Lire `06-sessions/NEXT-SESSION.md` (ce document, 5 min)
-2. Lire `06-sessions/2026-04-14-session-09.md` (journal complet, 10 min)
-3. Vérifier les 5 commandes de check ci-dessus
-4. Attaquer le plan session 10 directement
-
----
-
-**Dernière mise à jour** : 2026-04-14 (fin session 09)
+**Dernière mise à jour** : 2026-04-14 (fin session 10)
