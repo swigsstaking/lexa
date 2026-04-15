@@ -58,7 +58,7 @@ async function loginQaUser(): Promise<void> {
 
 type TestResult = {
   id: string;
-  kind: "classify" | "tva" | "fiscal-pp-vs" | "taxpayer";
+  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "taxpayer";
   pass: boolean;
   latencyMs: number;
   reason?: string;
@@ -125,6 +125,19 @@ const fiscalPpQuestions = [
     question:
       "Quelles sont les regles du forfait frais professionnels pour un salarie en Valais?",
     context: { status: "salarie" as const },
+  },
+];
+
+const fiscalPpGeQuestions = [
+  {
+    id: "pp-ge-1-pilier-3a",
+    question:
+      "Un salarie marie a Geneve peut-il deduire le pilier 3a et quel est le plafond 2024 ?",
+    context: {
+      status: "salarie" as const,
+      commune: "Geneve",
+      civilStatus: "married" as const,
+    },
   },
 ];
 
@@ -205,6 +218,49 @@ async function runTvaQuestion(
     return {
       id: fixture.id,
       kind: "tva",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
+async function runFiscalPpGeQuestion(
+  fixture: (typeof fiscalPpGeQuestions)[number],
+): Promise<TestResult> {
+  const started = Date.now();
+  try {
+    const { data } = await http.post("/agents/fiscal-pp-ge/ask", {
+      question: fixture.question,
+      context: fixture.context,
+    });
+    const citations = Array.isArray(data.citations) ? data.citations.length : 0;
+    // Assert : au moins 1 citation, et l'answer contient "7 056" (le plafond
+    // pilier 3a 2024 salarié) — indique que le modèle a bien compris et
+    // répondu en utilisant la donnée fédérale applicable à GE.
+    const answerStr = typeof data.answer === "string" ? data.answer : "";
+    const hasPlafond =
+      answerStr.includes("7 056") ||
+      answerStr.includes("7056") ||
+      answerStr.includes("7'056");
+    return {
+      id: fixture.id,
+      kind: "fiscal-pp-ge",
+      pass: citations > 0 && hasPlafond,
+      latencyMs: Date.now() - started,
+      citations,
+      agentDurationMs: data.durationMs,
+      reason:
+        citations === 0
+          ? "no citations"
+          : hasPlafond
+            ? undefined
+            : "answer missing 7056 plafond",
+    };
+  } catch (err) {
+    return {
+      id: fixture.id,
+      kind: "fiscal-pp-ge",
       pass: false,
       latencyMs: Date.now() - started,
       reason: err instanceof Error ? err.message : "unknown error",
@@ -407,6 +463,15 @@ async function main(): Promise<void> {
     );
   }
 
+  // Fiscal PP Genève (session 16)
+  for (const f of fiscalPpGeQuestions) {
+    const r = await runFiscalPpGeQuestion(f);
+    results.push(r);
+    console.log(
+      `  ${r.pass ? "✓" : "✗"} ${r.id}  ${r.latencyMs}ms  cites=${r.citations ?? "?"}  ${r.reason ?? ""}`,
+    );
+  }
+
   // Taxpayer wizard (session 15)
   const r1 = await runTaxpayerDraftCreate();
   results.push(r1);
@@ -438,6 +503,7 @@ async function main(): Promise<void> {
       classify: { total: byKind("classify").length, passed: byKind("classify").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("classify")) },
       tva: { total: byKind("tva").length, passed: byKind("tva").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("tva")) },
       "fiscal-pp-vs": { total: byKind("fiscal-pp-vs").length, passed: byKind("fiscal-pp-vs").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiscal-pp-vs")) },
+      "fiscal-pp-ge": { total: byKind("fiscal-pp-ge").length, passed: byKind("fiscal-pp-ge").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiscal-pp-ge")) },
       taxpayer: { total: byKind("taxpayer").length, passed: byKind("taxpayer").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("taxpayer")) },
     },
     failures: results.filter((r) => !r.pass).map((r) => ({ id: r.id, kind: r.kind, reason: r.reason })),
