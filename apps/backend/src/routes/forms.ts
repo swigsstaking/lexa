@@ -19,6 +19,8 @@ import { buildVsPpDeclaration } from "../execution/VsPpFormBuilder.js";
 import { renderVsPpPdf } from "../execution/VsPpPdfRenderer.js";
 import { buildGePpDeclaration } from "../execution/GePpFormBuilder.js";
 import { renderGePpPdf } from "../execution/GePpPdfRenderer.js";
+import { buildVdPpDeclaration } from "../execution/VdPpFormBuilder.js";
+import { renderVdPpPdf } from "../execution/VdPpPdfRenderer.js";
 import type { FilledForm } from "../execution/types.js";
 
 export const formsRouter = Router();
@@ -331,5 +333,91 @@ formsRouter.post("/ge-declaration-pp", async (req, res) => {
     const message = err instanceof Error ? err.message : "unknown error";
     console.error("[forms.ge-declaration-pp]", err);
     res.status(500).json({ error: "ge-declaration-pp failed", message });
+  }
+});
+
+// ── Déclaration fiscale PP Vaud ────────────────────────
+
+const vdPpBodySchema = z.object({
+  year: z.number().int().min(2020).max(2100),
+  coefficientCommunal: z.number().int().min(1).max(200).optional(),
+  draft: z
+    .object({
+      step1: z.record(z.unknown()).optional(),
+      step2: z.record(z.unknown()).optional(),
+      step3: z.record(z.unknown()).optional(),
+      step4: z.record(z.unknown()).optional(),
+    })
+    .optional(),
+});
+
+/**
+ * POST /forms/vd-declaration-pp — déclaration fiscale PP Canton de Vaud.
+ * Clone du endpoint GE-PP, adapté aux spécificités vaudoises :
+ * - forfait frais pro min 2'000 CHF, max 4'000 CHF (3%) — TODO session 20 : confirmer ACI VD Art. 26 LI
+ * - pilier 3a salarié 7'260 CHF (avec LPP), 36'288 CHF (sans LPP) — 2026
+ * - coefficient communal (défaut 79 = Lausanne 2026) au lieu de centimes additionnels GE
+ * - PAS de forfait frontalier (VD n'a pas de régime frontalier significatif)
+ * - disclaimer LI (BLV 642.11), LIPC (BLV 650.11), LIFD
+ * - autorité ACI VD, délai dépôt : 15 mars
+ * Idempotent sur (tenant, formId, version, year).
+ */
+formsRouter.post("/vd-declaration-pp", async (req, res) => {
+  const parse = vdPpBodySchema.safeParse(req.body);
+  if (!parse.success) {
+    return res
+      .status(400)
+      .json({ error: "invalid body", details: parse.error.issues });
+  }
+  const { year, draft, coefficientCommunal } = parse.data;
+  try {
+    const form = await buildVdPpDeclaration({
+      tenantId: req.tenantId,
+      year,
+      draft: draft as Parameters<typeof buildVdPpDeclaration>[0]["draft"],
+      coefficientCommunal,
+    });
+
+    const existing = await findExistingVsPpDeclaration({
+      tenantId: form.company.tenantId,
+      formId: form.formId,
+      version: form.version,
+      year: form.year,
+    });
+
+    const pdfBuffer = await renderVdPpPdf(form);
+
+    let streamId: string;
+    let eventId: number;
+    let idempotent: boolean;
+    if (existing) {
+      streamId = existing.streamId;
+      eventId = existing.eventId;
+      idempotent = true;
+    } else {
+      const record = await appendVsPpDeclarationEvent(form);
+      streamId = record.streamId;
+      eventId = record.id;
+      idempotent = false;
+    }
+
+    res.json({
+      streamId,
+      eventId,
+      idempotent,
+      form: {
+        formId: form.formId,
+        version: form.version,
+        year: form.year,
+        company: form.company,
+        projection: form.projection,
+        generatedAt: form.generatedAt,
+      },
+      pdf: pdfBuffer.toString("base64"),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "unknown error";
+    console.error("[forms.vd-declaration-pp]", err);
+    res.status(500).json({ error: "vd-declaration-pp failed", message });
   }
 });

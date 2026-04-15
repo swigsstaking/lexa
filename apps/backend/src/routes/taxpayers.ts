@@ -15,6 +15,8 @@ import { buildVsPpDeclaration } from "../execution/VsPpFormBuilder.js";
 import { renderVsPpPdf } from "../execution/VsPpPdfRenderer.js";
 import { buildGePpDeclaration } from "../execution/GePpFormBuilder.js";
 import { renderGePpPdf } from "../execution/GePpPdfRenderer.js";
+import { buildVdPpDeclaration } from "../execution/VdPpFormBuilder.js";
+import { renderVdPpPdf } from "../execution/VdPpPdfRenderer.js";
 import {
   appendVsPpDeclarationEvent,
   findExistingVsPpDeclaration,
@@ -303,5 +305,70 @@ taxpayersRouter.post("/draft/submit-ge", async (req, res) => {
     const message = err instanceof Error ? err.message : "unknown error";
     console.error("[taxpayers.submit-ge]", err);
     res.status(500).json({ error: "submit-ge failed", message });
+  }
+});
+
+// POST /taxpayers/draft/submit-vd — génère le PDF PP Vaud à partir du draft
+taxpayersRouter.post("/draft/submit-vd", async (req, res) => {
+  const parse = TaxpayerDraftSubmitSchema.safeParse(req.body);
+  if (!parse.success) {
+    return res
+      .status(400)
+      .json({ error: "invalid body", details: parse.error.flatten() });
+  }
+  const { fiscalYear } = parse.data;
+
+  try {
+    const draft = await getOrCreateDraft(req.tenantId, fiscalYear);
+
+    const form = await buildVdPpDeclaration({
+      tenantId: req.tenantId,
+      year: fiscalYear,
+      draft: draft.state,
+    });
+
+    const existing = await findExistingVsPpDeclaration({
+      tenantId: req.tenantId,
+      formId: form.formId,
+      version: form.version,
+      year: fiscalYear,
+    });
+
+    const pdfBuffer = await renderVdPpPdf(form);
+
+    let streamId: string;
+    let eventId: number;
+    let idempotent: boolean;
+    if (existing) {
+      streamId = existing.streamId;
+      eventId = existing.eventId;
+      idempotent = true;
+    } else {
+      const record = await appendVsPpDeclarationEvent(form);
+      streamId = record.streamId;
+      eventId = record.id;
+      idempotent = false;
+    }
+
+    await markSubmitted(req.tenantId, fiscalYear);
+
+    res.json({
+      streamId,
+      eventId,
+      idempotent,
+      form: {
+        formId: form.formId,
+        version: form.version,
+        year: form.year,
+        company: form.company,
+        projection: form.projection,
+        generatedAt: form.generatedAt,
+      },
+      pdf: pdfBuffer.toString("base64"),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "unknown error";
+    console.error("[taxpayers.submit-vd]", err);
+    res.status(500).json({ error: "submit-vd failed", message });
   }
 });

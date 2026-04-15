@@ -1,0 +1,155 @@
+# Lexa — Template formulaire officiel
+# Déclaration d'impôt Personne Physique (PP) — Canton de Vaud
+#
+# Clone du template GE-PP session 17, adapté aux spécificités vaudoises.
+# Session 19 : champs critiques uniquement (revenu activité, fortune,
+# déductions principales). Coefficient communal VD (ex: Lausanne = 79).
+#
+# Source légale :
+#   - LIFD (RS 642.11) — art. 33 al. 1 let. e (pilier 3a)
+#   - LI (BLV 642.11) — Loi sur les impôts directs cantonaux Vaud
+#   - LIPC (BLV 650.11) — Loi sur l'imposition des personnes physiques et des personnes morales Vaud
+#   - Guide PP Vaud 2026 — déductions et barèmes ACI VD
+#
+# Autorité : Administration cantonale des impôts Vaud (ACI VD).
+# Délai de dépôt : 15 mars.
+
+form_id: VD-declaration-pp
+version: "2026-01-01"
+title: Déclaration d'impôt PP — Canton de Vaud
+jurisdiction: cantonal-VD
+canton: VD
+authority: ACI VD
+legal_reference:
+  law: LI
+  rs: "BLV 642.11"
+  articles: ["26", "30", "31", "33"]
+  federal_refs: ["LIFD art. 18", "LIFD art. 33 al. 1 let. e", "LIFD art. 34"]
+
+periodicity: annual
+
+# Montants officiels 2026 — Canton de Vaud
+# Coefficient communal : ex. Lausanne = 79 (2026)
+# TODO session 20 : confirmer barème ACI VD Art. 26 LI — forfait frais pro
+reference_amounts:
+  pilier_3a_salarie_max_chf: 7260
+  pilier_3a_independant_max_chf: 36288
+  frais_professionnels_forfait_pct: 3
+  frais_professionnels_forfait_min_chf: 2000
+  frais_professionnels_forfait_max_chf: 4000
+  # Pas de centime additionnel — VD utilise le coefficient communal
+  coefficient_communal_defaut: 79
+
+fields:
+  # Identité contribuable
+  - id: contribuable_nom
+    label: Nom et prénom
+    source: company.name
+    validation: required
+  - id: contribuable_uid
+    label: Numéro IDE / UID
+    source: company.uid
+  - id: contribuable_canton
+    label: Canton de domicile
+    source: company.canton
+    validation: required
+  - id: contribuable_commune
+    label: Commune de domicile
+    source: input.commune
+  - id: coefficient_communal
+    label: Coefficient communal (ex. Lausanne 2026 = 79)
+    source: input.coefficient_communal
+
+  # Période
+  - id: periode_fiscale
+    label: Année fiscale
+    source: input.year
+    validation: required
+
+  # Revenus
+  - id: revenu_activite_independante
+    label: Revenu net d'activité lucrative indépendante
+    source: projection.vd_pp.revenu_independant
+    format: currency_chf
+    note: "LIFD art. 18 — bénéfice net de l'entreprise individuelle"
+  - id: revenu_activite_dependante
+    label: Revenu net d'activité lucrative dépendante
+    source: input.revenu_salaire
+    format: currency_chf
+    todo: true
+  - id: revenu_capital
+    label: Revenus du capital mobilier (intérêts, dividendes)
+    source: input.revenu_capital
+    format: currency_chf
+    todo: true
+  - id: revenu_total
+    label: Total des revenus
+    source: projection.vd_pp.revenu_total
+    format: currency_chf
+    validation: required
+
+  # Fortune
+  - id: fortune_nette
+    label: Fortune nette au 31 décembre
+    source: projection.vd_pp.fortune_nette
+    format: currency_chf
+    note: "Actif circulant + actif immobilisé − dettes"
+
+  # Déductions principales
+  - id: deduction_pilier_3a
+    label: Cotisation au pilier 3a (max CHF 36'288 indépendant / 7'260 salarié)
+    source: input.pilier_3a
+    format: currency_chf
+    todo: true
+  - id: deduction_lpp_rachats
+    label: Rachats LPP (2e pilier)
+    source: input.lpp_rachats
+    format: currency_chf
+    todo: true
+  - id: deduction_assurances
+    label: Primes d'assurance maladie et accidents
+    source: input.primes_assurances
+    format: currency_chf
+    todo: true
+  - id: deduction_interets_dette
+    label: Intérêts passifs d'emprunts privés
+    source: input.interets_dette
+    format: currency_chf
+    todo: true
+  - id: deduction_frais_professionnels
+    label: Frais professionnels (forfait 3% min 2'000 max 4'000 CHF — ACI VD Art. 26 LI)
+    source: computed.frais_pro_forfait
+    format: currency_chf
+  - id: deduction_total
+    label: Total des déductions
+    source: projection.vd_pp.deduction_total
+    format: currency_chf
+
+  # Revenu imposable
+  - id: revenu_imposable
+    label: Revenu imposable
+    source: projection.vd_pp.revenu_imposable
+    format: currency_chf
+    validation: required
+    note: "Total revenus − total déductions"
+
+output:
+  pdf:
+    renderer: pdfkit
+    disclaimer: >
+      Information à titre indicatif — vérifiez avec votre fiduciaire et
+      l'Administration cantonale des impôts VD (ACI). Ce document ne reflète que
+      les données extraites automatiquement de votre comptabilité. Les revenus
+      salariés, revenus du capital et déductions personnelles doivent être
+      complétés manuellement. Lexa prépare, l'humain signe (whitepaper §6).
+      Base légale : LI (BLV 642.11), LIPC (BLV 650.11), LIFD.
+  xml:
+    schema: none
+    note: >
+      Pas de XML en v1 — ACI VD n'exige pas d'échange structuré eCH-0217
+      en v1. Session future : intégration si disponible côté ACI VD.
+
+validation:
+  human_signature_required: true
+  lexa_liability: preparation_only
+  depot_deadline: "15 mars"
