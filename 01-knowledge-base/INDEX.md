@@ -18,13 +18,13 @@
 | Fédéral — jurisprudence TF | 0 (à décider scope) | 0 | — |
 | Cantonal VS — **loi fiscale** | 1 | **1 (RSVS 642.1, 339 articles via Playwright v2)** | **100% ✓** |
 | Cantonal VS — directives / guides | ~10 | **4 (Guide 2024, barème 2026, déductions, impôt source)** | ~40% |
-| Autres cantons SR | 6 | 0 | 0% |
+| Autres cantons SR | 6 | **3 (NE, JU, BE-Jura session 25)** | **50%** |
 | Standards techniques | 4 (eCH-0217, Swissdec, CAMT.053, QR) | 0 | 0% |
 | Plan comptable Käfer | 1 (structuré) | 1 (dans system prompt, à extraire) | 100%* |
 
 *existe mais pas en format ingéré/requêtable
 
-**Total Qdrant collection `swiss_law`** : **5761 points**
+**Total Qdrant collection `swiss_law`** : **9846 points** (au 2026-04-15)
 - Session 01 : 791 (LIFD + LTVA + CO + résumés manuels)
 - Session 02 : +108 LHID → 899
 - Session 03 : +1880 AFC + 228 VS docs → 3007
@@ -33,6 +33,8 @@
 - Session ~07 : +66 Plan comptable Käfer → **5388**
 - Session 16 : **+373 Canton Genève (LCP 267 + LIPP 66 + LIPM 40)** → **5761**
 - Session 18 : **+381 Canton Vaud (LI 310 + LIPC 62 + RLI 9)** → **6142**
+- Sessions 20-24 : +2071 (Fribourg LICD+LIC+ORD, fédéral supplémentaire, VS guides v2) → **~8213**
+- Session 25 (Lane B) : **+390 NE (LCdir 329 + RGI 3 + ORD-FP 58) + +174 JU (LI via PDF) + +1069 BE-Jura (LI-BE)** → **9846**
 
 Voir [`federal/circulaires-afc-index.md`](federal/circulaires-afc-index.md) pour le détail des documents AFC ingérés.
 
@@ -169,32 +171,55 @@ Source : https://www.bger.ch/
 | Barème cantonal | ❌ Manquant | SCC |
 | Formulaires | ❌ Manquant | fribourg.ch/scc |
 
-### 4. Neuchâtel (NE)
+### 4. Neuchâtel (NE) — **SESSION 25 ✓**
 
 | Document | Statut | Source |
 |---|---|---|
-| Loi sur les contributions directes (LCdir) | ❌ Manquant | RSN 631.0 |
-| Règlement général | ❌ Manquant | À télécharger |
+| **LCdir** — Loi sur les contributions directes (RSN 631.0) | ✅ **Ingéré session 25 (329 articles)** | rsn.ne.ch/DATA/program/books/rsne/htm/631.0.htm |
+| **RGI** — Règlement général sur l'imposition (RSN 631.00) | ✅ **Ingéré session 25 (3 articles)** | rsn.ne.ch/DATA/program/books/rsne/htm/631.00.htm |
+| **ORD-FP-NE** — Ordonnance sur les listes d'échéances (RSN 631.01) | ✅ **Ingéré session 25 (58 articles)** | rsn.ne.ch/DATA/program/books/rsne/htm/631.01.htm |
 | Barèmes | ❌ Manquant | Service des contributions NE |
 | Formulaires | ❌ Manquant | ne.ch/contributions |
 
-### 5. Jura (JU)
+**Portail** : https://www.ne.ch/autorites/DFIN/SCC/Pages/accueil.aspx
+**Script d'ingestion** : `01-knowledge-base/scripts/ingest_ne_laws_lexa.py`
+**Méthode** : HTML statique windows-1252 (Microsoft Word export), `LVMP_BOOKS_LOAD` pattern `DATA/program/books/rsne/htm/`. Parser regex `<a name="LVMPART_X">` + texte. Même pattern que silgeneve.ch GE.
+**Tags Qdrant** : `law ∈ {LCdir-NE, RGI-NE, ORD-FP-NE}`, `jurisdiction: "cantonal-NE"`, `canton: "NE"`
+**Validation RAG session 25** : **5/5 queries** — scores 0.55-0.68 avec NE dans top-1
+**Agent Modelfile** : `lexa-fiscal-pp-ne` créé sur Spark (session 25). Agent TS `FiscalPpNeAgent.ts` à créer en binding S22.5.
+
+### 5. Jura (JU) — **SESSION 25 ✓**
 
 | Document | Statut | Source |
 |---|---|---|
-| Loi d'impôt | ❌ Manquant | RSJU 641.11 |
+| **LI** — Loi d'impôt (RSJU 641.11) | ✅ **Ingéré session 25 (174 articles via PDF pdfminer)** | rsju.jura.ch/fr/viewdocument.html?idn=20113&id=37000&download=1 |
 | Ordonnances | ❌ Manquant | À télécharger |
 | Barèmes | ❌ Manquant | Service cantonal des contributions JU |
 | Formulaires | ❌ Manquant | jura.ch |
 
-### 7. Berne francophone (Jura bernois)
+**Portail** : https://rsju.jura.ch/
+**Script d'ingestion** : `01-knowledge-base/scripts/ingest_ju_laws_lexa.py`
+**Méthode** : PDF download (`download=1`) + extraction pdfminer.six dans /tmp/lexa-venv. Parser regex `Art. N` sur texte extrait. Le site RSJU (IceCube2 CMS) ne fournit pas de HTML statique ni d'API JSON accessible.
+**Tags Qdrant** : `law ∈ {LI-JU}`, `jurisdiction: "cantonal-JU"`, `canton: "JU"`
+**Validation RAG session 25** : **5/5 queries** — scores 0.57-0.62 avec JU dans top-1
+**Agent Modelfile** : `lexa-fiscal-pp-ju` créé sur Spark (session 25). Agent TS `FiscalPpJuAgent.ts` à créer en binding S22.5.
+
+### 6. Berne francophone (Jura bernois) — **SESSION 25 ✓**
 
 | Document | Statut | Source |
 |---|---|---|
-| Loi sur les impôts (LI-BE) | ❌ Manquant | RSB 661.11 |
-| Ordonnances | ❌ Manquant | À télécharger |
+| **LI-BE** — Loi sur les impôts (RSB 661.11) | ✅ **Ingéré session 25 (1069 articles/paragraphes, version FR)** | belex.sites.be.ch/api/fr/texts_of_law/661.11/show_as_json |
+| OI-BE (661.111) | ❌ Absent de l'API belex (404) | — |
 | Barèmes | ❌ Manquant | Intendance des impôts BE |
-| Formulaires (version FR) | ❌ Manquant | be.ch |
+| Formulaires (version FR) | ❌ Manquant | be.ch / taxme.ch |
+
+**Portail** : https://www.belex.sites.be.ch/
+**Script d'ingestion** : `01-knowledge-base/scripts/ingest_bj_laws_lexa.py`
+**Méthode** : API JSON LexWork (même format que bdlf.fr.ch). Hostname résolvable depuis Mac (93.187.192.136), fallback IP en cas DNS fail sur le Spark. Version FR uniquement (`/api/fr/`). 1069 chunks car la LI-BE inclut tous les sous-paragraphes détaillés.
+**Tags Qdrant** : `law ∈ {LI-BE}`, `jurisdiction: "cantonal-BE"`, `canton: "BE"`
+**Validation RAG session 25** : **5/5 queries** — scores 0.58-0.72 avec BE dans top-1
+**Note** : Certains chunks ont label `§li_be` (paragraphes sans numéro article explicite dans JSON) — à filtrer en S22.5.
+**Agent Modelfile** : `lexa-fiscal-pp-bj` créé sur Spark (session 25). Agent TS `FiscalPpBjAgent.ts` à créer en binding S22.5.
 
 ---
 
