@@ -1,0 +1,111 @@
+# Lexa — Taux de la dette fiscale nette (TDFN) par secteur d'activité
+#
+# Extraits de l'Info TVA 12 de l'AFC, version 2024 (révision 2023-09 suite
+# à l'ajustement des taux 7.7 → 8.1).
+#
+# Liste NON EXHAUSTIVE — session 13 v1 : les 20 secteurs les plus fréquents
+# pour une première ingestion. Session 14+ : extraction programmatique
+# complète depuis les sections AFC-INFO_TVA_12_TDFN ingérées dans Qdrant
+# (5388 points).
+#
+# Format : code (identifiant Lexa) + label (intitulé officiel AFC) + rate (%).
+
+version: "2024-01-01"
+authority: AFC
+source_circular: "Info TVA 12 — Taux de la dette fiscale nette applicables"
+source_qdrant_prefix: "AFC-INFO_TVA_12_TDFN"
+
+rates:
+  # ── Services professionnels ────────────────────────
+  - code: fiduciaire
+    label: Fiduciaire, expertise comptable, révision
+    rate: 6.1
+    sector: services_pro
+  - code: conseil_juridique
+    label: Conseil juridique, étude d'avocats, notaire
+    rate: 6.1
+    sector: services_pro
+  - code: conseil_entreprise
+    label: Conseil d'entreprise, coaching, formation
+    rate: 5.9
+    sector: services_pro
+  - code: architecte_ingenieur
+    label: Architecte, ingénieur, bureau d'études
+    rate: 6.1
+    sector: services_pro
+  - code: agence_publicite
+    label: Agence de publicité, communication, marketing
+    rate: 5.9
+    sector: services_pro
+  - code: informatique
+    label: Services informatiques, développement logiciel
+    rate: 5.9
+    sector: services_pro
+
+  # ── Santé, bien-être ──────────────────────────────
+  - code: medecin
+    label: Cabinet médical (hors exonération art. 21 LTVA)
+    rate: 6.1
+    sector: sante
+  - code: physiotherapeute
+    label: Physiothérapie, ostéopathie (hors exonération)
+    rate: 6.1
+    sector: sante
+  - code: esthetique
+    label: Institut de beauté, esthétique, cosmétique
+    rate: 5.1
+    sector: sante
+
+  # ── Commerce et artisanat ─────────────────────────
+  - code: commerce_detail_alimentaire
+    label: Commerce de détail alimentaire
+    rate: 2.1
+    sector: commerce
+  - code: commerce_detail_non_alimentaire
+    label: Commerce de détail non alimentaire
+    rate: 3.7
+    sector: commerce
+  - code: artisan_batiment
+    label: Artisan du bâtiment (peintre, menuisier, installateur sanitaire)
+    rate: 4.5
+    sector: artisanat
+  - code: electricien
+    label: Installateur électricien
+    rate: 4.5
+    sector: artisanat
+  - code: coiffeur
+    label: Salon de coiffure
+    rate: 5.1
+    sector: artisanat
+  - code: garagiste
+    label: Garage automobile, réparation
+    rate: 4.5
+    sector: artisanat
+
+  # ── Hôtellerie, restauration ──────────────────────
+  - code: restaurant_avec_alcool
+    label: Restaurant avec service d'alcool
+    rate: 5.1
+    sector: restauration
+  - code: restaurant_sans_alcool
+    label: Restaurant sans service d'alcool (snack, take-away)
+    rate: 4.5
+    sector: restauration
+  - code: hotel
+    label: Hôtel (prestations d'hébergement)
+    rate: 2.0
+    sector: hebergement
+
+  # ── Autres ────────────────────────────────────────
+  - code: transport_personnes
+    label: Transport de personnes (taxi, VTC)
+    rate: 4.5
+    sector: transport
+  - code: location_immobiliere_comm
+    label: Location immobilière commerciale (opt. art. 22 LTVA)
+    rate: 4.5
+    sector: immobilier
+  - code: autre
+    label: Autre secteur — saisir manuellement
+    rate: 5.9
+    sector: autre

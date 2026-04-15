@@ -62,16 +62,26 @@ export type CompanyInfo = {
   legalForm: string;
 };
 
+export type FilledFormPeriod =
+  | {
+      kind: "quarterly";
+      quarter: 1 | 2 | 3 | 4;
+      year: number;
+      start: string;
+      end: string;
+    }
+  | {
+      kind: "annual";
+      year: number;
+      start: string;
+      end: string;
+    };
+
 export type FilledForm = {
   formId: string;
   version: string;
   method: "effective" | "tdfn";
-  period: {
-    quarter: 1 | 2 | 3 | 4;
-    year: number;
-    start: string;
-    end: string;
-  };
+  period: FilledFormPeriod;
   company: CompanyInfo;
   projection: TvaProjection;
   template: TvaFormTemplate;
@@ -88,3 +98,68 @@ export function quarterRange(quarter: 1 | 2 | 3 | 4, year: number): { start: str
     end: `${year}-${mm(endMonth)}-${mm(lastDay)}`,
   };
 }
+
+export function annualRange(year: number): { start: string; end: string } {
+  return { start: `${year}-01-01`, end: `${year}-12-31` };
+}
+
+// ── Déclaration fiscale PP Valais ──────────────────────
+export type VsPpProjection = {
+  revenuIndependant: number;
+  revenuTotal: number;
+  fortuneNette: number;
+  fraisProForfait: number;
+  deductionTotal: number;
+  revenuImposable: number;
+  eventCount: number;
+};
+
+export type VsPpFormTemplate = {
+  form_id: string;
+  version: string;
+  title: string;
+  jurisdiction: string;
+  canton: string;
+  authority: string;
+  periodicity: string;
+  legal_reference: {
+    law: string;
+    rs: string;
+    articles: string[];
+    federal_refs?: string[];
+  };
+  reference_amounts: {
+    pilier_3a_salarie_max_chf: number;
+    pilier_3a_independant_max_chf: number;
+    frais_professionnels_forfait_pct: number;
+    frais_professionnels_forfait_min_chf: number;
+    frais_professionnels_forfait_max_chf: number;
+  };
+  fields: Array<{
+    id: string;
+    label: string;
+    source: string;
+    validation?: string;
+    format?: string;
+    note?: string;
+    todo?: boolean;
+  }>;
+  output: {
+    pdf: { renderer: string; disclaimer: string };
+    xml: { schema: string; note?: string };
+  };
+  validation: {
+    human_signature_required: boolean;
+    lexa_liability: string;
+  };
+};
+
+export type FilledVsPpForm = {
+  formId: string;
+  version: string;
+  year: number;
+  company: CompanyInfo;
+  projection: VsPpProjection;
+  template: VsPpFormTemplate;
+  generatedAt: string;
+};

@@ -61,36 +61,119 @@ export const lexa = {
     quarter: 1 | 2 | 3 | 4;
     year: number;
     method?: 'effective' | 'tdfn';
+    sectorCode?: string;
   }) =>
     api
-      .post<{
-        streamId: string;
-        eventId: number;
-        form: {
-          formId: string;
-          version: string;
-          method: 'effective' | 'tdfn';
-          period: { quarter: 1 | 2 | 3 | 4; year: number; start: string; end: string };
-          company: {
-            tenantId: string;
-            uid: string | null;
-            name: string;
-            vatNumber: string | null;
-            canton: string | null;
-            legalForm: string;
-          };
-          projection: {
-            caHt: { standard: number; reduced: number; lodging: number };
-            tvaDue: { standard: number; reduced: number; lodging: number; total: number };
-            impotPrealable: { operating: number; capex: number; total: number };
-            solde: number;
-            caExonere: number;
-            eventCount: number;
-          };
-          generatedAt: string;
-        };
-        pdf: string;
-        xml: string;
-      }>('/forms/tva-decompte', input)
+      .post<TvaDecompteResponse>('/forms/tva-decompte', input)
       .then((r) => r.data),
+
+  generateTvaDecompteAnnual: (input: {
+    year: number;
+    method?: 'effective' | 'tdfn';
+    sectorCode?: string;
+  }) =>
+    api
+      .post<TvaDecompteResponse>('/forms/tva-decompte-annuel', input)
+      .then((r) => r.data),
+
+  listTdfnRates: () =>
+    api
+      .get<{
+        version: string;
+        authority: string;
+        source: string;
+        rates: Array<{
+          code: string;
+          label: string;
+          rate: number;
+          sector: string;
+        }>;
+      }>('/forms/tdfn-rates')
+      .then((r) => r.data),
+
+  generateVsPpDeclaration: (input: { year: number }) =>
+    api
+      .post<VsPpDeclarationResponse>('/forms/vs-declaration-pp', input)
+      .then((r) => r.data),
+};
+
+export type VsPpDeclarationResponse = {
+  streamId: string;
+  eventId: number;
+  idempotent: boolean;
+  form: {
+    formId: string;
+    version: string;
+    year: number;
+    company: {
+      tenantId: string;
+      uid: string | null;
+      name: string;
+      vatNumber: string | null;
+      canton: string | null;
+      legalForm: string;
+    };
+    projection: {
+      revenuIndependant: number;
+      revenuTotal: number;
+      fortuneNette: number;
+      fraisProForfait: number;
+      deductionTotal: number;
+      revenuImposable: number;
+      eventCount: number;
+    };
+    generatedAt: string;
+  };
+  pdf: string;
+};
+
+export type TvaDecompteResponse = {
+  streamId: string;
+  eventId: number;
+  idempotent: boolean;
+  form: {
+    formId: string;
+    version: string;
+    method: 'effective' | 'tdfn';
+    period:
+      | {
+          kind: 'quarterly';
+          quarter: 1 | 2 | 3 | 4;
+          year: number;
+          start: string;
+          end: string;
+        }
+      | {
+          kind: 'annual';
+          year: number;
+          start: string;
+          end: string;
+        };
+    company: {
+      tenantId: string;
+      uid: string | null;
+      name: string;
+      vatNumber: string | null;
+      canton: string | null;
+      legalForm: string;
+    };
+    projection: {
+      caHt: { standard: number; reduced: number; lodging: number };
+      caTtc: { standard: number; reduced: number; lodging: number };
+      tvaDue: { standard: number; reduced: number; lodging: number; total: number };
+      impotPrealable: { operating: number; capex: number; total: number };
+      solde: number;
+      caExonere: number;
+      eventCount: number;
+    };
+    generatedAt: string;
+    tdfnRate?: {
+      code: string;
+      label: string;
+      rate: number;
+      sector: string;
+    };
+  };
+  pdf: string;
+  xml: string;
 };

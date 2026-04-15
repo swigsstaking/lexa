@@ -57,14 +57,32 @@ export type LexaEvent =
       payload: {
         formId: string;
         version: string;
-        method: "effective" | "tdfn";
-        period: { quarter: 1 | 2 | 3 | 4; year: number; start: string; end: string };
-        totals: {
-          caHt: { standard: number; reduced: number; lodging: number };
-          tvaDueTotal: number;
-          impotPrealableTotal: number;
-          solde: number;
+        /**
+         * Type de formulaire : "tva" pour TVA AFC (trimestriel/annuel,
+         * effective/TDFN), "vs-pp" pour déclaration fiscale PP Valais.
+         * Session 14+ : "ge-pp", "vs-pm", etc.
+         */
+        formKind: "tva" | "vs-pp";
+        /**
+         * Méthode TVA (effective/tdfn) — absent pour les formulaires non-TVA.
+         */
+        method?: "effective" | "tdfn";
+        /**
+         * Période du décompte. `quarter` est optionnel : absent pour les
+         * décomptes annuels et VS-PP (annuel par construction).
+         */
+        period: {
+          quarter?: 1 | 2 | 3 | 4;
+          year: number;
+          start: string;
+          end: string;
         };
+        /**
+         * Totals génériques — structure dépendant de formKind :
+         * - TVA : caHt, tvaDueTotal, impotPrealableTotal, solde
+         * - VS-PP : revenuTotal, fortuneNette, revenuImposable
+         */
+        totals: Record<string, unknown>;
         eventCount: number;
         generatedBy: "lexa";
         liability: "preparation_only";

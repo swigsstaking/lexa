@@ -35,6 +35,7 @@ export function renderDecompteTvaXml(form: FilledForm): string {
     `<VATDeclaration xmlns="http://www.ech.ch/xmlns/eCH-0217/1" ` +
       `version="1.0" ` +
       `status="draft" ` +
+      `kind="${p.kind}" ` +
       `generatedBy="Lexa" ` +
       `generatedAt="${form.generatedAt}">`,
   );
@@ -50,8 +51,11 @@ export function renderDecompteTvaXml(form: FilledForm): string {
 
   // ── Période ────────────────────────────────────────
   lines.push("  <period>");
+  lines.push(`    <kind>${p.kind}</kind>`);
   lines.push(`    <year>${p.year}</year>`);
-  lines.push(`    <quarter>${p.quarter}</quarter>`);
+  if (p.kind === "quarterly") {
+    lines.push(`    <quarter>${p.quarter}</quarter>`);
+  }
   lines.push(`    <start>${p.start}</start>`);
   lines.push(`    <end>${p.end}</end>`);
   lines.push(`    <method>${form.method}</method>`);

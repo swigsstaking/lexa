@@ -1,5 +1,6 @@
 import PDFDocument from "pdfkit";
 import type { FilledForm } from "./types.js";
+import type { TdfnRate } from "./TdfnFormBuilder.js";
 
 function chf(n: number): string {
   return n.toLocaleString("fr-CH", {
@@ -8,14 +9,29 @@ function chf(n: number): string {
   });
 }
 
-export async function renderDecompteTvaPdf(form: FilledForm): Promise<Buffer> {
+export async function renderDecompteTvaPdf(
+  form: FilledForm,
+  opts?: { tdfnRate?: TdfnRate },
+): Promise<Buffer> {
+  const isAnnual = form.period.kind === "annual";
+  const isTdfn = form.method === "tdfn";
+  const title = isTdfn
+    ? `Décompte TVA TDFN ${form.period.year}${isAnnual ? "" : ` Q${(form.period as { quarter: number }).quarter}`} — ${form.company.name}`
+    : isAnnual
+      ? `Décompte TVA annuel ${form.period.year} — ${form.company.name}`
+      : `Décompte TVA ${form.period.year} Q${(form.period as { quarter: number }).quarter} — ${form.company.name}`;
+
   const doc = new PDFDocument({
     size: "A4",
     margins: { top: 48, bottom: 48, left: 48, right: 48 },
     info: {
-      Title: `Décompte TVA ${form.period.year} Q${form.period.quarter} — ${form.company.name}`,
+      Title: title,
       Author: "Lexa",
-      Subject: "Décompte TVA AFC méthode effective",
+      Subject: isTdfn
+        ? "Décompte TVA AFC — méthode TDFN (LTVA art. 37)"
+        : isAnnual
+          ? "Décompte TVA AFC annuel récapitulatif (LTVA art. 72)"
+          : "Décompte TVA AFC méthode effective",
     },
   });
 
@@ -29,7 +45,14 @@ export async function renderDecompteTvaPdf(form: FilledForm): Promise<Buffer> {
   doc
     .fontSize(18)
     .fillColor("#0b0b0f")
-    .text("Décompte TVA — méthode effective", { align: "left" });
+    .text(
+      isTdfn
+        ? "Décompte TVA — méthode TDFN"
+        : isAnnual
+          ? "Décompte TVA annuel récapitulatif"
+          : "Décompte TVA — méthode effective",
+      { align: "left" },
+    );
   doc
     .fontSize(10)
     .fillColor("#71717a")
@@ -68,9 +91,15 @@ export async function renderDecompteTvaPdf(form: FilledForm): Promise<Buffer> {
   doc.fontSize(11).text("Période", { underline: true });
   doc.moveDown(0.3);
   doc.fontSize(10);
-  doc.text(
-    `Trimestre ${form.period.quarter} — ${form.period.year}  (${form.period.start} → ${form.period.end})`,
-  );
+  if (form.period.kind === "quarterly") {
+    doc.text(
+      `Trimestre ${form.period.quarter} — ${form.period.year}  (${form.period.start} → ${form.period.end})`,
+    );
+  } else {
+    doc.text(
+      `Année ${form.period.year}  (${form.period.start} → ${form.period.end})`,
+    );
+  }
   doc.text(`Méthode : ${form.method === "effective" ? "Effective" : "TDFN"}`);
   doc.moveDown(0.8);
 
@@ -79,11 +108,19 @@ export async function renderDecompteTvaPdf(form: FilledForm): Promise<Buffer> {
   doc.moveDown(0.3);
   doc.fontSize(10);
 
-  const rows: Array<[string, number, number]> = [
-    ["Taux normal 8.1%", form.projection.caHt.standard, form.projection.tvaDue.standard],
-    ["Taux réduit 2.6%", form.projection.caHt.reduced, form.projection.tvaDue.reduced],
-    ["Taux hébergement 3.8%", form.projection.caHt.lodging, form.projection.tvaDue.lodging],
-  ];
+  const rows: Array<[string, number, number]> = isTdfn
+    ? [
+        [
+          `Secteur « ${opts?.tdfnRate?.label ?? "—"} » · taux net ${opts?.tdfnRate?.rate ?? "?"}%`,
+          form.projection.caTtc.standard,
+          form.projection.tvaDue.standard,
+        ],
+      ]
+    : [
+        ["Taux normal 8.1%", form.projection.caHt.standard, form.projection.tvaDue.standard],
+        ["Taux réduit 2.6%", form.projection.caHt.reduced, form.projection.tvaDue.reduced],
+        ["Taux hébergement 3.8%", form.projection.caHt.lodging, form.projection.tvaDue.lodging],
+      ];
 
   const colX = { label: 48, ht: 280, tva: 430 };
   doc
@@ -91,8 +128,14 @@ export async function renderDecompteTvaPdf(form: FilledForm): Promise<Buffer> {
     .fontSize(9)
     .text("Description", colX.label, doc.y, { continued: false });
   const headY = doc.y - 12;
-  doc.text("CA HT (CHF)", colX.ht, headY, { width: 140, align: "right" });
-  doc.text("TVA due (CHF)", colX.tva, headY, { width: 110, align: "right" });
+  doc.text(isTdfn ? "CA TTC (CHF)" : "CA HT (CHF)", colX.ht, headY, {
+    width: 140,
+    align: "right",
+  });
+  doc.text(isTdfn ? "Impôt dû (CHF)" : "TVA due (CHF)", colX.tva, headY, {
+    width: 110,
+    align: "right",
+  });
   doc.moveDown(0.6);
   doc
     .strokeColor("#e5e7eb")
@@ -130,27 +173,40 @@ export async function renderDecompteTvaPdf(form: FilledForm): Promise<Buffer> {
   }
 
   // ── Impôt préalable ────────────────────────────────
-  doc.fontSize(11).text("Impôt préalable", { underline: true });
-  doc.moveDown(0.3);
-  doc.fontSize(10);
-  {
-    const y = doc.y;
-    doc.text("Matériel et prestations", colX.label, y);
-    doc.text(chf(form.projection.impotPrealable.operating), colX.tva, y, {
-      width: 110,
-      align: "right",
-    });
-    doc.moveDown(0.4);
-  }
-  {
-    const y = doc.y;
-    doc.font("Helvetica-Bold");
-    doc.text("Total impôt préalable", colX.label, y);
-    doc.text(chf(form.projection.impotPrealable.total), colX.tva, y, {
-      width: 110,
-      align: "right",
-    });
-    doc.font("Helvetica");
+  if (!isTdfn) {
+    doc.fontSize(11).text("Impôt préalable", { underline: true });
+    doc.moveDown(0.3);
+    doc.fontSize(10);
+    {
+      const y = doc.y;
+      doc.text("Matériel et prestations", colX.label, y);
+      doc.text(chf(form.projection.impotPrealable.operating), colX.tva, y, {
+        width: 110,
+        align: "right",
+      });
+      doc.moveDown(0.4);
+    }
+    {
+      const y = doc.y;
+      doc.font("Helvetica-Bold");
+      doc.text("Total impôt préalable", colX.label, y);
+      doc.text(chf(form.projection.impotPrealable.total), colX.tva, y, {
+        width: 110,
+        align: "right",
+      });
+      doc.font("Helvetica");
+      doc.moveDown(1);
+    }
+  } else {
+    doc.fontSize(9).fillColor("#71717a");
+    doc.text(
+      "En méthode TDFN, l'impôt préalable est réputé couvert par le taux " +
+        "net forfaitaire (LTVA art. 37). Aucune déduction complémentaire.",
+      colX.label,
+      doc.y,
+      { width: 500 },
+    );
+    doc.fillColor("#0b0b0f").fontSize(10);
     doc.moveDown(1);
   }
 

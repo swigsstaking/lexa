@@ -1,0 +1,118 @@
+# Lexa — Template formulaire officiel
+# Décompte TVA AFC — méthode des Taux de la Dette Fiscale Nette (TDFN)
+#
+# Variante simplifiée du décompte TVA, réservée aux PME dont le CA annuel
+# imposable ne dépasse pas **CHF 5'024'000** et dont la dette fiscale annuelle
+# n'excède pas **CHF 108'000** (art. 37 al. 1 LTVA, depuis 2024).
+#
+# Principe : au lieu de déclarer la TVA collectée et l'impôt préalable
+# séparément, on applique un **taux net forfaitaire par secteur d'activité**
+# sur le CA TTC. L'impôt préalable est déjà inclus dans le taux (d'où
+# "net"). Périodicité semestrielle par défaut mais trimestriel accepté.
+#
+# Liste officielle des taux par secteur : Info TVA 12 (taux nets forfaitaires),
+# publiée par l'AFC. Taux 2024 (révision 2023-09 suite à la hausse 7.7→8.1).
+#
+# Source légale : LTVA art. 37 (taux nets), art. 71 (décompte).
+
+form_id: TVA-AFC-decompte-tdfn
+version: "2024-01-01"
+title: Décompte TVA — méthode des taux de la dette fiscale nette
+jurisdiction: federal
+authority: AFC
+legal_reference:
+  law: LTVA
+  rs: "641.20"
+  articles: ["37", "71"]
+  circular: "Info TVA 12 — Taux de la dette fiscale nette"
+
+periodicity: quarterly
+method: tdfn
+
+# Seuils d'éligibilité TDFN (art. 37 al. 1 LTVA)
+eligibility:
+  max_ca_annuel_chf: 5024000
+  max_impot_annuel_chf: 108000
+
+# Champs du formulaire
+fields:
+  - id: entreprise_uid
+    label: Numéro IDE / UID
+    source: company.uid
+    validation: required
+  - id: entreprise_name
+    label: Raison sociale
+    source: company.name
+    validation: required
+  - id: entreprise_vat_number
+    label: Numéro TVA
+    source: company.vat_number
+    validation: required
+
+  - id: periode_quarter
+    label: Trimestre
+    source: input.quarter
+    validation: required
+  - id: periode_year
+    label: Année
+    source: input.year
+    validation: required
+  - id: periode_start
+    label: Début
+    source: computed.period_start
+  - id: periode_end
+    label: Fin
+    source: computed.period_end
+
+  # TDFN — ligne unique par taux appliqué
+  - id: tdfn_sector
+    label: Secteur d'activité principal
+    source: input.sector_code
+    validation: required
+  - id: tdfn_rate
+    label: Taux TDFN appliqué (%)
+    source: input.tdfn_rate
+    validation: required
+  - id: tdfn_ca_ttc
+    label: Chiffre d'affaires TTC du trimestre
+    source: projection.tdfn.ca_ttc_total
+    format: currency_chf
+    validation: required
+  - id: tdfn_impot_du
+    label: Impôt dû = CA TTC × taux TDFN
+    source: projection.tdfn.impot_du
+    format: currency_chf
+    validation: required
+
+  # Pas d'impôt préalable en TDFN — il est déjà inclus dans le taux net
+  - id: tdfn_note_impot_prealable
+    label: Note
+    source: static
+    value: >
+      En méthode TDFN, l'impôt préalable est réputé couvert par le taux net
+      forfaitaire (LTVA art. 37). Aucune déduction d'impôt préalable
+      complémentaire n'est applicable.
+
+  - id: solde_tdfn
+    label: Solde à payer à l'AFC
+    source: projection.tdfn.solde
+    format: currency_chf
+    validation: required
+
+output:
+  pdf:
+    renderer: pdfkit
+    disclaimer: >
+      PRÉPARÉ AUTOMATIQUEMENT PAR LEXA — à vérifier et valider par votre
+      fiduciaire avant dépôt. Lexa prépare, l'humain signe (whitepaper §6).
+      Vérifier que votre entreprise est bien éligible à la TDFN (CA ≤ 5'024'000
+      CHF et dette ≤ 108'000 CHF) et que le secteur d'activité retenu est
+      cohérent avec l'Info TVA 12 de l'AFC.
+  xml:
+    schema: eCH-0217
+    version: "1.0"
+    note: v1 TDFN minimal, secteurs multiples TODO session 14+
+
+validation:
+  human_signature_required: true
+  lexa_liability: preparation_only

@@ -1,0 +1,133 @@
+# Lexa — Template formulaire officiel
+# Décompte TVA AFC annuel récapitulatif (art. 72 LTVA)
+#
+# Ce décompte annuel consolide les 4 décomptes trimestriels de l'année,
+# et permet de déclarer les corrections éventuelles (erreurs passées, change,
+# réconciliation des comptes annuels). Deadline : 180 jours après la fin
+# de l'exercice (art. 72 al. 1 LTVA).
+#
+# Source légale : LTVA art. 71 (décompte périodique) + art. 72 (corrections)
+# Formulaire officiel : https://www.estv.admin.ch/estv/fr/accueil/tva/decompte-tva.html
+
+form_id: TVA-AFC-decompte-annuel
+version: "2024-01-01"
+title: Décompte TVA annuel récapitulatif — méthode effective
+jurisdiction: federal
+authority: AFC
+legal_reference:
+  law: LTVA
+  rs: "641.20"
+  articles: ["71", "72"]
+
+periodicity: annual
+method: effective
+
+vat_rates:
+  - code: standard
+    rate: 8.1
+    label: Taux normal
+  - code: reduced
+    rate: 2.6
+    label: Taux réduit
+  - code: lodging
+    rate: 3.8
+    label: Taux spécial hébergement
+
+fields:
+  # Identité entreprise
+  - id: entreprise_uid
+    label: Numéro IDE / UID
+    source: company.uid
+    validation: required
+  - id: entreprise_name
+    label: Raison sociale
+    source: company.name
+    validation: required
+  - id: entreprise_vat_number
+    label: Numéro TVA
+    source: company.vat_number
+    validation: required
+
+  # Période
+  - id: periode_year
+    label: Année
+    source: input.year
+    validation: required
+  - id: periode_start
+    label: Début de période
+    source: computed.period_start
+  - id: periode_end
+    label: Fin de période
+    source: computed.period_end
+
+  # CA annuel imposable par taux
+  - id: ca_imposable_81_annuel
+    label: CA annuel imposable à 8.1%
+    source: projection.tva.ca_ht.standard
+    format: currency_chf
+  - id: ca_imposable_26_annuel
+    label: CA annuel imposable à 2.6%
+    source: projection.tva.ca_ht.reduced
+    format: currency_chf
+  - id: ca_imposable_38_annuel
+    label: CA annuel imposable à 3.8%
+    source: projection.tva.ca_ht.lodging
+    format: currency_chf
+
+  # TVA due annuelle
+  - id: tva_due_annuelle_total
+    label: TVA due annuelle totale
+    source: projection.tva.tva_due.total
+    format: currency_chf
+    validation: required
+
+  # Impôt préalable annuel
+  - id: impot_prealable_annuel_materiel
+    label: Impôt préalable sur achats matériel et prestations
+    source: projection.tva.impot_prealable.operating
+    format: currency_chf
+  - id: impot_prealable_annuel_investissements
+    label: Impôt préalable sur investissements
+    source: projection.tva.impot_prealable.capex
+    format: currency_chf
+    todo: true
+  - id: impot_prealable_annuel_total
+    label: Impôt préalable annuel total
+    source: projection.tva.impot_prealable.total
+    format: currency_chf
+    validation: required
+
+  # Corrections art. 72 al. 1 (v2 — événements TvaCorrectionDeclared)
+  - id: corrections_plus
+    label: Corrections en faveur de l'AFC (art. 72 al. 1)
+    source: projection.tva.corrections.plus
+    format: currency_chf
+    todo: true
+  - id: corrections_moins
+    label: Corrections en faveur du contribuable (art. 72 al. 1)
+    source: projection.tva.corrections.moins
+    format: currency_chf
+    todo: true
+
+  # Solde annuel
+  - id: tva_solde_annuel
+    label: Solde annuel à payer à l'AFC (ou à recevoir)
+    source: projection.tva.solde
+    format: currency_chf
+    validation: required
+    note: "Si négatif, l'AFC doit remboursement."
+
+output:
+  pdf:
+    renderer: pdfkit
+    disclaimer: >
+      PRÉPARÉ AUTOMATIQUEMENT PAR LEXA — à vérifier et valider par votre
+      fiduciaire avant dépôt. Lexa prépare, l'humain signe (whitepaper §6).
+  xml:
+    schema: eCH-0217
+    version: "1.0"
+    note: v1 consolidé annuel, corrections art. 72 TODO session 14+
+
+validation:
+  human_signature_required: true
+  lexa_liability: preparation_only
