@@ -412,6 +412,46 @@ async function runFiscalPpQuestion(
   }
 }
 
+// ── Wizard GE form generation (session 17) ─────────────
+
+async function runGeTaxpayerWizard(): Promise<TestResult> {
+  const started = Date.now();
+  try {
+    const { data } = await http.post("/forms/ge-declaration-pp", {
+      year: 2026,
+      draft: {
+        step1: { firstName: "Jean", lastName: "Test", commune: "Genève", civilStatus: "married" },
+        step2: { revenuSalaire: 85000, salaireBrut: 85000 },
+        step3: {},
+        step4: { pilier3a: 7260 },
+      },
+    });
+    const pdfB64 = data.pdf as string;
+    const pdfBytes = Buffer.from(pdfB64, "base64");
+    const formId = data.form?.formId as string | undefined;
+    const hasGe = formId === "GE-declaration-pp";
+    const noValais = !pdfBytes.toString("latin1").includes("Valais");
+    const ok = pdfBytes.length > 2000 && hasGe && noValais;
+    return {
+      id: "tx-3-ge-wizard-form",
+      kind: "taxpayer",
+      pass: ok,
+      latencyMs: Date.now() - started,
+      reason: ok
+        ? undefined
+        : `bytes=${pdfBytes.length}, formId=${formId}, noValais=${noValais}`,
+    };
+  } catch (err) {
+    return {
+      id: "tx-3-ge-wizard-form",
+      kind: "taxpayer",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
 // ── Main ───────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -482,6 +522,13 @@ async function main(): Promise<void> {
   results.push(r2);
   console.log(
     `  ${r2.pass ? "✓" : "✗"} ${r2.id}  ${r2.latencyMs}ms  ${r2.reason ?? ""}`,
+  );
+
+  // Wizard GE — form generation (session 17)
+  const r3 = await runGeTaxpayerWizard();
+  results.push(r3);
+  console.log(
+    `  ${r3.pass ? "✓" : "✗"} ${r3.id}  ${r3.latencyMs}ms  ${r3.reason ?? ""}`,
   );
 
   const totalMs = Date.now() - started;

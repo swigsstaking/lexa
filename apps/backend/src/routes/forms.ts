@@ -17,6 +17,8 @@ import {
 } from "../execution/idempotence.js";
 import { buildVsPpDeclaration } from "../execution/VsPpFormBuilder.js";
 import { renderVsPpPdf } from "../execution/VsPpPdfRenderer.js";
+import { buildGePpDeclaration } from "../execution/GePpFormBuilder.js";
+import { renderGePpPdf } from "../execution/GePpPdfRenderer.js";
 import type { FilledForm } from "../execution/types.js";
 
 export const formsRouter = Router();
@@ -249,5 +251,85 @@ formsRouter.post("/vs-declaration-pp", async (req, res) => {
     const message = err instanceof Error ? err.message : "unknown error";
     console.error("[forms.vs-declaration-pp]", err);
     res.status(500).json({ error: "vs-declaration-pp failed", message });
+  }
+});
+
+// ── Déclaration fiscale PP Genève ──────────────────────
+
+const gePpBodySchema = z.object({
+  year: z.number().int().min(2020).max(2100),
+  draft: z
+    .object({
+      step1: z.record(z.unknown()).optional(),
+      step2: z.record(z.unknown()).optional(),
+      step3: z.record(z.unknown()).optional(),
+      step4: z.record(z.unknown()).optional(),
+    })
+    .optional(),
+});
+
+/**
+ * POST /forms/ge-declaration-pp — déclaration fiscale PP Canton de Genève.
+ * Clone du endpoint VS-PP, adapté aux spécificités genevoises :
+ * forfait frais pro min 1'700 CHF, pilier 3a salarié 7'260 CHF (2026),
+ * centime additionnel cantonal 47.5%, disclaimer LIPP (RSG D 3 08).
+ * Idempotent sur (tenant, formId, version, year).
+ */
+formsRouter.post("/ge-declaration-pp", async (req, res) => {
+  const parse = gePpBodySchema.safeParse(req.body);
+  if (!parse.success) {
+    return res
+      .status(400)
+      .json({ error: "invalid body", details: parse.error.issues });
+  }
+  const { year, draft } = parse.data;
+  try {
+    const form = await buildGePpDeclaration({
+      tenantId: req.tenantId,
+      year,
+      draft: draft as Parameters<typeof buildGePpDeclaration>[0]["draft"],
+    });
+
+    const existing = await findExistingVsPpDeclaration({
+      tenantId: form.company.tenantId,
+      formId: form.formId,
+      version: form.version,
+      year: form.year,
+    });
+
+    const pdfBuffer = await renderGePpPdf(form);
+
+    let streamId: string;
+    let eventId: number;
+    let idempotent: boolean;
+    if (existing) {
+      streamId = existing.streamId;
+      eventId = existing.eventId;
+      idempotent = true;
+    } else {
+      const record = await appendVsPpDeclarationEvent(form);
+      streamId = record.streamId;
+      eventId = record.id;
+      idempotent = false;
+    }
+
+    res.json({
+      streamId,
+      eventId,
+      idempotent,
+      form: {
+        formId: form.formId,
+        version: form.version,
+        year: form.year,
+        company: form.company,
+        projection: form.projection,
+        generatedAt: form.generatedAt,
+      },
+      pdf: pdfBuffer.toString("base64"),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "unknown error";
+    console.error("[forms.ge-declaration-pp]", err);
+    res.status(500).json({ error: "ge-declaration-pp failed", message });
   }
 });
