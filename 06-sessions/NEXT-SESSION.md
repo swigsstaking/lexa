@@ -1,260 +1,261 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 14 — 2026-04-15](2026-04-15-session-14.md)
-**Prochaine session** : Session 15 — **Retour à la valeur utilisateur : onboarding PP + 2e canton + observation cron live**
+**Dernière session** : [Session 15 — 2026-04-15](2026-04-15-session-15.md)
+**Prochaine session** : Session 16 — **Canton Genève + agent contextuel wizard + webhook retour Pro + onboarding personnel**
 
-> Session 14 a ouvert la porte : Lexa est public sur `lexa.swigs.online`
-> avec auth JWT, HMAC Pro→Lexa, et qa-lexa 10/10 via HTTPS. Session 15
-> doit transformer ce que le testeur voit en quelque chose qu'il peut
-> *vraiment* utiliser, en priorité le flow PP Valais qui reste une démo
-> tant que l'utilisateur ne peut pas saisir son salaire.
+> Session 15 a fait passer VS-PP de démo à produit : un salarié valaisan
+> peut désormais générer sa déclaration en 6 étapes via
+> `https://lexa.swigs.online/taxpayer/2026`. Session 16 doit élargir le
+> périmètre géographique (Genève) et enrichir l'expérience du wizard
+> existant (agent contextuel, profil personnel persistant, webhook retour Pro).
 
 ---
 
-## Ce qui marche après session 14
+## Ce qui marche après session 15
 
 | Composant | État |
 |---|---|
 | **Plateforme** | |
-| `https://lexa.swigs.online` | ✅ HTTPS Let's Encrypt |
-| Frontend prod | ✅ 716KB JS / 228KB gzip + SPA fallback |
-| Nginx proxy `/api` → `:3010` | ✅ timeout 120s |
-| **Auth** | |
-| `POST /auth/register` | ✅ email+password+company, 409 si duplicate |
-| `POST /auth/login` | ✅ rate limit 5/15min/IP |
-| `GET /auth/me` | ✅ user + company jointure |
-| `POST /auth/admin/reset-password` | ✅ X-Admin-Secret |
-| `requireAuth` middleware | ✅ override req.tenantId depuis JWT |
-| Isolation multi-tenant via JWT | ✅ vérifié (smoke test + qa-lexa) |
-| Frontend login/register/logout + guards | ✅ dark mode, compile clean |
-| **Pont Pro→Lexa** | |
-| HMAC `X-Lexa-Signature` SHA256 timing-safe | ✅ smoke 4/4 |
-| `pushTransactionToLexa` patché côté Pro | ✅ `classify:true` + signature |
-| `LEXA_WEBHOOK_SECRET` partagé | ✅ posé des deux côtés |
-| Classification auto end-to-end | ✅ FIDUCIAIRE DUPONT → 6510 TVA 8.1% |
-| **Infra** | |
-| `EmbedderClient.health()` réelle (dim 1024 check) | ✅ dette D1 résolue |
-| qa-lexa 10/10 via HTTPS public | ✅ baseline classify 28s / tva 7.8s / fiscal-pp 13.8s |
-| 4 agents actifs listés sur GET /agents | ✅ |
+| `https://lexa.swigs.online` HTTPS + proxy /api | ✅ |
+| Auth JWT + rate limit + **trust proxy fix** (session 15) | ✅ |
+| HMAC Pro→Lexa | ✅ smoke manuel OK |
+| `EmbedderClient.health()` probe réelle | ✅ |
+| **Wizard contribuable PP VS** | |
+| Migration `005_taxpayer_drafts` | ✅ appliquée prod |
+| Routes `GET/PATCH/POST/RESET /taxpayers/draft` | ✅ JWT-protégées |
+| `VsPpFormBuilder` dual mode `draft/ledger/mixed` | ✅ source affichée dans PDF footer |
+| Wizard 6 steps + side-panel preview + debounce 500ms | ✅ compile + deploy |
+| Route `/taxpayer/:year` + bouton accès depuis Workspace | ✅ |
+| Smoke E2E Marie Dubois Sion | ✅ revenuImposable 79'894 CHF, PDF 3498 bytes |
+| **Event store** | |
+| Event type `TaxpayerFieldUpdated` | ✅ (audit trail best-effort) |
+| **Tests auto** | |
+| qa-lexa 12/12 via HTTPS public | ✅ (10 anciens + 2 taxpayer) |
+| **Agents** | |
+| 4 agents actifs (classifier, reasoning, tva, fiscal-pp-vs) | ✅ |
 
 ---
 
-## Priorité session 15 — Option A : profondeur valeur (reco)
+## Priorité session 16 — ordre strict
 
-### A. Onboarding personnel PP — urgent (~2h)
+### A. Webhook retour Lexa → Pro (~1h) — PRIORITÉ 1
 
-Sans ça, le PDF VS-PP généré session 13 reste inutilisable pour un
-contribuable : il affiche "revenu indépendant -6253 CHF" + 0 pour tous les
-champs personnels (salaire, pilier 3a, LPP, intérêts, assurance, rachats).
+Le pont Pro → Lexa classifie les transactions bancaires mais Pro ne voit
+rien en retour. Ajouter un hook post-classification qui notifie Pro pour
+qu'il update `BankTransaction.lexaClassification` côté Mongo.
 
-1. **Migration `005_personal_profile.sql`** : table `personal_profile`
-   keyée sur `tenant_id` avec colonnes `civil_status`, `children_count`,
-   `revenu_salaire_annuel`, `pilier_3a_cotise`, `lpp_rachats`,
-   `primes_assurance`, `interets_dette`, `frais_reels`, `is_salarie` bool,
-   `commune`, `created_at`, `updated_at`.
-2. **Frontend : ajouter un 5e step Personnel dans le wizard d'onboarding**
-   ou un panel dédié `/workspace/personal` accessible via un bouton dans
-   le header Workspace. Form contextuel : si `is_salarie=true`, afficher
-   champs LPP + salaire, sinon champs indépendant. Plafond pilier 3a
-   dynamique selon `is_salarie` (7056 vs 35280).
-3. **Extension `VsPpFormBuilder.ts`** : lit `personal_profile` en plus
-   du ledger et injecte les valeurs dans la projection. Frais pro reste
-   un forfait 3% min 2000 max 4000, mais `frais_reels` si renseignés le
-   remplacent.
-4. **Validation** : relancer `POST /forms/vs-declaration-pp` pour le
-   user de test avec un profil réaliste (salaire 85k + pilier 3a 5000 +
-   LPP 10k + canton VS + commune Sion), le PDF doit afficher des
-   chiffres cohérents avec le Guide PP VS 2024.
+1. **Côté Lexa** : nouveau hook dans `routes/connectors.ts` qui, après
+   un `TransactionClassified` event, POST sur
+   `${PRO_WEBHOOK_URL}/api/bank/lexa-classification` avec :
+   ```json
+   {
+     "txId": "...",
+     "debitAccount": "6510",
+     "creditAccount": "1020",
+     "tvaRate": 8.1,
+     "tvaCode": "TVA-8.1-standard",
+     "confidence": 0.95,
+     "citations": [...],
+     "reasoning": "..."
+   }
+   ```
+   + header `X-Pro-Signature: sha256=${HMAC-SHA256(PRO_WEBHOOK_SECRET, body)}`.
+   Non-blocking avec `try/catch` + log.
+2. **Côté Pro** : nouveau endpoint `POST /api/bank/lexa-classification`
+   dans `swigs-workflow` avec middleware `requireHmac` (miroir de celui
+   de Lexa), met à jour `BankTransaction.lexaClassification` Mongo field.
+3. **Secret partagé** : `PRO_WEBHOOK_SECRET` dans `/home/swigs/lexa-backend/.env`
+   et `/home/swigs/swigs-workflow/.env` (openssl rand -hex 32).
+4. **Test** : POST manuel sur `/connectors/bank/ingest` avec `classify:true`
+   → vérifier que Pro reçoit le callback et update Mongo. Peut être
+   observé via `mongosh` direct.
 
-### B. Observation live du cron `:30` Pro→Lexa (~15 min, asynchrone)
+### B. Agent contextuel dans le wizard (~45 min) — PRIORITÉ 2
 
-Session 14 a prouvé le flow avec un HMAC manuel, mais n'a pas observé un
-`:30` naturel. Session 15 début :
+Session 15 a laissé un placeholder pour un bouton chat contextuel dans
+chaque step. Session 16 l'implémente :
 
-```bash
-ssh swigs@192.168.110.59 'pm2 logs lexa-backend --lines 1000 --nostream | grep -iE "connectors/bank|X-Lexa-Signature" | tail -20'
-```
+1. **Bouton flottant** `"Demander à Lexa"` en bas à droite de chaque step
+   du wizard. Icône `MessageSquare`.
+2. **Au click** : ouvre le `ChatOverlay` existant (Cmd+K) avec un prompt
+   **pré-rempli contextualisé** selon le step courant. Exemple pour
+   Step 4 Déductions : *"Je suis {civilStatus} à {commune} avec un
+   salaire brut de {salaireBrut} CHF. Quel est mon plafond pilier 3a
+   exact pour 2024 ?"*
+3. **Pipeline** : le template de prompt vit dans
+   `src/data/wizard-prompts.ts`, une fonction par step qui prend le
+   `draft.state` et retourne une string enrichie. L'agent appelé est
+   `fiscal-pp-vs` (session 13).
+4. **Pas de changement backend** — le bouton réutilise `lexa.fiscalPpAsk()`
+   et affiche le résultat dans le `ChatOverlay` avec citations cliquables
+   vers fedlex.
 
-Si les logs montrent des POST spontanés en provenance de swigs-workflow
-depuis la session 14, **documenter** dans le journal 15 avec streamId,
-timestamp, classification résultat. Sinon, investiguer pourquoi le cron
-ne tire pas (le patch v1 session 09 peut avoir un cas limite avec la
-signature HMAC si `JSON.stringify` mute les chiffres).
+### C. Profil personnel persistant (~45 min) — PRIORITÉ 2
 
-### C. Canton Genève — agent `lexa-fiscal-pp-ge` + formulaire (~2h)
+Actuellement les champs stables (nom, prénom, date de naissance, civilStatus,
+commune) sont saisis à chaque nouvelle année fiscale. Session 16 :
 
-Élargissement SR après Valais. Cible : un indépendant genevois.
+1. **Migration `006_personal_profile`** : table keyée sur `tenant_id`
+   UNIQUE avec les champs stables + `updated_at`.
+2. **Service `taxpayers/personal.ts`** avec `getProfile(tenantId)` et
+   `upsertProfile(tenantId, data)`.
+3. **Auto-préremplissage** dans `getOrCreateDraft` : si le profil existe,
+   merge dans `state.step1` au moment de la création du draft. Si le
+   wizard update un champ stable, le profil est aussi updated (dual
+   write, v1 acceptable pour un user per tenant).
+4. **Pas de nouveau UI** — le changement est transparent pour le user,
+   les champs step1 arrivent déjà pré-remplis.
 
-1. **Ingestion KB** : vérifier que la loi fiscale GE est dans Qdrant
-   (session 04 l'avait-il ingérée ? Sinon scraper LexFind GE). Ingérer
-   aussi le Guide PP GE si disponible (ge.ch).
-2. **Modelfile `lexa-fiscal-pp-ge`** : base qwen3.5:9b-optimized, SYSTEM
-   prompt adapté GE (barème canton différent, déductions cantonales
-   spécifiques, rabais d'impôts sur frais maladie, etc.). `ollama create`
-   sur Spark.
-3. **Template `01-knowledge-base/forms/ge-declaration-pp-2024.yaml`** :
-   même structure que VS-PP mais avec `canton: GE` et `reference_amounts`
-   2024 Genève (barème, déductions GE-spécifiques).
-4. **Builder `GePpFormBuilder.ts`** + PDF renderer.
-5. **Endpoint `POST /forms/ge-declaration-pp`** + idempotence.
-6. **Agent endpoint `POST /agents/fiscal-pp/ask`** déjà en place —
-   enrichir pour routage dynamique selon `company.canton` (VS → lexa-fiscal-pp-vs,
-   GE → lexa-fiscal-pp-ge). Ou endpoint dédié `/agents/fiscal-pp-ge/ask`
-   en v1 pour éviter de toucher au re-ranking existant.
-7. **Frontend** : le bouton "Décl. PP" dans LedgerModal appelle le bon
-   endpoint selon `activeCompany.canton`. Ajouter une option VS/GE dans
-   le wizard d'onboarding.
-8. **qa-lexa** : ajouter 2 fixtures GE pour maintenir le filet de
-   sécurité.
+### D. Canton Genève (~2h) — PRIORITÉ 3, reportable session 17
 
-### D. Corrections art. 72 LTVA dans le décompte annuel (~45 min)
+Bloc reporté de session 15. **Ne pas commencer si A+B+C dépassent 2h30.**
 
-Déclassé en priorité moyenne, mais complète le formulaire session 13 qui
-a les champs `corrections_plus` et `corrections_moins` en TODO.
+1. **Ingestion KB Genève** (~1h)
+   - Télécharger LCP + LIPP + LIPM depuis `lex.ge.ch` (ou LexFind GE)
+   - Script Python `ingest_vs_pdfs_lexa.py` adapté pour GE (même pipeline)
+   - Tag `cantonal-GE` + loi spécifique
+   - Vérification : `rag/ask "Plafond pilier 3a 2024 Genève"` doit retourner
+     des citations `LCP` ou `LIPP`
+2. **Modelfile `lexa-fiscal-pp-ge`** sur Spark (~15 min, pattern session 13)
+3. **Agent `FiscalPpGeAgent`** + endpoint `POST /agents/fiscal-pp-ge/ask` (~30 min)
+4. **Routage contextuel** dans le frontend : selon `company.canton`,
+   le bouton `fiscal-pp` du wizard appelle VS ou GE agent (~15 min)
+5. **Pas de wizard GE-PP en session 16** — le formulaire GE dédié vient
+   session 17 avec son propre builder + template YAML
 
-1. Nouveau event `TvaCorrectionDeclared` dans `LexaEvent` avec payload
-   `{year, type: 'plus' | 'moins', amount, reason, declaredAt}`.
-2. Endpoint `POST /corrections/tva` body `{year, type, amount, reason}`
-   qui persiste l'event.
-3. `TvaAnnualFormBuilder` lit les events `TvaCorrectionDeclared` du tenant
-   pour l'année demandée et les intègre dans la projection.
-4. PDF template annuel affiche les corrections (si > 0).
-5. Pas d'UI dédiée — l'event peut être poussé via curl par le fiduciaire
-   en attendant session 16 pour un form.
+### E. qa-lexa re-run + observation cron `:30` + journal + commits + push (~30 min)
 
-### E. Ingestion des 60 secteurs TDFN complet (~1h)
-
-Session 13 a ingéré 21 secteurs hardcoded dans `tdfn-rates-2024.yaml`.
-Session 15 automatise :
-
-1. Script Python `ingest_tdfn_rates.py` qui query Qdrant filter
-   `AFC-INFO_TVA_12_TDFN`, extrait les sections avec regex "secteur X :
-   Y.Y%", produit un YAML étendu.
-2. Review manuelle du YAML (20 min) puis remplacement de `tdfn-rates-2024.yaml`.
-3. Frontend : le select secteur TDFN affiche ~60 options au lieu de 21.
-
----
-
-## Option B — Retour à la plateforme (alternative si option A bloque)
-
-1. **Webhook retour Lexa → Pro** : update `BankTransaction.lexaClassification`
-   côté Mongo avec compte Käfer + TVA + citations. HMAC dans l'autre sens
-   avec un secret séparé (`PRO_WEBHOOK_SECRET`). Événement `ClassificationAckFromPro`.
-2. **Mode fiduciaire v1** : refactor `users.tenant_ids[]` en table de
-   jointure `user_tenants (user_id, tenant_id, role)`. Frontend switcher
-   de tenant dans le header. Le JWT transporte `currentTenantId` que
-   le user peut changer via `POST /auth/switch-tenant`.
-3. **Projections bilan + compte résultat** : views SQL sur `ledger_entries`
-   groupées par catégorie Käfer (actifs/passifs/charges/produits), endpoint
-   `GET /ledger/financial-statements?year=2026`. Affichage dans un nouvel
-   overlay Cmd+Shift+B (Bilan).
-4. **Monitoring minimal** : un endpoint `/metrics` format Prometheus qui
-   expose `lexa_requests_total`, `lexa_request_duration_seconds`,
-   `lexa_classifications_total`, `lexa_declarations_total` par type.
-   Pas besoin de Grafana encore.
+1. **qa-lexa 13/13** : ajouter 1 fixture pour le webhook retour Lexa→Pro
+   (si bloc A fait) ou garder 12/12 sinon
+2. **Observation cron `:30`** : à relancer dès le début de session, kill
+   et grep à la fin. Session 15 a 2 captures (une avant fix trust proxy,
+   une après) — cumulées ~30 min de logs avec 0 POST capturé. Session 16
+   doit avoir une fenêtre plus longue (~1h30) pour garantir au moins un
+   tick naturel
+3. **Journal session 16** + update NEXT-SESSION session 17 + INDEX
+4. Commits incrémentaux (migration+routes, wizard agent contextuel, webhook retour, GE si fait)
+5. Push `origin/main`
 
 ---
 
-## Ma reco session 15
+## Règle de coupe
 
-**Option A, avec A+B en noyau et C si temps**.
+**Noyau obligatoire** : A + B + C + E (webhook retour + agent contextuel +
+profil personnel + journal).
 
-- **A onboarding PP** : c'est le seul travail qui transforme VS-PP de
-  démo à produit. Un fiduciaire qui voit actuellement "-6253 CHF" dans le
-  PDF ne démarrera pas.
-- **B observation cron** : 15 min asynchrones, valide rétroactivement que
-  le patch session 14 tourne en production naturelle.
-- **C canton GE** si et seulement si le temps le permet après A et B.
-  L'alternative est de cut GE pour session 16 et de faire à la place
-  **D corrections art. 72** (45 min) qui referme la dette session 13.
+**Reportable session 17** : D (canton Genève) si A+B+C dépassent 2h30.
+
+Justification : webhook retour est la dernière pièce du pont Pro↔Lexa,
+agent contextuel complète le wizard session 15, profil personnel évite
+une frustration UX majeure pour les testeurs externes. Canton Genève
+ajouterait de la surface sans profondeur si le wizard VS reste incomplet.
 
 ---
 
-## Dettes reportées (NE PAS traiter session 15 sauf si gros creux)
+## Dettes reportées (NE PAS traiter session 16 sauf gros creux)
 
-- Refresh tokens + email verification + password reset user-facing (session 16 avec fiduciaire)
-- Webhook retour Lexa→Pro (session 16)
-- Mode fiduciaire multi-clients (session 16+)
-- Refactor code-splitting frontend pour descendre sous 500KB JS (session 17+)
-- Bug mapping eCH-0097 côté swigs-workflow (15 min dédiés)
-- Monitoring Prometheus/Grafana (session 18+)
+- Fiscal PM Sàrl/SA — session 17+
+- Annexes CO bilans fiscaux — session 17+
+- Swissdec salaires — session 18+
+- Projections bilan + compte résultat — session 17
+- Mode fiduciaire multi-clients — session 18+
+- Email verification + password reset user-facing — session 18+
+- Refresh tokens — session 18+
+- Monitoring Prometheus / Grafana — session 19+
+- Code-splitting frontend (743 KB → < 500 KB) — session 17+
+- Bug mapping eCH-0097 côté swigs-workflow — 15 min dédiés
+- Tests unitaires backend — session 20+
+- GE-PP wizard dédié — session 17 (après l'agent GE session 16)
+- Validation XML eCH-0217 contre xsd officiel — session 17+
 
 ---
 
 ## Décisions tranchées — ne plus réinterpréter
 
-(reprise sessions 11→14)
+(reprise sessions 11→15)
 
 1. **Canvas lib** → react-flow définitif
 2. **Dark mode** → livré session 11
 3. **Multi-tenant isolation par JWT** → session 14 override req.tenantId
-4. **Autonomie IA** → validation humaine obligatoire v1
-5. **Langue v1** → FR uniquement (i18next posée, DE session 17+)
-6. **Auth** → JWT simple HS256 7d, bcrypt cost 12, pas de refresh tokens v1, pas d'email verification v1
-7. **Deploy** → subdomain `lexa.swigs.online` live, nginx + Let's Encrypt
+4. **Autonomie IA** → validation humaine v1
+5. **Langue v1** → FR uniquement
+6. **Auth** → JWT simple HS256 7d, bcryptjs cost 12, pas de refresh v1
+7. **Deploy** → `lexa.swigs.online` live
 8. **Webhook Pro→Lexa** → HMAC SHA256 `X-Lexa-Signature` timing-safe
-9. **PDF** → pdfkit backend (toutes sessions)
-10. **Canvas minimap** → supprimée option A (session 12)
-11. **Template forms** → YAML canonique `01-knowledge-base/forms/` + copie runtime embed
-12. **Fallback company orphelin** → `getCompany` émet minimale CompanyInfo
-13. **Audit trail** → `DeclarationGenerated` event typé avec `formKind`
-14. **Disclaimer PDF/XML non retirable** → texte dans template
-15. **Helpers execution mutualisés** → `shared.ts`
-16. **Idempotence par formKind** → query SQL JSONB
-17. **Un YAML + un Builder par formulaire** → pas de mega-template
-18. **Un Modelfile par canton** → `lexa-fiscal-pp-vs`, `lexa-fiscal-pp-ge` séparés
-19. **qa-lexa baseline de régression** → 10/10 à chaque push
-20. **HMAC service-to-service strictement séparé du JWT user-facing** (session 14)
-21. **Raw body capture via express.json verify hook** (session 14)
-22. **Deploy frontend HTTP → webroot → HTTPS** en 2 étapes pour LE (session 14)
+9. **Webhook Lexa→Pro** (session 16) → HMAC SHA256 `X-Pro-Signature`
+   avec `PRO_WEBHOOK_SECRET` séparé du `LEXA_WEBHOOK_SECRET`
+10. **PDF** → pdfkit backend
+11. **Canvas minimap** → supprimée
+12. **Template forms** → YAML canonique + copie runtime embed
+13. **Fallback company orphelin** → CompanyInfo minimale
+14. **Audit trail** → `DeclarationGenerated` + `TaxpayerFieldUpdated`
+15. **Disclaimer PDF non retirable**
+16. **Helpers execution mutualisés** → `shared.ts`
+17. **Idempotence par formKind**
+18. **Un YAML + un Builder par formulaire**
+19. **Un Modelfile par canton**
+20. **qa-lexa baseline de régression**
+21. **HMAC service-to-service strictement séparé du JWT**
+22. **Raw body via `express.json verify` hook**
+23. **Deploy vhost HTTP → webroot → HTTPS** en 2 étapes
+24. **Un draft par tenant par année fiscale** (session 15)
+25. **State wizard en JSONB flexible** (session 15)
+26. **Mutation atomique par dot-path** (session 15)
+27. **Side-panel preview client-side** (session 15)
+28. **`app.set('trust proxy', 1)` pour le rate limiter derrière nginx** (session 15 fix critique)
 
 ---
 
-## Infrastructure — vérification début session 15
+## Infrastructure — vérification début session 16
 
 ```bash
-# 1. Drifts .env (héritage sessions 12→13)
-ssh swigs@192.168.110.59 'grep -E "DATABASE_URL|EMBEDDER_URL|JWT_SECRET|LEXA_WEBHOOK_SECRET" /home/swigs/lexa-backend/.env'
-# Attendu : 127.0.0.1:5432, 192.168.110.103:8082, JWT_SECRET présent, LEXA_WEBHOOK_SECRET présent
+# 1. Drifts .env + 3 secrets auth (5 lignes côté Lexa, 1 côté Pro)
+ssh swigs@192.168.110.59 'grep -cE "DATABASE_URL|EMBEDDER_URL|JWT_SECRET|ADMIN_SECRET|LEXA_WEBHOOK_SECRET" /home/swigs/lexa-backend/.env'
+# → 5
 
-# 2. Backend health via URL publique
+# 2. Backend health via public HTTPS
 curl -s https://lexa.swigs.online/api/health | python3 -m json.tool
-# → ok:true, 5388 pts, embedder:true (vraie probe dim 1024)
+# → ok:true, 5388 pts, embedder probe réelle true
 
-# 3. Modèles Ollama (4 attendus)
-ssh swigs@192.168.110.103 'ollama list | grep lexa-'
-# → lexa-classifier, lexa-reasoning, lexa-tva, lexa-fiscal-pp-vs
+# 3. Wizard accessible
+curl -s https://lexa.swigs.online/ | grep -c "Lexa · Comptabilité"
+# → 1
 
-# 4. qa-lexa 10/10 via HTTPS public
+# 4. qa-lexa 12/12 (noir sur blanc avant de toucher au code)
 cd apps/backend && BASE_URL=https://lexa.swigs.online/api npx tsx src/scripts/qa-lexa.ts
-# → 10/10 pass
 
-# 5. Observer logs cron :30 session 14 → 15
-ssh swigs@192.168.110.59 'pm2 logs lexa-backend --lines 1000 --nostream | grep -iE "connectors/bank|X-Lexa-Signature" | tail -20'
+# 5. Flow taxpayer via HTTPS (register → draft → submit)
+TS=$(date +%s)
+REG=$(curl -sX POST https://lexa.swigs.online/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"s16-probe-${TS}@lexa.test\",\"password\":\"ProbePass2026!\",\"company\":{\"name\":\"Probe\",\"legalForm\":\"sarl\",\"canton\":\"VS\"}}")
+TOKEN=$(echo "$REG" | python3 -c 'import sys,json;print(json.load(sys.stdin)["token"])')
+curl -s "https://lexa.swigs.online/api/taxpayers/draft?year=2026" -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+
+# 6. Logs observation cron :30 (lancer en background dès le début)
+ssh swigs@192.168.110.59 "pm2 logs lexa-backend --lines 0 --raw --timestamp" > /tmp/lexa-cron-s16.log &
+# ... attendre un :30 sans redémarrage pm2 ...
+kill %1
+grep -cE "connectors/bank|TransactionClassified" /tmp/lexa-cron-s16.log
 ```
 
-Secrets :
-- Sudo .59 : `Labo`
-- Sudo Spark (.103) : `SW45id-445-332`
-- Password Postgres `lexa_app` : `~/.lexa_db_pass_temp` (Mac) ou `.env` prod
-- `JWT_SECRET`, `ADMIN_SECRET`, `LEXA_WEBHOOK_SECRET` : dans `.env` prod sur `.59`
-- Admin reset endpoint : `POST /api/auth/admin/reset-password` avec header `X-Admin-Secret`
-- qa user test : `qa@lexa.test` / `QaLexa-Fixed-2026!` (re-seedable via `scripts/seed-qa-user.ts`)
-- **EMBEDDER_URL doit être `:8082`** — jamais `:8001` (uvicorn ancien cassé)
-- **Toujours exclure `.env` des rsync backend** — `--exclude=.env`
+---
+
+## Avertissements (héritage sessions 11-15)
+
+1. **`.env` prod jamais rsync.** Règle immuable — `--exclude=.env` toujours
+2. **`trust proxy 1`** ne doit pas être retiré — sans lui, le rate limiter
+   casse silencieusement en prod derrière nginx (session 15)
+3. **qa-lexa baseline 12/12** — si un test fail, investiguer avant push
+4. **HMAC des deux côtés** : ne jamais JSON.stringify deux fois côté Pro
+5. **JWT override req.tenantId** — header `X-Tenant-Id` ignoré sur routes protégées
+6. **Disclaimer PDF/XML obligatoire** (whitepaper §6)
+7. **Observation cron `:30`** : lancer le tail dès le début de session et
+   ne **pas** restart lexa-backend pendant le tick attendu
+8. **Les valeurs seed `-6253 CHF`** ne doivent plus jamais apparaître dans
+   un PDF VS-PP généré depuis un wizard correctement rempli. Si c'est le
+   cas, le dual mode draft/ledger est cassé
 
 ---
 
-## Avertissements (héritage sessions 11-14)
-
-1. **`.env` prod jamais rsync.** Règle immuable — rsync seulement `src/` avec `--exclude=.env`
-2. **Disclaimer PDF/XML obligatoire** sur tous les formulaires (whitepaper §6)
-3. **EMBEDDER_URL drift protection** : la health probe réelle session 14 la capte désormais
-4. **qa-lexa doit rester 10/10** — adapté session 14 pour login+Bearer, si un test fail post-ajout d'une feature, investiguer avant push
-5. **HMAC Pro→Lexa** : ne jamais JSON.stringify deux fois ou modifier le rawBody — axios reçoit la string telle quelle avec `Content-Type: application/json`
-6. **JWT override req.tenantId** — le `X-Tenant-Id` header est ignoré côté routes protégées. Si un test en a besoin, utiliser un vrai user avec le bon tenant
-7. **`certbot --nginx` bloque sur config ref cert manquant** — toujours démarrer par une config HTTP-only + `certbot --webroot`, puis config HTTPS finale
-
----
-
-**Dernière mise à jour** : 2026-04-15 (fin session 14 — Lexa public sur lexa.swigs.online)
+**Dernière mise à jour** : 2026-04-15 (fin session 15 — wizard contribuable PP VS livré, VS-PP devient produit)
