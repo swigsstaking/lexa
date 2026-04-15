@@ -5,6 +5,7 @@ import { Register } from '@/routes/Register';
 import { Onboarding } from '@/routes/Onboarding';
 import { Workspace } from '@/routes/Workspace';
 import { TaxpayerWizard } from '@/routes/taxpayer/TaxpayerWizard';
+import { TaxpayerWizardGe } from '@/routes/taxpayer/TaxpayerWizardGe';
 import { useAuthStore } from '@/stores/authStore';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -52,6 +53,14 @@ export default function App() {
         element={
           <RequireAuth>
             <Workspace />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/taxpayer/ge/:year"
+        element={
+          <RequireAuth>
+            <TaxpayerWizardGe />
           </RequireAuth>
         }
       />

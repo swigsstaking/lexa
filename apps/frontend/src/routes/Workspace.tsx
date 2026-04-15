@@ -133,7 +133,14 @@ export function Workspace() {
           </button>
 
           <button
-            onClick={() => navigate(`/taxpayer/${new Date().getFullYear()}`)}
+            onClick={() => {
+              const canton = company?.canton ?? 'VS';
+              const taxpayerPath =
+                canton === 'GE'
+                  ? `/taxpayer/ge/${new Date().getFullYear()}`
+                  : `/taxpayer/${new Date().getFullYear()}`;
+              navigate(taxpayerPath);
+            }}
             className="btn-ghost !px-3 !py-1.5"
             title="Déclaration fiscale PP"
           >

@@ -26,7 +26,7 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function Step6Generate({ draft, year }: Props) {
+export function Step6GenerateGe({ draft, year }: Props) {
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<{
     streamId: string;
@@ -53,13 +53,13 @@ export function Step6Generate({ draft, year }: Props) {
         birthDate: s1.dateOfBirth,
         civilStatus: s1.civilStatus,
         commune: s1.commune,
-        canton: 'VS',
+        canton: 'GE',
         childrenCount: s1.childrenCount,
       }).catch(() => { /* non-bloquant */ });
 
-      const response = await lexa.submitTaxpayerDraft({ fiscalYear: year });
+      const response = await lexa.submitTaxpayerDraftGe({ fiscalYear: year });
       const pdfBlob = base64ToBlob(response.pdf, 'application/pdf');
-      const filename = `lexa-declaration-pp-vs-${year}-${fullName.replace(/\s+/g, '_')}.pdf`;
+      const filename = `lexa-declaration-pp-ge-${year}-${fullName.replace(/\s+/g, '_')}.pdf`;
       downloadBlob(pdfBlob, filename);
       setResult({
         streamId: response.streamId,
@@ -80,7 +80,7 @@ export function Step6Generate({ draft, year }: Props) {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-semibold tracking-tight mb-1">
-          Générer ma déclaration
+          Générer ma déclaration Genève
         </h2>
         <p className="text-sm text-muted">
           Le PDF sera produit à partir de toutes les données saisies, puis
@@ -94,11 +94,12 @@ export function Step6Generate({ draft, year }: Props) {
             <Sparkles className="w-7 h-7" />
           </div>
           <h3 className="text-lg font-semibold mb-2">
-            Prêt·e à générer votre déclaration {year} ?
+            Prêt·e à générer votre déclaration GE {year} ?
           </h3>
           <p className="text-sm text-muted max-w-md mx-auto mb-6">
             Le PDF inclura toutes les informations saisies, les calculs de revenu
-            imposable, et le disclaimer réglementaire obligatoire (whitepaper §6).
+            imposable, et le disclaimer réglementaire obligatoire (LIFD art. 33,
+            LIPP RSG D 3 08).
           </p>
           {error && (
             <div className="p-3 mb-4 rounded-lg bg-danger/10 border border-danger/30 text-sm text-danger">
@@ -118,7 +119,7 @@ export function Step6Generate({ draft, year }: Props) {
             ) : (
               <>
                 <Download className="w-4 h-4" />
-                Générer ma déclaration PDF
+                Générer ma déclaration PDF Genève
               </>
             )}
           </button>
@@ -130,7 +131,7 @@ export function Step6Generate({ draft, year }: Props) {
               <FileCheck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-semibold">Déclaration générée ✓</h3>
+              <h3 className="font-semibold">Déclaration GE générée ✓</h3>
               <p className="text-2xs text-muted">
                 Event audit : {result.streamId.slice(0, 8)}
                 {result.idempotent && ' (idempotent)'} · source : {result.source}
@@ -165,8 +166,9 @@ export function Step6Generate({ draft, year }: Props) {
 
           <div className="p-3 rounded-lg bg-warning/10 border border-warning/30 text-xs text-warning">
             Rappel : Lexa prépare cette déclaration à titre indicatif. Faites-la
-            vérifier par votre fiduciaire ou le Service cantonal des contributions
-            VS avant dépôt.
+            vérifier par votre fiduciaire ou l'Administration fiscale cantonale
+            de Genève (AFC-GE) avant dépôt. Base légale : LIFD art. 33,
+            LIPP (RSG D 3 08).
           </div>
 
           <button

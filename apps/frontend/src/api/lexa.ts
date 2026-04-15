@@ -142,8 +142,24 @@ export const lexa = {
       .post<VsPpDeclarationResponse>('/taxpayers/draft/submit', input)
       .then((r) => r.data),
 
+  submitTaxpayerDraftGe: (input: { fiscalYear: number }) =>
+    api
+      .post<VsPpDeclarationResponse>('/taxpayers/draft/submit-ge', input)
+      .then((r) => r.data),
+
   resetTaxpayerDraft: (input: { fiscalYear: number }) =>
     api.post<{ ok: true }>('/taxpayers/draft/reset', input).then((r) => r.data),
+
+  patchTaxpayerProfile: (input: {
+    firstName?: string;
+    lastName?: string;
+    birthDate?: string;
+    civilStatus?: string;
+    commune?: string;
+    canton?: string;
+    childrenCount?: number;
+  }) =>
+    api.patch<{ ok: true }>('/taxpayers/profile', input).then((r) => r.data),
 };
 
 export type TaxpayerDraft = {
