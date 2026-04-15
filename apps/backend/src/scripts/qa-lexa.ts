@@ -559,6 +559,42 @@ async function runGeTaxpayerWizard(): Promise<TestResult> {
 // ── Wizard VD draft submit (session 19) ─────────────────
 
 /**
+ * Fixture: taxpayer-fr-1-draft-submit
+ * Crée un draft FR minimal via submit-fr, assert : HTTP 200 + pdf présent + formId FR
+ * Ajouté session 22 (Lane A)
+ */
+async function runFrTaxpayerDraftSubmit(): Promise<TestResult> {
+  const started = Date.now();
+  try {
+    const { data } = await http.post("/taxpayers/draft/submit-fr", {
+      fiscalYear: 2026,
+    });
+    const pdfB64 = data.pdf as string;
+    const pdfBytes = Buffer.from(pdfB64, "base64");
+    const formId = data.form?.formId as string | undefined;
+    const hasFr = formId === "FR-declaration-pp";
+    const ok = pdfBytes.length > 2000 && hasFr && !!data.streamId;
+    return {
+      id: "taxpayer-fr-1-draft-submit",
+      kind: "taxpayer",
+      pass: ok,
+      latencyMs: Date.now() - started,
+      reason: ok
+        ? undefined
+        : `bytes=${pdfBytes.length}, formId=${formId}, streamId=${data.streamId ?? "MISSING"}`,
+    };
+  } catch (err) {
+    return {
+      id: "taxpayer-fr-1-draft-submit",
+      kind: "taxpayer",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
+/**
  * Fixture: taxpayer-vd-1-draft-submit
  * Crée un draft VD minimal via submit-vd, assert : HTTP 200 + pdf présent
  */
@@ -695,6 +731,13 @@ async function main(): Promise<void> {
   results.push(r4);
   console.log(
     `  ${r4.pass ? "✓" : "✗"} ${r4.id}  ${r4.latencyMs}ms  ${r4.reason ?? ""}`,
+  );
+
+  // Wizard FR — draft submit (session 22 Lane A)
+  const r5 = await runFrTaxpayerDraftSubmit();
+  results.push(r5);
+  console.log(
+    `  ${r5.pass ? "✓" : "✗"} ${r5.id}  ${r5.latencyMs}ms  ${r5.reason ?? ""}`,
   );
 
   const totalMs = Date.now() - started;
