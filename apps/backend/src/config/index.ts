@@ -48,6 +48,10 @@ const ConfigSchema = z.object({
     .string()
     .transform((v) => v === "true")
     .default("false"),
+
+  // MongoDB GridFS pour stockage documents (session 23)
+  MONGO_URL: z.string().default("mongodb://192.168.110.59:27017"),
+  MONGO_DB: z.string().default("lexa-documents"),
 });
 
 const parsed = ConfigSchema.safeParse(process.env);

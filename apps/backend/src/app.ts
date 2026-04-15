@@ -12,6 +12,8 @@ import { formsRouter } from "./routes/forms.js";
 import { authRouter } from "./routes/auth.js";
 import { taxpayersRouter } from "./routes/taxpayers.js";
 import { requireAuth } from "./middleware/requireAuth.js";
+import { documentsRouter } from "./routes/documents.js";
+import { connectMongo } from "./db/mongo.js";
 
 const app = express();
 
@@ -60,6 +62,7 @@ app.use("/transactions", requireAuth, transactionsRouter);
 app.use("/ledger", requireAuth, ledgerRouter);
 app.use("/forms", requireAuth, formsRouter);
 app.use("/taxpayers", requireAuth, taxpayersRouter);
+app.use("/documents", requireAuth, documentsRouter);
 
 // /agents est mixte : GET / (listing) public, POST /* protégé via les
 // handlers eux-mêmes dans routes/agents.ts.
@@ -84,6 +87,10 @@ const server = app.listen(config.PORT, () => {
   console.log(`  Ollama:   ${config.OLLAMA_URL}`);
   console.log(`  Qdrant:   ${config.QDRANT_URL}`);
   console.log(`  Embedder: ${config.EMBEDDER_URL}`);
+  // MongoDB — non-bloquant, Lexa continue à démarrer même si Mongo est down
+  connectMongo().catch((err) => {
+    console.warn("[mongo] startup connection failed (non-fatal):", err.message);
+  });
 });
 
 // Graceful shutdown

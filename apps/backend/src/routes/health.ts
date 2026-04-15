@@ -3,12 +3,13 @@ import { pool } from "../db/postgres.js";
 import { embedder } from "../rag/EmbedderClient.js";
 import { qdrant } from "../rag/QdrantClient.js";
 import { ollama } from "../llm/OllamaClient.js";
+import { checkMongoHealth } from "../db/mongo.js";
 import { config } from "../config/index.js";
 
 export const healthRouter = Router();
 
 healthRouter.get("/health", async (_req, res) => {
-  const [pgOk, qdrantOk, ollamaOk, embedderOk] = await Promise.all([
+  const [pgOk, qdrantOk, ollamaOk, embedderOk, mongoOk] = await Promise.all([
     pool
       .query("SELECT 1")
       .then(() => true)
@@ -16,6 +17,7 @@ healthRouter.get("/health", async (_req, res) => {
     qdrant.health(),
     ollama.health(),
     embedder.health(),
+    checkMongoHealth(),
   ]);
 
   const points = qdrantOk ? await qdrant.countPoints().catch(() => -1) : -1;
@@ -32,6 +34,7 @@ healthRouter.get("/health", async (_req, res) => {
       qdrantPoints: points,
       ollama: ollamaOk,
       embedder: embedderOk,
+      mongo: mongoOk,
     },
   });
 });
