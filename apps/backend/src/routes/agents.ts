@@ -4,6 +4,7 @@ import { tvaAgent } from "../agents/tva/TvaAgent.js";
 import { fiscalPpVsAgent } from "../agents/fiscalPpVs/FiscalPpVsAgent.js";
 import { fiscalPpGeAgent } from "../agents/fiscalPpGe/FiscalPpGeAgent.js";
 import { fiscalPpVdAgent } from "../agents/fiscalPpVd/FiscalPpVdAgent.js";
+import { fiscalPpFrAgent } from "../agents/fiscalPpFr/FiscalPpFrAgent.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 
 export const agentsRouter = Router();
@@ -123,6 +124,36 @@ agentsRouter.post("/fiscal-pp-vd/ask", requireAuth, async (req, res) => {
   }
 });
 
+const FiscalPpFrSchema = z.object({
+  question: z.string().min(3).max(2000),
+  context: z
+    .object({
+      status: z.enum(["salarie", "independant", "mixte"]).optional(),
+      netIncome: z.number().optional(),
+      commune: z.string().optional(),
+      district: z.string().optional(),
+      civilStatus: z.enum(["single", "married", "divorced", "widowed"]).optional(),
+      isPropertyOwner: z.boolean().optional(),
+      isBilingual: z.boolean().optional(),
+    })
+    .optional(),
+});
+
+/** POST /agents/fiscal-pp-fr/ask — specialized FR personal income tax agent */
+agentsRouter.post("/fiscal-pp-fr/ask", requireAuth, async (req, res) => {
+  const parsed = FiscalPpFrSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
+  }
+  try {
+    const result = await fiscalPpFrAgent.ask(parsed.data);
+    res.json(result);
+  } catch (err) {
+    console.error("FiscalPpFr agent error:", err);
+    res.status(500).json({ error: "fiscal-pp-fr agent failed", message: (err as Error).message });
+  }
+});
+
 /** GET /agents — list of available agents */
 agentsRouter.get("/", (_req, res) => {
   res.json({
@@ -165,6 +196,13 @@ agentsRouter.get("/", (_req, res) => {
         model: "lexa-fiscal-pp-vd",
         description:
           "Agent specialise fiscalite PP Vaud (LIFD, LHID, LI VD, LIPC VD)",
+      },
+      {
+        id: "fiscal-pp-fr",
+        endpoint: "POST /agents/fiscal-pp-fr/ask",
+        model: "lexa-fiscal-pp-fr",
+        description:
+          "Agent specialise fiscalite PP Fribourg (LIFD, LHID, LICD FR, LIC FR, ORD-FP FR)",
       },
     ],
     planned: [
