@@ -4,6 +4,7 @@ import { Login } from '@/routes/Login';
 import { Register } from '@/routes/Register';
 import { Onboarding } from '@/routes/Onboarding';
 import { Workspace } from '@/routes/Workspace';
+import { Documents } from '@/routes/Documents';
 import { TaxpayerWizardCanton } from '@/routes/taxpayer/TaxpayerWizardCanton';
 import { cantonGE } from '@/config/cantons/ge';
 import { cantonVD } from '@/config/cantons/vd';
@@ -88,6 +89,14 @@ export default function App() {
         element={
           <RequireAuth>
             <TaxpayerWizardCanton canton={cantonVS} />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/documents"
+        element={
+          <RequireAuth>
+            <Documents />
           </RequireAuth>
         }
       />

@@ -8,6 +8,7 @@ import {
   Calculator,
   Command,
   FileSignature,
+  FileText,
   LogOut,
   Sparkles,
 } from 'lucide-react';
@@ -151,6 +152,15 @@ export function Workspace() {
           >
             <FileSignature className="w-3.5 h-3.5" />
             <span className="text-xs hidden md:inline">Déclaration PP</span>
+          </button>
+
+          <button
+            onClick={() => navigate('/documents')}
+            className="btn-ghost !px-3 !py-1.5"
+            title="Documents OCR"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span className="text-xs hidden md:inline">Documents</span>
           </button>
 
           <button onClick={handleLogout} className="btn-ghost !px-2 !py-1.5" aria-label="logout">

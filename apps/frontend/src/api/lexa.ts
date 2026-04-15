@@ -170,6 +170,24 @@ export const lexa = {
     childrenCount?: number;
   }) =>
     api.patch<{ ok: true }>('/taxpayers/profile', input).then((r) => r.data),
+
+  // Documents OCR (session 23)
+  uploadDocument: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api
+      .post<UploadDocumentResponse>('/documents/upload', formData, {
+        // Ne pas setter Content-Type manuellement — axios gère le boundary multipart
+        headers: { 'Content-Type': undefined },
+      })
+      .then((r) => r.data);
+  },
+
+  listDocuments: () =>
+    api.get<{ documents: DocumentMeta[] }>('/documents').then((r) => r.data.documents),
+
+  getDocument: (documentId: string) =>
+    api.get<DocumentMeta>(`/documents/${documentId}`).then((r) => r.data),
 };
 
 export type TaxpayerDraft = {
@@ -312,4 +330,31 @@ export type TvaDecompteResponse = {
   };
   pdf: string;
   xml: string;
+};
+
+// ── Types documents OCR (session 23) ────────────────────────────────────────
+
+export type OcrResult = {
+  rawText: string;
+  extractionMethod: 'pdf-parse' | 'qwen3-vl-ocr';
+  ocrConfidence: number;
+  type: 'certificat_salaire' | 'attestation_3a' | 'facture' | 'releve_bancaire' | 'autre';
+  extractedFields: Record<string, unknown>;
+  durationMs: number;
+};
+
+export type DocumentMeta = {
+  documentId: string;
+  tenantId: string;
+  filename: string;
+  mimetype: string;
+  size: number;
+  uploadedAt: string;
+  ocrResult: OcrResult;
+};
+
+export type UploadDocumentResponse = {
+  documentId: string;
+  filename: string;
+  ocrResult: OcrResult;
 };
