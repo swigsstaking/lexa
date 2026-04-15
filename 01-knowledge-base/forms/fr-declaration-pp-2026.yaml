@@ -1,0 +1,162 @@
+# Lexa — Template formulaire officiel
+# Déclaration d'impôt Personne Physique (PP) — Canton de Fribourg
+#
+# Clone du template VD-PP session 19, adapté aux spécificités fribourgeoises.
+# Session 22 (Lane A) : champs critiques (revenu activité, fortune, déductions principales).
+# Pas de coefficient communal FR — système fiscal cantonal différent de VD.
+#
+# Source légale :
+#   - LIFD (RS 642.11) — art. 33 al. 1 let. e (pilier 3a)
+#   - LICD (BDLF 631.1) — Loi sur les impôts cantonaux directs Fribourg
+#   - LIC (BDLF 632.1) — Loi sur l'imposition des personnes physiques et des capitaux Fribourg
+#   - ORD-FP (BDLF 631.411) — Ordonnance sur les frais professionnels (forfait)
+#   - Guide PP FR 2026 — déductions et barèmes SCC FR
+#
+# Autorité : Service cantonal des contributions Fribourg (SCC FR).
+# Délai de dépôt : 31 mars.
+#
+# TODO session 23 : confirmer barème forfait frais pro SCC FR (ORD-FP 631.411)
+# Fallback utilisé : 3% plafonné min 1'700 CHF / max 3'400 CHF (conservateur)
+
+form_id: FR-declaration-pp
+version: "2026-01-01"
+title: Déclaration d'impôt PP — Canton de Fribourg
+jurisdiction: cantonal-FR
+canton: FR
+authority: SCC FR
+legal_reference:
+  law: LICD
+  rs: "BDLF 631.1"
+  articles: ["26", "30", "31", "33", "34"]
+  federal_refs: ["LIFD art. 18", "LIFD art. 33 al. 1 let. e", "LIFD art. 34"]
+  additional_refs:
+    - "LIC (BDLF 632.1)"
+    - "ORD-FP (BDLF 631.411)"
+
+periodicity: annual
+
+# Montants officiels 2026 — Canton de Fribourg
+# Pilier 3a : identique fédéral (LIFD art. 33 al. 1 let. e)
+# TODO session 23 : confirmer barème SCC FR Art. 26 LICD — forfait frais pro
+# Fallback conservateur : 3% min 1'700 / max 3'400 CHF (pattern stub session 21)
+reference_amounts:
+  pilier_3a_salarie_max_chf: 7260
+  pilier_3a_independant_max_chf: 36288
+  frais_professionnels_forfait_pct: 3
+  frais_professionnels_forfait_min_chf: 1700
+  frais_professionnels_forfait_max_chf: 3400
+  # Pas de coefficient communal — FR utilise un autre système de calcul
+
+fields:
+  # Identité contribuable
+  - id: contribuable_nom
+    label: Nom et prénom
+    source: company.name
+    validation: required
+  - id: contribuable_uid
+    label: Numéro IDE / UID
+    source: company.uid
+  - id: contribuable_canton
+    label: Canton de domicile
+    source: company.canton
+    validation: required
+  - id: contribuable_commune
+    label: Commune de domicile (FR)
+    source: input.commune
+
+  # Période
+  - id: periode_fiscale
+    label: Année fiscale
+    source: input.year
+    validation: required
+
+  # Revenus
+  - id: revenu_activite_independante
+    label: Revenu net d'activité lucrative indépendante
+    source: projection.fr_pp.revenu_independant
+    format: currency_chf
+    note: "LIFD art. 18 — bénéfice net de l'entreprise individuelle"
+  - id: revenu_activite_dependante
+    label: Revenu net d'activité lucrative dépendante
+    source: input.revenu_salaire
+    format: currency_chf
+    todo: true
+  - id: revenu_capital
+    label: Revenus du capital mobilier (intérêts, dividendes)
+    source: input.revenu_capital
+    format: currency_chf
+    todo: true
+  - id: revenu_total
+    label: Total des revenus
+    source: projection.fr_pp.revenu_total
+    format: currency_chf
+    validation: required
+
+  # Fortune
+  - id: fortune_nette
+    label: Fortune nette au 31 décembre
+    source: projection.fr_pp.fortune_nette
+    format: currency_chf
+    note: "Actif circulant + actif immobilisé − dettes"
+
+  # Déductions principales
+  - id: deduction_pilier_3a
+    label: Cotisation au pilier 3a (max CHF 36'288 indépendant / 7'260 salarié)
+    source: input.pilier_3a
+    format: currency_chf
+    todo: true
+  - id: deduction_lpp_rachats
+    label: Rachats LPP (2e pilier)
+    source: input.lpp_rachats
+    format: currency_chf
+    todo: true
+  - id: deduction_assurances
+    label: Primes d'assurance maladie et accidents
+    source: input.primes_assurances
+    format: currency_chf
+    todo: true
+  - id: deduction_interets_dette
+    label: Intérêts passifs d'emprunts privés
+    source: input.interets_dette
+    format: currency_chf
+    todo: true
+  - id: deduction_frais_professionnels
+    label: "Frais professionnels (forfait 3% min 1700 max 3400 CHF — TODO: confirmer SCC FR ORD-FP)"
+    source: computed.frais_pro_forfait
+    format: currency_chf
+    todo: true
+  - id: deduction_total
+    label: Total des déductions
+    source: projection.fr_pp.deduction_total
+    format: currency_chf
+
+  # Revenu imposable
+  - id: revenu_imposable
+    label: Revenu imposable
+    source: projection.fr_pp.revenu_imposable
+    format: currency_chf
+    validation: required
+    note: "Total revenus − total déductions"
+
+output:
+  pdf:
+    renderer: pdfkit
+    disclaimer: >
+      Information à titre indicatif — vérifiez avec votre fiduciaire et
+      le Service cantonal des contributions FR (SCC). Ce document ne reflète que
+      les données extraites automatiquement de votre comptabilité. Les revenus
+      salariés, revenus du capital et déductions personnelles doivent être
+      complétés manuellement. Lexa prépare, l'humain signe (whitepaper §6).
+      Base légale : LICD (BDLF 631.1), LIC (BDLF 632.1), ORD-FP (BDLF 631.411), LIFD.
+      ATTENTION : Le forfait frais professionnels FR (fallback 3% min 1'700/max 3'400 CHF)
+      n'est pas encore validé officiellement — à confirmer avec SCC FR (TODO session 23).
+  xml:
+    schema: none
+    note: >
+      Pas de XML en v1 — SCC FR n'exige pas d'échange structuré eCH-0217
+      en v1. Session future : intégration si disponible côté SCC FR.
+
+validation:
+  human_signature_required: true
+  lexa_liability: preparation_only
+  depot_deadline: "31 mars"

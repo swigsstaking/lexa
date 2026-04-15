@@ -17,6 +17,8 @@ import { buildGePpDeclaration } from "../execution/GePpFormBuilder.js";
 import { renderGePpPdf } from "../execution/GePpPdfRenderer.js";
 import { buildVdPpDeclaration } from "../execution/VdPpFormBuilder.js";
 import { renderVdPpPdf } from "../execution/VdPpPdfRenderer.js";
+import { buildFrPpDeclaration } from "../execution/FrPpFormBuilder.js";
+import { renderFrPpPdf } from "../execution/FrPpPdfRenderer.js";
 import {
   appendVsPpDeclarationEvent,
   findExistingVsPpDeclaration,
@@ -221,6 +223,71 @@ taxpayersRouter.post("/draft/submit", async (req, res) => {
     const message = err instanceof Error ? err.message : "unknown error";
     console.error("[taxpayers.submit]", err);
     res.status(500).json({ error: "submit failed", message });
+  }
+});
+
+// POST /taxpayers/draft/submit-fr — génère le PDF PP Fribourg à partir du draft
+taxpayersRouter.post("/draft/submit-fr", async (req, res) => {
+  const parse = TaxpayerDraftSubmitSchema.safeParse(req.body);
+  if (!parse.success) {
+    return res
+      .status(400)
+      .json({ error: "invalid body", details: parse.error.flatten() });
+  }
+  const { fiscalYear } = parse.data;
+
+  try {
+    const draft = await getOrCreateDraft(req.tenantId, fiscalYear);
+
+    const form = await buildFrPpDeclaration({
+      tenantId: req.tenantId,
+      year: fiscalYear,
+      draft: draft.state,
+    });
+
+    const existing = await findExistingVsPpDeclaration({
+      tenantId: req.tenantId,
+      formId: form.formId,
+      version: form.version,
+      year: fiscalYear,
+    });
+
+    const pdfBuffer = await renderFrPpPdf(form);
+
+    let streamId: string;
+    let eventId: number;
+    let idempotent: boolean;
+    if (existing) {
+      streamId = existing.streamId;
+      eventId = existing.eventId;
+      idempotent = true;
+    } else {
+      const record = await appendVsPpDeclarationEvent(form);
+      streamId = record.streamId;
+      eventId = record.id;
+      idempotent = false;
+    }
+
+    await markSubmitted(req.tenantId, fiscalYear);
+
+    res.json({
+      streamId,
+      eventId,
+      idempotent,
+      form: {
+        formId: form.formId,
+        version: form.version,
+        year: form.year,
+        company: form.company,
+        projection: form.projection,
+        generatedAt: form.generatedAt,
+      },
+      pdf: pdfBuffer.toString("base64"),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "unknown error";
+    console.error("[taxpayers.submit-fr]", err);
+    res.status(500).json({ error: "submit-fr failed", message });
   }
 });
 

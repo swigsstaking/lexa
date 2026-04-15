@@ -152,6 +152,11 @@ export const lexa = {
       .post<VsPpDeclarationResponse>('/taxpayers/draft/submit-vd', input)
       .then((r) => r.data),
 
+  submitTaxpayerDraftFr: (input: { fiscalYear: number }) =>
+    api
+      .post<VsPpDeclarationResponse>('/taxpayers/draft/submit-fr', input)
+      .then((r) => r.data),
+
   resetTaxpayerDraft: (input: { fiscalYear: number }) =>
     api.post<{ ok: true }>('/taxpayers/draft/reset', input).then((r) => r.data),
 

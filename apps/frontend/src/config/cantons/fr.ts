@@ -1,32 +1,19 @@
-// TODO (session 22): importer la vraie liste COMMUNES_FR + coefficients depuis /data/communes-fr
-// Stub minimal pour permettre la route /taxpayer/fr/:year
-
+import { COMMUNES_FR } from '@/data/communes-fr';
 import { lexa } from '@/api/lexa';
-import type { CantonConfig, CantonCommune } from './types';
-
-/** Liste indicative des communes FR (stub — à compléter session 22) */
-const COMMUNES_FR_STUB: CantonCommune[] = [
-  { name: 'Fribourg' },
-  { name: 'Bulle' },
-  { name: 'Romont' },
-  { name: 'Estavayer-le-Lac' },
-  { name: 'Châtel-Saint-Denis' },
-  { name: 'Morat (Murten)' },
-  { name: 'Düdingen' },
-  { name: 'Villars-sur-Glâne' },
-];
+import type { CantonConfig } from './types';
 
 export const cantonFR: CantonConfig = {
   code: 'FR',
   label: 'Fribourg',
-  communes: COMMUNES_FR_STUB,
+  communes: COMMUNES_FR.map((c) => ({ name: c.name, coefficientCommunal: null })),
   pathPrefix: '/taxpayer/fr',
   authority: 'SCC FR',
   header: 'Déclaration d\'impôt PP Fribourg',
   deadlineLabel: '31 mars',
-  legalBasis: 'LICD (BDLF 631.1), LIC (BDLF 632.1), LIFD',
+  legalBasis: 'LICD (BDLF 631.1), LIC (BDLF 632.1), ORD-FP (BDLF 631.411), LIFD',
   fraisProMin: 1700,
   fraisProMax: 3400,
-  hasCoefficientCommunal: true,
-  submitDraft: lexa.submitTaxpayerDraftVd, // TODO (session 22): créer submitTaxpayerDraftFr
+  // FR n'utilise pas de coefficient communal par commune dans le wizard
+  hasCoefficientCommunal: false,
+  submitDraft: lexa.submitTaxpayerDraftFr,
 };

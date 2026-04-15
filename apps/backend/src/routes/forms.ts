@@ -21,6 +21,8 @@ import { buildGePpDeclaration } from "../execution/GePpFormBuilder.js";
 import { renderGePpPdf } from "../execution/GePpPdfRenderer.js";
 import { buildVdPpDeclaration } from "../execution/VdPpFormBuilder.js";
 import { renderVdPpPdf } from "../execution/VdPpPdfRenderer.js";
+import { buildFrPpDeclaration } from "../execution/FrPpFormBuilder.js";
+import { renderFrPpPdf } from "../execution/FrPpPdfRenderer.js";
 import type { FilledForm } from "../execution/types.js";
 
 export const formsRouter = Router();
@@ -419,5 +421,90 @@ formsRouter.post("/vd-declaration-pp", async (req, res) => {
     const message = err instanceof Error ? err.message : "unknown error";
     console.error("[forms.vd-declaration-pp]", err);
     res.status(500).json({ error: "vd-declaration-pp failed", message });
+  }
+});
+
+// ── Déclaration fiscale PP Fribourg ───────────────────────────────────────────
+
+const frPpBodySchema = z.object({
+  year: z.number().int().min(2020).max(2100),
+  draft: z
+    .object({
+      step1: z.record(z.unknown()).optional(),
+      step2: z.record(z.unknown()).optional(),
+      step3: z.record(z.unknown()).optional(),
+      step4: z.record(z.unknown()).optional(),
+    })
+    .optional(),
+});
+
+/**
+ * POST /forms/fr-declaration-pp — déclaration fiscale PP Canton de Fribourg.
+ * Clone du endpoint VD-PP, adapté aux spécificités fribourgeoises :
+ * - forfait frais pro min 1'700 CHF, max 3'400 CHF (3%)
+ *   TODO session 23 : confirmer barème SCC FR ORD-FP (BDLF 631.411)
+ * - pilier 3a salarié 7'260 CHF (avec LPP), 36'288 CHF (sans LPP) — 2026
+ * - PAS de coefficient communal (FR utilise un autre système)
+ * - PAS de régime frontalier spécifique
+ * - disclaimer LICD (BDLF 631.1), LIC (BDLF 632.1), ORD-FP (BDLF 631.411), LIFD
+ * - autorité SCC FR, délai dépôt : 31 mars
+ * Idempotent sur (tenant, formId, version, year).
+ */
+formsRouter.post("/fr-declaration-pp", async (req, res) => {
+  const parse = frPpBodySchema.safeParse(req.body);
+  if (!parse.success) {
+    return res
+      .status(400)
+      .json({ error: "invalid body", details: parse.error.issues });
+  }
+  const { year, draft } = parse.data;
+  try {
+    const form = await buildFrPpDeclaration({
+      tenantId: req.tenantId,
+      year,
+      draft: draft as Parameters<typeof buildFrPpDeclaration>[0]["draft"],
+    });
+
+    const existing = await findExistingVsPpDeclaration({
+      tenantId: form.company.tenantId,
+      formId: form.formId,
+      version: form.version,
+      year: form.year,
+    });
+
+    const pdfBuffer = await renderFrPpPdf(form);
+
+    let streamId: string;
+    let eventId: number;
+    let idempotent: boolean;
+    if (existing) {
+      streamId = existing.streamId;
+      eventId = existing.eventId;
+      idempotent = true;
+    } else {
+      const record = await appendVsPpDeclarationEvent(form);
+      streamId = record.streamId;
+      eventId = record.id;
+      idempotent = false;
+    }
+
+    res.json({
+      streamId,
+      eventId,
+      idempotent,
+      form: {
+        formId: form.formId,
+        version: form.version,
+        year: form.year,
+        company: form.company,
+        projection: form.projection,
+        generatedAt: form.generatedAt,
+      },
+      pdf: pdfBuffer.toString("base64"),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "unknown error";
+    console.error("[forms.fr-declaration-pp]", err);
+    res.status(500).json({ error: "fr-declaration-pp failed", message });
   }
 });
