@@ -147,6 +147,11 @@ export const lexa = {
       .post<VsPpDeclarationResponse>('/taxpayers/draft/submit-ge', input)
       .then((r) => r.data),
 
+  submitTaxpayerDraftVd: (input: { fiscalYear: number }) =>
+    api
+      .post<VsPpDeclarationResponse>('/taxpayers/draft/submit-vd', input)
+      .then((r) => r.data),
+
   resetTaxpayerDraft: (input: { fiscalYear: number }) =>
     api.post<{ ok: true }>('/taxpayers/draft/reset', input).then((r) => r.data),
 
@@ -180,7 +185,9 @@ export type TaxpayerDraft = {
         | 'widowed';
       childrenCount?: number;
       commune?: string;
-      canton: 'VS';
+      canton: 'VS' | 'GE' | 'VD' | string;
+      // VD-specific: coefficient communal (ex: Lausanne 2026 = 79)
+      coefficientCommunal?: number;
     };
     step2: {
       isSalarie?: boolean;

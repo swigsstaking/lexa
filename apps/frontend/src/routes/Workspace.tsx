@@ -135,10 +135,13 @@ export function Workspace() {
           <button
             onClick={() => {
               const canton = company?.canton ?? 'VS';
+              const year = new Date().getFullYear();
               const taxpayerPath =
                 canton === 'GE'
-                  ? `/taxpayer/ge/${new Date().getFullYear()}`
-                  : `/taxpayer/${new Date().getFullYear()}`;
+                  ? `/taxpayer/ge/${year}`
+                  : canton === 'VD'
+                    ? `/taxpayer/vd/${year}`
+                    : `/taxpayer/${year}`;
               navigate(taxpayerPath);
             }}
             className="btn-ghost !px-3 !py-1.5"
