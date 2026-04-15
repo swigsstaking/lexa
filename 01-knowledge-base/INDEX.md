@@ -137,7 +137,9 @@ Source : https://www.bger.ch/
 | **LIPC** — Loi sur les impôts communaux (BLV 650.11) | ✅ **Ingéré session 18 (62 articles)** | prestations.vd.ch/pub/blv-publication/api/actes/{id}/html |
 | **RLI** — Règlement d'application de la LI (BLV 642.11.1) | ✅ **Ingéré session 18 (9 articles)** | prestations.vd.ch/pub/blv-publication/api/actes/{id}/html |
 | Barème cantonal | ❌ Manquant | ACI |
-| Formulaires PP / PM | ❌ Manquant | VaudTax |
+| **vd-declaration-pp-2026.yaml** — Template formulaire déclaration PP VD | ✅ **Ajouté session 19** | `01-knowledge-base/forms/` + `apps/backend/src/execution/templates/` |
+| Barème cantonal | ❌ Manquant | ACI |
+| Formulaires PP / PM (VaudTax) | ❌ Manquant | VaudTax |
 | Directives ACI | ❌ Manquant | aci.vd.ch |
 
 **Portail** : https://www.vd.ch/themes/etat-droit-finances/impots

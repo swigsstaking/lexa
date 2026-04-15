@@ -1,14 +1,22 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 18 — 2026-04-15](2026-04-15-session-18.md)
-**Prochaine session** : Session 19 — Wizard VD-PP (priorité 1) ou Ingestion Fribourg (FR)
+**Dernière session** : [Session 19 — 2026-04-15](2026-04-15-session-19.md)
+**Prochaine session** : Session 20 — Ingestion Fribourg (FR) OU Webhook retour Lexa→Pro — au choix de la mère
 
-> Session 18 a livré l'ingestion Canton Vaud (LI + LIPC + RLI, 381 articles), le Modelfile
-> lexa-fiscal-pp-vd (6ᵉ agent Lexa) et le endpoint fiscal-pp-vd. qa-lexa 15/15. Score MVP ~68.5%.
+> Session 19 a livré le wizard contribuable PP Vaud complet (6 steps, `/taxpayer/vd/:year`),
+> le backend VdPpFormBuilder + VdPpPdfRenderer + 2 routes, et qa-lexa **16/16**. Score MVP ~70%.
 
 ---
 
-## Ce qui marche après session 18
+> **Recommandation pour session 20 (2 options — mère décide) :**
+>
+> **Option A : Ingestion Fribourg (FR)** — Clone du pattern VD/GE. Source FR : legislation.fr.ch ou Legifer FR (BLV fribourgeois). Livrable : agent `lexa-fiscal-pp-fr`, KB FR dans Qdrant, +qa fixtures, wizard PP FR session 21.
+>
+> **Option B : Webhook retour Lexa→Pro** — Notifier swigs-workflow quand une déclaration est générée. Payload HMAC, route `/api/webhooks/lexa-declaration` côté Pro, store dans `declarations` table Pro.
+
+---
+
+## Ce qui marche après session 19
 
 | Composant | État |
 |---|---|
@@ -19,16 +27,17 @@
 | **Wizard contribuable** | |
 | Wizard PP VS 6 steps sur `/taxpayer/:year` | ✅ session 15 |
 | Wizard PP GE 6 steps sur `/taxpayer/ge/:year` | ✅ session 17 |
-| Bouton "Déclaration PP" canton-aware (VS/GE) | ✅ session 17 |
+| **Wizard PP VD 6 steps sur `/taxpayer/vd/:year`** | ✅ **session 19** |
+| Bouton "Déclaration PP" canton-aware (VS/GE/VD) | ✅ session 19 |
 | Profil persistant `taxpayer_profiles` (migration 006) | ✅ session 17 |
 | **Knowledge base** | |
 | Canton VS (339 articles) | ✅ |
 | Canton GE (373 articles LCP/LIPP/LIPM) | ✅ session 16 |
-| **Canton VD (381 articles LI/LIPC/RLI)** | ✅ **session 18** |
+| Canton VD (381 articles LI/LIPC/RLI) | ✅ session 18 |
 | Qdrant `swiss_law` | **6142 pts** |
-| **Agents actifs** (6/7) | classifier, reasoning, tva, fiscal-pp-vs, fiscal-pp-ge, **fiscal-pp-vd** |
+| **Agents actifs** (6/7) | classifier, reasoning, tva, fiscal-pp-vs, fiscal-pp-ge, fiscal-pp-vd |
 | **Tests auto** | |
-| qa-lexa **15/15** via HTTPS public | ✅ **session 18** (5 classify + 3 tva + 2 fiscal-pp-vs + 1 fiscal-pp-ge + 1 fiscal-pp-vd + 3 taxpayer) |
+| qa-lexa **16/16** via HTTPS public | ✅ **session 19** (5 classify + 3 tva + 2 fiscal-pp-vs + 1 fiscal-pp-ge + 1 fiscal-pp-vd + 4 taxpayer) |
 
 ---
 
@@ -95,7 +104,7 @@ Clone du pattern VD/GE. Source FR : legislation.fr.ch ou Legifer FR. À délégu
 12. Idempotence par formKind
 13. Un YAML + un Builder par formulaire
 14. Un Modelfile par canton
-15. qa-lexa baseline de régression → **15/15** après session 18
+15. qa-lexa baseline de régression → **16/16** après session 19
 16. HMAC service-to-service strictement séparé du JWT
 17. Un draft par tenant par année fiscale
 18. State wizard en JSONB flexible, mutation atomique par dot-path
@@ -127,4 +136,4 @@ Clone du pattern VD/GE. Source FR : legislation.fr.ch ou Legifer FR. À délégu
 
 ---
 
-**Dernière mise à jour** : 2026-04-15 (fin session 18 — Canton Vaud acquis + 6ᵉ agent)
+**Dernière mise à jour** : 2026-04-15 (fin session 19 — Wizard PP Vaud livré, qa-lexa 16/16)
