@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { tvaAgent } from "../agents/tva/TvaAgent.js";
 import { fiscalPpVsAgent } from "../agents/fiscalPpVs/FiscalPpVsAgent.js";
+import { fiscalPpGeAgent } from "../agents/fiscalPpGe/FiscalPpGeAgent.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 
 export const agentsRouter = Router();
@@ -59,6 +60,39 @@ agentsRouter.post("/fiscal-pp/ask", requireAuth, async (req, res) => {
   }
 });
 
+const FiscalPpGeSchema = z.object({
+  question: z.string().min(3).max(2000),
+  context: z
+    .object({
+      status: z
+        .enum(["salarie", "independant", "mixte", "frontalier"])
+        .optional(),
+      netIncome: z.number().optional(),
+      commune: z.string().optional(),
+      civilStatus: z
+        .enum(["single", "married", "divorced", "widowed"])
+        .optional(),
+      isPropertyOwner: z.boolean().optional(),
+      hasForeignIncome: z.boolean().optional(),
+    })
+    .optional(),
+});
+
+/** POST /agents/fiscal-pp-ge/ask — specialized GE personal income tax agent */
+agentsRouter.post("/fiscal-pp-ge/ask", requireAuth, async (req, res) => {
+  const parsed = FiscalPpGeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
+  }
+  try {
+    const result = await fiscalPpGeAgent.ask(parsed.data);
+    res.json(result);
+  } catch (err) {
+    console.error("FiscalPpGe agent error:", err);
+    res.status(500).json({ error: "fiscal-pp-ge agent failed", message: (err as Error).message });
+  }
+});
+
 /** GET /agents — list of available agents */
 agentsRouter.get("/", (_req, res) => {
   res.json({
@@ -88,9 +122,15 @@ agentsRouter.get("/", (_req, res) => {
         description:
           "Agent specialise fiscalite PP Valais (LIFD, LHID, LF VS, Guide PP 2024)",
       },
+      {
+        id: "fiscal-pp-ge",
+        endpoint: "POST /agents/fiscal-pp-ge/ask",
+        model: "lexa-fiscal-pp-ge",
+        description:
+          "Agent specialise fiscalite PP Geneve (LIFD, LHID, LIPP, LCP, LIPM)",
+      },
     ],
     planned: [
-      { id: "fiscal-pp-ge", description: "Fiscal PP Geneve (session 14+)" },
       { id: "fiscal-pm", description: "Fiscal personnes morales (SA/Sàrl)" },
       { id: "cloture", description: "Clôture continue CO" },
       { id: "conseiller", description: "Optimisation proactive" },
