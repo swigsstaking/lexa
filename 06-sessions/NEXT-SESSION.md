@@ -1,18 +1,18 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 19 — 2026-04-15](2026-04-15-session-19.md)
-**Prochaine session** : Session 20 — Ingestion Fribourg (FR) OU Webhook retour Lexa→Pro — au choix de la mère
+**Dernière session** : [Session 20 — 2026-04-15](2026-04-15-session-20.md)
+**Prochaine session** : Session 21 — Ingestion Fribourg (FR) OU Refactor wizard générique — au choix de la mère
 
-> Session 19 a livré le wizard contribuable PP Vaud complet (6 steps, `/taxpayer/vd/:year`),
-> le backend VdPpFormBuilder + VdPpPdfRenderer + 2 routes, et qa-lexa **16/16**. Score MVP ~70%.
+> Session 20 a livré le webhook retour Lexa→Pro (bidirectionnel complet) : ProWebhookClient HMAC,
+> endpoint `/api/integrations/lexa/webhook` côté Pro avec verifyLexaHmac, idempotence, qa-lexa **16/16**. Score MVP ~71%.
 
 ---
 
-> **Recommandation pour session 20 (2 options — mère décide) :**
+> **Recommandation pour session 21 (2 options — mère décide) :**
 >
-> **Option A : Ingestion Fribourg (FR)** — Clone du pattern VD/GE. Source FR : legislation.fr.ch ou Legifer FR (BLV fribourgeois). Livrable : agent `lexa-fiscal-pp-fr`, KB FR dans Qdrant, +qa fixtures, wizard PP FR session 21.
+> **Option A : Ingestion Fribourg (FR)** — Clone du pattern VD/GE. Source FR : legislation.fr.ch ou Legifer FR (BLV fribourgeois). Livrable : agent `lexa-fiscal-pp-fr`, KB FR dans Qdrant, +qa fixtures, wizard PP FR session 22.
 >
-> **Option B : Webhook retour Lexa→Pro** — Notifier swigs-workflow quand une déclaration est générée. Payload HMAC, route `/api/webhooks/lexa-declaration` côté Pro, store dans `declarations` table Pro.
+> **Option B : Refactor wizard générique multi-canton** — Factoriser les 3 wizards (VS/GE/VD) en un seul composant `TaxpayerWizard.tsx` avec configuration par canton. Prérequis avant FR, NE, JU, BE.
 
 ---
 
@@ -24,6 +24,7 @@
 | `https://lexa.swigs.online` HTTPS + proxy /api | ✅ |
 | Auth JWT + rate limit + trust proxy 1 | ✅ |
 | HMAC Pro→Lexa + classify auto | ✅ synthétique validé sessions 16+18 |
+| **HMAC Lexa→Pro (webhook retour)** | ✅ **session 20** — bidirectionnel complet |
 | **Wizard contribuable** | |
 | Wizard PP VS 6 steps sur `/taxpayer/:year` | ✅ session 15 |
 | Wizard PP GE 6 steps sur `/taxpayer/ge/:year` | ✅ session 17 |
@@ -136,4 +137,4 @@ Clone du pattern VD/GE. Source FR : legislation.fr.ch ou Legifer FR. À délégu
 
 ---
 
-**Dernière mise à jour** : 2026-04-15 (fin session 19 — Wizard PP Vaud livré, qa-lexa 16/16)
+**Dernière mise à jour** : 2026-04-15 (fin session 20 — Webhook retour Lexa→Pro livré, qa-lexa 16/16)
