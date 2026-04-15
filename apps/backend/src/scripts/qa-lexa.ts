@@ -58,7 +58,7 @@ async function loginQaUser(): Promise<void> {
 
 type TestResult = {
   id: string;
-  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "taxpayer";
+  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "taxpayer" | "documents";
   pass: boolean;
   latencyMs: number;
   reason?: string;
@@ -779,6 +779,40 @@ async function runVdTaxpayerDraftSubmit(): Promise<TestResult> {
   }
 }
 
+/**
+ * Fixture: documents-1-list-route
+ * Vérifie que la route GET /documents est accessible et retourne bien
+ * un tableau (même vide). Test de route, pas de test OCR complet.
+ * Le smoke test OCR complet est validé manuellement via upload HTTPS.
+ * Session 23.
+ */
+async function runDocumentsUploadSynth(): Promise<TestResult> {
+  const started = Date.now();
+  try {
+    const { data } = await http.get<{ documents: unknown[] }>("/documents");
+
+    const ok = Array.isArray(data.documents);
+
+    return {
+      id: "documents-1-list-route",
+      kind: "documents",
+      pass: ok,
+      latencyMs: Date.now() - started,
+      reason: ok
+        ? undefined
+        : `expected documents array, got: ${JSON.stringify(data)}`,
+    };
+  } catch (err) {
+    return {
+      id: "documents-1-list-route",
+      kind: "documents",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
 // ── Main ───────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -917,6 +951,13 @@ async function main(): Promise<void> {
     `  ${r5.pass ? "✓" : "✗"} ${r5.id}  ${r5.latencyMs}ms  ${r5.reason ?? ""}`,
   );
 
+  // Documents OCR pipeline (session 23)
+  const r6 = await runDocumentsUploadSynth();
+  results.push(r6);
+  console.log(
+    `  ${r6.pass ? "✓" : "✗"} ${r6.id}  ${r6.latencyMs}ms  ${r6.reason ?? ""}`,
+  );
+
   const totalMs = Date.now() - started;
   const pass = results.filter((r) => r.pass).length;
   const fail = results.length - pass;
@@ -943,6 +984,7 @@ async function main(): Promise<void> {
       "fiscal-pp-ju": { total: byKind("fiscal-pp-ju").length, passed: byKind("fiscal-pp-ju").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiscal-pp-ju")) },
       "fiscal-pp-bj": { total: byKind("fiscal-pp-bj").length, passed: byKind("fiscal-pp-bj").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiscal-pp-bj")) },
       taxpayer: { total: byKind("taxpayer").length, passed: byKind("taxpayer").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("taxpayer")) },
+      documents: { total: byKind("documents").length, passed: byKind("documents").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("documents")) },
     },
     failures: results.filter((r) => !r.pass).map((r) => ({ id: r.id, kind: r.kind, reason: r.reason })),
     generatedAt: new Date().toISOString(),
