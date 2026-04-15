@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { eventStore } from "../events/EventStore.js";
 import { classifierAgent } from "../agents/classifier/ClassifierAgent.js";
 import { query } from "../db/postgres.js";
+import { requireHmac } from "../middleware/requireHmac.js";
 
 export const connectorsRouter = Router();
 
@@ -44,7 +45,7 @@ const BatchIngestSchema = z.object({
  *
  * Response: per-transaction result with streamId + optional classification.
  */
-connectorsRouter.post("/bank/ingest", async (req, res) => {
+connectorsRouter.post("/bank/ingest", requireHmac, async (req, res) => {
   const parsed = BatchIngestSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
