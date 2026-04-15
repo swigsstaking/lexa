@@ -10,7 +10,8 @@
     "start": "node dist/app.js",
     "migrate": "tsx src/db/migrate.ts",
     "test:rag": "tsx src/scripts/test-rag.ts",
-    "test:classify": "tsx src/scripts/test-classify.ts"
+    "test:classify": "tsx src/scripts/test-classify.ts",
+    "qa-lexa": "tsx src/scripts/qa-lexa.ts"
   },
   "dependencies": {
     "axios": "^1.7.9",
@@ -20,6 +21,9 @@
     "express-rate-limit": "^8.3.2",
     "fast-xml-parser": "^5.5.12",
     "jsonwebtoken": "^9.0.3",
+    "mongodb": "^6.8.0",
+    "multer": "^1.4.5-lts.1",
+    "pdf-parse": "^1.1.1",
     "pdfkit": "^0.18.0",
     "pg": "^8.13.1",
     "uuid": "^11.0.5",
@@ -30,7 +34,9 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^1.4.11",
     "@types/node": "^22.10.5",
+    "@types/pdf-parse": "^1.1.4",
     "@types/pdfkit": "^0.17.5",
     "@types/pg": "^8.11.10",
     "@types/uuid": "^10.0.0",
