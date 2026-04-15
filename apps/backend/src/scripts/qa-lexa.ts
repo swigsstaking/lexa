@@ -504,6 +504,43 @@ async function runGeTaxpayerWizard(): Promise<TestResult> {
   }
 }
 
+// ── Wizard VD draft submit (session 19) ─────────────────
+
+/**
+ * Fixture: taxpayer-vd-1-draft-submit
+ * Crée un draft VD minimal via submit-vd, assert : HTTP 200 + pdf présent
+ */
+async function runVdTaxpayerDraftSubmit(): Promise<TestResult> {
+  const started = Date.now();
+  try {
+    const { data } = await http.post("/taxpayers/draft/submit-vd", {
+      fiscalYear: 2026,
+    });
+    const pdfB64 = data.pdf as string;
+    const pdfBytes = Buffer.from(pdfB64, "base64");
+    const formId = data.form?.formId as string | undefined;
+    const hasVd = formId === "VD-declaration-pp";
+    const ok = pdfBytes.length > 2000 && hasVd && !!data.streamId;
+    return {
+      id: "taxpayer-vd-1-draft-submit",
+      kind: "taxpayer",
+      pass: ok,
+      latencyMs: Date.now() - started,
+      reason: ok
+        ? undefined
+        : `bytes=${pdfBytes.length}, formId=${formId}, streamId=${data.streamId ?? "MISSING"}`,
+    };
+  } catch (err) {
+    return {
+      id: "taxpayer-vd-1-draft-submit",
+      kind: "taxpayer",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
 // ── Main ───────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -590,6 +627,13 @@ async function main(): Promise<void> {
   results.push(r3);
   console.log(
     `  ${r3.pass ? "✓" : "✗"} ${r3.id}  ${r3.latencyMs}ms  ${r3.reason ?? ""}`,
+  );
+
+  // Wizard VD — draft submit (session 19)
+  const r4 = await runVdTaxpayerDraftSubmit();
+  results.push(r4);
+  console.log(
+    `  ${r4.pass ? "✓" : "✗"} ${r4.id}  ${r4.latencyMs}ms  ${r4.reason ?? ""}`,
   );
 
   const totalMs = Date.now() - started;
