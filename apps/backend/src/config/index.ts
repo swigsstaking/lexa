@@ -39,6 +39,15 @@ const ConfigSchema = z.object({
     .string()
     .min(16)
     .default("dev-webhook-secret-change-me-in-production"),
+
+  // Webhook retour Lexa→Pro (session 20)
+  PRO_WEBHOOK_URL: z
+    .string()
+    .default("http://192.168.110.59:3003/api/integrations/lexa/webhook"),
+  PRO_WEBHOOK_ENABLED: z
+    .string()
+    .transform((v) => v === "true")
+    .default("false"),
 });
 
 const parsed = ConfigSchema.safeParse(process.env);

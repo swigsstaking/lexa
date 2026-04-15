@@ -5,6 +5,8 @@ import { eventStore } from "../events/EventStore.js";
 import { classifierAgent } from "../agents/classifier/ClassifierAgent.js";
 import { query } from "../db/postgres.js";
 import { requireHmac } from "../middleware/requireHmac.js";
+import { config } from "../config/index.js";
+import { proWebhookClient } from "../services/ProWebhookClient.js";
 
 export const connectorsRouter = Router();
 
@@ -158,6 +160,13 @@ connectorsRouter.post("/bank/ingest", requireHmac, async (req, res) => {
           classification.durationMs,
         ],
       );
+
+      // Session 20 : notifier Pro du résultat (fire-and-forget, ne bloque pas la réponse)
+      if (config.PRO_WEBHOOK_ENABLED) {
+        proWebhookClient.notify(streamId, tx.txId, classification).catch((err) => {
+          console.warn("[pro-webhook] fire-and-forget failed:", (err as Error).message);
+        });
+      }
 
       results.push({
         txId: tx.txId,
