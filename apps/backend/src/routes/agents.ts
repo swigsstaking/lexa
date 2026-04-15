@@ -5,6 +5,9 @@ import { fiscalPpVsAgent } from "../agents/fiscalPpVs/FiscalPpVsAgent.js";
 import { fiscalPpGeAgent } from "../agents/fiscalPpGe/FiscalPpGeAgent.js";
 import { fiscalPpVdAgent } from "../agents/fiscalPpVd/FiscalPpVdAgent.js";
 import { fiscalPpFrAgent } from "../agents/fiscalPpFr/FiscalPpFrAgent.js";
+import { fiscalPpNeAgent } from "../agents/fiscalPpNe/FiscalPpNeAgent.js";
+import { fiscalPpJuAgent } from "../agents/fiscalPpJu/FiscalPpJuAgent.js";
+import { fiscalPpBjAgent } from "../agents/fiscalPpBj/FiscalPpBjAgent.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 
 export const agentsRouter = Router();
@@ -154,6 +157,90 @@ agentsRouter.post("/fiscal-pp-fr/ask", requireAuth, async (req, res) => {
   }
 });
 
+const FiscalPpNeSchema = z.object({
+  question: z.string().min(3).max(2000),
+  context: z
+    .object({
+      status: z.enum(["salarie", "independant", "mixte"]).optional(),
+      netIncome: z.number().optional(),
+      commune: z.string().optional(),
+      civilStatus: z.enum(["single", "married", "divorced", "widowed"]).optional(),
+      isPropertyOwner: z.boolean().optional(),
+    })
+    .optional(),
+});
+
+/** POST /agents/fiscal-pp-ne/ask — specialized NE personal income tax agent */
+agentsRouter.post("/fiscal-pp-ne/ask", requireAuth, async (req, res) => {
+  const parsed = FiscalPpNeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
+  }
+  try {
+    const result = await fiscalPpNeAgent.ask(parsed.data);
+    res.json(result);
+  } catch (err) {
+    console.error("FiscalPpNe agent error:", err);
+    res.status(500).json({ error: "fiscal-pp-ne agent failed", message: (err as Error).message });
+  }
+});
+
+const FiscalPpJuSchema = z.object({
+  question: z.string().min(3).max(2000),
+  context: z
+    .object({
+      status: z.enum(["salarie", "independant", "mixte"]).optional(),
+      netIncome: z.number().optional(),
+      commune: z.string().optional(),
+      civilStatus: z.enum(["single", "married", "divorced", "widowed"]).optional(),
+      isPropertyOwner: z.boolean().optional(),
+    })
+    .optional(),
+});
+
+/** POST /agents/fiscal-pp-ju/ask — specialized JU personal income tax agent */
+agentsRouter.post("/fiscal-pp-ju/ask", requireAuth, async (req, res) => {
+  const parsed = FiscalPpJuSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
+  }
+  try {
+    const result = await fiscalPpJuAgent.ask(parsed.data);
+    res.json(result);
+  } catch (err) {
+    console.error("FiscalPpJu agent error:", err);
+    res.status(500).json({ error: "fiscal-pp-ju agent failed", message: (err as Error).message });
+  }
+});
+
+const FiscalPpBjSchema = z.object({
+  question: z.string().min(3).max(2000),
+  context: z
+    .object({
+      status: z.enum(["salarie", "independant", "mixte"]).optional(),
+      netIncome: z.number().optional(),
+      commune: z.string().optional(),
+      civilStatus: z.enum(["single", "married", "divorced", "widowed"]).optional(),
+      isPropertyOwner: z.boolean().optional(),
+    })
+    .optional(),
+});
+
+/** POST /agents/fiscal-pp-bj/ask — specialized BJ (Jura bernois) personal income tax agent */
+agentsRouter.post("/fiscal-pp-bj/ask", requireAuth, async (req, res) => {
+  const parsed = FiscalPpBjSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
+  }
+  try {
+    const result = await fiscalPpBjAgent.ask(parsed.data);
+    res.json(result);
+  } catch (err) {
+    console.error("FiscalPpBj agent error:", err);
+    res.status(500).json({ error: "fiscal-pp-bj agent failed", message: (err as Error).message });
+  }
+});
+
 /** GET /agents — list of available agents */
 agentsRouter.get("/", (_req, res) => {
   res.json({
@@ -203,6 +290,27 @@ agentsRouter.get("/", (_req, res) => {
         model: "lexa-fiscal-pp-fr",
         description:
           "Agent specialise fiscalite PP Fribourg (LIFD, LHID, LICD FR, LIC FR, ORD-FP FR)",
+      },
+      {
+        id: "fiscal-pp-ne",
+        endpoint: "POST /agents/fiscal-pp-ne/ask",
+        model: "lexa-fiscal-pp-ne",
+        description:
+          "Agent specialise fiscalite PP Neuchatel (LIFD, LHID, LCdir NE, RGI NE, ORD-FP NE)",
+      },
+      {
+        id: "fiscal-pp-ju",
+        endpoint: "POST /agents/fiscal-pp-ju/ask",
+        model: "lexa-fiscal-pp-ju",
+        description:
+          "Agent specialise fiscalite PP Jura (LIFD, LHID, LI JU RSJU 641.11)",
+      },
+      {
+        id: "fiscal-pp-bj",
+        endpoint: "POST /agents/fiscal-pp-bj/ask",
+        model: "lexa-fiscal-pp-bj",
+        description:
+          "Agent specialise fiscalite PP Jura bernois (LIFD, LHID, LI BE RSB 661.11, OI BE RSB 661.111)",
       },
     ],
     planned: [

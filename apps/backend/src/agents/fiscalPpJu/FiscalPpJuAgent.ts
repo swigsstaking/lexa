@@ -1,0 +1,142 @@
+import { embedder } from "../../rag/EmbedderClient.js";
+import { qdrant, type QdrantHit } from "../../rag/QdrantClient.js";
+import { ollama } from "../../llm/OllamaClient.js";
+
+export type FiscalPpJuQuery = {
+  question: string;
+  context?: {
+    status?: "salarie" | "independant" | "mixte";
+    netIncome?: number; // CHF annual
+    commune?: string;
+    civilStatus?: "single" | "married" | "divorced" | "widowed";
+    isPropertyOwner?: boolean;
+  };
+};
+
+export type FiscalPpJuAnswer = {
+  answer: string;
+  citations: Array<{
+    law: string;
+    article: string;
+    heading?: string;
+    score: number;
+    url?: string;
+  }>;
+  durationMs: number;
+  model: string;
+};
+
+/**
+ * FiscalPpJuAgent — Specialized agent for Jura personal income tax (PP).
+ *
+ * Uses:
+ *   - lexa-fiscal-pp-ju Modelfile (qwen3.5:9b + SYSTEM prompt PP JU)
+ *   - Qdrant prioritizing LI-JU (RSJU 641.11), with federal fallback on LIFD / LHID.
+ *   - Authority: SCC JU (Service cantonal des contributions, Jura)
+ */
+export class FiscalPpJuAgent {
+  private readonly model = "lexa-fiscal-pp-ju";
+
+  async ask(query: FiscalPpJuQuery): Promise<FiscalPpJuAnswer> {
+    const started = Date.now();
+
+    // 1. Enrich question with user context
+    const enriched = this.enrichQuestion(query);
+
+    // 2. Embed + Qdrant search (top 8 for better coverage)
+    const qVec = await embedder.embedOne(enriched);
+    const hits = await qdrant.search({ vector: qVec, limit: 8 });
+
+    // 3. Re-rank boosting Jura-specific sources, then federal tax sources
+    const rankedHits = this.rankJuTaxSources(hits).slice(0, 5);
+
+    // 4. Build RAG context
+    const contextLines = rankedHits.map((h, i) => {
+      const p = h.payload;
+      const src = p.rs ? `[${p.law} (${p.rs}) ${p.article}]` : `[${p.law} ${p.article}]`;
+      return `${i + 1}. ${src} ${p.heading ?? ""}\n${p.text.slice(0, 700)}`;
+    });
+    const context = contextLines.join("\n\n---\n\n");
+
+    const prompt = `CONTEXTE FISCAL JU (extraits legaux):
+${context}
+
+QUESTION: ${enriched}
+
+Reponds de maniere concise en citant les articles LI-JU (RSJU 641.11) et les articles federaux LIFD / LHID pertinents. Autorite fiscale competente: SCC JU (Service cantonal des contributions, Jura). Termine par l avertissement obligatoire.
+
+REPONSE:`;
+
+    const { response } = await ollama.generate({
+      model: this.model,
+      prompt,
+      temperature: 0.15,
+      numCtx: 16384,
+      numPredict: 600,
+    });
+
+    const citations = rankedHits.map((h) => ({
+      law: h.payload.law,
+      article: h.payload.article,
+      heading: h.payload.heading,
+      score: h.score,
+      url: h.payload.url,
+    }));
+
+    return {
+      answer: response.trim(),
+      citations,
+      durationMs: Date.now() - started,
+      model: this.model,
+    };
+  }
+
+  private enrichQuestion(query: FiscalPpJuQuery): string {
+    const parts: string[] = [query.question];
+    if (query.context?.status) {
+      const statusLabel =
+        query.context.status === "salarie"
+          ? "salarie avec LPP"
+          : query.context.status === "independant"
+            ? "independant sans LPP"
+            : "mixte salarie + activite independante accessoire";
+      parts.push(`Statut du contribuable: ${statusLabel}.`);
+    }
+    if (query.context?.netIncome) {
+      parts.push(`Revenu net annuel: ${query.context.netIncome} CHF.`);
+    }
+    if (query.context?.commune) {
+      parts.push(`Commune de domicile: ${query.context.commune} (Jura).`);
+    }
+    if (query.context?.civilStatus) {
+      parts.push(`Etat civil: ${query.context.civilStatus}.`);
+    }
+    if (query.context?.isPropertyOwner) {
+      parts.push("Contribuable proprietaire immobilier (valeur locative + impot immobilier JU).");
+    }
+    return parts.join(" ");
+  }
+
+  private rankJuTaxSources(hits: QdrantHit[]): QdrantHit[] {
+    const tier = (law: string): number => {
+      // 0 = source JU prioritaire personnes physiques
+      if (law === "LI-JU") return 0;
+      // 1 = autres reglements JU
+      if (law.endsWith("-JU")) return 1;
+      // 2 = sources federales de reference
+      if (law === "LIFD") return 2;
+      if (law === "LHID") return 2;
+      // 3 = circulaires federales
+      if (law.startsWith("AFC-IFD-Circ")) return 3;
+      return 10;
+    };
+    return [...hits].sort((a, b) => {
+      const pa = tier(a.payload.law);
+      const pb = tier(b.payload.law);
+      if (pa !== pb) return pa - pb;
+      return b.score - a.score;
+    });
+  }
+}
+
+export const fiscalPpJuAgent = new FiscalPpJuAgent();
