@@ -54,10 +54,16 @@ export class EmbedderClient {
     return vecs[0]!;
   }
 
+  /**
+   * Health probe réelle (session 14) — fait un vrai `embedOne("ping")` et
+   * vérifie que le vecteur retourne bien la dimension attendue (1024 pour
+   * BGE-M3). Évite le drift invisible EMBEDDER_URL observé sessions 12→13
+   * où le /health superficiel passait vert mais /v1/embeddings retournait 404.
+   */
   async health(): Promise<boolean> {
     try {
-      const { status } = await this.http.get("/health", { timeout: 5_000 });
-      return status === 200;
+      const vec = await this.embedOne("ping");
+      return Array.isArray(vec) && vec.length === 1024;
     } catch {
       return false;
     }
