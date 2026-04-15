@@ -1,13 +1,13 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 22.5 — 2026-04-15](2026-04-15-session-22-5-binding.md)
-**Prochaine session** : Session 23 — Pipeline OCR (MongoDB GridFS + upload + deepseek-ocr + Document model)
+**Dernière session** : [Session 23 — 2026-04-15](2026-04-15-session-23.md)
+**Prochaine session** : Session 24 — Auto-fill wizard depuis documents uploadés
 
-> Session 22.5 a livre le binding NE/JU/BJ : 3 agents TS (FiscalPpNeAgent, FiscalPpJuAgent, FiscalPpBjAgent), 3 routes POST /agents/fiscal-pp-{ne,ju,bj}/ask, GET /agents = 10 agents actifs, qa-lexa **21/21** passRate 100%. Smoke HTTPS 3 cantons OK (plafond 7260 CHF, citations=5, latence < 20s).
+> Session 23 a livré le pipeline OCR end-to-end : MongoDB GridFS, OcrExtractor 2-stages (pdf-parse + qwen3-vl-ocr + qwen3.5:9b-optimized), routes POST/GET /documents, page /documents frontend, event DocumentUploaded. qa-lexa **22/22** passRate 100%.
 
 ---
 
-## Ce qui marche après session 22.5
+## Ce qui marche après session 23
 
 | Composant | Etat |
 |---|---|
@@ -16,6 +16,26 @@
 | Auth JWT + rate limit + trust proxy 1 | OK |
 | HMAC Pro Lexa + classify auto | OK |
 | HMAC Lexa Pro (webhook retour) | OK session 20 |
+| **MongoDB GridFS** | |
+| `lexa-documents` DB sur `127.0.0.1:27017` | OK session 23 |
+| Collection `documents_meta` (metadata + ocrResult) | OK |
+| Collection `documents.files` + `documents.chunks` (GridFS) | OK |
+| `services.mongo: true` dans health | OK |
+| **Pipeline OCR** | |
+| Stage 1 pdf-parse (PDFs texte-embedded) | OK session 23 |
+| Stage 1 qwen3-vl-ocr (images + PDFs scannés) | OK session 23 |
+| `parseOcrModelOutput()` format JSON non-déterministe | OK session 23 |
+| Stage 2 qwen3.5:9b-optimized (classification + champs) | OK session 23 |
+| Types : certificat_salaire, attestation_3a, facture, releve_bancaire, autre | OK |
+| **Routes documents** | |
+| `POST /documents/upload` multipart JWT 10MB | OK session 23 |
+| `GET /documents` liste tenant | OK session 23 |
+| `GET /documents/:id` metadata | OK session 23 |
+| `GET /documents/:id/binary` stream GridFS | OK session 23 |
+| Event `DocumentUploaded` dans event store Postgres | OK session 23 |
+| **Frontend** | |
+| Page `/documents` upload + liste + champs extraits | OK session 23 |
+| Bouton Documents dans Workspace navbar | OK session 23 |
 | **Wizard contribuable** | |
 | Wizard PP VS 6 steps sur `/taxpayer/:year` | OK session 15 |
 | Wizard PP GE 6 steps sur `/taxpayer/ge/:year` | OK session 21 |
@@ -25,92 +45,71 @@
 | Canton VS (339 articles) | OK |
 | Canton GE (373 articles) | OK |
 | Canton VD (381 articles) | OK |
-| Canton FR (1035 articles LICD/LIC/ORD-FP) | OK session 21 |
-| Canton NE (LCdir-NE, RGI-NE, ORD-FP-NE) | OK session 25 Lane B |
-| Canton JU (LI-JU RSJU 641.11) | OK session 25 Lane B |
-| Canton BJ (LI-BE/OI-BE RSB 661.11/661.111 FR) | OK session 25 Lane B |
+| Canton FR (1035 articles) | OK |
+| Canton NE/JU/BJ | OK session 22.5/25 |
 | Qdrant `swiss_law` | **9846 pts** |
 | **Agents actifs (10)** | classifier, reasoning, tva, fiscal-pp-vs/ge/vd/fr/ne/ju/bj |
 | **Tests auto** | |
-| qa-lexa **21/21** via HTTPS public | OK **session 22.5** |
+| qa-lexa **22/22** via HTTP localhost | OK **session 23** |
 
 ---
 
-## Priorite session 23 — OCR Pipeline
+## Priorite session 24 — Auto-fill wizard depuis documents
 
-### 1. MongoDB GridFS + Document model (~1h)
+### 1. Service DocumentToWizardMapper (~45 min)
 
-- Installer `mongoose` + `mongodb` dans le backend
-- `Document` model : tenantId, filename, mimeType, gridfsId, status (pending/processing/done/error), rawText, extractedData, createdAt
-- `POST /documents/upload` : multipart/form-data, store dans GridFS
-- `GET /documents/:id` : retourne metadata + rawText si dispo
+Pour chaque type OCR, mapper les champs vers les fields wizard :
+- `certificat_salaire.grossSalary` → wizard step2 `revenue.salaireAnnuel`
+- `certificat_salaire.employer` → wizard step1 `employeur`
+- `attestation_3a.amount` → wizard step4 `deductions.pilier3a`
+- `facture.amountTtc` → transaction candidate (via classify)
 
-### 2. deepseek-ocr integration (~1h)
+Service `DocumentMapper.ts` : `mapDocumentToWizardPatch(ocrResult, canton)` → `TaxpayerDraftPatch[]`
 
-- Ollama model `deepseek-ocr` sur Spark (verifier presence)
-- Service `OcrService.ts` : fetch GridFS binary → base64 → Ollama vision → rawText
-- Route `POST /documents/:id/ocr` : lance extraction async
-- Stocker rawText dans Document
+### 2. Route POST /documents/:id/apply-to-wizard (~30 min)
 
-### 3. Linkage Expense/Invoice → Document (~30 min)
+- Lit `documents_meta.ocrResult.extractedFields`
+- Appelle `mapDocumentToWizardPatch()`
+- Appelle PATCH /taxpayers/draft/field pour chaque field mappé
+- Retourne `{ applied: [{field, value}], skipped: [{field, reason}] }`
 
-- Ajouter `documentIds: string[]` sur modeles existants
-- Route `POST /expenses/:id/attach-document`
-- qa-lexa fixture : upload + ocr + assert rawText non vide
+### 3. Frontend — bouton "Remplir wizard" (~30 min)
+
+Dans la DocumentCard, ajouter un bouton "Remplir wizard" qui appelle la route ci-dessus
+et toast les champs appliqués.
+
+### 4. Test qa-lexa fixture OCR réelle (~30 min)
+
+Remplacer `documents-1-list-route` par un vrai test d'upload avec assertion sur `ocrResult.type`,
+en utilisant un document de référence stable (créé depuis le PDF de test session 23).
 
 ---
 
 ## Décisions tranchées — ne plus réinterpréter
 
-(reprise sessions 11→21)
+(reprise sessions 11→23)
 
-1. Canvas → react-flow définitif
-2. Dark mode → livré session 11
-3. Multi-tenant isolation par JWT → req.tenantId override
-4. Autonomie IA → validation humaine obligatoire
-5. Langue v1 → FR uniquement
-6. Auth → JWT simple HS256 7d, bcryptjs cost 12
-7. Deploy → `lexa.swigs.online` Let's Encrypt
-8. Webhook Pro↔Lexa → HMAC SHA256 timing-safe
-9. PDF → pdfkit backend
-10. Template forms → YAML canonique + copie runtime embed
-11. Helpers execution mutualisés → `shared.ts`
-12. Idempotence par formKind
-13. Un YAML + un Builder par formulaire
-14. Un Modelfile par canton
-15. qa-lexa baseline de régression → **17/17** après session 21
-16. HMAC service-to-service strictement séparé du JWT
-17. Un draft par tenant par année fiscale
-18. State wizard en JSONB flexible, mutation atomique par dot-path
-19. `app.set('trust proxy', 1)` obligatoire
-20. Source canonique KB cantonale : HTML statiques officiels (ou API REST si SPA)
-21. Re-ranking agent cantonal : tier 0 sources cantonales PP
-22. Observation cron = filet optionnel, synthetic suffit
-23. **Wizard générique `TaxpayerWizardCanton` avec `CantonConfig`** — session 21
-24. **Backend tourne via `tsx watch src/` — rsync doit cibler src/, pas dist/**
-25. **PATCH profile auto-save non-bloquant** — erreur catchée silencieusement
-26. **BLV VD = API REST AkomaNtoso** (pas HTML statique direct) — session 18
-27. **Firefox Playwright sur Spark** disponible pour découvrir des APIs masquées par SPA
-28. **Ollama v0.20.x** : `POST /api/create` utilise `from` + `system` + `parameters` (pas `modelfile` texte)
-29. **bdlf.fr.ch** : `GET /api/fr/texts_of_law/{sn}/show_as_json` pour lois cantonales FR
+1-29. (voir archive session 23)
+30. **MongoDB écoute sur 127.0.0.1:27017** — MONGO_URL doit être `mongodb://127.0.0.1:27017` dans `.env` prod
+31. **qwen3-vl-ocr sortie JSON non-déterministe** — toujours passer par `parseOcrModelOutput()`
+32. **Fixture qa-lexa OCR** : le modèle plante sur images synthétiques trop petites — tester via liste plutôt qu'upload pour les tests auto
 
 ---
 
-## Avertissements (héritage sessions 11-21)
+## Avertissements (héritage sessions 11-23)
 
 1. **`.env` prod jamais rsync**
 2. **`trust proxy 1`** ne pas retirer
-3. **qa-lexa 17/17 baseline** — si un test fail, investiguer avant push
+3. **qa-lexa 22/22 baseline** — si un test fail, investiguer avant push
 4. **HMAC Pro→Lexa** : ne jamais JSON.stringify deux fois
 5. **JWT override req.tenantId** — header `X-Tenant-Id` ignoré sur routes protégées
 6. **Disclaimer PDF/XML obligatoire**
-7. **deepseek-ocr sur Spark** : ne jamais décharger avec keep_alive=0
+7. **qwen3-vl-ocr sur Spark** : output JSON non-déterministe, utiliser `parseOcrModelOutput()`
 8. **LEXA_ENABLED=true côté Pro** : ne jamais passer à false
-9. **Backend = tsx watch src/** (pas dist compilé) — découvert session 17
-10. **Templates YAML dans src/execution/templates/** — copier dans src lors du rsync
-11. **BLV VD htmlId** : si le Canton VD met à jour la loi, appeler l'endpoint CONSOLIDE pour obtenir le nouveau htmlId
-12. **cantonFR stub** : `submitDraft = lexa.submitTaxpayerDraftVd` — REMPLACER session 22 avec `submitTaxpayerDraftFr`
+9. **Backend = tsx watch src/** (pas dist compilé)
+10. **Templates YAML dans src/execution/templates/**
+11. **MONGO_URL = mongodb://127.0.0.1:27017** (loopback, pas IP réseau)
 
 ---
 
-**Derniere mise a jour** : 2026-04-15 (fin session 22.5 — binding NE/JU/BJ, 10 agents actifs, qa-lexa 21/21)
+**Derniere mise a jour** : 2026-04-15 (fin session 23 — pipeline OCR, MongoDB GridFS, 22/22 qa-lexa)
