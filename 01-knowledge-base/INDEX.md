@@ -24,12 +24,14 @@
 
 *existe mais pas en format ingéré/requêtable
 
-**Total Qdrant collection `swiss_law`** : **5322 points**
+**Total Qdrant collection `swiss_law`** : **5761 points**
 - Session 01 : 791 (LIFD + LTVA + CO + résumés manuels)
 - Session 02 : +108 LHID → 899
 - Session 03 : +1880 AFC + 228 VS docs → 3007
 - Session 04 : +397 LP + 479 CSI + 175 VS Loi fiscale → 4058
 - Session 05 : +164 VS (re-parsing v2) +448 ordonnances (OIFD/OLTVA/OIA/ORC) +652 Info TVA → **5322**
+- Session ~07 : +66 Plan comptable Käfer → **5388**
+- Session 16 : **+373 Canton Genève (LCP 267 + LIPP 66 + LIPM 40)** → **5761**
 
 Voir [`federal/circulaires-afc-index.md`](federal/circulaires-afc-index.md) pour le détail des documents AFC ingérés.
 
@@ -101,20 +103,30 @@ Source : https://www.bger.ch/
 **Portail** : https://www.vs.ch/web/scc
 **Particularités** : forte variabilité communale, spécificités tourisme/hôtellerie, bilingue FR/DE (priorité FR pour Lexa v1).
 
-### 2. Genève (GE)
+### 2. Genève (GE) — **SESSION 16 ✓**
 
 | Document | Statut | Source |
 |---|---|---|
-| Loi générale sur les contributions publiques (LCP) | ❌ Manquant | https://www.ge.ch/legislation/ |
-| Règlements d'application | ❌ Manquant | https://www.ge.ch/legislation/ |
-| Loi sur l'imposition des personnes physiques (LIPP) | ❌ Manquant | À télécharger |
-| Loi sur l'imposition des personnes morales (LIPM) | ❌ Manquant | À télécharger |
+| **LCP** — Loi générale sur les contributions publiques (RSG D 3 05) | ✅ **Ingéré session 16 (267 articles)** | silgeneve.ch/legis/data/rsg_d3_05.htm |
+| **LIPP** — Loi sur l'imposition des personnes physiques (RSG D 3 08) | ✅ **Ingéré session 16 (66 articles)** | silgeneve.ch/legis/data/rsg_d3_08.htm |
+| **LIPM** — Loi sur l'imposition des personnes morales (RSG D 3 15) | ✅ **Ingéré session 16 (40 articles)** | silgeneve.ch/legis/data/rsg_d3_15.htm |
+| Règlements d'application | ❌ Manquant | silgeneve.ch |
 | Barème cantonal annuel | ❌ Manquant | AFC-GE |
 | Formulaires déclaration PP | ❌ Manquant | AFC-GE |
 | Formulaires déclaration PM | ❌ Manquant | AFC-GE |
 | Circulaires AFC-GE | ❌ Manquant | AFC-GE |
 
 **Portail** : https://www.ge.ch/dossier/deposer-declaration-impots
+**Script d'ingestion** : `01-knowledge-base/scripts/ingest_ge_laws_lexa.py`
+**Méthode** : curl HTTP simple (encoding windows-1252) + BeautifulSoup + regex article parser. Pas de Playwright nécessaire — SILGeneve sert du HTML statique legacy ASP.NET.
+**Tags Qdrant** : `law ∈ {LCP-GE, LIPP-GE, LIPM-GE}`, `jurisdiction: "cantonal-GE"`, `canton: "GE"`
+**Validation RAG session 16** (top-3 scores observés) :
+- "Contributions publiques communes Genève" → LCP-GE top-3 (0.587/0.574/0.571)
+- "Impôt sur la fortune personne physique Genève" → LCP-GE Art. 1 + LIPP-GE Art. 1 (0.663/0.618)
+- "Rattachement personnel canton Genève assujettissement" → LIPM-GE Art. 4 top (0.616)
+- "Déduction pilier 3a salarié Genève" → sources fédérales + VS en top (logique, c'est une règle LIFD Art. 33 al. 1 let. e)
+- "Imposition bénéfice SA Genève" → VS/OIA/LIFD (à surveiller, session 17+ un Guide PP GE plus explicite améliorerait le score)
+**Agent** : `lexa-fiscal-pp-ge` Modelfile + `FiscalPpGeAgent.ts` session 16, re-ranking tier 0 LIPP-GE/LCP-GE + tier 1 LIPM-GE + tier 2 LIFD/LHID
 
 ### 2. Vaud (VD)
 
