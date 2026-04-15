@@ -12,6 +12,7 @@ import type {
 } from "./types.js";
 import { annualRange } from "./types.js";
 import type { TaxpayerDraftState } from "../taxpayers/schema.js";
+import { estimateTaxDue } from "./taxEstimator.js";
 
 // ── Constantes genevoises 2026 ──────────────────────────────────────────────
 // Centime additionnel cantonal GE 2024 : 47.5%
@@ -232,6 +233,19 @@ async function projectGePp(params: {
       : "draft"
     : "ledger";
 
+  // Simulateur fiscal V1 — barèmes tabulés approximatifs
+  // TODO session 23+ : remplacer par barèmes officiels ingérés
+  const taxEstimate = revenuImposable > 0
+    ? estimateTaxDue({
+        canton: "GE",
+        year,
+        revenuImposable,
+        civilStatus: (draft?.step1?.civilStatus === "married" || draft?.step1?.civilStatus === "registered_partnership")
+          ? "married"
+          : "single",
+      })
+    : undefined;
+
   return {
     revenuSalaire,
     revenuIndependant,
@@ -252,6 +266,7 @@ async function projectGePp(params: {
     deductionDons,
     deductionTotal,
     revenuImposable,
+    taxEstimate,
     source,
     eventCount: ledger.eventCount,
   };

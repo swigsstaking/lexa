@@ -12,6 +12,7 @@ import type {
 } from "./types.js";
 import { annualRange } from "./types.js";
 import type { TaxpayerDraftState } from "../taxpayers/schema.js";
+import { estimateTaxDue } from "./taxEstimator.js";
 
 const TEMPLATE_FILE = "vs-declaration-pp-2024.yaml";
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -218,6 +219,19 @@ async function projectVsPp(params: {
       : "draft"
     : "ledger";
 
+  // Simulateur fiscal V1 — barèmes tabulés approximatifs
+  // TODO session 23+ : remplacer par barèmes officiels ingérés
+  const taxEstimate = revenuImposable > 0
+    ? estimateTaxDue({
+        canton: "VS",
+        year,
+        revenuImposable,
+        civilStatus: (draft?.step1?.civilStatus === "married" || draft?.step1?.civilStatus === "registered_partnership")
+          ? "married"
+          : "single",
+      })
+    : undefined;
+
   return {
     revenuSalaire,
     revenuIndependant,
@@ -238,6 +252,7 @@ async function projectVsPp(params: {
     deductionDons,
     deductionTotal,
     revenuImposable,
+    taxEstimate,
     source,
     eventCount: ledger.eventCount,
   };

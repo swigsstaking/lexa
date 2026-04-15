@@ -12,6 +12,7 @@ import type {
 } from "./types.js";
 import { annualRange } from "./types.js";
 import type { TaxpayerDraftState } from "../taxpayers/schema.js";
+import { estimateTaxDue } from "./taxEstimator.js";
 
 // ── Constantes vaudoises 2026 ────────────────────────────────────────────────
 // Pilier 3a 2026 : avec LPP = 7'260 CHF, sans LPP = 36'288 CHF
@@ -250,6 +251,19 @@ async function projectVdPp(params: {
       : "draft"
     : "ledger";
 
+  // Simulateur fiscal V1 — barèmes tabulés approximatifs
+  // TODO session 23+ : remplacer par barèmes officiels ingérés
+  const taxEstimate = revenuImposable > 0
+    ? estimateTaxDue({
+        canton: "VD",
+        year,
+        revenuImposable,
+        civilStatus: (draft?.step1?.civilStatus === "married" || draft?.step1?.civilStatus === "registered_partnership")
+          ? "married"
+          : "single",
+      })
+    : undefined;
+
   return {
     revenuSalaire,
     revenuIndependant,
@@ -270,6 +284,7 @@ async function projectVdPp(params: {
     deductionDons,
     deductionTotal,
     revenuImposable,
+    taxEstimate,
     source,
     eventCount: ledger.eventCount,
   };

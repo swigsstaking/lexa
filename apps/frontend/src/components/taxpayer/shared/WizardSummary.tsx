@@ -1,6 +1,7 @@
 import type { TaxpayerDraft } from '@/api/lexa';
 import type { CantonConfig } from '@/config/cantons/types';
 import { FileText, Info } from 'lucide-react';
+import { estimateTaxDue } from '@/utils/taxEstimator';
 
 interface Props {
   draft: TaxpayerDraft;
@@ -83,6 +84,17 @@ export function WizardSummary({ draft, canton }: Props) {
     (step4.dons ?? 0);
 
   const revenuImposable = totalRevenus - totalDeductions;
+
+  const civilStatus =
+    (draft.state.step1.civilStatus === 'married' || draft.state.step1.civilStatus === 'registered_partnership')
+      ? 'married'
+      : 'single';
+
+  const taxEstimate = estimateTaxDue({
+    canton: canton.code,
+    revenuImposable,
+    civilStatus,
+  });
 
   return (
     <div className="sticky top-6 space-y-4">
@@ -190,7 +202,7 @@ export function WizardSummary({ draft, canton }: Props) {
             />
           </div>
 
-          <div className="pt-3 border-t border-accent/30 bg-accent/5 -mx-4 -mb-4 px-4 py-3 rounded-b-xl">
+          <div className="pt-3 border-t border-accent/30 bg-accent/5 -mx-4 px-4 py-3">
             <SummaryRow
               label="Revenu imposable"
               value={chf(revenuImposable || undefined)}
@@ -198,6 +210,23 @@ export function WizardSummary({ draft, canton }: Props) {
               bold
             />
           </div>
+
+          {taxEstimate && (
+            <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-4 -mx-4 -mb-4">
+              <div className="text-[10px] uppercase tracking-wide text-amber-400 mb-1">
+                Estimation impôt {canton.code} 2026
+              </div>
+              <div className="text-xl font-bold text-amber-300">
+                {chf(taxEstimate.total)} CHF
+              </div>
+              <div className="text-[10px] text-amber-200/70 mt-1">
+                ICC {chf(taxEstimate.icc)} · IFD {chf(taxEstimate.ifd)} · Taux {(taxEstimate.effectiveRate * 100).toFixed(1)}%
+              </div>
+              <div className="text-[9px] text-amber-200/50 mt-2 leading-tight">
+                {taxEstimate.disclaimer}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

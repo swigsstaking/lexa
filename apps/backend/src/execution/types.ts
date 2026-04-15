@@ -103,6 +103,15 @@ export function annualRange(year: number): { start: string; end: string } {
   return { start: `${year}-01-01`, end: `${year}-12-31` };
 }
 
+// ── Simulateur fiscal V1 ──────────────────────────────
+export type TaxEstimate = {
+  icc: number;           // Impôt cantonal + communal CHF
+  ifd: number;           // Impôt fédéral direct CHF
+  total: number;         // ICC + IFD
+  effectiveRate: number; // total / revenuImposable (ratio, pas %)
+  disclaimer: string;
+};
+
 // ── Déclaration fiscale PP Valais ──────────────────────
 export type VsPpProjection = {
   // Section Revenus
@@ -131,6 +140,9 @@ export type VsPpProjection = {
 
   // Résultat
   revenuImposable: number;
+
+  // Simulateur fiscal V1 (optionnel — absent si revenuImposable <= 0)
+  taxEstimate?: TaxEstimate;
 
   // Méta
   source: "draft" | "ledger" | "mixed";
