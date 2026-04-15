@@ -58,7 +58,7 @@ async function loginQaUser(): Promise<void> {
 
 type TestResult = {
   id: string;
-  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "taxpayer";
+  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "taxpayer";
   pass: boolean;
   latencyMs: number;
   reason?: string;
@@ -146,6 +146,14 @@ const fiscalPpVdQuestions = [
     id: "pp-vd-1-pilier-3a",
     question: "Plafond pilier 3a salarie Lausanne 2026 ?",
     context: { commune: "Lausanne" },
+  },
+];
+
+const fiscalPpFrQuestions = [
+  {
+    id: "pp-fr-1-pilier-3a",
+    question: "Quel est le plafond du pilier 3a 2026 pour un salarie affilie LPP domicilie a Fribourg ?",
+    context: { status: "salarie" as const, commune: "Fribourg" },
   },
 ];
 
@@ -464,6 +472,50 @@ async function runFiscalPpVdQuestion(
   }
 }
 
+async function runFiscalPpFrQuestion(
+  fixture: (typeof fiscalPpFrQuestions)[number],
+): Promise<TestResult> {
+  const started = Date.now();
+  try {
+    const { data } = await http.post("/agents/fiscal-pp-fr/ask", {
+      question: fixture.question,
+      context: fixture.context,
+    });
+    const citations = Array.isArray(data.citations) ? data.citations.length : 0;
+    // Assert : au moins 1 citation, et l'answer contient "7 260" ou "7260" ou "7'260"
+    // (plafond pilier 3a salarié 2026).
+    const answerStr = typeof data.answer === "string" ? data.answer : "";
+    const hasPlafond =
+      answerStr.includes("7 260") ||
+      answerStr.includes("7260") ||
+      answerStr.includes("7'260") ||
+      answerStr.includes("7 056") ||
+      answerStr.includes("7'056");
+    return {
+      id: fixture.id,
+      kind: "fiscal-pp-fr",
+      pass: citations > 0 && hasPlafond,
+      latencyMs: Date.now() - started,
+      citations,
+      agentDurationMs: data.durationMs,
+      reason:
+        citations === 0
+          ? "no citations"
+          : hasPlafond
+            ? undefined
+            : "answer missing pilier 3a plafond (7260/7056)",
+    };
+  } catch (err) {
+    return {
+      id: fixture.id,
+      kind: "fiscal-pp-fr",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
 // ── Wizard GE form generation (session 17) ─────────────
 
 async function runGeTaxpayerWizard(): Promise<TestResult> {
@@ -549,7 +601,7 @@ async function main(): Promise<void> {
 
   console.log(`[qa-lexa] BASE_URL=${BASE_URL} user=${QA_EMAIL}`);
   console.log(
-    `[qa-lexa] fixtures: ${classifyFixtures.length} classify + ${tvaQuestions.length} tva + ${fiscalPpQuestions.length} fiscal-pp-vs + ${fiscalPpGeQuestions.length} fiscal-pp-ge + ${fiscalPpVdQuestions.length} fiscal-pp-vd`,
+    `[qa-lexa] fixtures: ${classifyFixtures.length} classify + ${tvaQuestions.length} tva + ${fiscalPpQuestions.length} fiscal-pp-vs + ${fiscalPpGeQuestions.length} fiscal-pp-ge + ${fiscalPpVdQuestions.length} fiscal-pp-vd + ${fiscalPpFrQuestions.length} fiscal-pp-fr`,
   );
 
   // Health gate (public)
@@ -610,6 +662,15 @@ async function main(): Promise<void> {
     );
   }
 
+  // Fiscal PP Fribourg (session 21)
+  for (const f of fiscalPpFrQuestions) {
+    const r = await runFiscalPpFrQuestion(f);
+    results.push(r);
+    console.log(
+      `  ${r.pass ? "✓" : "✗"} ${r.id}  ${r.latencyMs}ms  cites=${r.citations ?? "?"}  ${r.reason ?? ""}`,
+    );
+  }
+
   // Taxpayer wizard (session 15)
   const r1 = await runTaxpayerDraftCreate();
   results.push(r1);
@@ -657,6 +718,7 @@ async function main(): Promise<void> {
       "fiscal-pp-vs": { total: byKind("fiscal-pp-vs").length, passed: byKind("fiscal-pp-vs").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiscal-pp-vs")) },
       "fiscal-pp-ge": { total: byKind("fiscal-pp-ge").length, passed: byKind("fiscal-pp-ge").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiscal-pp-ge")) },
       "fiscal-pp-vd": { total: byKind("fiscal-pp-vd").length, passed: byKind("fiscal-pp-vd").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiscal-pp-vd")) },
+      "fiscal-pp-fr": { total: byKind("fiscal-pp-fr").length, passed: byKind("fiscal-pp-fr").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiscal-pp-fr")) },
       taxpayer: { total: byKind("taxpayer").length, passed: byKind("taxpayer").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("taxpayer")) },
     },
     failures: results.filter((r) => !r.pass).map((r) => ({ id: r.id, kind: r.kind, reason: r.reason })),
