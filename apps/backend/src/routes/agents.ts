@@ -3,6 +3,7 @@ import { z } from "zod";
 import { tvaAgent } from "../agents/tva/TvaAgent.js";
 import { fiscalPpVsAgent } from "../agents/fiscalPpVs/FiscalPpVsAgent.js";
 import { fiscalPpGeAgent } from "../agents/fiscalPpGe/FiscalPpGeAgent.js";
+import { fiscalPpVdAgent } from "../agents/fiscalPpVd/FiscalPpVdAgent.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 
 export const agentsRouter = Router();
@@ -93,6 +94,35 @@ agentsRouter.post("/fiscal-pp-ge/ask", requireAuth, async (req, res) => {
   }
 });
 
+const FiscalPpVdSchema = z.object({
+  question: z.string().min(3).max(2000),
+  context: z
+    .object({
+      status: z.enum(["salarie", "independant", "mixte"]).optional(),
+      netIncome: z.number().optional(),
+      commune: z.string().optional(),
+      civilStatus: z.enum(["single", "married", "divorced", "widowed"]).optional(),
+      isPropertyOwner: z.boolean().optional(),
+      isFrontalier: z.boolean().optional(),
+    })
+    .optional(),
+});
+
+/** POST /agents/fiscal-pp-vd/ask — specialized VD personal income tax agent */
+agentsRouter.post("/fiscal-pp-vd/ask", requireAuth, async (req, res) => {
+  const parsed = FiscalPpVdSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
+  }
+  try {
+    const result = await fiscalPpVdAgent.ask(parsed.data);
+    res.json(result);
+  } catch (err) {
+    console.error("FiscalPpVd agent error:", err);
+    res.status(500).json({ error: "fiscal-pp-vd agent failed", message: (err as Error).message });
+  }
+});
+
 /** GET /agents — list of available agents */
 agentsRouter.get("/", (_req, res) => {
   res.json({
@@ -128,6 +158,13 @@ agentsRouter.get("/", (_req, res) => {
         model: "lexa-fiscal-pp-ge",
         description:
           "Agent specialise fiscalite PP Geneve (LIFD, LHID, LIPP, LCP, LIPM)",
+      },
+      {
+        id: "fiscal-pp-vd",
+        endpoint: "POST /agents/fiscal-pp-vd/ask",
+        model: "lexa-fiscal-pp-vd",
+        description:
+          "Agent specialise fiscalite PP Vaud (LIFD, LHID, LI VD, LIPC VD)",
       },
     ],
     planned: [
