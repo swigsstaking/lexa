@@ -1,6 +1,6 @@
 import type { TaxpayerDraft } from '@/api/lexa';
-import { COMMUNES_VD, COEFFICIENT_COMMUNAL_2026 } from '@/data/communes-vd';
-import { useFieldUpdaterVd } from '@/routes/taxpayer/TaxpayerWizardVd';
+import type { CantonConfig } from '@/config/cantons/types';
+import { useTaxpayerDraftStore } from '@/stores/taxpayerDraftStore';
 
 const CIVIL_STATUS = [
   { value: 'single', label: 'Célibataire' },
@@ -14,23 +14,29 @@ const CIVIL_STATUS = [
 interface Props {
   draft: TaxpayerDraft;
   year: number;
+  canton: CantonConfig;
 }
 
-export function Step1IdentityVd({ draft, year }: Props) {
-  const update = useFieldUpdaterVd(year);
+export function Step1Identity({ draft, year, canton }: Props) {
+  const updateField = useTaxpayerDraftStore((s) => s.updateField);
+  const update = (field: string, value: unknown) => updateField(field, value, 1, year);
   const s = draft.state.step1;
 
-  const selectedCommune = s.commune as keyof typeof COEFFICIENT_COMMUNAL_2026 | undefined;
-  const autoCoeff = selectedCommune ? COEFFICIENT_COMMUNAL_2026[selectedCommune] : null;
-
   const handleCommuneChange = (commune: string) => {
-    update('step1.commune', commune, 1);
-    // Auto-remplir le coefficient communal si connu
-    const coeff = COEFFICIENT_COMMUNAL_2026[commune as keyof typeof COEFFICIENT_COMMUNAL_2026];
-    if (coeff !== null && coeff !== undefined) {
-      update('step1.coefficientCommunal', coeff, 1);
+    update('step1.commune', commune);
+    if (canton.hasCoefficientCommunal) {
+      const communeData = canton.communes.find((c) => c.name === commune);
+      const coeff = communeData?.coefficientCommunal;
+      if (coeff !== null && coeff !== undefined) {
+        update('step1.coefficientCommunal', coeff);
+      }
     }
   };
+
+  const selectedCommune = canton.hasCoefficientCommunal
+    ? canton.communes.find((c) => c.name === s.commune)
+    : null;
+  const autoCoeff = selectedCommune?.coefficientCommunal ?? null;
 
   return (
     <div className="space-y-6">
@@ -39,7 +45,7 @@ export function Step1IdentityVd({ draft, year }: Props) {
           Identité & situation familiale
         </h2>
         <p className="text-sm text-muted">
-          Les données officielles de votre déclaration. Canton fixé à Vaud (VD).
+          Les données officielles de votre déclaration. Canton fixé à {canton.label} ({canton.code}).
         </p>
       </div>
 
@@ -51,7 +57,7 @@ export function Step1IdentityVd({ draft, year }: Props) {
             name="firstName"
             className="input"
             value={s.firstName ?? ''}
-            onChange={(e) => update('step1.firstName', e.target.value, 1)}
+            onChange={(e) => update('step1.firstName', e.target.value)}
           />
         </div>
         <div>
@@ -61,7 +67,7 @@ export function Step1IdentityVd({ draft, year }: Props) {
             name="lastName"
             className="input"
             value={s.lastName ?? ''}
-            onChange={(e) => update('step1.lastName', e.target.value, 1)}
+            onChange={(e) => update('step1.lastName', e.target.value)}
           />
         </div>
         <div>
@@ -72,7 +78,7 @@ export function Step1IdentityVd({ draft, year }: Props) {
             type="date"
             className="input"
             value={s.dateOfBirth ?? ''}
-            onChange={(e) => update('step1.dateOfBirth', e.target.value, 1)}
+            onChange={(e) => update('step1.dateOfBirth', e.target.value)}
           />
         </div>
         <div>
@@ -82,7 +88,7 @@ export function Step1IdentityVd({ draft, year }: Props) {
             name="civilStatus"
             className="input"
             value={s.civilStatus ?? ''}
-            onChange={(e) => update('step1.civilStatus', e.target.value, 1)}
+            onChange={(e) => update('step1.civilStatus', e.target.value)}
           >
             <option value="">—</option>
             {CIVIL_STATUS.map((cs) => (
@@ -103,12 +109,12 @@ export function Step1IdentityVd({ draft, year }: Props) {
             className="input"
             value={s.childrenCount ?? 0}
             onChange={(e) =>
-              update('step1.childrenCount', Number(e.target.value) || 0, 1)
+              update('step1.childrenCount', Number(e.target.value) || 0)
             }
           />
         </div>
         <div>
-          <label className="label" htmlFor="tp-commune">Commune fiscale VD</label>
+          <label className="label" htmlFor="tp-commune">Commune fiscale {canton.code}</label>
           <select
             id="tp-commune"
             name="commune"
@@ -117,45 +123,48 @@ export function Step1IdentityVd({ draft, year }: Props) {
             onChange={(e) => handleCommuneChange(e.target.value)}
           >
             <option value="">—</option>
-            {COMMUNES_VD.map((c) => (
-              <option key={c} value={c}>
-                {c}
+            {canton.communes.map((c) => (
+              <option key={c.name} value={c.name}>
+                {c.name}
               </option>
             ))}
           </select>
         </div>
-        <div>
-          <label className="label" htmlFor="tp-coeff">
-            Coefficient communal 2026
-            {autoCoeff !== null && (
-              <span className="ml-2 text-2xs text-success">
-                (auto-rempli)
-              </span>
+
+        {canton.hasCoefficientCommunal && (
+          <div>
+            <label className="label" htmlFor="tp-coeff">
+              Coefficient communal 2026
+              {autoCoeff !== null && (
+                <span className="ml-2 text-2xs text-success">
+                  (auto-rempli)
+                </span>
+              )}
+            </label>
+            <input
+              id="tp-coeff"
+              name="coefficientCommunal"
+              type="number"
+              min="1"
+              max="200"
+              className="input"
+              value={s.coefficientCommunal ?? ''}
+              onChange={(e) =>
+                update('step1.coefficientCommunal', Number(e.target.value) || undefined)
+              }
+              placeholder={
+                s.commune && autoCoeff === null
+                  ? 'À saisir manuellement (vd.ch)'
+                  : '79'
+              }
+            />
+            {s.commune && autoCoeff === null && (
+              <p className="text-2xs text-warning mt-1">
+                Coefficient non disponible pour cette commune — à saisir manuellement (source : vd.ch).
+              </p>
             )}
-          </label>
-          <input
-            id="tp-coeff"
-            name="coefficientCommunal"
-            type="number"
-            min="1"
-            max="200"
-            className="input"
-            value={s.coefficientCommunal ?? ''}
-            onChange={(e) =>
-              update('step1.coefficientCommunal', Number(e.target.value) || undefined, 1)
-            }
-            placeholder={
-              selectedCommune && autoCoeff === null
-                ? 'À saisir manuellement (vd.ch)'
-                : '79'
-            }
-          />
-          {selectedCommune && autoCoeff === null && (
-            <p className="text-2xs text-warning mt-1">
-              Coefficient non disponible pour cette commune — à saisir manuellement (source : vd.ch).
-            </p>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Download, Loader2, Sparkles, FileCheck } from 'lucide-react';
 import type { TaxpayerDraft } from '@/api/lexa';
 import { lexa } from '@/api/lexa';
+import type { CantonConfig } from '@/config/cantons/types';
 
 interface Props {
   draft: TaxpayerDraft;
   year: number;
+  canton: CantonConfig;
 }
 
 function base64ToBlob(base64: string, mime: string): Blob {
@@ -26,15 +28,17 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function Step6GenerateVd({ draft, year }: Props) {
+type GenerateResult = {
+  streamId: string;
+  idempotent: boolean;
+  revenuImposable: number;
+  fortuneNette: number;
+  source: string;
+};
+
+export function Step6Generate({ draft, year, canton }: Props) {
   const [generating, setGenerating] = useState(false);
-  const [result, setResult] = useState<{
-    streamId: string;
-    idempotent: boolean;
-    revenuImposable: number;
-    fortuneNette: number;
-    source: string;
-  } | null>(null);
+  const [result, setResult] = useState<GenerateResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fullName =
@@ -45,7 +49,6 @@ export function Step6GenerateVd({ draft, year }: Props) {
     setGenerating(true);
     setError(null);
     try {
-      // Auto-save profil (transparent, sans bloquer la génération)
       const s1 = draft.state.step1;
       lexa.patchTaxpayerProfile({
         firstName: s1.firstName,
@@ -53,20 +56,25 @@ export function Step6GenerateVd({ draft, year }: Props) {
         birthDate: s1.dateOfBirth,
         civilStatus: s1.civilStatus,
         commune: s1.commune,
-        canton: 'VD',
+        canton: canton.code,
         childrenCount: s1.childrenCount,
       }).catch(() => { /* non-bloquant */ });
 
-      const response = await lexa.submitTaxpayerDraftVd({ fiscalYear: year });
+      const response = await canton.submitDraft({ fiscalYear: year }) as {
+        pdf: string;
+        streamId: string;
+        idempotent: boolean;
+        form: { projection: { revenuImposable: number; fortuneNette: number; source?: string } };
+      };
       const pdfBlob = base64ToBlob(response.pdf, 'application/pdf');
-      const filename = `lexa-declaration-pp-vd-${year}-${fullName.replace(/\s+/g, '_')}.pdf`;
+      const cantonCode = canton.code.toLowerCase();
+      const filename = `lexa-declaration-pp-${cantonCode}-${year}-${fullName.replace(/\s+/g, '_')}.pdf`;
       downloadBlob(pdfBlob, filename);
       setResult({
         streamId: response.streamId,
         idempotent: response.idempotent,
         revenuImposable: response.form.projection.revenuImposable,
         fortuneNette: response.form.projection.fortuneNette,
-        // @ts-expect-error — source est ajoutée en session 15
         source: response.form.projection.source ?? 'draft',
       });
     } catch (err) {
@@ -80,12 +88,12 @@ export function Step6GenerateVd({ draft, year }: Props) {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-semibold tracking-tight mb-1">
-          Générer ma déclaration Vaud
+          Générer ma déclaration {canton.label}
         </h2>
         <p className="text-sm text-muted">
           Le PDF sera produit à partir de toutes les données saisies, puis
           téléchargé automatiquement. Lexa prépare, vous validez et signez.
-          Délai de dépôt ACI VD : 15 mars.
+          {canton.deadlineLabel && ` Délai de dépôt ${canton.authority} : ${canton.deadlineLabel}.`}
         </p>
       </div>
 
@@ -95,12 +103,12 @@ export function Step6GenerateVd({ draft, year }: Props) {
             <Sparkles className="w-7 h-7" />
           </div>
           <h3 className="text-lg font-semibold mb-2">
-            Prêt·e à générer votre déclaration VD {year} ?
+            Prêt·e à générer votre déclaration {canton.code} {year} ?
           </h3>
           <p className="text-sm text-muted max-w-md mx-auto mb-6">
             Le PDF inclura toutes les informations saisies, les calculs de revenu
             imposable, et le disclaimer réglementaire obligatoire
-            (LI BLV 642.11, LIPC BLV 650.11, LIFD).
+            ({canton.legalBasis}).
           </p>
           {error && (
             <div className="p-3 mb-4 rounded-lg bg-danger/10 border border-danger/30 text-sm text-danger">
@@ -120,7 +128,7 @@ export function Step6GenerateVd({ draft, year }: Props) {
             ) : (
               <>
                 <Download className="w-4 h-4" />
-                Générer ma déclaration PDF Vaud
+                Générer ma déclaration PDF {canton.label}
               </>
             )}
           </button>
@@ -132,7 +140,7 @@ export function Step6GenerateVd({ draft, year }: Props) {
               <FileCheck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-semibold">Déclaration VD générée ✓</h3>
+              <h3 className="font-semibold">Déclaration {canton.code} générée ✓</h3>
               <p className="text-2xs text-muted">
                 Event audit : {result.streamId.slice(0, 8)}
                 {result.idempotent && ' (idempotent)'} · source : {result.source}
@@ -167,9 +175,8 @@ export function Step6GenerateVd({ draft, year }: Props) {
 
           <div className="p-3 rounded-lg bg-warning/10 border border-warning/30 text-xs text-warning">
             Rappel : Lexa prépare cette déclaration à titre indicatif. Faites-la
-            vérifier par votre fiduciaire ou l'Administration cantonale des impôts
-            VD (ACI VD) avant dépôt le 15 mars. Base légale : LI (BLV 642.11),
-            LIPC (BLV 650.11), LIFD.
+            vérifier par votre fiduciaire ou l'{canton.authority} avant dépôt
+            {canton.deadlineLabel ? ` le ${canton.deadlineLabel}` : ''}. Base légale : {canton.legalBasis}.
           </div>
 
           <button

@@ -5,8 +5,9 @@ import { Register } from '@/routes/Register';
 import { Onboarding } from '@/routes/Onboarding';
 import { Workspace } from '@/routes/Workspace';
 import { TaxpayerWizard } from '@/routes/taxpayer/TaxpayerWizard';
-import { TaxpayerWizardGe } from '@/routes/taxpayer/TaxpayerWizardGe';
-import { TaxpayerWizardVd } from '@/routes/taxpayer/TaxpayerWizardVd';
+import { TaxpayerWizardCanton } from '@/routes/taxpayer/TaxpayerWizardCanton';
+import { cantonGE } from '@/config/cantons/ge';
+import { cantonVD } from '@/config/cantons/vd';
 import { useAuthStore } from '@/stores/authStore';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -61,7 +62,7 @@ export default function App() {
         path="/taxpayer/ge/:year"
         element={
           <RequireAuth>
-            <TaxpayerWizardGe />
+            <TaxpayerWizardCanton canton={cantonGE} />
           </RequireAuth>
         }
       />
@@ -69,7 +70,7 @@ export default function App() {
         path="/taxpayer/vd/:year"
         element={
           <RequireAuth>
-            <TaxpayerWizardVd />
+            <TaxpayerWizardCanton canton={cantonVD} />
           </RequireAuth>
         }
       />

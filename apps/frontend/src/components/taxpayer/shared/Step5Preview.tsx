@@ -1,13 +1,15 @@
 import type { TaxpayerDraft } from '@/api/lexa';
+import type { CantonConfig } from '@/config/cantons/types';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { useTaxpayerDraftStore } from '@/stores/taxpayerDraftStore';
 
 interface Props {
   draft: TaxpayerDraft;
   year: number;
+  canton: CantonConfig;
 }
 
-export function Step5PreviewGe({ draft }: Props) {
+export function Step5Preview({ draft, canton }: Props) {
   const setStep = useTaxpayerDraftStore((s) => s.setStep);
   const { step1, step2, step3, step4 } = draft.state;
 
@@ -17,7 +19,7 @@ export function Step5PreviewGe({ draft }: Props) {
     goTo: number;
   }> = [
     {
-      label: 'Identité (prénom, nom, commune GE)',
+      label: `Identité (prénom, nom, commune ${canton.code})`,
       ok: !!(step1.firstName && step1.lastName && step1.commune),
       goTo: 1,
     },
@@ -26,6 +28,15 @@ export function Step5PreviewGe({ draft }: Props) {
       ok: !!step1.civilStatus,
       goTo: 1,
     },
+    ...(canton.hasCoefficientCommunal
+      ? [
+          {
+            label: 'Coefficient communal renseigné',
+            ok: !!(step1.coefficientCommunal ?? (step1.commune === 'Lausanne' ? 79 : undefined)),
+            goTo: 1,
+          },
+        ]
+      : []),
     {
       label: 'Au moins un revenu déclaré',
       ok:
@@ -92,7 +103,7 @@ export function Step5PreviewGe({ draft }: Props) {
         {allOk ? (
           <p className="text-sm">
             ✓ Toutes les vérifications sont passées. Vous pouvez passer à
-            l'étape 6 pour générer votre déclaration PDF Genève.
+            l'étape 6 pour générer votre déclaration PDF {canton.label}.
           </p>
         ) : (
           <p className="text-sm">

@@ -1,10 +1,11 @@
 import type { TaxpayerDraft } from '@/api/lexa';
+import type { CantonConfig } from '@/config/cantons/types';
 import { FileText, Info } from 'lucide-react';
 
-// VD : forfait frais pro min 2'000 CHF, max 4'000 CHF
-// TODO session 20 : confirmer barème ACI VD Art. 26 LI
-const VD_FRAIS_PRO_MIN = 2000;
-const VD_FRAIS_PRO_MAX = 4000;
+interface Props {
+  draft: TaxpayerDraft;
+  canton: CantonConfig;
+}
 
 function chf(n: number | undefined): string {
   if (n === undefined || n === null || Number.isNaN(n)) return '—';
@@ -14,11 +15,32 @@ function chf(n: number | undefined): string {
   });
 }
 
-interface Props {
-  draft: TaxpayerDraft;
+function SummaryRow({
+  label,
+  value,
+  mono,
+  bold,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  bold?: boolean;
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-2">
+      <span className={`text-xs ${bold ? 'text-ink font-semibold' : 'text-muted'}`}>
+        {label}
+      </span>
+      <span
+        className={`text-xs ${mono ? 'mono-num' : ''} ${bold ? 'text-ink font-semibold' : 'text-ink'}`}
+      >
+        {value}
+      </span>
+    </div>
+  );
 }
 
-export function WizardSummaryVd({ draft }: Props) {
+export function WizardSummary({ draft, canton }: Props) {
   const { step1, step2, step3, step4 } = draft.state;
 
   const totalRevenus =
@@ -42,10 +64,9 @@ export function WizardSummaryVd({ draft }: Props) {
 
   const revenuSalaire =
     (step2.salaireBrut ?? 0) + (step2.revenusAccessoires ?? 0);
-  // VD : min 2'000 CHF (vs 1'700 CHF GE) — TODO session 20 : confirmer ACI VD Art. 26 LI
   const fraisProForfaitCalcule = Math.min(
-    Math.max(revenuSalaire * 0.03, VD_FRAIS_PRO_MIN),
-    VD_FRAIS_PRO_MAX,
+    Math.max(revenuSalaire * 0.03, canton.fraisProMin),
+    canton.fraisProMax,
   );
   const deductionFraisPro =
     step4.fraisProFormat === 'reel'
@@ -69,7 +90,7 @@ export function WizardSummaryVd({ draft }: Props) {
         <div className="flex items-center gap-2 mb-3">
           <FileText className="w-4 h-4 text-accent" />
           <span className="text-2xs uppercase tracking-wider text-muted">
-            Aperçu en direct — VD
+            Aperçu en direct — {canton.code}
           </span>
         </div>
 
@@ -83,13 +104,15 @@ export function WizardSummaryVd({ draft }: Props) {
             }
           />
           <SummaryRow
-            label="Commune VD"
+            label={`Commune ${canton.code}`}
             value={step1.commune ?? '—'}
           />
-          <SummaryRow
-            label="Coeff. communal"
-            value={step1.coefficientCommunal ? String(step1.coefficientCommunal) : '—'}
-          />
+          {canton.hasCoefficientCommunal && (
+            <SummaryRow
+              label="Coeff. communal"
+              value={step1.coefficientCommunal ? String(step1.coefficientCommunal) : '—'}
+            />
+          )}
 
           <div className="pt-3 border-t border-border">
             <div className="text-2xs uppercase tracking-wider text-muted mb-2">
@@ -155,7 +178,7 @@ export function WizardSummaryVd({ draft }: Props) {
               mono
             />
             <SummaryRow
-              label="Frais pro (VD)"
+              label={`Frais pro (${canton.code})`}
               value={chf(deductionFraisPro || undefined)}
               mono
             />
@@ -183,35 +206,10 @@ export function WizardSummaryVd({ draft }: Props) {
         <p>
           Les totaux sont calculés en direct. Le PDF final est généré à
           l'étape 6 avec la projection officielle Lexa et le disclaimer
-          réglementaire (LI BLV 642.11, LIPC BLV 650.11, LIFD).
-          Délai de dépôt ACI VD : 15 mars.
+          réglementaire ({canton.legalBasis}).
+          {canton.deadlineLabel && ` Délai de dépôt ${canton.authority} : ${canton.deadlineLabel}.`}
         </p>
       </div>
-    </div>
-  );
-}
-
-function SummaryRow({
-  label,
-  value,
-  mono,
-  bold,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-  bold?: boolean;
-}) {
-  return (
-    <div className="flex items-baseline justify-between gap-2">
-      <span className={`text-xs ${bold ? 'text-ink font-semibold' : 'text-muted'}`}>
-        {label}
-      </span>
-      <span
-        className={`text-xs ${mono ? 'mono-num' : ''} ${bold ? 'text-ink font-semibold' : 'text-ink'}`}
-      >
-        {value}
-      </span>
     </div>
   );
 }

@@ -15,14 +15,14 @@ import {
   X,
 } from 'lucide-react';
 import { useTaxpayerDraftStore } from '@/stores/taxpayerDraftStore';
-import { lexa } from '@/api/lexa';
-import { Step1IdentityVd } from '@/components/taxpayer/vd/Step1IdentityVd';
-import { Step2RevenuesVd } from '@/components/taxpayer/vd/Step2RevenuesVd';
-import { Step3WealthVd } from '@/components/taxpayer/vd/Step3WealthVd';
-import { Step4DeductionsVd } from '@/components/taxpayer/vd/Step4DeductionsVd';
-import { Step5PreviewVd } from '@/components/taxpayer/vd/Step5PreviewVd';
-import { Step6GenerateVd } from '@/components/taxpayer/vd/Step6GenerateVd';
-import { WizardSummaryVd } from '@/components/taxpayer/vd/WizardSummaryVd';
+import type { CantonConfig } from '@/config/cantons/types';
+import { Step1Identity } from '@/components/taxpayer/shared/Step1Identity';
+import { Step2Revenues } from '@/components/taxpayer/shared/Step2Revenues';
+import { Step3Wealth } from '@/components/taxpayer/shared/Step3Wealth';
+import { Step4Deductions } from '@/components/taxpayer/shared/Step4Deductions';
+import { Step5Preview } from '@/components/taxpayer/shared/Step5Preview';
+import { Step6Generate } from '@/components/taxpayer/shared/Step6Generate';
+import { WizardSummary } from '@/components/taxpayer/shared/WizardSummary';
 
 const STEPS = [
   { id: 1, label: 'Identité', icon: Users },
@@ -33,7 +33,11 @@ const STEPS = [
   { id: 6, label: 'Générer', icon: Sparkles },
 ] as const;
 
-export function TaxpayerWizardVd() {
+interface Props {
+  canton: CantonConfig;
+}
+
+export function TaxpayerWizardCanton({ canton }: Props) {
   const params = useParams<{ year?: string }>();
   const year = Number(params.year) || new Date().getFullYear();
   const navigate = useNavigate();
@@ -82,7 +86,7 @@ export function TaxpayerWizardVd() {
           <span className="text-sm font-semibold">Lexa</span>
           <span className="w-px h-5 bg-border" />
           <span className="text-sm text-muted">
-            Déclaration d'impôt PP Vaud — {year}
+            {canton.header} — {year}
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -146,12 +150,12 @@ export function TaxpayerWizardVd() {
             transition={{ duration: 0.25 }}
             className="lg:col-span-2 space-y-6"
           >
-            {currentStep === 1 && <Step1IdentityVd draft={draft} year={year} />}
-            {currentStep === 2 && <Step2RevenuesVd draft={draft} year={year} />}
-            {currentStep === 3 && <Step3WealthVd draft={draft} year={year} />}
-            {currentStep === 4 && <Step4DeductionsVd draft={draft} year={year} />}
-            {currentStep === 5 && <Step5PreviewVd draft={draft} year={year} />}
-            {currentStep === 6 && <Step6GenerateVd draft={draft} year={year} />}
+            {currentStep === 1 && <Step1Identity draft={draft} year={year} canton={canton} />}
+            {currentStep === 2 && <Step2Revenues draft={draft} year={year} canton={canton} />}
+            {currentStep === 3 && <Step3Wealth draft={draft} year={year} canton={canton} />}
+            {currentStep === 4 && <Step4Deductions draft={draft} year={year} canton={canton} />}
+            {currentStep === 5 && <Step5Preview draft={draft} year={year} canton={canton} />}
+            {currentStep === 6 && <Step6Generate draft={draft} year={year} canton={canton} />}
 
             {/* Nav buttons (cachés sur step 6 qui a son propre CTA) */}
             {currentStep < 6 && (
@@ -174,7 +178,7 @@ export function TaxpayerWizardVd() {
 
           {/* Side-panel summary */}
           <aside className="lg:col-span-1">
-            <WizardSummaryVd draft={draft} />
+            <WizardSummary draft={draft} canton={canton} />
           </aside>
         </div>
       </main>
@@ -217,13 +221,3 @@ export function TaxpayerWizardVd() {
     </div>
   );
 }
-
-// Helper pour les steps VD 1-4 — expose le helper d'update
-export function useFieldUpdaterVd(year: number) {
-  const updateField = useTaxpayerDraftStore((s) => s.updateField);
-  return (field: string, value: unknown, step: number) =>
-    updateField(field, value, step, year);
-}
-
-// Re-export du helper API pour que Step6Vd puisse call submit-vd
-export { lexa };

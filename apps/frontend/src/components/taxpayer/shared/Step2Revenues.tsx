@@ -1,14 +1,17 @@
 import type { TaxpayerDraft } from '@/api/lexa';
-import { useFieldUpdaterGe } from '@/routes/taxpayer/TaxpayerWizardGe';
+import type { CantonConfig } from '@/config/cantons/types';
+import { useTaxpayerDraftStore } from '@/stores/taxpayerDraftStore';
 import { CurrencyField } from '@/routes/taxpayer/steps/CurrencyField';
 
 interface Props {
   draft: TaxpayerDraft;
   year: number;
+  canton: CantonConfig;
 }
 
-export function Step2RevenuesGe({ draft, year }: Props) {
-  const update = useFieldUpdaterGe(year);
+export function Step2Revenues({ draft, year, canton: _canton }: Props) {
+  const updateField = useTaxpayerDraftStore((s) => s.updateField);
+  const update = (field: string, value: unknown) => updateField(field, value, 2, year);
   const s = draft.state.step2;
 
   return (
@@ -26,7 +29,7 @@ export function Step2RevenuesGe({ draft, year }: Props) {
             type="checkbox"
             id="tp-salarie"
             checked={s.isSalarie ?? false}
-            onChange={(e) => update('step2.isSalarie', e.target.checked, 2)}
+            onChange={(e) => update('step2.isSalarie', e.target.checked)}
             className="w-4 h-4"
           />
           <label htmlFor="tp-salarie" className="text-sm">
@@ -40,7 +43,7 @@ export function Step2RevenuesGe({ draft, year }: Props) {
               id="tp-swissdec"
               checked={s.hasSwissdecCertificate ?? false}
               onChange={(e) =>
-                update('step2.hasSwissdecCertificate', e.target.checked, 2)
+                update('step2.hasSwissdecCertificate', e.target.checked)
               }
               className="w-4 h-4"
             />
@@ -56,44 +59,44 @@ export function Step2RevenuesGe({ draft, year }: Props) {
           id="tp-salaire"
           label="Salaire brut principal"
           value={s.salaireBrut}
-          onChange={(v) => update('step2.salaireBrut', v, 2)}
+          onChange={(v) => update('step2.salaireBrut', v)}
           hint="Montant brut du certificat de salaire"
         />
         <CurrencyField
           id="tp-accessoires"
           label="Revenus accessoires (indépendant, second emploi…)"
           value={s.revenusAccessoires}
-          onChange={(v) => update('step2.revenusAccessoires', v, 2)}
+          onChange={(v) => update('step2.revenusAccessoires', v)}
         />
         <CurrencyField
           id="tp-avs"
           label="Rentes AVS"
           value={s.rentesAvs}
-          onChange={(v) => update('step2.rentesAvs', v, 2)}
+          onChange={(v) => update('step2.rentesAvs', v)}
         />
         <CurrencyField
           id="tp-lpp"
           label="Rentes LPP (2e pilier)"
           value={s.rentesLpp}
-          onChange={(v) => update('step2.rentesLpp', v, 2)}
+          onChange={(v) => update('step2.rentesLpp', v)}
         />
         <CurrencyField
           id="tp-3p"
           label="Rentes 3e pilier"
           value={s.rentes3ePilier}
-          onChange={(v) => update('step2.rentes3ePilier', v, 2)}
+          onChange={(v) => update('step2.rentes3ePilier', v)}
         />
         <CurrencyField
           id="tp-titres"
           label="Revenus du capital mobilier (intérêts, dividendes)"
           value={s.revenusTitres}
-          onChange={(v) => update('step2.revenusTitres', v, 2)}
+          onChange={(v) => update('step2.revenusTitres', v)}
         />
         <CurrencyField
           id="tp-immo"
           label="Revenus immobiliers (loyers, valeur locative)"
           value={s.revenusImmobiliers}
-          onChange={(v) => update('step2.revenusImmobiliers', v, 2)}
+          onChange={(v) => update('step2.revenusImmobiliers', v)}
         />
       </div>
     </div>
