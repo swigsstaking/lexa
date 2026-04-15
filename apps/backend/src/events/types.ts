@@ -97,6 +97,18 @@ export type LexaEvent =
         generatedBy: "lexa";
         liability: "preparation_only";
       };
+    }
+  | {
+      type: "DocumentUploaded";
+      payload: {
+        documentId: string;
+        filename: string;
+        mimetype: string;
+        size: number;
+        ocrType: string;
+        ocrConfidence: number;
+        extractedFields: Record<string, unknown>;
+      };
     };
 
 export type LexaEventType = LexaEvent["type"];
