@@ -7,6 +7,7 @@ import {
   Building2,
   Calculator,
   Command,
+  FileSignature,
   LogOut,
   Sparkles,
 } from 'lucide-react';
@@ -129,6 +130,15 @@ export function Workspace() {
           >
             <Calculator className="w-3.5 h-3.5" />
             <span className="text-xs hidden md:inline">{t('workspace.toggle_expert')}</span>
+          </button>
+
+          <button
+            onClick={() => navigate(`/taxpayer/${new Date().getFullYear()}`)}
+            className="btn-ghost !px-3 !py-1.5"
+            title="Déclaration fiscale PP"
+          >
+            <FileSignature className="w-3.5 h-3.5" />
+            <span className="text-xs hidden md:inline">Déclaration PP</span>
           </button>
 
           <button onClick={handleLogout} className="btn-ghost !px-2 !py-1.5" aria-label="logout">

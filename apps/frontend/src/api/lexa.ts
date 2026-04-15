@@ -120,6 +120,89 @@ export const lexa = {
     api
       .post<VsPpDeclarationResponse>('/forms/vs-declaration-pp', input)
       .then((r) => r.data),
+
+  // Taxpayers (session 15 wizard)
+  getTaxpayerDraft: (year: number) =>
+    api
+      .get<{ draft: TaxpayerDraft }>(`/taxpayers/draft`, { params: { year } })
+      .then((r) => r.data),
+
+  patchTaxpayerField: (input: {
+    fiscalYear: number;
+    step: number;
+    field: string;
+    value: unknown;
+  }) =>
+    api
+      .patch<{ draft: TaxpayerDraft }>('/taxpayers/draft/field', input)
+      .then((r) => r.data),
+
+  submitTaxpayerDraft: (input: { fiscalYear: number }) =>
+    api
+      .post<VsPpDeclarationResponse>('/taxpayers/draft/submit', input)
+      .then((r) => r.data),
+
+  resetTaxpayerDraft: (input: { fiscalYear: number }) =>
+    api.post<{ ok: true }>('/taxpayers/draft/reset', input).then((r) => r.data),
+};
+
+export type TaxpayerDraft = {
+  id: string;
+  tenantId: string;
+  fiscalYear: number;
+  state: {
+    step1: {
+      firstName?: string;
+      lastName?: string;
+      dateOfBirth?: string;
+      civilStatus?:
+        | 'single'
+        | 'married'
+        | 'registered_partnership'
+        | 'divorced'
+        | 'separated'
+        | 'widowed';
+      childrenCount?: number;
+      commune?: string;
+      canton: 'VS';
+    };
+    step2: {
+      isSalarie?: boolean;
+      salaireBrut?: number;
+      hasSwissdecCertificate?: boolean;
+      revenusAccessoires?: number;
+      rentesAvs?: number;
+      rentesLpp?: number;
+      rentes3ePilier?: number;
+      allocations?: number;
+      revenusTitres?: number;
+      revenusImmobiliers?: number;
+    };
+    step3: {
+      comptesBancaires?: number;
+      titresCotes?: number;
+      titresNonCotes?: number;
+      immeublesValeurFiscale?: number;
+      immeublesEmprunt?: number;
+      vehicules?: number;
+      autresBiens?: number;
+      dettes?: number;
+    };
+    step4: {
+      pilier3a?: number;
+      primesAssurance?: number;
+      fraisProFormat?: 'forfait' | 'reel';
+      fraisProReels?: number;
+      interetsPassifs?: number;
+      rachatsLpp?: number;
+      fraisMedicaux?: number;
+      dons?: number;
+    };
+  };
+  currentStep: number;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type VsPpDeclarationResponse = {
