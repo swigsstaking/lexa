@@ -1,7 +1,7 @@
 import type { TaxpayerDraft } from '@/api/lexa';
 import type { CantonConfig } from '@/config/cantons/types';
 import { useTaxpayerDraftStore } from '@/stores/taxpayerDraftStore';
-import { CurrencyField } from '@/routes/taxpayer/steps/CurrencyField';
+import { CurrencyField } from '@/components/taxpayer/shared/CurrencyField';
 
 const PILIER_3A_SALARIE = 7260;
 const PILIER_3A_INDEPENDANT = 36288;

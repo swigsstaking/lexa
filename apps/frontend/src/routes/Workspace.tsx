@@ -141,7 +141,9 @@ export function Workspace() {
                   ? `/taxpayer/ge/${year}`
                   : canton === 'VD'
                     ? `/taxpayer/vd/${year}`
-                    : `/taxpayer/${year}`;
+                    : canton === 'FR'
+                      ? `/taxpayer/fr/${year}`
+                      : `/taxpayer/${year}`;
               navigate(taxpayerPath);
             }}
             className="btn-ghost !px-3 !py-1.5"

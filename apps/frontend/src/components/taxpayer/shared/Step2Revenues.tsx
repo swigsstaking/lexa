@@ -1,7 +1,7 @@
 import type { TaxpayerDraft } from '@/api/lexa';
 import type { CantonConfig } from '@/config/cantons/types';
 import { useTaxpayerDraftStore } from '@/stores/taxpayerDraftStore';
-import { CurrencyField } from '@/routes/taxpayer/steps/CurrencyField';
+import { CurrencyField } from '@/components/taxpayer/shared/CurrencyField';
 
 interface Props {
   draft: TaxpayerDraft;

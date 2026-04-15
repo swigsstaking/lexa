@@ -4,10 +4,11 @@ import { Login } from '@/routes/Login';
 import { Register } from '@/routes/Register';
 import { Onboarding } from '@/routes/Onboarding';
 import { Workspace } from '@/routes/Workspace';
-import { TaxpayerWizard } from '@/routes/taxpayer/TaxpayerWizard';
 import { TaxpayerWizardCanton } from '@/routes/taxpayer/TaxpayerWizardCanton';
 import { cantonGE } from '@/config/cantons/ge';
 import { cantonVD } from '@/config/cantons/vd';
+import { cantonVS } from '@/config/cantons/vs';
+import { cantonFR } from '@/config/cantons/fr';
 import { useAuthStore } from '@/stores/authStore';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -75,10 +76,18 @@ export default function App() {
         }
       />
       <Route
+        path="/taxpayer/fr/:year"
+        element={
+          <RequireAuth>
+            <TaxpayerWizardCanton canton={cantonFR} />
+          </RequireAuth>
+        }
+      />
+      <Route
         path="/taxpayer/:year"
         element={
           <RequireAuth>
-            <TaxpayerWizard />
+            <TaxpayerWizardCanton canton={cantonVS} />
           </RequireAuth>
         }
       />
