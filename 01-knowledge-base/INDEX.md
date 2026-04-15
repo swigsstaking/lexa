@@ -32,6 +32,7 @@
 - Session 05 : +164 VS (re-parsing v2) +448 ordonnances (OIFD/OLTVA/OIA/ORC) +652 Info TVA → **5322**
 - Session ~07 : +66 Plan comptable Käfer → **5388**
 - Session 16 : **+373 Canton Genève (LCP 267 + LIPP 66 + LIPM 40)** → **5761**
+- Session 18 : **+381 Canton Vaud (LI 310 + LIPC 62 + RLI 9)** → **6142**
 
 Voir [`federal/circulaires-afc-index.md`](federal/circulaires-afc-index.md) pour le détail des documents AFC ingérés.
 
@@ -128,17 +129,34 @@ Source : https://www.bger.ch/
 - "Imposition bénéfice SA Genève" → VS/OIA/LIFD (à surveiller, session 17+ un Guide PP GE plus explicite améliorerait le score)
 **Agent** : `lexa-fiscal-pp-ge` Modelfile + `FiscalPpGeAgent.ts` session 16, re-ranking tier 0 LIPP-GE/LCP-GE + tier 1 LIPM-GE + tier 2 LIFD/LHID
 
-### 2. Vaud (VD)
+### 2. Vaud (VD) — **SESSION 18 ✓**
 
 | Document | Statut | Source |
 |---|---|---|
-| Loi sur les impôts directs cantonaux (LI) | ❌ Manquant | BLV 642.11 |
-| Règlement d'application (RLI) | ❌ Manquant | BLV 642.11.1 |
+| **LI** — Loi sur les impôts directs cantonaux (BLV 642.11) | ✅ **Ingéré session 18 (310 articles)** | prestations.vd.ch/pub/blv-publication/api/actes/{id}/html |
+| **LIPC** — Loi sur les impôts communaux (BLV 650.11) | ✅ **Ingéré session 18 (62 articles)** | prestations.vd.ch/pub/blv-publication/api/actes/{id}/html |
+| **RLI** — Règlement d'application de la LI (BLV 642.11.1) | ✅ **Ingéré session 18 (9 articles)** | prestations.vd.ch/pub/blv-publication/api/actes/{id}/html |
 | Barème cantonal | ❌ Manquant | ACI |
 | Formulaires PP / PM | ❌ Manquant | VaudTax |
-| Directives | ❌ Manquant | ACI |
+| Directives ACI | ❌ Manquant | aci.vd.ch |
 
 **Portail** : https://www.vd.ch/themes/etat-droit-finances/impots
+**Script d'ingestion** : `01-knowledge-base/scripts/ingest_vd_laws_lexa.py`
+**Méthode** : API REST JSON derrière SPA Angular BLV (`api/actes/CONSOLIDE?id=...&cote=...` → html_id → `api/actes/{html_id}/html`). XHTML AkomaNtoso UTF-8. Parser `akn-article-container` + `akn-alinea`. Firefox Playwright utilisé pour découvrir l'API REST (aucune source HTML statique directe disponible pour VD).
+**Tags Qdrant** : `law ∈ {LI-VD, LIPC-VD, RLI-VD}`, `jurisdiction: "cantonal-VD"`, `canton: "VD"`
+**IDs BLV** (version 2026) :
+  - LI 642.11 : acte=`8df99d51-...`, html=`a28b9d22-...`
+  - LIPC 650.11 : acte=`66dcd6f6-...`, html=`0848120c-...`
+  - RLI 642.11.1 : acte=`5390e38d-...`, html=`afe66749-...`
+**Validation RAG session 18** (top-3 scores observés) :
+  - "Coefficient communal impôt direct Vaud" → LI-VD Art. 105 (0.665) ✅
+  - "Impôt sur la fortune personne physique Vaud" → LI-VD Art. 111 (0.653) ✅
+  - "Déduction frais professionnels canton Vaud salarié" → VS-Loi-fiscale (VS-Guide-PP plus riche) ⚠️ normal
+  - "Assujettissement rattachement personnel canton Vaud" → VS-Loi-fiscale ⚠️ normal (sans Guide PP VD)
+  - "Impôt cantonal et communal Lausanne" → VS-Guide-PP ⚠️ normal
+  - Score 2/5 — acceptable, pattern identique session 16 GE (sans Guide PP VD, les requêtes génériques vont vers VS)
+**Agent** : `lexa-fiscal-pp-vd` Modelfile + `FiscalPpVdAgent.ts` session 18, re-ranking tier 0 LI-VD/LIPC-VD + tier 1 RLI-VD + tier 2 LIFD/LHID
+**Collection après ingestion** : 5761 → 6142 points (+381)
 
 ### 3. Fribourg (FR)
 
