@@ -11,6 +11,7 @@ import type {
   VsPpProjection,
 } from "./types.js";
 import { annualRange } from "./types.js";
+import type { TaxpayerDraftState } from "../taxpayers/schema.js";
 
 const TEMPLATE_FILE = "vs-declaration-pp-2024.yaml";
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -32,36 +33,26 @@ type AccountSumRow = {
 };
 
 /**
- * Projection comptable → champs fiscaux PP VS.
+ * Projection fiscale PP Valais avec support dual mode.
  *
- * v1 : mapping simplifié depuis le grand livre Käfer.
+ * Mode `draft` (session 15) : les valeurs viennent du wizard contribuable
+ * (TaxpayerDraftState avec step1-4 remplies). C'est le mode standard pour
+ * une déclaration réelle.
  *
- *   revenuIndependant = Σ crédit produits (3xxx) − Σ débit charges (4-8xxx)
- *     (bénéfice net de l'exploitation individuelle)
+ * Mode `ledger` (session 13 legacy) : si pas de draft, fallback sur la
+ * projection comptable du grand livre Käfer (indépendant seed). Utile
+ * pour les tests et les tenants qui n'ont pas encore complété le wizard.
  *
- *   fortuneNette = Σ solde débit actif (1xxx) − Σ solde crédit passif (2xxx)
- *     (approximation : solde cumulé au 31/12 de l'année)
- *
- *   fraisProForfait = min(max(revenu × 3%, 2000), 4000)
- *     (forfait frais pro salariés 2024 Valais)
- *
- * Les champs `revenu_salaire`, `pilier_3a`, `lpp_rachats`, `primes_assurances`
- * et `interets_dette` sont marqués TODO dans le template et devront être
- * complétés manuellement par l'utilisateur jusqu'à ce qu'on ajoute un
- * onboarding personnel (session 14+).
+ * Mode `mixed` : les deux sources sont combinées (ex : revenu indépendant
+ * du ledger + salaire du draft).
  */
-async function projectVsPp(
+async function projectFromLedger(
   tenantId: string,
   year: number,
-  refAmounts: VsPpFormTemplate["reference_amounts"],
-): Promise<VsPpProjection> {
+): Promise<{ revenuIndependant: number; fortuneNette: number; eventCount: number }> {
   const { start, end } = annualRange(year);
 
-  // 1) Revenu d'activité indépendante : produits − charges sur l'année
-  const incomeResult = await query<{
-    class: string;
-    total: string;
-  }>(
+  const incomeResult = await query<{ class: string; total: string }>(
     `SELECT
        CASE
          WHEN account LIKE '3%' THEN 'produit'
@@ -88,8 +79,6 @@ async function projectVsPp(
   }
   const revenuIndependant = round2(produits - charges);
 
-  // 2) Fortune nette : somme actifs (1xxx) - somme passifs (2xxx) au 31/12
-  //    Approximation : solde cumulé de toutes les écritures <= end.
   const wealthResult = await query<AccountSumRow>(
     `SELECT account,
             SUM(CASE WHEN line_type = 'debit' THEN amount ELSE 0 END)::text  AS total_debit,
@@ -112,41 +101,162 @@ async function projectVsPp(
       fortuneNette -= credit - debit;
     }
   }
-  fortuneNette = round2(fortuneNette);
 
-  // 3) Frais professionnels forfaitaires (salariés VS 2024)
-  const brut = Math.max(revenuIndependant, 0);
-  const rawForfait = brut * (refAmounts.frais_professionnels_forfait_pct / 100);
-  const fraisProForfait = round2(
+  return {
+    revenuIndependant,
+    fortuneNette: round2(fortuneNette),
+    eventCount: incomeResult.rows.length + wealthResult.rows.length,
+  };
+}
+
+function computeFraisPro(
+  refAmounts: VsPpFormTemplate["reference_amounts"],
+  revenuBrut: number,
+  format?: "forfait" | "reel",
+  fraisReels?: number,
+): number {
+  if (format === "reel" && fraisReels !== undefined) {
+    return round2(fraisReels);
+  }
+  const base = Math.max(revenuBrut, 0);
+  const rawForfait = base * (refAmounts.frais_professionnels_forfait_pct / 100);
+  return round2(
     Math.min(
       Math.max(rawForfait, refAmounts.frais_professionnels_forfait_min_chf),
       refAmounts.frais_professionnels_forfait_max_chf,
     ),
   );
+}
 
-  const revenuTotal = revenuIndependant; // salaires + capital = TODO
-  const deductionTotal = fraisProForfait;
+async function projectVsPp(params: {
+  tenantId: string;
+  year: number;
+  refAmounts: VsPpFormTemplate["reference_amounts"];
+  draft?: TaxpayerDraftState;
+}): Promise<VsPpProjection> {
+  const { tenantId, year, refAmounts, draft } = params;
+  const hasDraft =
+    !!draft &&
+    (Object.keys(draft.step1 ?? {}).length > 0 ||
+      Object.keys(draft.step2 ?? {}).length > 0 ||
+      Object.keys(draft.step3 ?? {}).length > 0 ||
+      Object.keys(draft.step4 ?? {}).length > 0);
+
+  // Ledger projection reste un fallback pour les indépendants
+  const ledger = await projectFromLedger(tenantId, year);
+
+  const step2 = draft?.step2 ?? {};
+  const step3 = draft?.step3 ?? {};
+  const step4 = draft?.step4 ?? {};
+
+  // ── Revenus ─────────────────────────────────────────
+  const revenuSalaire = round2(step2.salaireBrut ?? 0);
+  const revenuAccessoires = round2(step2.revenusAccessoires ?? 0);
+  const revenuRentes = round2(
+    (step2.rentesAvs ?? 0) + (step2.rentesLpp ?? 0) + (step2.rentes3ePilier ?? 0),
+  );
+  const revenuCapital = round2(step2.revenusTitres ?? 0);
+  const revenuImmobilier = round2(step2.revenusImmobiliers ?? 0);
+  const revenuIndependant = hasDraft
+    ? round2(revenuAccessoires) // v1 : indépendant = revenus accessoires du draft
+    : ledger.revenuIndependant;
+
+  const revenuTotal = round2(
+    revenuSalaire +
+      revenuIndependant +
+      revenuRentes +
+      revenuCapital +
+      revenuImmobilier,
+  );
+
+  // ── Fortune ─────────────────────────────────────────
+  const fortuneBrute = round2(
+    (step3.comptesBancaires ?? 0) +
+      (step3.titresCotes ?? 0) +
+      (step3.titresNonCotes ?? 0) +
+      (step3.immeublesValeurFiscale ?? 0) +
+      (step3.vehicules ?? 0) +
+      (step3.autresBiens ?? 0),
+  );
+  const fortuneDettes = round2(
+    (step3.immeublesEmprunt ?? 0) + (step3.dettes ?? 0),
+  );
+  const fortuneNette = hasDraft
+    ? round2(fortuneBrute - fortuneDettes)
+    : ledger.fortuneNette;
+
+  // ── Déductions ──────────────────────────────────────
+  const deductionPilier3a = round2(step4.pilier3a ?? 0);
+  const deductionLppRachats = round2(step4.rachatsLpp ?? 0);
+  const deductionPrimes = round2(step4.primesAssurance ?? 0);
+  const deductionInterets = round2(step4.interetsPassifs ?? 0);
+  const deductionFraisMedicaux = round2(step4.fraisMedicaux ?? 0);
+  const deductionDons = round2(step4.dons ?? 0);
+
+  const deductionFraisPro = computeFraisPro(
+    refAmounts,
+    revenuSalaire + revenuIndependant,
+    step4.fraisProFormat,
+    step4.fraisProReels,
+  );
+
+  const deductionTotal = round2(
+    deductionPilier3a +
+      deductionLppRachats +
+      deductionPrimes +
+      deductionInterets +
+      deductionFraisPro +
+      deductionFraisMedicaux +
+      deductionDons,
+  );
+
   const revenuImposable = round2(revenuTotal - deductionTotal);
 
+  const source: VsPpProjection["source"] = hasDraft
+    ? step2.revenusAccessoires !== undefined && ledger.revenuIndependant !== 0
+      ? "mixed"
+      : "draft"
+    : "ledger";
+
   return {
+    revenuSalaire,
     revenuIndependant,
+    revenuAccessoires,
+    revenuRentes,
+    revenuCapital,
+    revenuImmobilier,
     revenuTotal,
+    fortuneBrute,
+    fortuneDettes,
     fortuneNette,
-    fraisProForfait,
+    deductionPilier3a,
+    deductionLppRachats,
+    deductionPrimes,
+    deductionInterets,
+    deductionFraisPro,
+    deductionFraisMedicaux,
+    deductionDons,
     deductionTotal,
     revenuImposable,
-    eventCount: incomeResult.rows.length + wealthResult.rows.length,
+    source,
+    eventCount: ledger.eventCount,
   };
 }
 
 export async function buildVsPpDeclaration(params: {
   tenantId: string;
   year: number;
+  draft?: TaxpayerDraftState;
 }): Promise<FilledVsPpForm> {
-  const { tenantId, year } = params;
+  const { tenantId, year, draft } = params;
   const template = await loadVsPpTemplate();
   const company: CompanyInfo = await getCompany(tenantId);
-  const projection = await projectVsPp(tenantId, year, template.reference_amounts);
+  const projection = await projectVsPp({
+    tenantId,
+    year,
+    refAmounts: template.reference_amounts,
+    draft,
+  });
 
   return {
     formId: template.form_id,

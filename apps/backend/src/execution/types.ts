@@ -105,12 +105,35 @@ export function annualRange(year: number): { start: string; end: string } {
 
 // ── Déclaration fiscale PP Valais ──────────────────────
 export type VsPpProjection = {
-  revenuIndependant: number;
+  // Section Revenus
+  revenuSalaire: number;           // step2.salaireBrut (ou 0)
+  revenuIndependant: number;       // projection ledger (bénéfice)
+  revenuAccessoires: number;       // step2.revenusAccessoires
+  revenuRentes: number;            // AVS + LPP + 3e pilier
+  revenuCapital: number;           // step2.revenusTitres
+  revenuImmobilier: number;        // step2.revenusImmobiliers
   revenuTotal: number;
-  fortuneNette: number;
-  fraisProForfait: number;
+
+  // Section Fortune
+  fortuneBrute: number;            // Σ actifs (comptes + titres + immeubles + ...)
+  fortuneDettes: number;           // Σ dettes (emprunt immo + step3.dettes)
+  fortuneNette: number;            // brute - dettes
+
+  // Section Déductions
+  deductionPilier3a: number;       // step4.pilier3a
+  deductionLppRachats: number;     // step4.rachatsLpp
+  deductionPrimes: number;         // step4.primesAssurance
+  deductionInterets: number;       // step4.interetsPassifs
+  deductionFraisPro: number;       // forfait ou réel selon step4.fraisProFormat
+  deductionFraisMedicaux: number;
+  deductionDons: number;
   deductionTotal: number;
+
+  // Résultat
   revenuImposable: number;
+
+  // Méta
+  source: "draft" | "ledger" | "mixed";
   eventCount: number;
 };
 

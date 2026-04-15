@@ -10,9 +10,16 @@ import { agentsRouter } from "./routes/agents.js";
 import { onboardingRouter } from "./routes/onboarding.js";
 import { formsRouter } from "./routes/forms.js";
 import { authRouter } from "./routes/auth.js";
+import { taxpayersRouter } from "./routes/taxpayers.js";
 import { requireAuth } from "./middleware/requireAuth.js";
 
 const app = express();
+
+// Derrière nginx reverse proxy sur .59, faire confiance au premier hop pour
+// X-Forwarded-For. Sans ça, express-rate-limit warn et compte toutes les
+// requêtes comme venant de la même IP (l'IP loopback de nginx), ce qui
+// détruit la protection bruteforce /auth/login.
+app.set("trust proxy", 1);
 
 // Capture le raw body pour la vérification HMAC du pont Pro→Lexa
 // (requireHmac.ts lit req.rawBody avant que express.json ne consume le stream)
@@ -52,6 +59,7 @@ app.use("/rag", requireAuth, ragRouter);
 app.use("/transactions", requireAuth, transactionsRouter);
 app.use("/ledger", requireAuth, ledgerRouter);
 app.use("/forms", requireAuth, formsRouter);
+app.use("/taxpayers", requireAuth, taxpayersRouter);
 
 // /agents est mixte : GET / (listing) public, POST /* protégé via les
 // handlers eux-mêmes dans routes/agents.ts.

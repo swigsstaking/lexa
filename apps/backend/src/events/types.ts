@@ -53,6 +53,16 @@ export type LexaEvent =
       };
     }
   | {
+      type: "TaxpayerFieldUpdated";
+      payload: {
+        fiscalYear: number;
+        step: number;
+        field: string;
+        value: unknown;
+        updatedBy: string;
+      };
+    }
+  | {
       type: "DeclarationGenerated";
       payload: {
         formId: string;

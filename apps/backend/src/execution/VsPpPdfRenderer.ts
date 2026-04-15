@@ -73,19 +73,26 @@ export async function renderVsPpPdf(form: FilledVsPpForm): Promise<Buffer> {
     doc.moveDown(0.4);
   };
 
-  row("Revenu net d'activité indépendante", form.projection.revenuIndependant);
-  row("Revenu d'activité dépendante (TODO : saisir manuellement)", 0);
-  row("Revenus du capital (TODO : saisir manuellement)", 0);
+  const p = form.projection;
+  row("Revenu salaire (activité dépendante)", p.revenuSalaire);
+  row("Revenu d'activité indépendante / accessoire", p.revenuIndependant);
+  row("Rentes (AVS / LPP / 3e pilier)", p.revenuRentes);
+  row("Revenus du capital mobilier", p.revenuCapital);
+  row("Revenus immobiliers", p.revenuImmobilier);
   doc.strokeColor("#e5e7eb").moveTo(48, doc.y + 2).lineTo(540, doc.y + 2).stroke();
   doc.moveDown(0.5);
-  row("Total des revenus", form.projection.revenuTotal, true);
+  row("Total des revenus", p.revenuTotal, true);
   doc.moveDown(0.6);
 
   // ── Fortune ────────────────────────────────────────
   doc.fontSize(11).text("Fortune", { underline: true });
   doc.moveDown(0.3);
   doc.fontSize(10);
-  row("Fortune nette au 31 décembre", form.projection.fortuneNette, true);
+  row("Fortune brute", p.fortuneBrute);
+  row("Dettes déductibles", p.fortuneDettes);
+  doc.strokeColor("#e5e7eb").moveTo(48, doc.y + 2).lineTo(540, doc.y + 2).stroke();
+  doc.moveDown(0.5);
+  row("Fortune nette au 31 décembre", p.fortuneNette, true);
   doc.moveDown(0.6);
 
   // ── Déductions ─────────────────────────────────────
@@ -95,18 +102,20 @@ export async function renderVsPpPdf(form: FilledVsPpForm): Promise<Buffer> {
   const ref = form.template.reference_amounts;
   row(
     `Frais professionnels (forfait ${ref.frais_professionnels_forfait_pct}% min ${chf(ref.frais_professionnels_forfait_min_chf)} / max ${chf(ref.frais_professionnels_forfait_max_chf)})`,
-    form.projection.fraisProForfait,
+    p.deductionFraisPro,
   );
   row(
-    `Cotisation pilier 3a (TODO · max ${chf(ref.pilier_3a_independant_max_chf)} indép. / ${chf(ref.pilier_3a_salarie_max_chf)} salarié)`,
-    0,
+    `Cotisation pilier 3a (max ${chf(ref.pilier_3a_independant_max_chf)} indép. / ${chf(ref.pilier_3a_salarie_max_chf)} salarié)`,
+    p.deductionPilier3a,
   );
-  row("Rachats LPP (TODO)", 0);
-  row("Primes d'assurance maladie (TODO)", 0);
-  row("Intérêts passifs d'emprunts (TODO)", 0);
+  row("Rachats LPP (2e pilier)", p.deductionLppRachats);
+  row("Primes d'assurance maladie et accidents", p.deductionPrimes);
+  row("Intérêts passifs d'emprunts privés", p.deductionInterets);
+  row("Frais médicaux", p.deductionFraisMedicaux);
+  row("Dons aux institutions d'utilité publique", p.deductionDons);
   doc.strokeColor("#e5e7eb").moveTo(48, doc.y + 2).lineTo(540, doc.y + 2).stroke();
   doc.moveDown(0.5);
-  row("Total des déductions", form.projection.deductionTotal, true);
+  row("Total des déductions", p.deductionTotal, true);
   doc.moveDown(0.6);
 
   // ── Revenu imposable ───────────────────────────────
@@ -116,11 +125,17 @@ export async function renderVsPpPdf(form: FilledVsPpForm): Promise<Buffer> {
   doc.moveDown(1.5);
 
   // ── Footer ────────────────────────────────────────
+  const sourceLabel =
+    form.projection.source === "draft"
+      ? "saisie contribuable"
+      : form.projection.source === "mixed"
+        ? "saisie contribuable + grand livre"
+        : "grand livre (seed)";
   doc
     .fontSize(8)
     .fillColor("#71717a")
     .text(
-      `Généré par Lexa le ${new Date(form.generatedAt).toLocaleString("fr-CH")} · Formulaire ${form.formId} v${form.version} · ${form.projection.eventCount} lignes ledger agrégées`,
+      `Généré par Lexa le ${new Date(form.generatedAt).toLocaleString("fr-CH")} · Formulaire ${form.formId} v${form.version} · source : ${sourceLabel}`,
       48,
       780,
       { width: 500, align: "center" },
