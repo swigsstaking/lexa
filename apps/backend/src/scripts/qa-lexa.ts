@@ -58,7 +58,7 @@ async function loginQaUser(): Promise<void> {
 
 type TestResult = {
   id: string;
-  kind: "classify" | "tva" | "fiscal-pp-vs";
+  kind: "classify" | "tva" | "fiscal-pp-vs" | "taxpayer";
   pass: boolean;
   latencyMs: number;
   reason?: string;
@@ -212,6 +212,110 @@ async function runTvaQuestion(
   }
 }
 
+async function runTaxpayerDraftCreate(): Promise<TestResult> {
+  const started = Date.now();
+  const year = new Date().getFullYear();
+  try {
+    // Reset (safe if not existing)
+    await http.post("/taxpayers/draft/reset", { fiscalYear: year }).catch(() => null);
+    // GET creates a fresh empty draft
+    const { data: draftData } = await http.get("/taxpayers/draft", {
+      params: { year },
+    });
+    if (!draftData?.draft?.id) {
+      return {
+        id: "tx-1-draft-create",
+        kind: "taxpayer",
+        pass: false,
+        latencyMs: Date.now() - started,
+        reason: "no draft.id in response",
+      };
+    }
+    // PATCH 3 fields
+    const patches = [
+      { field: "step1.firstName", value: "Qa", step: 1 },
+      { field: "step1.lastName", value: "Lexa", step: 1 },
+      { field: "step2.salaireBrut", value: 80000, step: 2 },
+    ];
+    for (const p of patches) {
+      await http.patch("/taxpayers/draft/field", { fiscalYear: year, ...p });
+    }
+    // Re-fetch and assert
+    const { data: refetched } = await http.get("/taxpayers/draft", {
+      params: { year },
+    });
+    const s = refetched.draft.state;
+    const ok =
+      s.step1.firstName === "Qa" &&
+      s.step1.lastName === "Lexa" &&
+      s.step2.salaireBrut === 80000;
+    return {
+      id: "tx-1-draft-create",
+      kind: "taxpayer",
+      pass: ok,
+      latencyMs: Date.now() - started,
+      reason: ok ? undefined : "fields not persisted correctly",
+    };
+  } catch (err) {
+    return {
+      id: "tx-1-draft-create",
+      kind: "taxpayer",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
+async function runTaxpayerDraftSubmit(): Promise<TestResult> {
+  const started = Date.now();
+  const year = new Date().getFullYear();
+  try {
+    // Fill a minimally useful draft (assume runTaxpayerDraftCreate a déjà posé le base)
+    const patches = [
+      { field: "step1.civilStatus", value: "single", step: 1 },
+      { field: "step1.commune", value: "Sion", step: 1 },
+      { field: "step2.isSalarie", value: true, step: 2 },
+      { field: "step3.comptesBancaires", value: 15000, step: 3 },
+      { field: "step4.pilier3a", value: 7056, step: 4 },
+      { field: "step4.fraisProFormat", value: "forfait", step: 4 },
+    ];
+    for (const p of patches) {
+      await http.patch("/taxpayers/draft/field", { fiscalYear: year, ...p });
+    }
+
+    const { data } = await http.post("/taxpayers/draft/submit", {
+      fiscalYear: year,
+    });
+    const pdfB64 = data.pdf as string;
+    const pdfBytes = Buffer.from(pdfB64, "base64");
+    const source = data.form?.projection?.source;
+    const hasRevenuSalaire =
+      data.form?.projection?.revenuSalaire === 80000;
+    const notSeed =
+      !pdfBytes.toString("latin1").includes("6253");
+    const ok =
+      source === "draft" && pdfBytes.length > 2000 && hasRevenuSalaire && notSeed;
+    return {
+      id: "tx-2-draft-submit",
+      kind: "taxpayer",
+      pass: ok,
+      latencyMs: Date.now() - started,
+      reason: ok
+        ? undefined
+        : `source=${source}, bytes=${pdfBytes.length}, hasSalaire=${hasRevenuSalaire}, notSeed=${notSeed}`,
+    };
+  } catch (err) {
+    return {
+      id: "tx-2-draft-submit",
+      kind: "taxpayer",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
 async function runFiscalPpQuestion(
   fixture: (typeof fiscalPpQuestions)[number],
 ): Promise<TestResult> {
@@ -303,6 +407,18 @@ async function main(): Promise<void> {
     );
   }
 
+  // Taxpayer wizard (session 15)
+  const r1 = await runTaxpayerDraftCreate();
+  results.push(r1);
+  console.log(
+    `  ${r1.pass ? "✓" : "✗"} ${r1.id}  ${r1.latencyMs}ms  ${r1.reason ?? ""}`,
+  );
+  const r2 = await runTaxpayerDraftSubmit();
+  results.push(r2);
+  console.log(
+    `  ${r2.pass ? "✓" : "✗"} ${r2.id}  ${r2.latencyMs}ms  ${r2.reason ?? ""}`,
+  );
+
   const totalMs = Date.now() - started;
   const pass = results.filter((r) => r.pass).length;
   const fail = results.length - pass;
@@ -322,6 +438,7 @@ async function main(): Promise<void> {
       classify: { total: byKind("classify").length, passed: byKind("classify").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("classify")) },
       tva: { total: byKind("tva").length, passed: byKind("tva").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("tva")) },
       "fiscal-pp-vs": { total: byKind("fiscal-pp-vs").length, passed: byKind("fiscal-pp-vs").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiscal-pp-vs")) },
+      taxpayer: { total: byKind("taxpayer").length, passed: byKind("taxpayer").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("taxpayer")) },
     },
     failures: results.filter((r) => !r.pass).map((r) => ({ id: r.id, kind: r.kind, reason: r.reason })),
     generatedAt: new Date().toISOString(),
