@@ -1,0 +1,144 @@
+# Lexa — Template formulaire officiel
+# Déclaration d'impôt Personne Physique (PP) — Canton de Genève
+#
+# Clone du template VS-PP session 15, adapté aux spécificités genevoises.
+# Session 17 : champs critiques uniquement (revenu activité, fortune,
+# déductions principales). Centime additionnel cantonal GE = 47.5%.
+#
+# Source légale :
+#   - LIFD (RS 642.11) — art. 33 al. 1 let. e (pilier 3a)
+#   - LIPP (RSG D 3 08) — Loi sur l'imposition des personnes physiques GE
+#   - Guide PP Genève 2026 — déductions et barèmes
+#
+# Autorité : Administration fiscale cantonale de Genève (AFC-GE).
+
+form_id: GE-declaration-pp
+version: "2026-01-01"
+title: Déclaration d'impôt PP — Canton de Genève
+jurisdiction: cantonal
+canton: GE
+authority: AFC-GE
+legal_reference:
+  law: LIPP
+  rs: "RSG D 3 08"
+  articles: ["33", "34", "35"]
+  federal_refs: ["LIFD art. 18", "LIFD art. 33 al. 1 let. e", "LIFD art. 34"]
+
+periodicity: annual
+
+# Montants officiels 2026 — Canton de Genève
+# Centime additionnel cantonal GE : 47.5% (coefficient 2024)
+reference_amounts:
+  pilier_3a_salarie_max_chf: 7260
+  pilier_3a_independant_max_chf: 36288
+  frais_professionnels_forfait_pct: 3
+  frais_professionnels_forfait_min_chf: 1700
+  frais_professionnels_forfait_max_chf: 4000
+  centime_additionnel_cantonal_pct: 47.5
+
+fields:
+  # Identité contribuable
+  - id: contribuable_nom
+    label: Nom et prénom
+    source: company.name
+    validation: required
+  - id: contribuable_uid
+    label: Numéro IDE / UID
+    source: company.uid
+  - id: contribuable_canton
+    label: Canton de domicile
+    source: company.canton
+    validation: required
+
+  # Période
+  - id: periode_fiscale
+    label: Année fiscale
+    source: input.year
+    validation: required
+
+  # Revenus
+  - id: revenu_activite_independante
+    label: Revenu net d'activité lucrative indépendante
+    source: projection.ge_pp.revenu_independant
+    format: currency_chf
+    note: "LIFD art. 18 — bénéfice net de l'entreprise individuelle"
+  - id: revenu_activite_dependante
+    label: Revenu net d'activité lucrative dépendante
+    source: input.revenu_salaire
+    format: currency_chf
+    todo: true
+  - id: revenu_capital
+    label: Revenus du capital mobilier (intérêts, dividendes)
+    source: input.revenu_capital
+    format: currency_chf
+    todo: true
+  - id: revenu_total
+    label: Total des revenus
+    source: projection.ge_pp.revenu_total
+    format: currency_chf
+    validation: required
+
+  # Fortune
+  - id: fortune_nette
+    label: Fortune nette au 31 décembre
+    source: projection.ge_pp.fortune_nette
+    format: currency_chf
+    note: "Actif circulant + actif immobilisé − dettes"
+
+  # Déductions principales
+  - id: deduction_pilier_3a
+    label: Cotisation au pilier 3a (max CHF 36'288 indépendant / 7'260 salarié)
+    source: input.pilier_3a
+    format: currency_chf
+    todo: true
+  - id: deduction_lpp_rachats
+    label: Rachats LPP (2e pilier)
+    source: input.lpp_rachats
+    format: currency_chf
+    todo: true
+  - id: deduction_assurances
+    label: Primes d'assurance maladie et accidents
+    source: input.primes_assurances
+    format: currency_chf
+    todo: true
+  - id: deduction_interets_dette
+    label: Intérêts passifs d'emprunts privés
+    source: input.interets_dette
+    format: currency_chf
+    todo: true
+  - id: deduction_frais_professionnels
+    label: Frais professionnels (forfait 3% min 1'700 max 4'000 CHF)
+    source: computed.frais_pro_forfait
+    format: currency_chf
+  - id: deduction_total
+    label: Total des déductions
+    source: projection.ge_pp.deduction_total
+    format: currency_chf
+
+  # Revenu imposable
+  - id: revenu_imposable
+    label: Revenu imposable
+    source: projection.ge_pp.revenu_imposable
+    format: currency_chf
+    validation: required
+    note: "Total revenus − total déductions"
+
+output:
+  pdf:
+    renderer: pdfkit
+    disclaimer: >
+      PRÉPARÉ AUTOMATIQUEMENT PAR LEXA — à vérifier et valider par votre
+      fiduciaire avant dépôt. Cette déclaration ne reflète que les données
+      extraites automatiquement de votre comptabilité. Les revenus salariés,
+      revenus du capital et déductions personnelles doivent être complétés
+      manuellement. Lexa prépare, l'humain signe (whitepaper §6).
+      Base légale : LIFD art. 33, LIPP (RSG D 3 08).
+  xml:
+    schema: none
+    note: >
+      Pas de XML en v1 — le canton GE n'exige pas d'échange structuré eCH-0217
+      en v1. Session future : intégration si disponible côté AFC-GE.
+
+validation:
+  human_signature_required: true
+  lexa_liability: preparation_only
