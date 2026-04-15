@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { tvaAgent } from "../agents/tva/TvaAgent.js";
 import { fiscalPpVsAgent } from "../agents/fiscalPpVs/FiscalPpVsAgent.js";
+import { requireAuth } from "../middleware/requireAuth.js";
 
 export const agentsRouter = Router();
 
@@ -17,7 +18,7 @@ const TvaAskSchema = z.object({
 });
 
 /** POST /agents/tva/ask — specialized VAT agent */
-agentsRouter.post("/tva/ask", async (req, res) => {
+agentsRouter.post("/tva/ask", requireAuth, async (req, res) => {
   const parsed = TvaAskSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
@@ -44,7 +45,7 @@ const FiscalPpVsSchema = z.object({
 });
 
 /** POST /agents/fiscal-pp/ask — specialized VS personal income tax agent */
-agentsRouter.post("/fiscal-pp/ask", async (req, res) => {
+agentsRouter.post("/fiscal-pp/ask", requireAuth, async (req, res) => {
   const parsed = FiscalPpVsSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });

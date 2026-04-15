@@ -1,4 +1,5 @@
 import { api } from './client';
+import type { AuthUser } from '@/stores/authStore';
 import type {
   AgentAnswer,
   AgentsResponse,
@@ -11,8 +12,32 @@ import type {
   TransactionStats,
 } from './types';
 
+export type AuthResponse = {
+  user: AuthUser;
+  company: Company | null;
+  token: string;
+};
+
 export const lexa = {
   health: () => api.get<HealthStatus>('/health').then((r) => r.data),
+
+  // Auth (session 14)
+  register: (input: {
+    email: string;
+    password: string;
+    company?: { name: string; legalForm?: string; canton?: string; isVatSubject?: boolean };
+  }) =>
+    api
+      .post<AuthResponse>('/auth/register', input)
+      .then((r) => r.data),
+
+  login: (input: { email: string; password: string }) =>
+    api.post<{ user: AuthUser; token: string }>('/auth/login', input).then((r) => r.data),
+
+  me: () =>
+    api
+      .get<{ user: AuthUser; company: Company | null }>('/auth/me')
+      .then((r) => r.data),
 
   // Onboarding
   searchCompany: (q: string) =>

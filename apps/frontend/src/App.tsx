@@ -1,12 +1,20 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Home } from '@/routes/Home';
+import { Login } from '@/routes/Login';
+import { Register } from '@/routes/Register';
 import { Onboarding } from '@/routes/Onboarding';
 import { Workspace } from '@/routes/Workspace';
-import { useActiveCompany } from '@/stores/companiesStore';
+import { useAuthStore } from '@/stores/authStore';
 
-function RequireCompany({ children }: { children: React.ReactNode }) {
-  const company = useActiveCompany();
-  if (!company) return <Navigate to="/onboarding" replace />;
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const token = useAuthStore((s) => s.token);
+  if (!token) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
+function RedirectIfAuthed({ children }: { children: React.ReactNode }) {
+  const token = useAuthStore((s) => s.token);
+  if (token) return <Navigate to="/workspace" replace />;
   return <>{children}</>;
 }
 
@@ -14,13 +22,36 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/onboarding" element={<Onboarding />} />
+      <Route
+        path="/login"
+        element={
+          <RedirectIfAuthed>
+            <Login />
+          </RedirectIfAuthed>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <RedirectIfAuthed>
+            <Register />
+          </RedirectIfAuthed>
+        }
+      />
+      <Route
+        path="/onboarding"
+        element={
+          <RequireAuth>
+            <Onboarding />
+          </RequireAuth>
+        }
+      />
       <Route
         path="/workspace"
         element={
-          <RequireCompany>
+          <RequireAuth>
             <Workspace />
-          </RequireCompany>
+          </RequireAuth>
         }
       />
       <Route path="*" element={<Navigate to="/" replace />} />

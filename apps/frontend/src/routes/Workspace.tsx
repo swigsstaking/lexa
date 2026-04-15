@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { lexa } from '@/api/lexa';
 import { useActiveCompany, useCompaniesStore } from '@/stores/companiesStore';
+import { useAuthStore } from '@/stores/authStore';
 import { useChatStore } from '@/stores/chatStore';
 import { LedgerCanvas } from '@/components/canvas/LedgerCanvas';
 import { ChatOverlay } from '@/components/chat/ChatOverlay';
@@ -23,6 +24,7 @@ export function Workspace() {
   const navigate = useNavigate();
   const company = useActiveCompany();
   const clear = useCompaniesStore((s) => s.clear);
+  const authLogout = useAuthStore((s) => s.logout);
   const setChatOpen = useChatStore((s) => s.setOpen);
 
   const [ledgerOpen, setLedgerOpen] = useState(false);
@@ -44,8 +46,9 @@ export function Workspace() {
   }, []);
 
   const handleLogout = () => {
+    authLogout();
     clear();
-    navigate('/');
+    navigate('/login', { replace: true });
   };
 
   const servicesState: 'checking' | 'up' | 'down' = health.data

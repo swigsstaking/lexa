@@ -22,6 +22,23 @@ const ConfigSchema = z.object({
 
   QDRANT_COLLECTION: z.string().default("swiss_law"),
   RAG_TOP_K: z.coerce.number().int().positive().default(5),
+
+  // Auth (session 14)
+  JWT_SECRET: z
+    .string()
+    .min(32, "JWT_SECRET must be at least 32 chars (use: openssl rand -hex 32)")
+    .default("dev-only-jwt-secret-change-me-in-production-32chars"),
+  JWT_EXPIRES_IN: z.string().default("7d"),
+  ADMIN_SECRET: z
+    .string()
+    .min(16, "ADMIN_SECRET must be at least 16 chars")
+    .default("dev-admin-reset-secret-change-me"),
+
+  // Webhook HMAC (session 14 bloc C)
+  LEXA_WEBHOOK_SECRET: z
+    .string()
+    .min(16)
+    .default("dev-webhook-secret-change-me-in-production"),
 });
 
 const parsed = ConfigSchema.safeParse(process.env);

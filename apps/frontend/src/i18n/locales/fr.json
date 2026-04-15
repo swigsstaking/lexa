@@ -20,6 +20,25 @@
     "no": "Non",
     "close": "Fermer"
   },
+  "auth": {
+    "login_title": "Connexion",
+    "login_sub": "Accédez à votre comptabilité Lexa",
+    "email": "Email",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "submitting": "Connexion…",
+    "no_account": "Pas encore de compte ?",
+    "to_register": "Créer un compte",
+    "register_title": "Créer un compte",
+    "register_sub": "Ouvrez votre espace Lexa en 30 secondes",
+    "register_submit": "Créer mon compte",
+    "register_submitting": "Création…",
+    "have_account": "Déjà un compte ?",
+    "to_login": "Se connecter",
+    "invalid_credentials": "Email ou mot de passe incorrect",
+    "rate_limited": "Trop de tentatives. Réessayez dans 15 minutes.",
+    "logout": "Déconnexion"
+  },
   "home": {
     "badge": "Backend v0.1 prêt — {{points}} points KB",
     "title_l1": "La compta PME suisse,",

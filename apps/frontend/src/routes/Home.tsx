@@ -2,12 +2,12 @@ import { Link, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Shield, Zap, BookOpen } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useActiveCompany } from '@/stores/companiesStore';
+import { useAuthStore } from '@/stores/authStore';
 
 export function Home() {
   const { t } = useTranslation();
-  const company = useActiveCompany();
-  if (company) return <Navigate to="/workspace" replace />;
+  const token = useAuthStore((s) => s.token);
+  if (token) return <Navigate to="/workspace" replace />;
 
   return (
     <div className="min-h-screen grid place-items-center px-6">
@@ -30,10 +30,15 @@ export function Home() {
           {t('home.subtitle')}
         </p>
 
-        <Link to="/onboarding" className="btn-primary text-base px-6 py-3">
-          {t('home.cta')}
-          <ArrowRight className="w-4 h-4" />
-        </Link>
+        <div className="flex items-center justify-center gap-3">
+          <Link to="/register" className="btn-primary text-base px-6 py-3">
+            {t('home.cta')}
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link to="/login" className="btn-ghost text-base px-6 py-3">
+            {t('auth.login_title')}
+          </Link>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-16">
           <Feature

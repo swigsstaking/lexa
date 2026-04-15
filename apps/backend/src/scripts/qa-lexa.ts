@@ -16,17 +16,45 @@
 import axios, { type AxiosInstance } from "axios";
 
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:3010";
-const TENANT_ID = process.env.TENANT_ID ?? "00000000-0000-0000-0000-000000000001";
+const QA_EMAIL = process.env.QA_EMAIL ?? "qa@lexa.test";
+const QA_PASSWORD = process.env.QA_PASSWORD ?? "QaLexa-Fixed-2026!";
 const TIMEOUT_MS = 120_000;
 
 const http: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   timeout: TIMEOUT_MS,
-  headers: {
-    "Content-Type": "application/json",
-    "X-Tenant-Id": TENANT_ID,
-  },
+  headers: { "Content-Type": "application/json" },
 });
+
+let authToken: string | null = null;
+
+async function loginQaUser(): Promise<void> {
+  try {
+    const { data } = await http.post<{ token: string }>("/auth/login", {
+      email: QA_EMAIL,
+      password: QA_PASSWORD,
+    });
+    authToken = data.token;
+    http.defaults.headers.common["Authorization"] = `Bearer ${authToken}`;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      if (err.response?.status === 401) {
+        console.error(
+          `[qa-lexa] FAIL login 401 — user ${QA_EMAIL} not seeded. Run: tsx src/scripts/seed-qa-user.ts`,
+        );
+      } else if (err.response?.status === 429) {
+        console.error(
+          `[qa-lexa] FAIL login 429 — rate limited, wait 15 min`,
+        );
+      } else {
+        console.error(`[qa-lexa] FAIL login ${err.response?.status}:`, err.message);
+      }
+    } else {
+      console.error("[qa-lexa] FAIL login:", err);
+    }
+    process.exit(2);
+  }
+}
 
 type TestResult = {
   id: string;
@@ -230,12 +258,12 @@ async function main(): Promise<void> {
   const started = Date.now();
   const results: TestResult[] = [];
 
-  console.log(`[qa-lexa] BASE_URL=${BASE_URL} tenant=${TENANT_ID}`);
+  console.log(`[qa-lexa] BASE_URL=${BASE_URL} user=${QA_EMAIL}`);
   console.log(
     `[qa-lexa] fixtures: ${classifyFixtures.length} classify + ${tvaQuestions.length} tva + ${fiscalPpQuestions.length} fiscal-pp-vs`,
   );
 
-  // Health gate
+  // Health gate (public)
   try {
     const { data } = await http.get("/health");
     if (!data.ok) {
@@ -245,6 +273,12 @@ async function main(): Promise<void> {
     console.error("[qa-lexa] backend unreachable:", err);
     process.exit(2);
   }
+
+  // Auth gate : login d'abord, les routes sensibles exigent un Bearer token
+  // (session 14). Exit 2 si le user qa n'est pas seed.
+  console.log(`[qa-lexa] logging in as ${QA_EMAIL}…`);
+  await loginQaUser();
+  console.log(`[qa-lexa] auth OK, token acquired`);
 
   // Sequential runs (Ollama is single-parallel sur Spark)
   for (const f of classifyFixtures) {

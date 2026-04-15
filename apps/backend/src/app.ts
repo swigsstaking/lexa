@@ -9,10 +9,21 @@ import { connectorsRouter } from "./routes/connectors.js";
 import { agentsRouter } from "./routes/agents.js";
 import { onboardingRouter } from "./routes/onboarding.js";
 import { formsRouter } from "./routes/forms.js";
+import { authRouter } from "./routes/auth.js";
+import { requireAuth } from "./middleware/requireAuth.js";
 
 const app = express();
 
-app.use(express.json({ limit: "2mb" }));
+// Capture le raw body pour la vérification HMAC du pont Pro→Lexa
+// (requireHmac.ts lit req.rawBody avant que express.json ne consume le stream)
+app.use(
+  express.json({
+    limit: "2mb",
+    verify: (req, _res, buf) => {
+      (req as express.Request & { rawBody?: Buffer }).rawBody = Buffer.from(buf);
+    },
+  }),
+);
 
 // CORS — frontend dev server peut appeler le backend en direct avec X-Tenant-Id
 app.use((req, res, next) => {
@@ -29,15 +40,22 @@ app.use((req, res, next) => {
 
 app.use(tenantMiddleware);
 
-// Routes
+// ── Public routes (pas d'auth) ─────────────────────────
 app.use(healthRouter);
-app.use("/rag", ragRouter);
-app.use("/transactions", transactionsRouter);
-app.use("/ledger", ledgerRouter);
-app.use("/connectors", connectorsRouter);
-app.use("/agents", agentsRouter);
+app.use("/auth", authRouter);
 app.use("/onboarding", onboardingRouter);
-app.use("/forms", formsRouter);
+app.use("/connectors", connectorsRouter); // HMAC validé côté routeur
+
+// ── Routes protégées par requireAuth ────────────────────
+// Session 14 : v1 single-user. Tenant extrait du JWT, pas du header.
+app.use("/rag", requireAuth, ragRouter);
+app.use("/transactions", requireAuth, transactionsRouter);
+app.use("/ledger", requireAuth, ledgerRouter);
+app.use("/forms", requireAuth, formsRouter);
+
+// /agents est mixte : GET / (listing) public, POST /* protégé via les
+// handlers eux-mêmes dans routes/agents.ts.
+app.use("/agents", agentsRouter);
 
 // 404
 app.use((_req, res) => {
