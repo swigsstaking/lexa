@@ -1,60 +1,62 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 21 — 2026-04-15](2026-04-15-session-21.md)
-**Prochaine session** : Session 22 — Wizard PP FR complet + harmoniser VS en CantonConfig
+**Dernière session** : [Session 22.5 — 2026-04-15](2026-04-15-session-22-5-binding.md)
+**Prochaine session** : Session 23 — Pipeline OCR (MongoDB GridFS + upload + deepseek-ocr + Document model)
 
-> Session 21 a livré le refactoring wizard GE+VD en générique (`TaxpayerWizardCanton`) + ingestion Canton Fribourg (LICD/LIC/ORD-FP, +1035 chunks) + agent `lexa-fiscal-pp-fr`. qa-lexa **17/17** passRate 100%.
+> Session 22.5 a livre le binding NE/JU/BJ : 3 agents TS (FiscalPpNeAgent, FiscalPpJuAgent, FiscalPpBjAgent), 3 routes POST /agents/fiscal-pp-{ne,ju,bj}/ask, GET /agents = 10 agents actifs, qa-lexa **21/21** passRate 100%. Smoke HTTPS 3 cantons OK (plafond 7260 CHF, citations=5, latence < 20s).
 
 ---
 
-## Ce qui marche après session 21
+## Ce qui marche après session 22.5
 
-| Composant | État |
+| Composant | Etat |
 |---|---|
 | **Plateforme** | |
-| `https://lexa.swigs.online` HTTPS + proxy /api | ✅ |
-| Auth JWT + rate limit + trust proxy 1 | ✅ |
-| HMAC Pro→Lexa + classify auto | ✅ |
-| HMAC Lexa→Pro (webhook retour) | ✅ session 20 |
+| `https://lexa.swigs.online` HTTPS + proxy /api | OK |
+| Auth JWT + rate limit + trust proxy 1 | OK |
+| HMAC Pro Lexa + classify auto | OK |
+| HMAC Lexa Pro (webhook retour) | OK session 20 |
 | **Wizard contribuable** | |
-| Wizard PP VS 6 steps sur `/taxpayer/:year` | ✅ session 15 (à migrer session 22) |
-| Wizard PP GE 6 steps sur `/taxpayer/ge/:year` | ✅ session 21 (TaxpayerWizardCanton) |
-| Wizard PP VD 6 steps sur `/taxpayer/vd/:year` | ✅ session 21 (TaxpayerWizardCanton) |
-| **Wizard PP FR** — stub config seulement | ⚠️ session 22 |
+| Wizard PP VS 6 steps sur `/taxpayer/:year` | OK session 15 |
+| Wizard PP GE 6 steps sur `/taxpayer/ge/:year` | OK session 21 |
+| Wizard PP VD 6 steps sur `/taxpayer/vd/:year` | OK session 21 |
+| Wizard PP FR 6 steps sur `/taxpayer/fr/:year` | OK session 22 Lane A |
 | **Knowledge base** | |
-| Canton VS (339 articles) | ✅ |
-| Canton GE (373 articles) | ✅ |
-| Canton VD (381 articles) | ✅ |
-| **Canton FR (1035 articles LICD/LIC/ORD-FP)** | ✅ **session 21** |
-| Qdrant `swiss_law` | **7178 pts** |
-| **Agents actifs** | classifier, reasoning, tva, fiscal-pp-vs, fiscal-pp-ge, fiscal-pp-vd, **fiscal-pp-fr** |
+| Canton VS (339 articles) | OK |
+| Canton GE (373 articles) | OK |
+| Canton VD (381 articles) | OK |
+| Canton FR (1035 articles LICD/LIC/ORD-FP) | OK session 21 |
+| Canton NE (LCdir-NE, RGI-NE, ORD-FP-NE) | OK session 25 Lane B |
+| Canton JU (LI-JU RSJU 641.11) | OK session 25 Lane B |
+| Canton BJ (LI-BE/OI-BE RSB 661.11/661.111 FR) | OK session 25 Lane B |
+| Qdrant `swiss_law` | **9846 pts** |
+| **Agents actifs (10)** | classifier, reasoning, tva, fiscal-pp-vs/ge/vd/fr/ne/ju/bj |
 | **Tests auto** | |
-| qa-lexa **17/17** via localhost | ✅ **session 21** |
+| qa-lexa **21/21** via HTTPS public | OK **session 22.5** |
 
 ---
 
-## Priorité session 22 — ordre strict
+## Priorite session 23 — OCR Pipeline
 
-### 1. Wizard PP FR complet (~2h30)
+### 1. MongoDB GridFS + Document model (~1h)
 
-Le stub `config/cantons/fr.ts` est en place. Il faut:
+- Installer `mongoose` + `mongodb` dans le backend
+- `Document` model : tenantId, filename, mimeType, gridfsId, status (pending/processing/done/error), rawText, extractedData, createdAt
+- `POST /documents/upload` : multipart/form-data, store dans GridFS
+- `GET /documents/:id` : retourne metadata + rawText si dispo
 
-1. **Données communes FR** : créer `/data/communes-fr.ts` avec les principales communes + coefficients communaux 2026 (SCC FR publie ces données)
-2. **`FrPpFormBuilder.ts`** : clone de `VdPpFormBuilder`, constantes FR (fraisProMin=1700, fraisProMax=3400)
-3. **`FrPpPdfRenderer.ts`** : clone de `VdPpPdfRenderer`, header "Déclaration d'impôt PP Fribourg — 2026"
-4. **Template YAML** `fr-declaration-pp-2026.yaml`
-5. **Routes** `POST /forms/fr-declaration-pp` + `POST /taxpayers/draft/submit-fr`
-6. **`lexa.submitTaxpayerDraftFr`** dans l'API client
-7. **Mettre à jour `cantonFR`** : communes réelles + `submitDraft = lexa.submitTaxpayerDraftFr`
-8. **Route** `/taxpayer/fr/:year` dans `App.tsx`
-9. **Bouton "Déclaration PP"** canton-aware étendu à FR dans Workspace.tsx
+### 2. deepseek-ocr integration (~1h)
 
-### 2. Migrer le Wizard VS en TaxpayerWizardCanton (~1h)
+- Ollama model `deepseek-ocr` sur Spark (verifier presence)
+- Service `OcrService.ts` : fetch GridFS binary → base64 → Ollama vision → rawText
+- Route `POST /documents/:id/ocr` : lance extraction async
+- Stocker rawText dans Document
 
-- Créer `config/cantons/vs.ts` avec `cantonVS` (cantonCode='VS', fraisProMin=?, fraisProMax=?)
-- Remplacer `TaxpayerWizard.tsx` → `TaxpayerWizardCanton` avec `canton={cantonVS}`
-- Route `/taxpayer/:year` → `/taxpayer/vs/:year` (redirection ou alias)
-- Supprimer les vieux composants VS (Step*Vs.tsx)
+### 3. Linkage Expense/Invoice → Document (~30 min)
+
+- Ajouter `documentIds: string[]` sur modeles existants
+- Route `POST /expenses/:id/attach-document`
+- qa-lexa fixture : upload + ocr + assert rawText non vide
 
 ---
 
@@ -111,4 +113,4 @@ Le stub `config/cantons/fr.ts` est en place. Il faut:
 
 ---
 
-**Dernière mise à jour** : 2026-04-15 (fin session 21 — Fribourg KB + agent + wizard générique GE+VD, qa-lexa 17/17)
+**Derniere mise a jour** : 2026-04-15 (fin session 22.5 — binding NE/JU/BJ, 10 agents actifs, qa-lexa 21/21)
