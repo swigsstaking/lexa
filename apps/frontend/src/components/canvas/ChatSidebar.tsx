@@ -164,7 +164,7 @@ export function ChatSidebar({ agentId, onClose }: Props) {
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: '100%', opacity: 0 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
-      className="fixed right-0 top-0 bottom-0 w-[420px] max-w-[95vw] z-50 flex flex-col bg-stone-950 border-l border-stone-800 shadow-2xl"
+      className="absolute right-0 top-0 bottom-0 w-[380px] max-w-[50vw] z-30 flex flex-col bg-stone-950/98 border-l border-stone-800 shadow-2xl"
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-stone-800 flex-shrink-0">
