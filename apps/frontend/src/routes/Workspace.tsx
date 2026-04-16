@@ -157,8 +157,10 @@ export function Workspace() {
 
           <button
             onClick={() => {
+              const canton = company?.canton ?? 'VS';
               const year = new Date().getFullYear();
-              navigate(`/pm/vs/${year}`);
+              const pmPath = `/pm/${canton.toLowerCase()}/${year}`;
+              navigate(pmPath);
             }}
             className="btn-ghost !px-3 !py-1.5"
             title="Déclaration fiscale PM (Sàrl/SA)"

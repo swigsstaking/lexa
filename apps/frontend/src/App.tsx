@@ -7,6 +7,7 @@ import { Workspace } from '@/routes/Workspace';
 import { Documents } from '@/routes/Documents';
 import { TaxpayerWizardCanton } from '@/routes/taxpayer/TaxpayerWizardCanton';
 import { PmWizardVs } from '@/routes/company/PmWizardVs';
+import { PmWizardCanton } from '@/routes/company/PmWizardCanton';
 import { cantonGE } from '@/config/cantons/ge';
 import { cantonVD } from '@/config/cantons/vd';
 import { cantonVS } from '@/config/cantons/vs';
@@ -101,12 +102,36 @@ export default function App() {
           </RequireAuth>
         }
       />
-      {/* PM wizard — Personnes Morales (session 27) */}
+      {/* PM wizard — Personnes Morales (session 27 VS + session 28 GE/VD/FR) */}
       <Route
         path="/pm/vs/:year"
         element={
           <RequireAuth>
             <PmWizardVs />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/pm/ge/:year"
+        element={
+          <RequireAuth>
+            <PmWizardCanton canton="GE" />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/pm/vd/:year"
+        element={
+          <RequireAuth>
+            <PmWizardCanton canton="VD" />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/pm/fr/:year"
+        element={
+          <RequireAuth>
+            <PmWizardCanton canton="FR" />
           </RequireAuth>
         }
       />

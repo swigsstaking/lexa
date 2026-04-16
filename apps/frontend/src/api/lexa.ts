@@ -226,6 +226,12 @@ export const lexa = {
     api
       .post<PmSubmitResponse>(`/companies/draft/${year}/submit-vs`)
       .then((r) => r.data),
+
+  /** Générique : submit pour n'importe quel canton PM (VS, GE, VD, FR) — Session 28 */
+  submitCompanyDraft: (year: number, canton: string) =>
+    api
+      .post<PmSubmitResponse>(`/companies/draft/${year}/submit-${canton.toLowerCase()}`)
+      .then((r) => r.data),
 };
 
 export type TaxpayerDraft = {
