@@ -20,6 +20,7 @@ import {
   Wand2,
 } from 'lucide-react';
 import { lexa, type DocumentMeta } from '@/api/lexa';
+import { useActiveCompany } from '@/stores/companiesStore';
 
 const CURRENT_FISCAL_YEAR = new Date().getFullYear();
 
@@ -168,6 +169,18 @@ export function Documents() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const company = useActiveCompany();
+
+  // Chemin canton-aware vers le wizard PP (même logique que Workspace.tsx)
+  const canton = company?.canton ?? 'VS';
+  const taxpayerPath =
+    canton === 'GE'
+      ? `/taxpayer/ge/${CURRENT_FISCAL_YEAR}`
+      : canton === 'VD'
+        ? `/taxpayer/vd/${CURRENT_FISCAL_YEAR}`
+        : canton === 'FR'
+          ? `/taxpayer/fr/${CURRENT_FISCAL_YEAR}`
+          : `/taxpayer/${CURRENT_FISCAL_YEAR}`;
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [lastUploaded, setLastUploaded] = useState<string | null>(null);
   const [applyFeedback, setApplyFeedback] = useState<{ docId: string; message: string; ok: boolean } | null>(null);
@@ -341,7 +354,7 @@ export function Documents() {
               <span>{applyFeedback.message}</span>
               {applyFeedback.ok && (
                 <button
-                  onClick={() => navigate(`/workspace/taxpayer?year=${CURRENT_FISCAL_YEAR}`)}
+                  onClick={() => navigate(taxpayerPath)}
                   className="ml-auto text-2xs underline hover:no-underline flex-shrink-0"
                 >
                   Ouvrir le wizard →
