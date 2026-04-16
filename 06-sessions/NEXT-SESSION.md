@@ -1,9 +1,9 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 29 — 2026-04-16](2026-04-16-session-29.md) (agent clôture, ContinuousClosingService, 3 endpoints ledger, page /close/:year, 31/31)
-**Prochaine session** : Session 30 — **À choix Mère** : Agent Conseiller (simulateur "et si ?") OU Agent Audit (vérif citations, hallucinations)
+**Dernière session** : [Session 30 — 2026-04-16](2026-04-16-session-30.md) (Seed fixture data + Agent Audit, 14e modèle Spark, 13 agents actifs, /audit/:year, verify-citations Qdrant)
+**Prochaine session** : **Session 31 — Agent Conseiller** (7e et dernier rôle whitepaper, simulateur "et si ?" LPP/3a/amortissements)
 
-> Session 29 a livré le 12e agent (lexa-cloture), le ContinuousClosingService (bilan + PnL + health depuis event store), 3 endpoints /ledger/*, la page /close/:year avec chat overlay, et fait passer qa-lexa à **31/31**. Score MVP estimé ~96%.
+> Session 30 a livré le seed fixture data (tenant demo réaliste — 35 tx, 3 docs, 2 drafts, 5 ai_decisions), le 14e modèle Spark (lexa-audit), l'Agent Audit avec CitationVerifier + AuditTrail, 3 endpoints audit, la page /audit/:year et +2 fixtures qa-lexa. Score MVP estimé ~98%.
 
 ---
 
@@ -38,29 +38,29 @@
 | `GET /ledger/health/:year` | **OK session 29** |
 | `/close/:year` — page 3 tabs + chat Clôture | **OK session 29** |
 | Bouton "Clôture" dans Workspace | **OK session 29** |
-| **Spark modèles (13)** | 12 précédents + **lexa-cloture** | OK session 29 |
+| **Spark modèles (14)** | 13 précédents + **lexa-audit** | OK session 30 |
+| **Seed fixture data** | |
+| `seed-fixture-data.ts` — tenant demo, 35 tx, 3 docs, 2 drafts | **OK session 30** |
+| **Agent Audit (Session 30)** | |
+| `POST /agents/audit/ask` | **OK session 30** |
+| `POST /audit/verify-citations` | **OK session 30** |
+| `GET /audit/trail/:year` | **OK session 30** |
+| `/audit/:year` — page timeline + verify widget + chat | **OK session 30** |
+| Bouton "Audit" (Shield) dans Workspace | **OK session 30** |
 | **Tests auto** | |
-| qa-lexa **31/31** — +2 cloture + balance-sheet | **OK session 29** |
+| qa-lexa **31/31 baseline** — +2 audit (1 PASS, 1 flaky Spark) | **S30 — cible 33/33** |
 
 ---
 
-## Session 30 — Options (à choix Mère)
+## Session 31 — Agent Conseiller (7e et dernier rôle whitepaper)
 
-### Option A : Agent Conseiller
 Simulateur "et si ?" — optimisations LPP/3a/amortissements
-- `lexa-conseiller` Modelfile (from lexa-fiscal-pm)
+- `lexa-conseiller` Modelfile (from lexa-fiscal-pm, 15e modèle Spark)
 - `ConseillerAgent.ts` : tier 0 = LPP + LIFD art.33 (3a) + CO 960a (amortissements)
-- `POST /agents/conseiller/ask` avec contexte financier (revenu, capital, situation)
-- Page `/conseiller` : formulaire paramètres + réponse comparative
-- 2 fixtures qa-lexa → 33/33
-
-### Option B : Agent Audit
-Vérification citations, détection hallucinations, audit trail UI
-- `lexa-audit` Modelfile
-- `AuditAgent.ts` : vérifie cohérence entre réponse agent et sources Qdrant
-- `POST /agents/audit/check` : entrée = answer + citations[], sortie = score fiabilité + flags
-- Page `/audit` : tableau de bord intégrité citations
-- 2 fixtures qa-lexa → 33/33
+- `POST /agents/conseiller/ask` avec contexte financier (revenu, capital, situation, canton)
+- Page `/conseiller` : formulaire scénarios + réponse comparative ("si 3a = 7260 → économie de X CHF")
+- 2 fixtures qa-lexa → **35/35**
+- Score MVP estimé : **~99%**
 
 ---
 
@@ -117,4 +117,8 @@ Vérification citations, détection hallucinations, audit trail UI
 22. **PmWizardCanton** : générique GE/VD/FR, PmWizardVs reste spécifique VS
 23. **qa-lexa rate-limit** : toujours lancer depuis http://localhost:3010 sur .59
 
-**Dernière mise à jour** : 2026-04-16 (session 29 — agent clôture, ContinuousClosingService, 31/31)
+24. **lexa-audit Modelfile** : créé via API Ollama v0.20.3 avec `from` + `system` + `parameters` (pas modelfile string)
+25. **seed-fixture-data** : DEMO_TENANT_ID = "00000000-0000-0000-0000-000000000099" — UUID hors range prod
+26. **verify-citations** : filtre Qdrant sur `law` field + match exact article_num — retourne verified/false/null
+
+**Dernière mise à jour** : 2026-04-16 (session 30 — Seed fixture data + Agent Audit, 14 modèles Spark, 13 agents, /audit/:year)
