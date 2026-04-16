@@ -34,6 +34,8 @@ type GenerateResult = {
   revenuImposable: number;
   fortuneNette: number;
   source: string;
+  pdfBase64: string;
+  filename: string;
 };
 
 export function Step6Generate({ draft, year, canton }: Props) {
@@ -66,9 +68,10 @@ export function Step6Generate({ draft, year, canton }: Props) {
         idempotent: boolean;
         form: { projection: { revenuImposable: number; fortuneNette: number; source?: string } };
       };
-      const pdfBlob = base64ToBlob(response.pdf, 'application/pdf');
       const cantonCode = canton.code.toLowerCase();
       const filename = `lexa-declaration-pp-${cantonCode}-${year}-${fullName.replace(/\s+/g, '_')}.pdf`;
+      // Auto-download immédiat
+      const pdfBlob = base64ToBlob(response.pdf, 'application/pdf');
       downloadBlob(pdfBlob, filename);
       setResult({
         streamId: response.streamId,
@@ -76,6 +79,8 @@ export function Step6Generate({ draft, year, canton }: Props) {
         revenuImposable: response.form.projection.revenuImposable,
         fortuneNette: response.form.projection.fortuneNette,
         source: response.form.projection.source ?? 'draft',
+        pdfBase64: response.pdf,
+        filename,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'generation failed');
@@ -172,6 +177,18 @@ export function Step6Generate({ draft, year, canton }: Props) {
               </div>
             </div>
           </div>
+
+          {/* Bouton download PDF — fallback si auto-download bloqué */}
+          <button
+            onClick={() => {
+              const blob = base64ToBlob(result.pdfBase64, 'application/pdf');
+              downloadBlob(blob, result.filename);
+            }}
+            className="btn-primary w-full mb-4"
+          >
+            <Download className="w-4 h-4" />
+            Télécharger ma déclaration PDF
+          </button>
 
           <div className="p-3 rounded-lg bg-warning/10 border border-warning/30 text-xs text-warning">
             Rappel : Lexa prépare cette déclaration à titre indicatif. Faites-la
