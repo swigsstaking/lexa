@@ -52,6 +52,10 @@ const ConfigSchema = z.object({
   // MongoDB GridFS pour stockage documents (session 23)
   MONGO_URL: z.string().default("mongodb://192.168.110.59:27017"),
   MONGO_DB: z.string().default("lexa-documents"),
+
+  // Rate-limit auth login (configurable pour dev/qa, default conservateur en prod)
+  AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(30),
+  AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(15 * 60 * 1000),
 });
 
 const parsed = ConfigSchema.safeParse(process.env);

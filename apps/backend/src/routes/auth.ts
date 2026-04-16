@@ -18,10 +18,10 @@ import {
 
 export const authRouter = Router();
 
-// ── Rate limit sur /auth/login (5 tentatives / 15 min / IP) ────────────
+// ── Rate limit sur /auth/login (configurable via AUTH_RATE_LIMIT_MAX) ──
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 5,
+  windowMs: config.AUTH_RATE_LIMIT_WINDOW_MS,
+  limit: config.AUTH_RATE_LIMIT_MAX,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { error: "too many login attempts, retry later" },
