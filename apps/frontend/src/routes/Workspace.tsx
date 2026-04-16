@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +16,7 @@ import {
   Shield,
   Lightbulb,
   Users,
-  ChevronDown,
+  Settings,
 } from 'lucide-react';
 import { lexa } from '@/api/lexa';
 import { useActiveCompany, useCompaniesStore } from '@/stores/companiesStore';
@@ -26,6 +26,8 @@ import { LedgerCanvas } from '@/components/canvas/LedgerCanvas';
 import { ChatOverlay } from '@/components/chat/ChatOverlay';
 import { LedgerModal } from '@/components/ledger/LedgerModal';
 import { FiscalTimeline } from '@/components/timeline/FiscalTimeline';
+import { NavDropdown } from '@/components/Nav/NavDropdown';
+import { MobileMenu } from '@/components/Nav/MobileMenu';
 
 export function Workspace() {
   const { t } = useTranslation();
@@ -40,9 +42,7 @@ export function Workspace() {
 
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const [cursorDate, setCursorDate] = useState<Date>(new Date());
-  const [switcherOpen, setSwitcherOpen] = useState(false);
   const [switchingTenant, setSwitchingTenant] = useState(false);
-  const switcherRef = useRef<HTMLDivElement>(null);
 
   // S32 : Charger les clients fiduciaires (si membership multiple)
   const { data: fiduClients } = useQuery({
@@ -54,21 +54,9 @@ export function Workspace() {
 
   const hasMultipleClients = fiduClients && fiduClients.length > 1;
 
-  // Fermer le dropdown si click dehors
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (switcherRef.current && !switcherRef.current.contains(e.target as Node)) {
-        setSwitcherOpen(false);
-      }
-    };
-    if (switcherOpen) document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [switcherOpen]);
-
   const handleSwitchTenant = async (tenantId: string) => {
     if (tenantId === activeTenantId || switchingTenant) return;
     setSwitchingTenant(true);
-    setSwitcherOpen(false);
     try {
       const { token, activeTenantId: newTenantId } = await lexa.switchTenant(tenantId);
       setToken(token, newTenantId);
@@ -113,10 +101,112 @@ export function Workspace() {
       : 'down'
     : 'checking';
 
+  // ── Logique canton-aware (PP + PM) ──────────────────────────────────────
+  const canton = company?.canton ?? 'VS';
+  const year = new Date().getFullYear();
+
+  const taxpayerPath =
+    canton === 'GE'
+      ? `/taxpayer/ge/${year}`
+      : canton === 'VD'
+        ? `/taxpayer/vd/${year}`
+        : canton === 'FR'
+          ? `/taxpayer/fr/${year}`
+          : `/taxpayer/${year}`;
+
+  const pmPath = `/pm/${canton.toLowerCase()}/${year}`;
+
+  // ── Items des 4 dropdowns ───────────────────────────────────────────────
+
+  const declarationsItems = [
+    {
+      label: `Déclaration PP${canton ? ` (${canton})` : ''}`,
+      onClick: () => navigate(taxpayerPath),
+      icon: FileSignature,
+      title: 'Déclaration fiscale personne physique',
+    },
+    {
+      label: `Déclaration PM${canton ? ` (${canton})` : ''}`,
+      onClick: () => navigate(pmPath),
+      icon: Briefcase,
+      title: 'Déclaration fiscale PM (Sàrl/SA)',
+    },
+  ];
+
+  const comptaItems = [
+    {
+      label: 'Clôture continue',
+      onClick: () => navigate(`/close/${year}`),
+      icon: BookOpen,
+      title: 'Clôture continue CO 957-963',
+    },
+    {
+      label: 'Documents',
+      onClick: () => navigate('/documents'),
+      icon: FileText,
+      title: 'Documents OCR',
+    },
+    {
+      label: 'Audit',
+      onClick: () => navigate(`/audit/${year}`),
+      icon: Shield,
+      title: 'Audit intégrité IA — CO 958f',
+    },
+  ];
+
+  const iaItems = [
+    {
+      label: 'Chat IA',
+      onClick: () => setChatOpen(true),
+      icon: Sparkles,
+      title: 'Ouvrir le chat IA (⌘K)',
+    },
+    {
+      label: 'Conseiller fiscal',
+      onClick: () => navigate(`/conseiller/${year}`),
+      icon: Lightbulb,
+      title: 'Conseiller fiscal — optimisation proactive',
+    },
+    {
+      label: 'Mode expert',
+      onClick: () => setLedgerOpen(true),
+      icon: Calculator,
+      title: 'Grand livre expert (⌘⇧L)',
+    },
+  ];
+
+  // Dropdown Paramètres — inclut switcher fiduciaire si multi-clients
+  const parametresItems = [
+    ...(hasMultipleClients && fiduClients
+      ? fiduClients.map((client) => ({
+          label: client.tenantName ?? client.tenantId.slice(0, 8),
+          onClick: () => handleSwitchTenant(client.tenantId),
+          icon: Users,
+          active: client.tenantId === activeTenantId,
+          title: `Passer au client ${client.tenantName ?? client.tenantId}`,
+        }))
+      : []),
+    {
+      label: 'Déconnexion',
+      onClick: handleLogout,
+      icon: LogOut,
+      title: 'Se déconnecter',
+    },
+  ];
+
+  // ── Groupes pour mobile ─────────────────────────────────────────────────
+  const mobileGroups = [
+    { label: 'Déclarations', items: declarationsItems },
+    { label: 'Comptabilité', items: comptaItems },
+    { label: 'IA', items: iaItems },
+    { label: 'Paramètres', items: parametresItems },
+  ];
+
   return (
     <div className="h-screen w-screen flex flex-col bg-bg text-ink">
       {/* Top bar */}
       <header className="h-12 flex items-center justify-between px-4 border-b border-border bg-surface flex-shrink-0">
+        {/* ── Gauche : logo + société ── */}
         <div className="flex items-center gap-4 min-w-0">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-accent text-accent-fg grid place-items-center font-semibold text-xs">
@@ -137,44 +227,9 @@ export function Workspace() {
           </div>
         </div>
 
+        {/* ── Droite : nav desktop + actions ── */}
         <div className="flex items-center gap-2">
-          {/* S32 : Switcher tenant fiduciaire — visible seulement si multi-clients */}
-          {hasMultipleClients && (
-            <div className="relative" ref={switcherRef}>
-              <button
-                onClick={() => setSwitcherOpen((o) => !o)}
-                disabled={switchingTenant}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-elevated border border-accent/40 text-accent hover:bg-accent/10 transition-colors text-xs"
-                title="Changer de client"
-              >
-                <Users className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">
-                  {fiduClients?.find((c) => c.tenantId === activeTenantId)?.tenantName ?? 'Client'}
-                </span>
-                <ChevronDown className="w-3 h-3 opacity-60" />
-              </button>
-              {switcherOpen && (
-                <div className="absolute right-0 top-full mt-1 w-52 rounded-lg border border-border bg-surface shadow-lg z-50 py-1">
-                  <div className="px-3 py-1.5 text-2xs text-muted uppercase tracking-wide border-b border-border mb-1">
-                    Clients fiduciaires
-                  </div>
-                  {fiduClients?.map((client) => (
-                    <button
-                      key={client.tenantId}
-                      onClick={() => handleSwitchTenant(client.tenantId)}
-                      className={`w-full text-left px-3 py-2 text-sm hover:bg-elevated flex items-center justify-between ${
-                        client.tenantId === activeTenantId ? 'text-accent font-medium' : 'text-ink'
-                      }`}
-                    >
-                      <span className="truncate">{client.tenantName ?? client.tenantId.slice(0, 8)}</span>
-                      <span className="text-2xs text-muted ml-2 flex-shrink-0">{client.role}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
+          {/* Indicateur services */}
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-elevated border border-border">
             <span
               className={`w-1.5 h-1.5 rounded-full ${
@@ -185,7 +240,7 @@ export function Workspace() {
                     : 'bg-muted animate-pulse'
               }`}
             />
-            <span className="text-2xs text-muted">
+            <span className="text-2xs text-muted hidden sm:inline">
               {servicesState === 'up'
                 ? t('workspace.services_up')
                 : servicesState === 'down'
@@ -193,108 +248,39 @@ export function Workspace() {
                   : t('workspace.services_checking')}
             </span>
             {health.data && (
-              <span className="text-2xs text-subtle mono-num ml-1">
+              <span className="text-2xs text-subtle mono-num ml-1 hidden sm:inline">
                 {health.data.services.qdrantPoints}
               </span>
             )}
           </div>
 
-          <button
-            onClick={() => setChatOpen(true)}
-            className="btn-ghost !px-3 !py-1.5"
-            title={t('workspace.shortcut_chat')}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span className="text-xs">{t('workspace.shortcut_chat')}</span>
-            <span className="flex items-center gap-0.5 ml-1">
-              <kbd className="kbd">⌘</kbd>
-              <kbd className="kbd">K</kbd>
-            </span>
-          </button>
+          {/* ── Nav desktop (md+) : 4 dropdowns ── */}
+          <nav className="hidden md:flex items-center gap-1" aria-label="Navigation principale">
+            <NavDropdown
+              label="Déclarations"
+              icon={FileSignature}
+              items={declarationsItems}
+            />
+            <NavDropdown
+              label="Comptabilité"
+              icon={BookOpen}
+              items={comptaItems}
+            />
+            <NavDropdown
+              label="IA"
+              icon={Sparkles}
+              items={iaItems}
+            />
+            <NavDropdown
+              label="Paramètres"
+              icon={Settings}
+              items={parametresItems}
+              badge={hasMultipleClients ? fiduClients?.length : undefined}
+            />
+          </nav>
 
-          <button
-            onClick={() => setLedgerOpen(true)}
-            className="btn-ghost !px-3 !py-1.5"
-            title={t('workspace.toggle_expert')}
-          >
-            <Calculator className="w-3.5 h-3.5" />
-            <span className="text-xs hidden md:inline">{t('workspace.toggle_expert')}</span>
-          </button>
-
-          <button
-            onClick={() => {
-              const canton = company?.canton ?? 'VS';
-              const year = new Date().getFullYear();
-              const taxpayerPath =
-                canton === 'GE'
-                  ? `/taxpayer/ge/${year}`
-                  : canton === 'VD'
-                    ? `/taxpayer/vd/${year}`
-                    : canton === 'FR'
-                      ? `/taxpayer/fr/${year}`
-                      : `/taxpayer/${year}`;
-              navigate(taxpayerPath);
-            }}
-            className="btn-ghost !px-3 !py-1.5"
-            title="Déclaration fiscale PP"
-          >
-            <FileSignature className="w-3.5 h-3.5" />
-            <span className="text-xs hidden md:inline">Déclaration PP</span>
-          </button>
-
-          <button
-            onClick={() => {
-              const canton = company?.canton ?? 'VS';
-              const year = new Date().getFullYear();
-              const pmPath = `/pm/${canton.toLowerCase()}/${year}`;
-              navigate(pmPath);
-            }}
-            className="btn-ghost !px-3 !py-1.5"
-            title="Déclaration fiscale PM (Sàrl/SA)"
-          >
-            <Briefcase className="w-3.5 h-3.5" />
-            <span className="text-xs hidden md:inline">Déclaration PM</span>
-          </button>
-
-          <button
-            onClick={() => navigate(`/close/${new Date().getFullYear()}`)}
-            className="btn-ghost !px-3 !py-1.5"
-            title="Clôture continue CO 957-963"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span className="text-xs hidden md:inline">Clôture</span>
-          </button>
-
-          <button
-            onClick={() => navigate('/documents')}
-            className="btn-ghost !px-3 !py-1.5"
-            title="Documents OCR"
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span className="text-xs hidden md:inline">Documents</span>
-          </button>
-
-          <button
-            onClick={() => navigate(`/audit/${new Date().getFullYear()}`)}
-            className="btn-ghost !px-3 !py-1.5"
-            title="Audit intégrité IA — CO 958f"
-          >
-            <Shield className="w-3.5 h-3.5" />
-            <span className="text-xs hidden md:inline">Audit</span>
-          </button>
-
-          <button
-            onClick={() => navigate(`/conseiller/${new Date().getFullYear()}`)}
-            className="btn-ghost !px-3 !py-1.5"
-            title="Conseiller fiscal — optimisation proactive"
-          >
-            <Lightbulb className="w-3.5 h-3.5" />
-            <span className="text-xs hidden md:inline">Conseiller</span>
-          </button>
-
-          <button onClick={handleLogout} className="btn-ghost !px-2 !py-1.5" aria-label="logout">
-            <LogOut className="w-3.5 h-3.5" />
-          </button>
+          {/* ── Mobile burger (<md) ── */}
+          <MobileMenu groups={mobileGroups} />
         </div>
       </header>
 
