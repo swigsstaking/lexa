@@ -1,13 +1,13 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 25 — 2026-04-16](2026-04-16-session-25.md) (fix pipeline OCR, bench définitif, fixture E2E réelle)
-**Prochaine session** : Session 26 — Option A (Fiscal-PM) ou B (Agent Conseiller)
+**Dernière session** : [Session 26 — 2026-04-16](2026-04-16-session-26.md) (agent Fiscal-PM, FormBuilder PM VS, pmTaxEstimator, 25/25)
+**Prochaine session** : Session 27 — Wizard PM frontend VS + PDF renderer PM + FormBuilder GE/VD/FR
 
-> Session 25 a fixé le pipeline OCR (pdf-parse + PDF→PNG via pdfjs-dist + flattenJsonToText), benchmarké les 2 modèles (GARDER qwen3-vl-ocr, deepseek-ocr vide), et remplacé la fixture documents-1 par une E2E réelle. qa-lexa **23/23** (maintenu, désormais E2E réel).
+> Session 26 a livré l'agent fiscal-pm (12e modèle Lexa, 11e agent actif), le moteur de calcul pmTaxEstimator (IFD 8.5% + ICC cantonal V1 + capital), et la route POST /forms/pm-declaration-vs. qa-lexa **25/25** (23 baseline + 1 fiscal-pm + 1 form PM).
 
 ---
 
-## Ce qui marche après session 24
+## Ce qui marche après session 26
 
 | Composant | Etat |
 |---|---|
@@ -17,131 +17,90 @@
 | HMAC Pro Lexa + classify auto | OK |
 | **MongoDB GridFS** | |
 | `lexa-documents` DB sur `127.0.0.1:27017` | OK session 23 |
-| Collection `documents_meta` (metadata + ocrResult + appliedToDrafts) | OK |
 | **Pipeline OCR** | |
-| Stage 1 pdf-parse (embed text) → fallback PDF→PNG via pdfjs-dist + @napi-rs/canvas | **OK session 25** |
-| Stage 2 classification + extraction JSON structurée | OK session 23 |
-| parseOcrModelOutput — flatten récursif JSON imbriqué multi-niveaux | **OK session 25** |
-| Types : certificat_salaire, attestation_3a, facture, releve_bancaire, autre | OK |
+| pdf-parse + fallback PDF→PNG via pdfjs-dist + @napi-rs/canvas | OK session 25 |
+| parseOcrModelOutput — flatten récursif JSON imbriqué | OK session 25 |
 | **Routes documents** | |
 | `POST /documents/upload` | OK session 23 |
-| `GET /documents` liste tenant | OK session 23 |
-| `POST /documents/:id/apply-to-draft` | **OK session 24** |
-| Event `DocumentAppliedToDraft` dans event store | **OK session 24** |
-| Provenance `appliedToDrafts[]` dans Mongo | **OK session 24** |
+| `POST /documents/:id/apply-to-draft` | OK session 24 |
 | **Routes taxpayers** | |
-| `GET /taxpayers/draft/:year/field-sources` | **OK session 24** |
-| **Frontend** | |
-| Page `/documents` bouton "Pré-remplir wizard" | **OK session 24** |
-| Feedback apply (succès/erreur + lien wizard) | **OK session 24** |
-| Wizard badges "📎 extrait de X" Step2 + Step4 | **OK session 24** |
-| **Services** | |
-| `DocumentMapper.ts` pure function | **OK session 24** |
-| `setDeep(obj, path, value)` pour state patch | **OK session 24** |
-| **Wizard contribuable** | |
 | Wizard PP VS/GE/VD/FR | OK sessions 15-22 |
-| **Knowledge base** | |
-| Qdrant `swiss_law` 9846 pts | OK |
-| **Agents actifs (10)** | classifier, reasoning, tva, fiscal-pp-vs/ge/vd/fr/ne/ju/bj |
+| **Agents actifs (11)** | classifier, reasoning, tva, fiscal-pp-vs/ge/vd/fr/ne/ju/bj, **fiscal-pm** |
+| **Routes PM** | |
+| `POST /agents/fiscal-pm/ask` | **OK session 26** |
+| `POST /forms/pm-declaration-vs` | **OK session 26** (calcul structurel, pas PDF) |
+| **Modules PM** | |
+| `pmTaxEstimator.ts` (IFD 8.5%, ICC V1, capital V1) | **OK session 26** |
+| `PmFormBuilder.ts` VS | **OK session 26** |
+| **Spark modèles (12)** | 11 précédents + lexa-fiscal-pm | **OK session 26** |
 | **Tests auto** | |
-| qa-lexa **23/23** — fixture documents-1 désormais E2E réelle | **OK session 25** |
-| PDF de test stable embarqué (2.2 KB) | OK session 24 |
-| Benchmark OCR qwen3-vl-ocr (100%) vs deepseek-ocr (0%) — GARDER qwen | **OK session 25** |
+| qa-lexa **25/25** — +1 fiscal-pm +1 form pm-vs | **OK session 26** |
 
 ---
 
-## Options session 25 — Décision mère
+## Session 27 — Wizard PM frontend VS
 
-### Option A — Fiscal-PM (Sàrl/SA) + wizard + agent (GROS MORCEAU)
+### Objectif
+Livrer le wizard PM frontend VS (6 steps) + PDF renderer PM.
 
-**Effort estimé** : 2 sessions (25 + 26)
-**Impact marché** : 40% de la cible (PME Sàrl/SA)
+### Livrables
 
-Ce qui est nécessaire :
-1. Wizard PM 4 steps : identité société (UID, raison sociale, canton), revenus (CA, résultat), charges, impôts
-2. Agent fiscal-pm-vs (impôt bénéfice + capital VS)
-3. FormBuilder + PDF VS-PM
-4. Connaissance base : LIFD art. 57-68, LHID art. 24-26, circulaires AFC PM
+1. **Page `/pm-declaration/:year`** — wizard 6 steps PM (clone pattern PP wizard)
+   - Step 1 : Identité société (raison sociale, IDE, canton, commune, legalForm)
+   - Step 2 : Exercice + bénéfice comptable (CA, résultat brut)
+   - Step 3 : Corrections fiscales (charges non admises, amortissements, provisions)
+   - Step 4 : Fonds propres (capital social + réserves + bénéfice reporté)
+   - Step 5 : Estimation fiscale (IFD + ICC VS + capital) — appel `pmTaxEstimator`
+   - Step 6 : Aperçu + bouton "Générer PDF"
 
-**Valeur** : couvre les 3-5 Sàrl romandes par mois de la cible commerciale
+2. **`VsPmPdfRenderer.ts`** — PDF déclaration PM (clone `VsPpPdfRenderer.ts`)
 
-### Option B — Agent Conseiller IA ("et si ?")
+3. **FormBuilder PM GE/VD/FR** — `GePmFormBuilder.ts`, `VdPmFormBuilder.ts`, `FrPmFormBuilder.ts` (clones triviaux VS)
 
-**Effort estimé** : 1 session
-**Impact** : feature whitepaper §1.4 — simulateur fiscal proactif
+4. **Route `POST /forms/pm-declaration-vs`** — mettre à jour pour retourner PDF en base64
 
-Fonctionnalités :
-1. Agent `conseiller` : "Et si tu augmentais ta 3a de X ?" → simulation d'impact sur impôt estimé
-2. Optimisations LPP/3a/amortissements suggérées
-3. Interface chat dans le wizard (sidebar)
-4. Sources citées (articles LIFD/LHID)
+5. **+1 fixture qa-lexa wizard PM** → cible **26/26**
 
-**Valeur** : différentiateur fort, "magie" du whitepaper §1.4
+### Exclus session 27
+- Pas de barèmes ICC officiels (session 28+)
+- Pas d'agent Clôture (session 28)
+- Pas d'annexes CO bilans fiscaux (session 28+)
 
 ---
 
 ## Décisions tranchées — ne plus réinterpréter
 
-(reprise sessions 11→24)
+(reprise sessions 11→26)
 
-1-32. (voir archive session 23)
-33. **Paths wizard corrects** : `step2.salaireBrut` (pas `income.salary`), `step4.pilier3a` (pas `deductions.pilier3a`)
-34. **`fiscal_year`** dans `taxpayer_drafts` (pas `year`) — toujours utiliser ce nom de colonne
-35. **streamId = UUID valide obligatoire** dans EventStore — si documentId non-UUID, générer un `randomUUID()` pour le streamId
-36. **Draft n'a pas de colonne `canton`** — le canton est dans `state.step1.canton` ou `taxpayer_profiles.canton`
-
----
-
-## ✅ Dette technique — Session 24.5 RÉSOLUE en S25
-
-### OCR : Benchmark et fix pipeline COMPLÉTÉS
-
-Le benchmark qwen3-vl-ocr vs deepseek-ocr (session 24.5) n'a pas pu être finalisé :
-- **Cause 1** : PDF envoyé directement à Ollama `images[]` → HTTP 500. Corrigé : utiliser PNG.
-- **Cause 2** : `pdf-parse@1.1.1` incompatible avec PDF PDFKit (`bad XRef entry`). À corriger.
-- **Cause 3** : Réseau 192.168.110.0/24 inaccessible depuis la machine locale en fin de session.
-
-**À faire session 25 (5 min)** :
-```bash
-rsync -avz apps/backend/src/scripts/bench-ocr.ts \
-           apps/backend/src/scripts/fixtures/test-cert-salaire-1.png \
-           swigs@192.168.110.59:/home/swigs/lexa-backend/src/scripts/fixtures/
-# Copier le PNG aussi dans src/scripts/ (pour le path du script)
-ssh swigs@192.168.110.59 'cp /home/swigs/lexa-backend/src/scripts/fixtures/test-cert-salaire-1.png /home/swigs/lexa-backend/src/scripts/'
-ssh swigs@192.168.110.59 'cd /home/swigs/lexa-backend && OLLAMA_URL=http://192.168.110.103:11434 npx tsx src/scripts/bench-ocr.ts'
-```
-
-### pdf-parse incompatible avec PDFKit (impact prod)
-
-`pdf-parse@1.1.1` lève `bad XRef entry` sur les PDF PDFKit. En production, **tous les PDF PDFKit**
-envoyés par les clients tombent sur le fallback vision (qwen3-vl-ocr) même s'ils ont du texte embarqué.
-Solution : remplacer `pdf-parse` par `pdfjs-dist` ou `pdf2json`.
+1-36. (voir archives sessions précédentes)
+37. **`fiscal-pm` re-ranking** : tier 4 = LIFD art.57-79 + CO art.957-963, tier 3 = LHID art.24-31
+38. **barèmes ICC PM V1** : VS 8.5%, GE 14%, VD 13.5%, FR 10% — approximatifs, TODO session 28+
+39. **V1 pm-declaration-vs sans PDF** — retourne JSON structurel. PDF = session 27 avec wizard.
+40. **think: false obligatoire** sur tous les modèles qwen3 (sinon field `response` vide)
 
 ---
 
-## Avertissements (héritage sessions 11-24.5)
+## Avertissements (héritage sessions 11-26)
 
-1. **`.env` prod jamais rsync**
-2. **`trust proxy 1`** ne pas retirer
-3. **qa-lexa 23/23 baseline** — si un test fail, investiguer avant push
-4. **HMAC Pro→Lexa** : ne jamais JSON.stringify deux fois
-5. **JWT override req.tenantId** — header `X-Tenant-Id` ignoré sur routes protégées
-6. **Disclaimer PDF/XML obligatoire**
-7. **qwen3-vl-ocr sur Spark** : output JSON non-déterministe, utiliser `parseOcrModelOutput()`
-8. **LEXA_ENABLED=true côté Pro** : ne jamais passer à false
-9. **Backend = tsx watch src/** (pas dist compilé)
-10. **Templates YAML dans src/execution/templates/**
-11. **MONGO_URL = mongodb://127.0.0.1:27017** (loopback, pas IP réseau)
-12. **Rate limit login** : le rate limit est strict côté prod — utiliser `http://localhost:3010` depuis le serveur pour les tests
-13. **Ollama images[] = PNG/JPEG uniquement** — ne jamais envoyer un PDF brut en base64, Ollama retourne HTTP 500
-14. **test-cert-salaire-1.png** = fixture correcte pour tests vision OCR (150 KB, 1 page A4)
+1. `.env` prod jamais rsync
+2. `trust proxy 1` ne pas retirer
+3. qa-lexa **25/25 baseline** — si un test fail, investiguer avant push
+4. HMAC Pro→Lexa : ne jamais JSON.stringify deux fois
+5. JWT override req.tenantId — header X-Tenant-Id ignoré sur routes protégées
+6. Disclaimer PDF/XML obligatoire
+7. qwen3-vl-ocr sur Spark : output JSON non-déterministe, utiliser parseOcrModelOutput()
+8. LEXA_ENABLED=true côté Pro : ne jamais passer à false
+9. Backend = tsx watch src/ (pas dist compilé)
+10. Templates YAML dans src/execution/templates/
+11. MONGO_URL = mongodb://127.0.0.1:27017
+12. Rate limit login strict — utiliser http://localhost:3010 depuis serveur pour tests
+13. Ollama images[] = PNG/JPEG uniquement — ne jamais envoyer PDF brut en base64
+14. test-cert-salaire-1.png = fixture correcte pour tests vision OCR
+15. pdfToPng via pdfjs-dist : utilise legacy/build/pdf.mjs + disableWorker: true
+16. @napi-rs/canvas : bindings natifs Linux 22.04 sur .59
+17. deepseek-ocr : inutilisable (retourne empty) — garder qwen3-vl-ocr
+18. qa-lexa doit tourner sur http://127.0.0.1:3010 depuis .59
+19. flattenJsonToText : gère JSON imbriqués multi-niveaux — ne pas supprimer
+20. **Ollama create API** : utiliser champ `from` + `system` + `parameters` dans le body JSON (pas Modelfile string) pour éviter l'erreur "neither 'from' or 'files' was specified"
 
----
-
-15. **pdfToPng via pdfjs-dist** : utilise `legacy/build/pdf.mjs` + `disableWorker: true` — ne pas utiliser le build principal (DOMMatrix undefined)
-16. **@napi-rs/canvas** : bindings natifs Linux 22.04 installés sur .59, inclus dans package.json
-17. **deepseek-ocr** : inutilisable pour OCR (retourne empty) — garder qwen3-vl-ocr
-18. **qa-lexa doit tourner sur `http://127.0.0.1:3010`** depuis .59 (pas `https://lexa.swigs.online` — route /health sans préfixe /api)
-19. **flattenJsonToText** : gère les JSON imbriqués multi-niveaux de qwen3-vl-ocr — ne pas supprimer
-
-**Dernière mise à jour** : 2026-04-16 (session 25 — fix OCR pipeline, bench chiffré, fixture E2E réelle, 23/23)
+**Dernière mise à jour** : 2026-04-16 (session 26 — agent fiscal-pm, FormBuilder PM VS, 25/25)
