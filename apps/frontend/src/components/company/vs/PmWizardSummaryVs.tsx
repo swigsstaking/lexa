@@ -1,8 +1,10 @@
 import type { CompanyDraft } from '@/api/lexa';
 import { Building2, Info } from 'lucide-react';
 
+
 interface Props {
   draft: CompanyDraft;
+  canton?: string;
 }
 
 function chf(n: number | undefined | null): string {
@@ -21,7 +23,7 @@ function Row({ label, value, bold, mono }: { label: string; value: string; bold?
   );
 }
 
-export function PmWizardSummaryVs({ draft }: Props) {
+export function PmWizardSummaryVs({ draft, canton = 'VS' }: Props) {
   const { state } = draft;
   const s1 = state.step1 ?? {};
   const s2 = state.step2 ?? {};
@@ -52,7 +54,7 @@ export function PmWizardSummaryVs({ draft }: Props) {
         <div className="flex items-center gap-2 mb-3">
           <Building2 className="w-4 h-4 text-accent" />
           <span className="text-2xs uppercase tracking-wider text-muted">
-            Aperçu en direct — PM VS
+            Aperçu en direct — PM {canton}
           </span>
         </div>
 
@@ -77,7 +79,7 @@ export function PmWizardSummaryVs({ draft }: Props) {
           {total > 0 && (
             <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-4 -mx-4 -mb-4">
               <div className="text-[10px] uppercase tracking-wide text-amber-400 mb-1">
-                Estimation impôt PM VS {draft.year}
+                Estimation impôt PM {canton} {draft.year}
               </div>
               <div className="text-xl font-bold text-amber-300">
                 {chf(total)} CHF
