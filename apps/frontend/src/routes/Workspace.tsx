@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   Activity,
+  BookOpen,
   Building2,
   Calculator,
   Command,
@@ -167,6 +168,15 @@ export function Workspace() {
           >
             <Briefcase className="w-3.5 h-3.5" />
             <span className="text-xs hidden md:inline">Déclaration PM</span>
+          </button>
+
+          <button
+            onClick={() => navigate(`/close/${new Date().getFullYear()}`)}
+            className="btn-ghost !px-3 !py-1.5"
+            title="Clôture continue CO 957-963"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span className="text-xs hidden md:inline">Clôture</span>
           </button>
 
           <button

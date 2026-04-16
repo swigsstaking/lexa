@@ -158,3 +158,53 @@ export interface TransactionStats {
   total: number;
   byType: Record<string, number>;
 }
+
+// ─── Continuous Closing types (session 29) ────────────────────────────────────
+
+export interface ClosingAccountLine {
+  account: string;
+  accountName: string | null;
+  balance: number;
+}
+
+export interface BalanceSheet {
+  year: number;
+  asOf: string;
+  assets: ClosingAccountLine[];
+  assetsTotal: number;
+  liabilities: ClosingAccountLine[];
+  liabilitiesTotal: number;
+  equity: ClosingAccountLine[];
+  equityTotal: number;
+  isBalanced: boolean;
+}
+
+export interface IncomeStatement {
+  year: number;
+  period: { start: string; end: string };
+  revenues: ClosingAccountLine[];
+  revenuesTotal: number;
+  charges: ClosingAccountLine[];
+  chargesTotal: number;
+  financialResult: number;
+  extraordinaryResult: number;
+  netResult: number;
+}
+
+export type LedgerGapType = 'missing_depreciation' | 'missing_accrual' | 'orphan_entry' | 'unbalanced';
+export type LedgerGapSeverity = 'info' | 'warning' | 'error';
+
+export interface LedgerGap {
+  type: LedgerGapType;
+  severity: LedgerGapSeverity;
+  message: string;
+}
+
+export interface LedgerHealth {
+  year: number;
+  entriesCount: number;
+  lastEntryDate: string | null;
+  isBalanced: boolean;
+  gaps: LedgerGap[];
+  co_959c_ready: boolean;
+}

@@ -3,11 +3,14 @@ import type { AuthUser } from '@/stores/authStore';
 import type {
   AgentAnswer,
   AgentsResponse,
+  BalanceSheet,
   Company,
   CompanyLookupResult,
   CreateCompanyInput,
   HealthStatus,
+  IncomeStatement,
   LedgerBalance,
+  LedgerHealth,
   LedgerListResponse,
   TransactionStats,
 } from './types';
@@ -232,6 +235,24 @@ export const lexa = {
     api
       .post<PmSubmitResponse>(`/companies/draft/${year}/submit-${canton.toLowerCase()}`)
       .then((r) => r.data),
+
+  // ── Continuous Closing (session 29) ─────────────────────────────────────────
+  getBalanceSheet: (year: number) =>
+    api.get<BalanceSheet>(`/ledger/balance-sheet/${year}`).then((r) => r.data),
+
+  getIncomeStatement: (year: number) =>
+    api.get<IncomeStatement>(`/ledger/income-statement/${year}`).then((r) => r.data),
+
+  getLedgerHealth: (year: number) =>
+    api.get<LedgerHealth>(`/ledger/health/${year}`).then((r) => r.data),
+
+  askCloture: (body: {
+    question: string;
+    year?: number;
+    balanceSheet?: { assetsTotal: number; liabilitiesTotal: number; equityTotal: number; isBalanced: boolean };
+    incomeStatement?: { revenuesTotal: number; chargesTotal: number; netResult: number };
+  }) =>
+    api.post<AgentAnswer>('/agents/cloture/ask', body).then((r) => r.data),
 };
 
 export type TaxpayerDraft = {

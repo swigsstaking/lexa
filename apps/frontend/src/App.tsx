@@ -8,6 +8,7 @@ import { Documents } from '@/routes/Documents';
 import { TaxpayerWizardCanton } from '@/routes/taxpayer/TaxpayerWizardCanton';
 import { PmWizardVs } from '@/routes/company/PmWizardVs';
 import { PmWizardCanton } from '@/routes/company/PmWizardCanton';
+import { CloseYear } from '@/routes/close/CloseYear';
 import { cantonGE } from '@/config/cantons/ge';
 import { cantonVD } from '@/config/cantons/vd';
 import { cantonVS } from '@/config/cantons/vs';
@@ -132,6 +133,15 @@ export default function App() {
         element={
           <RequireAuth>
             <PmWizardCanton canton="FR" />
+          </RequireAuth>
+        }
+      />
+      {/* Clôture continue — Session 29 */}
+      <Route
+        path="/close/:year"
+        element={
+          <RequireAuth>
+            <CloseYear />
           </RequireAuth>
         }
       />
