@@ -11,6 +11,7 @@ import { fiscalPpBjAgent } from "../agents/fiscalPpBj/FiscalPpBjAgent.js";
 import { fiscalPmAgent } from "../agents/fiscalPm/FiscalPmAgent.js";
 import { clotureAgent } from "../agents/cloture/ClotureAgent.js";
 import { auditAgent } from "../agents/audit/AuditAgent.js";
+import { conseillerAgent } from "../agents/conseiller/ConseillerAgent.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 
 export const agentsRouter = Router();
@@ -343,6 +344,35 @@ agentsRouter.post("/audit/ask", requireAuth, async (req, res) => {
   }
 });
 
+const ConseillerAskSchema = z.object({
+  question: z.string().min(3).max(2000),
+  year: z.number().int().optional(),
+  context: z
+    .object({
+      canton: z.enum(["VS", "GE", "VD", "FR"]).optional(),
+      entityType: z.enum(["pp", "pm"]).optional(),
+      civilStatus: z.enum(["single", "married"]).optional(),
+      currentIncome: z.number().optional(),
+      companyProfit: z.number().optional(),
+    })
+    .optional(),
+});
+
+/** POST /agents/conseiller/ask — Agent conseiller optimisation fiscale proactive (LIFD art.33+58+62+68, LHID art.24-31) */
+agentsRouter.post("/conseiller/ask", requireAuth, async (req, res) => {
+  const parsed = ConseillerAskSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
+  }
+  try {
+    const result = await conseillerAgent.ask(parsed.data);
+    res.json(result);
+  } catch (err) {
+    console.error("Conseiller agent error:", err);
+    res.status(500).json({ error: "conseiller agent failed", message: (err as Error).message });
+  }
+});
+
 /** GET /agents — list of available agents */
 agentsRouter.get("/", (_req, res) => {
   res.json({
@@ -435,9 +465,14 @@ agentsRouter.get("/", (_req, res) => {
         description:
           "Agent audit — verification citations legales (CO 958f, LTVA 70) + detection hallucinations + audit trail immuable",
       },
+      {
+        id: "conseiller",
+        endpoint: "POST /agents/conseiller/ask",
+        model: "lexa-conseiller",
+        description:
+          "Agent conseiller optimisation fiscale proactive — simulations 'et si ?' + briefing quotidien (LIFD art.33+58+62+68, LHID art.24-31)",
+      },
     ],
-    planned: [
-      { id: "conseiller", description: "Optimisation proactive — session 31" },
-    ],
+    planned: [],
   });
 });
