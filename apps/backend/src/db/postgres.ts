@@ -42,7 +42,8 @@ export async function queryAsTenant<T extends pg.QueryResultRow = pg.QueryResult
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query("SET LOCAL app.active_tenant = $1", [tenantId]);
+    // set_config avec is_local=true est équivalent à SET LOCAL — valeur resetée en fin de transaction
+    await client.query("SELECT set_config('app.active_tenant', $1, true)", [tenantId]);
     const result = await client.query<T>(sql, params as never);
     await client.query("COMMIT");
     return result;
