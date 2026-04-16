@@ -146,6 +146,17 @@ setInterval(async () => {
  * @param payload  - Typed payload forwarded to the handler
  * @param options  - Optional: timeoutMs override (default: config.LLM_QUEUE_TIMEOUT_MS)
  */
+/**
+ * Erreur custom levée quand un job LLM dépasse le timeout configuré.
+ * Permet aux routes de distinguer un timeout d'une autre erreur → HTTP 504.
+ */
+export class LlmQueueTimeoutError extends Error {
+  constructor(agentKey: string, tenantId: string, timeoutMs: number) {
+    super(`LLM queue timeout after ${timeoutMs}ms — agent: ${agentKey}, tenant: ${tenantId}`);
+    this.name = "LlmQueueTimeoutError";
+  }
+}
+
 export async function enqueueLlmCall(
   tenantId: string,
   agentKey: string,
@@ -156,7 +167,18 @@ export async function enqueueLlmCall(
   const timeoutMs = options.timeoutMs ?? config.LLM_QUEUE_TIMEOUT_MS;
 
   const job = await queue.add(agentKey, { agentKey, payload });
-  return job.waitUntilFinished(queueEvents, timeoutMs);
+
+  try {
+    return await job.waitUntilFinished(queueEvents, timeoutMs);
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      (err.message.includes("timed out") || err.message.includes("timeout"))
+    ) {
+      throw new LlmQueueTimeoutError(agentKey, tenantId, timeoutMs);
+    }
+    throw err;
+  }
 }
 
 /** Graceful shutdown: close all tenant resources. */
