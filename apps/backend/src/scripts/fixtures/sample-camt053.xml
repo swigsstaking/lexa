@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fixture CAMT.053.001.04 — Demo Sàrl (S39 Lexa)
+  Compte : CH9300762011623852957 (Raiffeisen fictif)
+  5 transactions variées pour tests parse + ingestion
+-->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.04"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <BkToCstmrStmt>
+    <GrpHdr>
+      <MsgId>LEXA-DEMO-2026-04-001</MsgId>
+      <CreDtTm>2026-04-15T10:00:00Z</CreDtTm>
+    </GrpHdr>
+    <Stmt>
+      <Id>STMT-DEMO-2026-04</Id>
+      <CreDtTm>2026-04-15T10:00:00Z</CreDtTm>
+      <FrToDt>
+        <FrDtTm>2026-03-01T00:00:00Z</FrDtTm>
+        <ToDtTm>2026-03-31T23:59:59Z</ToDtTm>
+      </FrToDt>
+      <Acct>
+        <Id>
+          <IBAN>CH9300762011623852957</IBAN>
+        </Id>
+        <Ccy>CHF</Ccy>
+        <Ownr>
+          <Nm>Demo Sàrl</Nm>
+        </Ownr>
+        <Svcr>
+          <FinInstnId>
+            <BIC>RAIFCH22</BIC>
+            <Nm>Raiffeisen Suisse</Nm>
+          </FinInstnId>
+        </Svcr>
+      </Acct>
+      <Bal>
+        <Tp>
+          <CdOrPrtry>
+            <Cd>OPBD</Cd>
+          </CdOrPrtry>
+        </Tp>
+        <Amt Ccy="CHF">42500.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt>
+          <Dt>2026-03-01</Dt>
+        </Dt>
+      </Bal>
+      <Bal>
+        <Tp>
+          <CdOrPrtry>
+            <Cd>CLBD</Cd>
+          </CdOrPrtry>
+        </Tp>
+        <Amt Ccy="CHF">47065.20</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt>
+          <Dt>2026-03-31</Dt>
+        </Dt>
+      </Bal>
+
+      <!-- TX 1 : CRDT 15000 — Encaissement facture client ABC -->
+      <Ntry>
+        <Amt Ccy="CHF">15000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt>
+          <Dt>2026-03-05</Dt>
+        </BookgDt>
+        <ValDt>
+          <Dt>2026-03-05</Dt>
+        </ValDt>
+        <NtryDtls>
+          <TxDtls>
+            <Refs>
+              <AcctSvcrRef>REF-2026-0001</AcctSvcrRef>
+              <EndToEndId>FAC-2026-001-ABC</EndToEndId>
+            </Refs>
+            <RltdPties>
+              <Dbtr>
+                <Nm>Client ABC SA</Nm>
+              </Dbtr>
+              <DbtrAcct>
+                <Id>
+                  <IBAN>CH5604835012345678009</IBAN>
+                </Id>
+              </DbtrAcct>
+            </RltdPties>
+            <RmtInf>
+              <Ustrd>Facture 001 — Client ABC SA mars 2026</Ustrd>
+            </RmtInf>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+
+      <!-- TX 2 : CRDT 8500 — Encaissement facture client XYZ -->
+      <Ntry>
+        <Amt Ccy="CHF">8500.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt>
+          <Dt>2026-03-12</Dt>
+        </BookgDt>
+        <ValDt>
+          <Dt>2026-03-12</Dt>
+        </ValDt>
+        <NtryDtls>
+          <TxDtls>
+            <Refs>
+              <AcctSvcrRef>REF-2026-0002</AcctSvcrRef>
+              <EndToEndId>FAC-2026-002-XYZ</EndToEndId>
+            </Refs>
+            <RltdPties>
+              <Dbtr>
+                <Nm>Client XYZ Sàrl</Nm>
+              </Dbtr>
+              <DbtrAcct>
+                <Id>
+                  <IBAN>CH2009000000100013534</IBAN>
+                </Id>
+              </DbtrAcct>
+            </RltdPties>
+            <RmtInf>
+              <Ustrd>Paiement facture 002 — Client XYZ mars 2026</Ustrd>
+            </RmtInf>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+
+      <!-- TX 3 : DBIT 3500 — Loyer -->
+      <Ntry>
+        <Amt Ccy="CHF">3500.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt>
+          <Dt>2026-03-01</Dt>
+        </BookgDt>
+        <ValDt>
+          <Dt>2026-03-01</Dt>
+        </ValDt>
+        <NtryDtls>
+          <TxDtls>
+            <Refs>
+              <AcctSvcrRef>REF-2026-0003</AcctSvcrRef>
+            </Refs>
+            <RltdPties>
+              <Cdtr>
+                <Nm>SOGESTIM SA</Nm>
+              </Cdtr>
+              <CdtrAcct>
+                <Id>
+                  <IBAN>CH4431999123000889012</IBAN>
+                </Id>
+              </CdtrAcct>
+            </RltdPties>
+            <RmtInf>
+              <Ustrd>LOYER SOGESTIM SA janvier 2026</Ustrd>
+            </RmtInf>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+
+      <!-- TX 4 : DBIT 5200 — Salaire -->
+      <Ntry>
+        <Amt Ccy="CHF">5200.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt>
+          <Dt>2026-03-25</Dt>
+        </BookgDt>
+        <ValDt>
+          <Dt>2026-03-25</Dt>
+        </ValDt>
+        <NtryDtls>
+          <TxDtls>
+            <Refs>
+              <AcctSvcrRef>REF-2026-0004</AcctSvcrRef>
+            </Refs>
+            <RltdPties>
+              <Cdtr>
+                <Nm>DUPONT JEAN</Nm>
+              </Cdtr>
+              <CdtrAcct>
+                <Id>
+                  <IBAN>CH5600781617516712573</IBAN>
+                </Id>
+              </CdtrAcct>
+            </RltdPties>
+            <RmtInf>
+              <Ustrd>SALAIRE DUPONT JEAN mars 2026</Ustrd>
+            </RmtInf>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+
+      <!-- TX 5 : DBIT 185 — Migros (pas de contrepartie IBAN) -->
+      <Ntry>
+        <Amt Ccy="CHF">185.80</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt>
+          <Dt>2026-03-15</Dt>
+        </BookgDt>
+        <ValDt>
+          <Dt>2026-03-15</Dt>
+        </ValDt>
+        <NtryDtls>
+          <TxDtls>
+            <Refs>
+              <AcctSvcrRef>REF-2026-0005</AcctSvcrRef>
+            </Refs>
+            <RltdPties>
+              <Cdtr>
+                <Nm>MIGROS GENEVE PLAINPALAIS</Nm>
+              </Cdtr>
+            </RltdPties>
+            <RmtInf>
+              <Ustrd>Paiement carte 15.03.2026</Ustrd>
+            </RmtInf>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>
