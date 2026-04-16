@@ -202,7 +202,7 @@ export function PmWizardVs() {
 
       {/* Main */}
       <main className="flex-1 overflow-auto">
-        <div className="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="max-w-6xl mx-auto px-6 py-8 pb-48 lg:pb-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
           <motion.div
             key={currentStep}
             initial={{ opacity: 0, x: 16 }}
@@ -248,8 +248,8 @@ export function PmWizardVs() {
             )}
           </motion.div>
 
-          {/* Side-panel */}
-          <aside className="lg:col-span-1">
+          {/* Side-panel summary — sticky bottom mobile, side panel desktop */}
+          <aside className="lg:col-span-1 fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto bg-surface/95 lg:bg-transparent backdrop-blur-sm lg:backdrop-blur-none border-t lg:border-t-0 border-border p-4 lg:p-0 max-h-[40vh] lg:max-h-none overflow-y-auto z-10 lg:z-auto">
             <PmWizardSummaryVs draft={draft} />
           </aside>
         </div>
