@@ -307,11 +307,11 @@ export function Workspace() {
       {/* Canvas hero */}
       <main className="flex-1 relative min-h-0 overflow-hidden">
         {/* Fallback mobile — canvas inutilisable sur petit écran */}
-        <div className="md:hidden flex flex-col items-center justify-center h-full gap-5 p-8 text-center">
-          <Network className="w-12 h-12 text-muted" />
-          <div className="space-y-2">
-            <p className="text-lg font-semibold text-ink">Vue comptable</p>
-            <p className="text-sm text-muted leading-relaxed max-w-xs">Utilisez le menu ci-dessus pour accéder aux déclarations, à la comptabilité et aux outils IA.</p>
+        <div className="md:hidden flex flex-col items-center justify-center h-full gap-4 p-6 text-center">
+          <Network className="w-10 h-10 text-muted" />
+          <div>
+            <p className="text-sm font-medium text-ink mb-1">Vue comptable</p>
+            <p className="text-xs text-muted leading-relaxed">Utilisez le menu ci-dessus pour accéder aux déclarations, à la comptabilité et aux outils IA.</p>
           </div>
         </div>
 
@@ -323,18 +323,18 @@ export function Workspace() {
         {/* Floating agents indicator — desktop seulement */}
         <div className="hidden md:flex absolute top-3 left-4 card-elevated px-3 py-2 items-center gap-2 pointer-events-none z-10">
           <Activity className="w-3.5 h-3.5 text-accent" />
-          <span className="text-xs font-medium uppercase tracking-wider text-muted">Agents</span>
-          <div className="flex gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-success" title="classifier" />
-            <span className="w-2 h-2 rounded-full bg-success" title="reasoning" />
-            <span className="w-2 h-2 rounded-full bg-success" title="tva" />
+          <span className="text-2xs uppercase tracking-wider text-muted">Agents</span>
+          <div className="flex gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-success" title="classifier" />
+            <span className="w-1.5 h-1.5 rounded-full bg-success" title="reasoning" />
+            <span className="w-1.5 h-1.5 rounded-full bg-success" title="tva" />
           </div>
         </div>
 
         {/* Hint Cmd+K — desktop seulement, pas sur mobile */}
         <div className="hidden md:flex absolute top-3 right-4 card-elevated px-3 py-2 items-center gap-2 pointer-events-none z-10">
           <Command className="w-3.5 h-3.5 text-muted" />
-          <span className="text-xs text-muted">Cmd+K pour interroger l'IA</span>
+          <span className="text-2xs text-muted">Cmd+K pour interroger l'IA</span>
         </div>
       </main>
 
