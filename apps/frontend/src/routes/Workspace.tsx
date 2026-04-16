@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   Activity,
@@ -15,6 +15,8 @@ import {
   Briefcase,
   Shield,
   Lightbulb,
+  Users,
+  ChevronDown,
 } from 'lucide-react';
 import { lexa } from '@/api/lexa';
 import { useActiveCompany, useCompaniesStore } from '@/stores/companiesStore';
@@ -28,13 +30,58 @@ import { FiscalTimeline } from '@/components/timeline/FiscalTimeline';
 export function Workspace() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const company = useActiveCompany();
   const clear = useCompaniesStore((s) => s.clear);
   const authLogout = useAuthStore((s) => s.logout);
+  const setToken = useAuthStore((s) => s.setToken);
+  const activeTenantId = useAuthStore((s) => s.activeTenantId);
   const setChatOpen = useChatStore((s) => s.setOpen);
 
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const [cursorDate, setCursorDate] = useState<Date>(new Date());
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [switchingTenant, setSwitchingTenant] = useState(false);
+  const switcherRef = useRef<HTMLDivElement>(null);
+
+  // S32 : Charger les clients fiduciaires (si membership multiple)
+  const { data: fiduClients } = useQuery({
+    queryKey: ['fiduciary-clients'],
+    queryFn: lexa.listFiduciaryClients,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  const hasMultipleClients = fiduClients && fiduClients.length > 1;
+
+  // Fermer le dropdown si click dehors
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (switcherRef.current && !switcherRef.current.contains(e.target as Node)) {
+        setSwitcherOpen(false);
+      }
+    };
+    if (switcherOpen) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [switcherOpen]);
+
+  const handleSwitchTenant = async (tenantId: string) => {
+    if (tenantId === activeTenantId || switchingTenant) return;
+    setSwitchingTenant(true);
+    setSwitcherOpen(false);
+    try {
+      const { token, activeTenantId: newTenantId } = await lexa.switchTenant(tenantId);
+      setToken(token, newTenantId);
+      // Invalider toutes les queries pour re-fetch avec le nouveau tenant
+      await queryClient.invalidateQueries();
+      // Reload page pour vider tout le state React qui dépend du tenant
+      window.location.reload();
+    } catch (err) {
+      console.error('[Workspace] switch-tenant failed:', err);
+    } finally {
+      setSwitchingTenant(false);
+    }
+  };
 
   const health = useQuery({ queryKey: ['health'], queryFn: lexa.health });
 
@@ -91,6 +138,43 @@ export function Workspace() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* S32 : Switcher tenant fiduciaire — visible seulement si multi-clients */}
+          {hasMultipleClients && (
+            <div className="relative" ref={switcherRef}>
+              <button
+                onClick={() => setSwitcherOpen((o) => !o)}
+                disabled={switchingTenant}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-elevated border border-accent/40 text-accent hover:bg-accent/10 transition-colors text-xs"
+                title="Changer de client"
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">
+                  {fiduClients?.find((c) => c.tenantId === activeTenantId)?.tenantName ?? 'Client'}
+                </span>
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
+              {switcherOpen && (
+                <div className="absolute right-0 top-full mt-1 w-52 rounded-lg border border-border bg-surface shadow-lg z-50 py-1">
+                  <div className="px-3 py-1.5 text-2xs text-muted uppercase tracking-wide border-b border-border mb-1">
+                    Clients fiduciaires
+                  </div>
+                  {fiduClients?.map((client) => (
+                    <button
+                      key={client.tenantId}
+                      onClick={() => handleSwitchTenant(client.tenantId)}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-elevated flex items-center justify-between ${
+                        client.tenantId === activeTenantId ? 'text-accent font-medium' : 'text-ink'
+                      }`}
+                    >
+                      <span className="truncate">{client.tenantName ?? client.tenantId.slice(0, 8)}</span>
+                      <span className="text-2xs text-muted ml-2 flex-shrink-0">{client.role}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-elevated border border-border">
             <span
               className={`w-1.5 h-1.5 rounded-full ${

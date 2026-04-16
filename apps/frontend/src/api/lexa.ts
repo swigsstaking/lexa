@@ -419,6 +419,18 @@ export const lexa = {
         disclaimer: string;
       }>('/simulate/dividend-vs-salary', input)
       .then((r) => r.data),
+
+  // ── Fiduciary — mode multi-clients (S32) ──────────────────────────────────
+
+  listFiduciaryClients: () =>
+    api
+      .get<{ clients: Array<{ tenantId: string; role: string; tenantName: string | null; addedAt: string }> }>('/fiduciary/clients')
+      .then((r) => r.data.clients),
+
+  switchTenant: (tenantId: string) =>
+    api
+      .post<{ token: string; activeTenantId: string }>('/auth/switch-tenant', { tenantId })
+      .then((r) => r.data),
 };
 
 export type TaxpayerDraft = {
