@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { query } from "../db/postgres.js";
+import { queryAsTenant } from "../db/postgres.js";
 import { eventStore } from "../events/EventStore.js";
 import type { EventRecord } from "../events/types.js";
 import type { FilledForm, FilledVsPpForm } from "./types.js";
@@ -43,7 +43,8 @@ export async function findExistingDeclaration(params: {
   const values: unknown[] = [tenantId, formId, version, method, year];
   if (quarter) values.push(quarter);
 
-  const result = await query<DeclarationEventRow>(
+  const result = await queryAsTenant<DeclarationEventRow>(
+    tenantId,
     `SELECT id::text, stream_id, payload
      FROM events
      WHERE tenant_id = $1
@@ -127,7 +128,8 @@ export async function findExistingVsPpDeclaration(params: {
   year: number;
 }): Promise<{ streamId: string; eventId: number } | null> {
   const { tenantId, formId, version, year } = params;
-  const result = await query<{ id: string; stream_id: string }>(
+  const result = await queryAsTenant<{ id: string; stream_id: string }>(
+    tenantId,
     `SELECT id::text, stream_id
      FROM events
      WHERE tenant_id = $1

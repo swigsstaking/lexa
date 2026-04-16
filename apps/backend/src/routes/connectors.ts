@@ -3,7 +3,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { eventStore } from "../events/EventStore.js";
 import { classifierAgent } from "../agents/classifier/ClassifierAgent.js";
-import { query } from "../db/postgres.js";
+import { query, queryAsTenant } from "../db/postgres.js";
 import { requireHmac } from "../middleware/requireHmac.js";
 import { config } from "../config/index.js";
 import { proWebhookClient } from "../services/ProWebhookClient.js";
@@ -144,7 +144,8 @@ connectorsRouter.post("/bank/ingest", requireHmac, async (req, res) => {
         metadata: { durationMs: classification.durationMs },
       });
 
-      await query(
+      await queryAsTenant(
+        tenantId,
         `INSERT INTO ai_decisions
          (event_id, tenant_id, agent, model, confidence, reasoning, citations, alternatives, duration_ms)
          VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9)`,

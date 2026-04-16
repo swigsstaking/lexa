@@ -3,7 +3,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { eventStore } from "../events/EventStore.js";
 import { classifierAgent } from "../agents/classifier/ClassifierAgent.js";
-import { query } from "../db/postgres.js";
+import { query, queryAsTenant } from "../db/postgres.js";
 
 export const transactionsRouter = Router();
 
@@ -90,7 +90,8 @@ transactionsRouter.post("/", async (req, res) => {
     });
 
     // Step 4 — persist ai_decision trace for audit
-    await query(
+    await queryAsTenant(
+      tenantId,
       `INSERT INTO ai_decisions
        (event_id, tenant_id, agent, model, confidence, reasoning, citations, alternatives, duration_ms)
        VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9)`,
@@ -184,7 +185,8 @@ transactionsRouter.get("/:streamId", async (req, res) => {
  * Basic stats: event count per type.
  */
 transactionsRouter.get("/stats/summary", async (req, res) => {
-  const result = await query<{ type: string; count: string }>(
+  const result = await queryAsTenant<{ type: string; count: string }>(
+    req.tenantId,
     `SELECT type, COUNT(*)::text AS count
      FROM events
      WHERE tenant_id = $1

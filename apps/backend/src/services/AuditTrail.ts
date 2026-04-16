@@ -8,7 +8,7 @@
  * LTVA art. 70 : conservation TVA 10 ans
  */
 
-import { query } from "../db/postgres.js";
+import { queryAsTenant } from "../db/postgres.js";
 
 export type AuditTrailEvent = {
   eventId: number;
@@ -61,13 +61,14 @@ export async function buildAuditTrail(
   const endDate = `${year}-12-31`;
 
   // 1. Récupère tous les events de l'année
-  const eventsResult = await query<{
+  const eventsResult = await queryAsTenant<{
     id: number;
     stream_id: string;
     occurred_at: string;
     type: string;
     payload: Record<string, unknown>;
   }>(
+    tenantId,
     `SELECT id, stream_id, occurred_at, type, payload
      FROM events
      WHERE tenant_id = $1
@@ -78,7 +79,8 @@ export async function buildAuditTrail(
   );
 
   // 2. Récupère toutes les ai_decisions de l'année (via events JOIN)
-  const decisionsResult = await query<{
+  // Un seul queryAsTenant suffit — RLS s'applique aux deux tables du JOIN
+  const decisionsResult = await queryAsTenant<{
     id: string;
     event_id: number;
     agent: string;
@@ -89,6 +91,7 @@ export async function buildAuditTrail(
     alternatives: Array<{ account: string; confidence: number }>;
     created_at: string;
   }>(
+    tenantId,
     `SELECT ad.id, ad.event_id, ad.agent, ad.model, ad.confidence::text,
             ad.reasoning, ad.citations, ad.alternatives, ad.created_at::text
      FROM ai_decisions ad

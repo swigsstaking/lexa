@@ -1,4 +1,4 @@
-import { query } from "../db/postgres.js";
+import { queryAsTenant } from "../db/postgres.js";
 import type { LexaEvent, EventRecord } from "./types.js";
 
 type EventRow = {
@@ -37,14 +37,16 @@ export class EventStore {
   }): Promise<EventRecord> {
     const { tenantId, streamId, event, metadata = {}, occurredAt = new Date() } = params;
 
-    const nextSeqResult = await query<{ next_seq: string }>(
+    const nextSeqResult = await queryAsTenant<{ next_seq: string }>(
+      tenantId,
       `SELECT COALESCE(MAX(sequence), 0) + 1 AS next_seq
        FROM events WHERE tenant_id = $1 AND stream_id = $2`,
       [tenantId, streamId],
     );
     const sequence = Number(nextSeqResult.rows[0]?.next_seq ?? 1);
 
-    const insertResult = await query<EventRow>(
+    const insertResult = await queryAsTenant<EventRow>(
+      tenantId,
       `INSERT INTO events (tenant_id, stream_id, sequence, type, payload, metadata, occurred_at)
        VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7)
        RETURNING *`,
@@ -68,7 +70,8 @@ export class EventStore {
     fromSequence?: number;
   }): Promise<EventRecord[]> {
     const { tenantId, streamId, fromSequence = 0 } = params;
-    const result = await query<EventRow>(
+    const result = await queryAsTenant<EventRow>(
+      tenantId,
       `SELECT * FROM events
        WHERE tenant_id = $1 AND stream_id = $2 AND sequence >= $3
        ORDER BY sequence ASC`,
@@ -83,7 +86,8 @@ export class EventStore {
     limit?: number;
   }): Promise<EventRecord[]> {
     const { tenantId, type, limit = 100 } = params;
-    const result = await query<EventRow>(
+    const result = await queryAsTenant<EventRow>(
+      tenantId,
       `SELECT * FROM events
        WHERE tenant_id = $1 AND type = $2
        ORDER BY occurred_at DESC
@@ -94,7 +98,8 @@ export class EventStore {
   }
 
   async count(tenantId: string): Promise<number> {
-    const result = await query<{ count: string }>(
+    const result = await queryAsTenant<{ count: string }>(
+      tenantId,
       `SELECT COUNT(*)::text AS count FROM events WHERE tenant_id = $1`,
       [tenantId],
     );
