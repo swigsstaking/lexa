@@ -3,35 +3,157 @@
  *
  * Stage 1 : Extraction texte brut
  *   - PDF avec texte embarqué → pdf-parse (rapide, fiable)
- *   - Image (JPEG/PNG) ou PDF scanné → qwen3-vl-ocr via Ollama (vision model)
+ *   - PDF scanné / pdfkit / texte court → conversion PNG via pdfjs-dist + @napi-rs/canvas
+ *     puis qwen3-vl-ocr via Ollama (vision model)
+ *   - Image (JPEG/PNG) → direct qwen3-vl-ocr via Ollama
  *
  * Stage 2 : Classification + extraction champs structurés
  *   - qwen3.5:9b-optimized via Ollama (format JSON strict)
  *
  * Session 23 — pipeline OCR initial.
+ * Session 25 — fix: PDF → PNG via pdfjs-dist + @napi-rs/canvas (plus de pdftoppm requis)
+ *              Corrige bug "bad XRef entry" (pdfkit) + bug "Ollama 500 sur PDF brut".
  */
 
 import pdfParse from "pdf-parse";
 import axios from "axios";
+import { createCanvas } from "@napi-rs/canvas";
 import { config } from "../config/index.js";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
 const OLLAMA_URL = config.OLLAMA_URL;
 const VISION_MODEL = "qwen3-vl-ocr";
 const STRUCTURE_MODEL = "qwen3.5:9b-optimized";
+
+// Chemin vers les polices standard pdfjs-dist (résolu au runtime)
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/**
+ * Convertit la première page d'un PDF en PNG via pdfjs-dist + @napi-rs/canvas.
+ * Solution pure Node.js — ne nécessite pas pdftoppm/poppler système.
+ *
+ * Corrige bug S23 :
+ *  - pdf-parse@1.1.1 incompatible avec pdfkit (bad XRef entry)
+ *  - Ollama rejette les PDF bruts en base64 avec HTTP 500
+ */
+async function pdfToPng(pdfBuffer: Buffer): Promise<Buffer> {
+  // Import dynamique pour éviter l'initialisation ESM au top-level
+  const { getDocument } = await import(
+    /* webpackIgnore: true */ "pdfjs-dist/legacy/build/pdf.mjs" as string
+  );
+
+  // Chercher les polices standard dans node_modules pdfjs-dist
+  // On cherche depuis le répertoire des sources OU node_modules
+  let standardFontDataUrl: string | undefined;
+  try {
+    // Chercher pdfjs-dist dans node_modules relatif au projet
+    const possiblePaths = [
+      join(__dirname, "../../../node_modules/pdfjs-dist/standard_fonts/"),
+      join(__dirname, "../../../../node_modules/pdfjs-dist/standard_fonts/"),
+      "/home/swigs/lexa-backend/node_modules/pdfjs-dist/standard_fonts/",
+    ];
+    for (const p of possiblePaths) {
+      try {
+        const { existsSync } = await import("node:fs");
+        if (existsSync(p)) {
+          standardFontDataUrl = p;
+          break;
+        }
+      } catch {
+        // continuer
+      }
+    }
+  } catch {
+    // Sans fonts, il y a des warnings mais ça fonctionne quand même
+  }
+
+  const pdf = await (getDocument as CallableFunction)({
+    data: new Uint8Array(pdfBuffer),
+    useWorkerFetch: false,
+    isEvalSupported: false,
+    disableWorker: true,
+    ...(standardFontDataUrl ? { standardFontDataUrl } : {}),
+  }).promise;
+
+  const page = await (pdf as { getPage: (n: number) => Promise<unknown> }).getPage(1);
+  // Scale 2.0 ≈ 200 dpi — lisible pour l'OCR vision
+  const viewport = (
+    page as { getViewport: (opts: { scale: number }) => { width: number; height: number } }
+  ).getViewport({ scale: 2.0 });
+
+  const canvas = createCanvas(
+    Math.ceil(viewport.width),
+    Math.ceil(viewport.height),
+  );
+  const context = canvas.getContext("2d");
+
+  await (
+    page as {
+      render: (opts: { canvasContext: unknown; viewport: unknown }) => { promise: Promise<void> };
+    }
+  ).render({ canvasContext: context, viewport }).promise;
+
+  return canvas.toBuffer("image/png");
+}
+
+/**
+ * Sérialise récursivement une valeur JSON en texte plat.
+ * Utilisé par parseOcrModelOutput pour aplatir les JSON imbriqués de qwen3-vl-ocr.
+ *
+ * Exemple :
+ *   { "Rémunération": { "Salaire brut": "CHF 85'000.00" } }
+ *   → "Rémunération:\n  Salaire brut: CHF 85'000.00"
+ */
+function flattenJsonToText(obj: unknown, indent = 0): string {
+  if (obj === null || obj === undefined) return "";
+  if (typeof obj === "string") return obj;
+  if (typeof obj === "number" || typeof obj === "boolean") return String(obj);
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => flattenJsonToText(item, indent)).join("\n");
+  }
+
+  if (typeof obj === "object") {
+    const prefix = "  ".repeat(indent);
+    return Object.entries(obj as Record<string, unknown>)
+      .map(([k, v]) => {
+        if (v === null || v === undefined || v === "") {
+          return `${prefix}${k}`;
+        }
+        if (typeof v === "object") {
+          return `${prefix}${k}:\n${flattenJsonToText(v, indent + 1)}`;
+        }
+        return `${prefix}${k}: ${String(v)}`;
+      })
+      .join("\n");
+  }
+
+  return String(obj);
+}
 
 /**
  * Parser robuste pour la sortie non-déterministe de qwen3-vl-ocr.
  * Gère les formats observés :
  *   1. {"text": "..."} — texte dans champ text
  *   2. {"text": [...]} — tableau de lignes dans champ text
- *   3. {"ligne1": "", "ligne2": ""} — clés = lignes OCR, valeurs vides
- *   4. Texte brut sans JSON
+ *   3. {"section": {"champ": "valeur"}} — JSON imbriqué (cas fréquent qwen3-vl-ocr)
+ *   4. {"ligne1": "", "ligne2": ""} — clés = lignes OCR, valeurs vides
+ *   5. Texte brut sans JSON
+ *
+ * Session 25 : ajout flattenJsonToText pour cas 3 (JSON imbriqué multi-niveaux).
  */
 function parseOcrModelOutput(content: string): string {
   if (!content.trim()) return "";
 
+  // Nettoyer les blocs markdown que certains modèles insèrent
+  const cleaned = content
+    .replace(/^```json\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+
   try {
-    const parsed = JSON.parse(content) as Record<string, unknown>;
+    const parsed = JSON.parse(cleaned) as Record<string, unknown>;
 
     // Cas 1 & 2 : {"text": ...}
     if ("text" in parsed) {
@@ -43,24 +165,16 @@ function parseOcrModelOutput(content: string): string {
       }
     }
 
-    // Cas 3 : {"ligne1": "", "ligne2": ""} — toutes les clés = lignes OCR
+    // Cas 3 & 4 : JSON arbitraire (imbriqué ou plat) → aplatir récursivement
     const keys = Object.keys(parsed);
     if (keys.length > 0) {
-      // Vérifier que les valeurs sont toutes vides ou courtes (c'est du format OCR-clés)
-      const allValuesEmpty = keys.every(
-        (k) => parsed[k] === "" || parsed[k] === null || parsed[k] === undefined,
-      );
-      if (allValuesEmpty) {
-        return keys.join("\n");
-      }
-      // Si les valeurs ont du contenu, concaténer clés + valeurs
-      return keys.map((k) => `${k}: ${parsed[k] ?? ""}`).join("\n");
+      return flattenJsonToText(parsed);
     }
   } catch {
     // Pas de JSON valide — retourner le contenu brut
   }
 
-  return content;
+  return cleaned;
 }
 
 export type DocumentType =
@@ -90,22 +204,31 @@ async function extractRawText(
   confidence: number;
 }> {
   if (mimeType === "application/pdf") {
+    // Path 1 : PDF avec texte embarqué (pdfkit/Word/LibreOffice avec embed)
     try {
       const parsed = await pdfParse(buffer);
-      if (parsed.text?.trim().length > 20) {
+      if (parsed.text?.trim().length > 50) {
+        console.log("[ocr] pdf-parse: text extracted, length:", parsed.text.trim().length);
         return { text: parsed.text, method: "pdf-parse", confidence: 0.95 };
       }
-      // Texte trop court → PDF scanné, fallback vision
-      console.log("[ocr] pdf-parse: text too short, falling back to vision");
+      console.log("[ocr] pdf-parse: text too short (<50 chars), will convert to PNG");
     } catch (err) {
+      // Bug S23 : pdf-parse@1.1.1 incompatible avec pdfkit → "bad XRef entry"
+      // Solution : convertir le PDF en PNG via pdfjs-dist + @napi-rs/canvas
       console.warn(
-        "[ocr] pdf-parse failed, falling back to vision:",
+        "[ocr] pdf-parse failed (probably pdfkit-generated PDF), converting to PNG:",
         (err as Error).message,
       );
     }
+
+    // Path 2 : PDF scanné OU pdfkit OU texte trop court → convertir en PNG
+    console.log("[ocr] converting PDF to PNG via pdfjs-dist...");
+    buffer = await pdfToPng(buffer);
+    mimeType = "image/png";
+    console.log("[ocr] PDF→PNG conversion done, PNG size:", buffer.length, "bytes");
   }
 
-  // Image ou PDF scanné : qwen3-vl-ocr
+  // Image directe (JPEG/PNG) ou PNG issu du preprocessing PDF
   // IMPORTANT: images[] attend du base64 brut sans prefix "data:image/..."
   const base64 = buffer.toString("base64");
   const { data } = await axios.post(
@@ -135,6 +258,7 @@ async function extractRawText(
   console.log("[ocr] qwen3-vl-ocr raw content length:", rawContent.length);
 
   const parsedText = parseOcrModelOutput(rawContent);
+  // method = "qwen3-vl-ocr" qu'on soit passé par une image directe ou via PDF→PNG preprocessing
   return { text: parsedText, method: "qwen3-vl-ocr", confidence: 0.85 };
 }
 
