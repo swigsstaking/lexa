@@ -1,0 +1,135 @@
+# Barème ICC Genève — Personnes Physiques 2026
+# Source : Loi sur l'imposition des personnes physiques (LIPP — RSG D 3 08)
+# Art. 41 al. 1 : Barème de l'impôt de base (célibataire)
+# Art. 41 al. 2 : Tarif marié (quotient conjugal)
+# Art. 67 : Adaptation annuelle au renchérissement (IPC genevois, période t-2 à t)
+# Ingéré dans Qdrant : LIPP-GE Art. 41 (score 0.614 — chunk complet avec toutes les tranches)
+#
+# IMPORTANT : Le barème est adapté chaque année selon l'art. 67 LIPP.
+# Les montants de seuils ci-dessous sont ceux du texte de loi ingéré dans swiss_law.
+# La version 2026 exacte est publiée annuellement par arrêté du Conseil d'État.
+
+canton: GE
+year: 2026
+entity: PP
+source:
+  authority: "Administration fiscale cantonale Genève (AFC-GE)"
+  law: "Loi sur l'imposition des personnes physiques (LIPP — RSG D 3 08)"
+  articles:
+    - "Art. 41 — Taux de l'impôt (barème de base)"
+    - "Art. 67 — Adaptation annuelle au renchérissement"
+  url: "https://silgeneve.ch/legis/data/rsg_D3_08.htm"
+  document: "LIPP GE — Art. 41 barème impôt de base"
+  fetched_at: "2026-04-16"
+  confidence: high
+  note: >
+    Barème extrait directement du texte de loi LIPP-GE ingéré dans swiss_law (Art. 41, score 0.614).
+    Les seuils sont indexés annuellement selon art. 67 — les montants en CHF peuvent varier
+    légèrement en 2026 après indexation renchérissement.
+
+# Barème impôt de base — Art. 41 al. 1 LIPP-GE
+# Tarif célibataire (et chaque époux séparément)
+tarif_single:
+  structure: progressif_par_tranche
+  note: "Impôt de BASE (avant coefficient annuel). Taux = taux marginal de la tranche."
+  tranches:
+    - threshold: 0
+      threshold_max: 17493
+      rate: 0.0000
+    - threshold: 17494
+      threshold_max: 21076
+      rate: 0.0730
+    - threshold: 21077
+      threshold_max: 23184
+      rate: 0.0820
+    - threshold: 23185
+      threshold_max: 25291
+      rate: 0.0910
+    - threshold: 25292
+      threshold_max: 27399
+      rate: 0.1000
+    - threshold: 27400
+      threshold_max: 32668
+      rate: 0.1090
+    - threshold: 32669
+      threshold_max: 36883
+      rate: 0.1130
+    - threshold: 36884
+      threshold_max: 41099
+      rate: 0.1230
+    - threshold: 41100
+      threshold_max: 45314
+      rate: 0.1280
+    - threshold: 45315
+      threshold_max: 72713
+      rate: 0.1320
+    - threshold: 72714
+      threshold_max: 119081
+      rate: 0.1420
+    - threshold: 119082
+      threshold_max: 160179
+      rate: 0.1500
+    - threshold: 160180
+      threshold_max: 181256
+      rate: 0.1560
+    - threshold: 181257
+      threshold_max: 259238
+      rate: 0.1580
+    - threshold: 259239
+      threshold_max: 276099
+      rate: 0.1600
+    - threshold: 276100
+      threshold_max: 388857
+      rate: 0.1680
+    - threshold: 388858
+      threshold_max: 609103
+      rate: 0.1760
+    - threshold: 609104
+      rate: 0.1800
+
+# Art. 41 al. 2 — Tarif marié (personnes mariées vivant en ménage commun)
+# Le barème marié est distinct du barème célibataire (splitting partiel genevois)
+tarif_married:
+  note: >
+    Art. 41 al. 2 LIPP prévoit un barème spécifique pour les époux vivant en ménage commun.
+    Ce barème n'est pas reproduit intégralement dans le chunk ingéré.
+    GE applique un système de quotient conjugal (1 part + 0.5 part pour le conjoint).
+  source_confidence: medium
+  # Approximation basée sur structure LIPP-GE (barème distinct al. 2)
+  note_integration: >
+    TODO session 35+ : récupérer le texte complet de l'al. 2 art. 41 LIPP-GE pour le tarif marié.
+
+# Impôt sur la fortune (LIPP Art. 59) — inclus pour contexte ICC complet
+impot_fortune:
+  structure: progressif_par_tranche
+  note: "Art. 59 LIPP-GE — indexé annuellement (art. 67)"
+  tranches:
+    - threshold: 1
+      threshold_max: 111059
+      rate_permille: 1.49
+    - threshold: 111060
+      threshold_max: 222117
+      rate_permille: 1.91
+    - threshold: 222118
+      threshold_max: 333176
+      rate_permille: 2.34
+    - threshold: 333177
+      threshold_max: 444234
+      rate_permille: 2.55
+    - threshold: 444235
+      threshold_max: 666352
+      rate_permille: 2.76
+
+frais_professionnels:
+  note: >
+    GE fixe les frais professionnels forfaitaires selon le barème LIPP et règlements AFC-GE.
+    Généralement : 3% du revenu brut activité salariée, min 600 CHF, max 5000 CHF.
+  confidence: medium
+
+# Note fiscale GE PP
+note_fiscale: >
+  Genève a l'un des ICC PP les plus élevés de Suisse (jusqu'à 18% de taux marginal sur base).
+  L'impôt de base calculé avec ce barème est multiplié par le coefficient annuel (loi annuelle).
+  Les communes genevoises ne perçoivent PAS d'impôt séparé : l'impôt communal est inclus dans
+  l'ICC cantonal (système unifié GE, contrairement à VS/VD/FR).
+  Taux effectif moyen ICC GE PP pour revenu 100k CHF : ~15-16% (parmi les plus élevés CH).

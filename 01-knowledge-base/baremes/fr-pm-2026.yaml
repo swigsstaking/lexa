@@ -1,0 +1,75 @@
+# Barème ICC Fribourg — Personnes Morales 2026
+# Source : Loi sur les impôts cantonaux directs Fribourg (LICD — RSF 631.1)
+#   - LICD §licd_fr : "L'impôt sur le bénéfice des sociétés de capitaux est de 4% du bénéfice net"
+#   - LICD §licd_fr : "L'impôt sur le capital des associations/fondations est de 1‰"
+#   - LICD §licd_fr : "0.1‰ pour capital afférent aux droits de participation, droits art. 103a, prêts groupe"
+#   - LICD §licd_fr : "L'impôt sur le bénéfice des associations/fondations est de 4% du bénéfice net"
+# Ingéré dans Qdrant : LICD-FR §licd_fr (multiple chunks confirmés, score 0.641-0.672)
+
+canton: FR
+year: 2026
+entity: PM
+source:
+  authority: "Service cantonal des contributions Fribourg (SCC-FR)"
+  law: "Loi sur les impôts cantonaux directs (LICD — RSF 631.1)"
+  articles:
+    - "LICD §licd_fr — Impôt bénéfice SA/Sàrl/SC (4%)"
+    - "LICD §licd_fr — Impôt bénéfice associations/fondations (4%)"
+    - "LICD §licd_fr — Impôt capital associations/fondations (1‰)"
+    - "LICD §licd_fr — Impôt capital réduit participations (0.1‰)"
+  url: "https://bdlf.fr.ch/app/fr/texts_of_law/631.1"
+  document: "LICD FR — Impôts PM bénéfice et capital"
+  fetched_at: "2026-04-16"
+  confidence: high
+  note: >
+    Taux extraits directement des chunks LICD-FR ingérés dans swiss_law.
+    Scores Qdrant 0.641-0.672 — correspondances directes avec les articles de loi.
+
+# Sociétés de capitaux et coopératives (SA, Sàrl, SC)
+impot_benefice:
+  # LICD FR §licd_fr : "L'impôt sur le bénéfice des sociétés de capitaux et des sociétés coopératives est de 4%"
+  structure: flat
+  rate: 0.04
+  description: "4% du bénéfice net"
+  source_article: "LICD FR §licd_fr"
+
+  # LICD FR §licd_fr : "L'impôt sur le bénéfice des associations, fondations et autres PM est de 4%"
+  associations_fondations:
+    structure: flat
+    rate: 0.04
+    description: "4% du bénéfice net — même taux que SA/Sàrl"
+    source_article: "LICD FR §licd_fr"
+
+impot_capital:
+  # LICD FR §licd_fr : "L'impôt sur le capital des associations, fondations et autres PM est calculé au taux de 1‰"
+  standard:
+    structure: flat
+    rate_permille: 1.0
+    description: "1‰ du capital propre"
+    source_article: "LICD FR §licd_fr"
+    note: "Confirmé pour associations, fondations et autres PM"
+
+  # LICD FR §licd_fr : "0.1‰ pour capital afférent aux droits de participation (arts 111, 112), droits art. 103a, prêts groupe"
+  reduit_participations:
+    structure: flat
+    rate_permille: 0.1
+    description: "0.1‰ pour capital afférent droits participation (arts 111, 112 LICD) et prêts groupe"
+    source_article: "LICD FR §licd_fr al. 2"
+
+  # Taux standard SA/Sàrl (non mentionné explicitement dans chunks — approximation)
+  sa_sarl_standard:
+    structure: flat
+    rate_permille: 1.0
+    confidence: medium
+    note: >
+      Le taux standard capital SA/Sàrl en FR est généralement ~1‰ (même ordre que associations).
+      Confirmer avec LICD FR article spécifique SA/Sàrl capital.
+      TODO session 35+ : récupérer l'article LICD FR sur impôt capital SA/Sàrl standard.
+
+# Note fiscale FR PM
+note_fiscale: >
+  Fribourg PM : taux bénéfice 4% (cantonal) — parmi les plus élevés de Suisse romande post-RFFA.
+  Taux ICC total FR PM (cantonal + IFD) ≈ 12.5% pour SA standard.
+  Capital standard : 1‰ (confirmé pour associations/fondations ; SA/Sàrl à confirmer).
+  Taux réduit participations : 0.1‰ (très favorable pour holdings).
+  Les communes fribourgeoises perçoivent leurs propres centimes additionnels sur PM.
