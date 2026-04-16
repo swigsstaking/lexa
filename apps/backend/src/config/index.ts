@@ -56,6 +56,12 @@ const ConfigSchema = z.object({
   // Rate-limit auth login (configurable pour dev/qa, default conservateur en prod)
   AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(30),
   AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(15 * 60 * 1000),
+
+  // Redis + LLM Queue (session 37)
+  // Default: localhost — production runs Redis locally; use env var REDIS_HOST to override
+  REDIS_HOST: z.string().default("127.0.0.1"),
+  REDIS_PORT: z.coerce.number().int().positive().default(6379),
+  LLM_QUEUE_TIMEOUT_MS: z.coerce.number().int().positive().default(180000),
 });
 
 const parsed = ConfigSchema.safeParse(process.env);
