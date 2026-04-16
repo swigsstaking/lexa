@@ -1,13 +1,13 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 27 — 2026-04-16](2026-04-16-session-27.md) (wizard PM VS, PmPdfRenderer, migration 007, 26/26)
-**Prochaine session** : Session 28 — Clone wizard PM GE/VD/FR + barèmes ICC officiels
+**Dernière session** : [Session 28 — 2026-04-16](2026-04-16-session-28.md) (wizards PM GE/VD/FR, buildPmDeclaration factory, PmWizardCanton, 29/29)
+**Prochaine session** : Session 29 — Agent Clôture (clôture continue CO 959a-c, projections bilan + compte résultat depuis event store)
 
-> Session 27 a livré le wizard PM VS end-to-end (6 steps frontend + PmPdfRenderer + 4 routes backend + migration 007 company_drafts). qa-lexa **26/26** (25 baseline S26 + 1 fixture pm-vs-1-draft-submit). Score MVP estimé ~93%.
+> Session 28 a livré les 3 wizards PM manquants (GE/VD/FR) en généralisant PmWizardVs → PmWizardCanton. Factory buildPmDeclaration(canton) + makeSubmitRoute(canton). qa-lexa **29/29** (26 S27 + 3 fixtures pm-ge/vd/fr). Score MVP estimé ~94%.
 
 ---
 
-## Ce qui marche après session 27
+## Ce qui marche après session 28
 
 | Composant | Etat |
 |---|---|
@@ -29,45 +29,48 @@
 | **Routes PM** | |
 | `POST /agents/fiscal-pm/ask` | **OK session 26** |
 | `POST /forms/pm-declaration-vs` | OK session 26 (calcul structurel) |
-| **Routes PM draft (Session 27)** | |
-| `POST /companies/draft` | **OK session 27** |
-| `GET /companies/draft/:year?canton=VS` | **OK session 27** |
-| `PATCH /companies/draft/:year` | **OK session 27** (auto-save dot-path) |
-| `POST /companies/draft/:year/submit-vs` | **OK session 27** |
+| **Routes PM draft (Session 27-28)** | |
+| `POST /companies/draft` | OK session 27 |
+| `GET /companies/draft/:year?canton=*` | OK session 27 |
+| `PATCH /companies/draft/:year` | OK session 27 (auto-save dot-path) |
+| `POST /companies/draft/:year/submit-vs` | OK session 27 |
+| `POST /companies/draft/:year/submit-ge` | **OK session 28** |
+| `POST /companies/draft/:year/submit-vd` | **OK session 28** |
+| `POST /companies/draft/:year/submit-fr` | **OK session 28** |
 | **Migration** | |
-| `007_company_drafts.sql` | **OK session 27** (table prod) |
+| `007_company_drafts.sql` | OK session 27 (table prod) |
 | **PDF renderer PM** | |
-| `PmPdfRenderer.ts` | **OK session 27** (pdfBase64 length 5800) |
+| `PmPdfRenderer.ts` | OK session 27 (pdfBase64 length ~6000) |
 | **Frontend wizard PM** | |
-| `/pm/vs/:year` — 6 steps + download PDF | **OK session 27** |
-| Bouton "Déclaration PM" Workspace | **OK session 27** |
+| `/pm/vs/:year` — 6 steps + download PDF | OK session 27 |
+| `/pm/ge/:year` — PmWizardCanton | **OK session 28** |
+| `/pm/vd/:year` — PmWizardCanton | **OK session 28** |
+| `/pm/fr/:year` — PmWizardCanton | **OK session 28** |
+| Bouton "Déclaration PM" Workspace canton-aware | **OK session 28** |
 | **Modules PM** | |
-| `pmTaxEstimator.ts` (IFD 8.5%, ICC V1, capital V1) | OK session 26 |
-| `PmFormBuilder.ts` VS | OK session 26 |
+| `pmTaxEstimator.ts` (IFD 8.5%, ICC V1, capital affinés/canton) | OK session 28 |
+| `buildPmDeclaration(canton, params)` factory | **OK session 28** |
 | **Spark modèles (12)** | 11 précédents + lexa-fiscal-pm | OK session 26 |
 | **Tests auto** | |
-| qa-lexa **26/26** — +1 pm-vs-1-draft-submit | **OK session 27** |
+| qa-lexa **29/29** — +3 pm-ge/vd/fr-draft-submit | **OK session 28** |
 
 ---
 
-## Session 28 — Clone PM wizard GE/VD/FR + barèmes ICC officiels
+## Session 29 — Agent Clôture
 
 ### Objectif
-Étendre le wizard PM aux cantons GE, VD, FR (clones triviaux de PmWizardVs)
-et remplacer les barèmes ICC V1 approximatifs par les taux officiels.
+Implémenter l'agent de clôture continue (CO 959a-c) : projections bilan + compte résultat automatiques depuis l'event store. Passe vers la partie "comptabilité intelligente" du MVP.
 
-### Livrables
+### Livrables cibles
+1. **Event store comptable** : catégorisation automatique des transactions (CA, charges, provisions)
+2. **Bilan automatique** : actif/passif selon CO 959a depuis les events
+3. **Compte résultat** : résultat net automatique depuis les events
+4. **Agent clôture** : `POST /agents/cloture/ask` — réponses LIFD art. 58-68 + CO 959a-c
+5. **Frontend** : page `/cloture/:year` avec bilan temps réel
 
-1. **`PmWizardGe.tsx`, `PmWizardVd.tsx`, `PmWizardFr.tsx`** — clones PmWizardVs avec canton hardcodé
-2. **Routes `/pm/ge/:year`, `/pm/vd/:year`, `/pm/fr/:year`** dans App.tsx
-3. **`GePmFormBuilder.ts`, `VdPmFormBuilder.ts`, `FrPmFormBuilder.ts`** — clones PmFormBuilder avec canton
-4. **`GePmPdfRenderer.ts`, `VdPmPdfRenderer.ts`, `FrPmPdfRenderer.ts`** — clones PmPdfRenderer
-5. **Barèmes ICC officiels** : remplacer taux V1 (VS 8.5%, GE 14%, VD 13.5%, FR 10%) par taux officiels ingérés
-6. **+3 fixtures qa-lexa** → cible **29/29**
-
-### Exclus session 28
-- Pas de refactor wizard générique PP/PM (V2)
-- Pas de multi-société par tenant (session 33)
+### Exclus session 29
+- Pas de mapping OCR → PM fields (V2)
+- Pas de barèmes ICC PM officiels (TODO session 30+)
 
 ---
 
@@ -110,4 +113,4 @@ et remplacer les barèmes ICC V1 approximatifs par les taux officiels.
 22. **PmWizardVs hardcodé VS** : canton GE/VD/FR = sessions 28+. Ne pas généraliser prématurément.
 23. **qa-lexa rate-limit** : toujours lancer depuis http://localhost:3010 sur .59, jamais depuis Mac local
 
-**Dernière mise à jour** : 2026-04-16 (session 27 — wizard PM VS, PmPdfRenderer, migration 007, 26/26)
+**Dernière mise à jour** : 2026-04-16 (session 28 — wizards PM GE/VD/FR, PmWizardCanton générique, 29/29)
