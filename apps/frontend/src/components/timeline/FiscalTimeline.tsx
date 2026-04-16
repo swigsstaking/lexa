@@ -44,7 +44,7 @@ export function FiscalTimeline({ year, selected, onSelect }: Props) {
   };
 
   return (
-    <div className="h-[60px] bg-surface border-t border-border px-6 flex items-center gap-4 select-none">
+    <div className="h-[60px] bg-surface border-t border-border px-4 md:px-6 flex items-center gap-2 md:gap-4 select-none overflow-x-hidden flex-shrink-0">
       <div className="flex items-baseline gap-2">
         <span className="text-2xs uppercase tracking-wider text-muted">Exercice</span>
         <span className="text-sm font-semibold text-ink mono-num">{y}</span>
@@ -92,7 +92,7 @@ export function FiscalTimeline({ year, selected, onSelect }: Props) {
           ))}
         </div>
       </div>
-      <div className="flex items-center gap-2 text-2xs text-muted">
+      <div className="hidden sm:flex items-center gap-2 text-2xs text-muted flex-shrink-0">
         <span className="w-2 h-2 rounded-full bg-success/60" />
         <span>Passé</span>
         <span className="w-2 h-2 rounded-full bg-warning ml-2" />
