@@ -109,6 +109,15 @@ export type LexaEvent =
         ocrConfidence: number;
         extractedFields: Record<string, unknown>;
       };
+    }
+  | {
+      type: "DocumentAppliedToDraft";
+      payload: {
+        documentId: string;
+        draftId: string;
+        fiscalYear: number;
+        fieldsApplied: string[];
+      };
     };
 
 export type LexaEventType = LexaEvent["type"];
