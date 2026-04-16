@@ -75,7 +75,7 @@ async function loginQaUser(): Promise<void> {
 
 type TestResult = {
   id: string;
-  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm" | "cloture" | "ledger" | "audit";
+  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm" | "cloture" | "ledger" | "audit" | "conseiller" | "simulate";
   pass: boolean;
   latencyMs: number;
   reason?: string;
@@ -1533,6 +1533,103 @@ async function runAuditAgentAsk(): Promise<TestResult> {
   }
 }
 
+// ── Agent Conseiller (session 31) ─────────────────────────────────────────────
+
+/**
+ * Fixture: conseiller-1-agent-ask
+ * POST /agents/conseiller/ask — question rachat LPP Valais
+ * Assert: citations >= 1, answer mentions "LIFD" && ("33" || "LPP")
+ */
+async function runConseillerAgentAsk(): Promise<TestResult> {
+  const TEST_ID = "conseiller-1-agent-ask";
+  const started = Date.now();
+  try {
+    const { data } = await http.post("/agents/conseiller/ask", {
+      question: "Comment optimiser fiscalement 10000 CHF via rachat LPP pour un salarie Valais ?",
+      year: 2026,
+      context: { canton: "VS", entityType: "pp", currentIncome: 85000 },
+    });
+    const answerStr = typeof data.answer === "string" ? data.answer : "";
+    const citations = Array.isArray(data.citations) ? data.citations.length : 0;
+    const hasLifd = answerStr.toUpperCase().includes("LIFD") || answerStr.toLowerCase().includes("lifd");
+    const has33 = answerStr.includes("33") || answerStr.toLowerCase().includes("lpp");
+    const hasDisclaimer = !!data.disclaimer;
+    return {
+      id: TEST_ID,
+      kind: "conseiller",
+      pass: citations >= 1 && hasLifd && has33,
+      latencyMs: Date.now() - started,
+      citations,
+      agentDurationMs: data.durationMs,
+      reason:
+        citations === 0
+          ? "no citations"
+          : !hasLifd
+            ? "answer missing LIFD reference"
+            : !has33
+              ? "answer missing art.33 or LPP reference"
+              : !hasDisclaimer
+                ? "disclaimer absent"
+                : undefined,
+    };
+  } catch (err) {
+    return {
+      id: TEST_ID,
+      kind: "conseiller",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
+/**
+ * Fixture: simulate-1-rachat-lpp-vs
+ * POST /simulate/rachat-lpp — revenu 85k, rachat 10k, célibataire VS
+ * Assert: HTTP 200, savings > 1000, effectiveSavingsRate > 10, citation LIFD art.33
+ */
+async function runSimulateRachatLppVs(): Promise<TestResult> {
+  const TEST_ID = "simulate-1-rachat-lpp-vs";
+  const started = Date.now();
+  try {
+    const { data } = await http.post("/simulate/rachat-lpp", {
+      canton: "VS",
+      year: 2026,
+      currentIncome: 85000,
+      additionalLppPurchase: 10000,
+      civilStatus: "single",
+    });
+    const savings = typeof data.savings === "number" ? data.savings : 0;
+    const rate = typeof data.effectiveSavingsRate === "number" ? data.effectiveSavingsRate : 0;
+    const citation = data.citation as { law?: string; article?: string } | undefined;
+    const hasLifd33 = citation?.law === "LIFD" && citation?.article === "33";
+    const savingsOk = savings > 1000;
+    const rateOk = rate > 10;
+    return {
+      id: TEST_ID,
+      kind: "simulate",
+      pass: savingsOk && rateOk && hasLifd33,
+      latencyMs: Date.now() - started,
+      reason:
+        !savingsOk
+          ? `savings ${savings} < 1000`
+          : !rateOk
+            ? `effectiveSavingsRate ${rate} < 10%`
+            : !hasLifd33
+              ? `citation missing LIFD art.33 (got ${JSON.stringify(citation)})`
+              : undefined,
+    };
+  } catch (err) {
+    return {
+      id: TEST_ID,
+      kind: "simulate",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
 async function main(): Promise<void> {
   const started = Date.now();
   const results: TestResult[] = [];
@@ -1756,6 +1853,20 @@ async function main(): Promise<void> {
     `  ${rAuditAsk.pass ? "✓" : "✗"} ${rAuditAsk.id}  ${rAuditAsk.latencyMs}ms  cites=${rAuditAsk.citations ?? "?"}  ${rAuditAsk.reason ?? ""}`,
   );
 
+  // Agent Conseiller + Simulate rachat LPP (session 31)
+  console.log("\n[S31] Agent Conseiller + Simulate rachat LPP");
+  const rConseiller = await runConseillerAgentAsk();
+  results.push(rConseiller);
+  console.log(
+    `  ${rConseiller.pass ? "✓" : "✗"} ${rConseiller.id}  ${rConseiller.latencyMs}ms  cites=${rConseiller.citations ?? "?"}  ${rConseiller.reason ?? ""}`,
+  );
+
+  const rSimulateLpp = await runSimulateRachatLppVs();
+  results.push(rSimulateLpp);
+  console.log(
+    `  ${rSimulateLpp.pass ? "✓" : "✗"} ${rSimulateLpp.id}  ${rSimulateLpp.latencyMs}ms  ${rSimulateLpp.reason ?? ""}`,
+  );
+
   const totalMs = Date.now() - started;
   const pass = results.filter((r) => r.pass).length;
   const fail = results.length - pass;
@@ -1788,6 +1899,8 @@ async function main(): Promise<void> {
       cloture: { total: byKind("cloture").length, passed: byKind("cloture").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("cloture")) },
       ledger: { total: byKind("ledger").length, passed: byKind("ledger").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("ledger")) },
       audit: { total: byKind("audit").length, passed: byKind("audit").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("audit")) },
+      conseiller: { total: byKind("conseiller").length, passed: byKind("conseiller").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("conseiller")) },
+      simulate: { total: byKind("simulate").length, passed: byKind("simulate").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("simulate")) },
     },
     failures: results.filter((r) => !r.pass).map((r) => ({ id: r.id, kind: r.kind, reason: r.reason })),
     generatedAt: new Date().toISOString(),
