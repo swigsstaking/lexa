@@ -73,9 +73,15 @@ async function loginQaUser(): Promise<void> {
   }
 }
 
+// S32 — Fiduciary fixtures constants
+const FIDU_EMAIL_QA = "fiduciaire@lexa.test";
+const FIDU_PASSWORD_QA = "LexaFidu2026!";
+const DEMO_TENANT_QA = "00000000-0000-0000-0000-000000000099";
+const ACME_TENANT_QA = "00000000-0000-0000-0000-000000000101";
+
 type TestResult = {
   id: string;
-  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm" | "cloture" | "ledger" | "audit" | "conseiller" | "simulate";
+  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm" | "cloture" | "ledger" | "audit" | "conseiller" | "simulate" | "fiduciary";
   pass: boolean;
   latencyMs: number;
   reason?: string;
@@ -1630,6 +1636,113 @@ async function runSimulateRachatLppVs(): Promise<TestResult> {
   }
 }
 
+// ── S32 Fixtures fiduciaires ───────────────────────────────────────────────
+
+/**
+ * fiduciary-1-switch-tenant
+ * Login fiduciaire → list 2 clients → switch demo → bilan 228k
+ */
+async function runFiduciarySwitch(): Promise<TestResult> {
+  const TEST_ID = "fiduciary-1-switch-tenant";
+  const started = Date.now();
+  try {
+    // 1. Login fiduciaire
+    const loginRes = await http.post<{ token: string; user?: { tenantId?: string } }>("/auth/login", {
+      email: FIDU_EMAIL_QA,
+      password: FIDU_PASSWORD_QA,
+    });
+    const fiduToken = loginRes.data.token;
+    if (!fiduToken) {
+      return { id: TEST_ID, kind: "fiduciary", pass: false, latencyMs: Date.now() - started, reason: "login failed: no token" };
+    }
+
+    // Decoder memberships du JWT
+    let memberships: string[] = [];
+    try {
+      const payload = JSON.parse(Buffer.from(fiduToken.split(".")[1]!, "base64url").toString()) as { memberships?: string[] };
+      memberships = payload.memberships ?? [];
+    } catch { /* ignore */ }
+
+    if (memberships.length < 2) {
+      return { id: TEST_ID, kind: "fiduciary", pass: false, latencyMs: Date.now() - started, reason: `JWT memberships.length=${memberships.length} < 2` };
+    }
+
+    // 2. GET /fiduciary/clients avec token fiduciaire
+    const clientsRes = await http.get<{ clients: Array<{ tenantId: string; role: string }> }>("/fiduciary/clients", {
+      headers: { Authorization: `Bearer ${fiduToken}` },
+    });
+    const clients = clientsRes.data.clients;
+    if (clients.length !== 2) {
+      return { id: TEST_ID, kind: "fiduciary", pass: false, latencyMs: Date.now() - started, reason: `clients.length=${clients.length} !== 2` };
+    }
+
+    // 3. POST /auth/switch-tenant vers demo
+    const switchRes = await http.post<{ token: string; activeTenantId: string }>("/auth/switch-tenant",
+      { tenantId: DEMO_TENANT_QA },
+      { headers: { Authorization: `Bearer ${fiduToken}` } },
+    );
+    const newToken = switchRes.data.token;
+    const newActiveTenantId = switchRes.data.activeTenantId;
+    if (newActiveTenantId !== DEMO_TENANT_QA) {
+      return { id: TEST_ID, kind: "fiduciary", pass: false, latencyMs: Date.now() - started, reason: `activeTenantId=${newActiveTenantId} !== demo` };
+    }
+
+    // 4. GET /ledger/balance-sheet/2026 avec nouveau token → doit avoir assets > 0
+    const balanceRes = await http.get<{ assets: Array<{ balance: number }> }>("/ledger/balance-sheet/2026", {
+      headers: { Authorization: `Bearer ${newToken}` },
+    });
+    const totalAssets = balanceRes.data.assets?.reduce((s, a) => s + (a.balance ?? 0), 0) ?? 0;
+    if (totalAssets < 100000) {
+      return { id: TEST_ID, kind: "fiduciary", pass: false, latencyMs: Date.now() - started, reason: `assets=${totalAssets} < 100000 (expected ~228k)` };
+    }
+
+    return { id: TEST_ID, kind: "fiduciary", pass: true, latencyMs: Date.now() - started };
+  } catch (err) {
+    return {
+      id: TEST_ID, kind: "fiduciary", pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? `${err.message} (status: ${(err as NodeJS.ErrnoException & {response?: {status: number}}).response?.status})` : "unknown",
+    };
+  }
+}
+
+/**
+ * fiduciary-2-isolation
+ * Login qa user → tente switch vers acme → 403 forbidden
+ */
+async function runFiduciaryIsolation(): Promise<TestResult> {
+  const TEST_ID = "fiduciary-2-isolation";
+  const started = Date.now();
+  try {
+    // Le qa user (QA_EMAIL) n'est pas membre du tenant acme
+    // On utilise le token courant (authToken) qui appartient à qa@lexa.test
+    if (!authToken) {
+      return { id: TEST_ID, kind: "fiduciary", pass: false, latencyMs: Date.now() - started, reason: "no authToken available" };
+    }
+
+    try {
+      await http.post("/auth/switch-tenant",
+        { tenantId: ACME_TENANT_QA },
+        { headers: { Authorization: `Bearer ${authToken}` } },
+      );
+      // Si on arrive ici, la sécurité est cassée
+      return { id: TEST_ID, kind: "fiduciary", pass: false, latencyMs: Date.now() - started, reason: "SECURITY FAIL: should have returned 403 but got 200" };
+    } catch (switchErr) {
+      if (axios.isAxiosError(switchErr) && switchErr.response?.status === 403) {
+        // Comportement attendu : 403 forbidden
+        return { id: TEST_ID, kind: "fiduciary", pass: true, latencyMs: Date.now() - started };
+      }
+      return { id: TEST_ID, kind: "fiduciary", pass: false, latencyMs: Date.now() - started, reason: `expected 403, got ${(switchErr as NodeJS.ErrnoException & {response?: {status: number}}).response?.status}` };
+    }
+  } catch (err) {
+    return {
+      id: TEST_ID, kind: "fiduciary", pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown",
+    };
+  }
+}
+
 async function main(): Promise<void> {
   const started = Date.now();
   const results: TestResult[] = [];
@@ -1867,6 +1980,20 @@ async function main(): Promise<void> {
     `  ${rSimulateLpp.pass ? "✓" : "✗"} ${rSimulateLpp.id}  ${rSimulateLpp.latencyMs}ms  ${rSimulateLpp.reason ?? ""}`,
   );
 
+  // Fiduciary multi-clients (session 32)
+  console.log("\n[S32] Mode fiduciaire multi-clients — switch-tenant + isolation");
+  const rFiduSwitch = await runFiduciarySwitch();
+  results.push(rFiduSwitch);
+  console.log(
+    `  ${rFiduSwitch.pass ? "✓" : "✗"} ${rFiduSwitch.id}  ${rFiduSwitch.latencyMs}ms  ${rFiduSwitch.reason ?? ""}`,
+  );
+
+  const rFiduIsolation = await runFiduciaryIsolation();
+  results.push(rFiduIsolation);
+  console.log(
+    `  ${rFiduIsolation.pass ? "✓" : "✗"} ${rFiduIsolation.id}  ${rFiduIsolation.latencyMs}ms  ${rFiduIsolation.reason ?? ""}`,
+  );
+
   const totalMs = Date.now() - started;
   const pass = results.filter((r) => r.pass).length;
   const fail = results.length - pass;
@@ -1901,6 +2028,7 @@ async function main(): Promise<void> {
       audit: { total: byKind("audit").length, passed: byKind("audit").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("audit")) },
       conseiller: { total: byKind("conseiller").length, passed: byKind("conseiller").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("conseiller")) },
       simulate: { total: byKind("simulate").length, passed: byKind("simulate").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("simulate")) },
+      fiduciary: { total: byKind("fiduciary").length, passed: byKind("fiduciary").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiduciary")) },
     },
     failures: results.filter((r) => !r.pass).map((r) => ({ id: r.id, kind: r.kind, reason: r.reason })),
     generatedAt: new Date().toISOString(),
