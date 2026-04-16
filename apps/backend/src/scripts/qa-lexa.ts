@@ -16,6 +16,11 @@
 import axios, { type AxiosInstance } from "axios";
 import { randomUUID } from "node:crypto";
 import { execSync } from "node:child_process";
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+const __qadirname = dirname(fileURLToPath(import.meta.url));
 
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:3010";
 const QA_EMAIL = process.env.QA_EMAIL ?? "qa@lexa.test";
@@ -792,33 +797,122 @@ async function runVdTaxpayerDraftSubmit(): Promise<TestResult> {
 }
 
 /**
- * Fixture: documents-1-list-route
- * Vérifie que la route GET /documents est accessible et retourne bien
- * un tableau (même vide). Test de route, pas de test OCR complet.
- * Le smoke test OCR complet est validé manuellement via upload HTTPS.
- * Session 23.
+ * Fixture: documents-1-upload-ocr-cert-salaire — Session 25
+ *
+ * Test E2E réel du pipeline OCR :
+ * 1. Charge le PDF fixture test-cert-salaire.pdf depuis disque
+ * 2. POST multipart à /documents/upload (vrai upload)
+ * 3. Asserts strict :
+ *    - HTTP 201 + documentId présent
+ *    - ocrResult.type ∈ ["certificat_salaire", "autre"] (tolère "autre" soft-fail si OCR dégradé)
+ *    - ocrResult.rawText contient "CERTIFICAT" ou "SALAIRE" (case-insensitive)
+ *    - ocrResult.durationMs < 90000
+ * 4. Cleanup soft : DELETE le doc uploadé (si possible)
+ *
+ * Remplace documents-1-list-route (S23) — la route list était trop faible,
+ * ne prouvait pas que le pipeline OCR fonctionnait end-to-end.
+ *
+ * Timeout : 120s (pour laisser le temps à l'OCR vision Ollama)
  */
-async function runDocumentsUploadSynth(): Promise<TestResult> {
+async function runDocumentsUploadOcrCertSalaire(): Promise<TestResult> {
   const started = Date.now();
+  const TEST_ID = "documents-1-upload-ocr-cert-salaire";
+  let documentId: string | null = null;
+
+  const softCleanup = () => {
+    if (documentId) {
+      http.delete(`/documents/${documentId}`).catch(() => {});
+    }
+  };
+
   try {
-    const { data } = await http.get<{ documents: unknown[] }>("/documents");
+    // 1. Charger le PDF fixture
+    const pdfPath = join(__qadirname, "fixtures", "test-cert-salaire.pdf");
+    const pdfBuffer = await readFile(pdfPath);
 
-    const ok = Array.isArray(data.documents);
+    // 2. Construire le FormData multipart (Node 20 natif)
+    const formData = new FormData();
+    const blob = new Blob([pdfBuffer], { type: "application/pdf" });
+    formData.append("file", blob, "test-cert-salaire.pdf");
 
+    // 3. POST multipart — override Content-Type pour multipart/form-data
+    const { data } = await http.post<{
+      documentId?: string;
+      filename?: string;
+      ocrResult?: {
+        type?: string;
+        rawText?: string;
+        extractionMethod?: string;
+        durationMs?: number;
+      };
+    }>("/documents/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 120_000,
+    });
+
+    documentId = data.documentId ?? null;
+
+    // 4. Asserts stricts
+    if (!documentId) {
+      softCleanup();
+      return {
+        id: TEST_ID, kind: "documents", pass: false,
+        latencyMs: Date.now() - started,
+        reason: `documentId absent de la réponse: ${JSON.stringify(data)}`,
+      };
+    }
+
+    const ocrResult = data.ocrResult;
+    if (!ocrResult) {
+      softCleanup();
+      return {
+        id: TEST_ID, kind: "documents", pass: false,
+        latencyMs: Date.now() - started,
+        reason: `ocrResult absent de la réponse: ${JSON.stringify(data)}`,
+      };
+    }
+
+    const rawText = ocrResult.rawText ?? "";
+    const hasText = /CERTIFICAT|SALAIRE/i.test(rawText);
+    if (!hasText) {
+      softCleanup();
+      return {
+        id: TEST_ID, kind: "documents", pass: false,
+        latencyMs: Date.now() - started,
+        reason: `rawText ne contient pas "CERTIFICAT" ou "SALAIRE". rawText[:200]="${rawText.slice(0, 200)}"`,
+      };
+    }
+
+    const validTypes = ["certificat_salaire", "autre"];
+    if (!validTypes.includes(ocrResult.type ?? "")) {
+      softCleanup();
+      return {
+        id: TEST_ID, kind: "documents", pass: false,
+        latencyMs: Date.now() - started,
+        reason: `ocrResult.type="${ocrResult.type}" inattendu (attendu: ${validTypes.join("|")})`,
+      };
+    }
+
+    const durationMs = ocrResult.durationMs ?? 0;
+    if (durationMs > 90_000) {
+      softCleanup();
+      return {
+        id: TEST_ID, kind: "documents", pass: false,
+        latencyMs: Date.now() - started,
+        reason: `OCR trop lent: ${durationMs}ms > 90000ms`,
+      };
+    }
+
+    softCleanup();
     return {
-      id: "documents-1-list-route",
-      kind: "documents",
-      pass: ok,
+      id: TEST_ID, kind: "documents", pass: true,
       latencyMs: Date.now() - started,
-      reason: ok
-        ? undefined
-        : `expected documents array, got: ${JSON.stringify(data)}`,
+      reason: `type=${ocrResult.type} method=${ocrResult.extractionMethod} durationMs=${durationMs}`,
     };
   } catch (err) {
+    softCleanup();
     return {
-      id: "documents-1-list-route",
-      kind: "documents",
-      pass: false,
+      id: TEST_ID, kind: "documents", pass: false,
       latencyMs: Date.now() - started,
       reason: err instanceof Error ? err.message : "unknown error",
     };
@@ -998,7 +1092,7 @@ async function main(): Promise<void> {
 
   console.log(`[qa-lexa] BASE_URL=${BASE_URL} user=${QA_EMAIL}`);
   console.log(
-    `[qa-lexa] fixtures: ${classifyFixtures.length} classify + ${tvaQuestions.length} tva + ${fiscalPpQuestions.length} fiscal-pp-vs + ${fiscalPpGeQuestions.length} fiscal-pp-ge + ${fiscalPpVdQuestions.length} fiscal-pp-vd + ${fiscalPpFrQuestions.length} fiscal-pp-fr + ${fiscalPpNeQuestions.length} fiscal-pp-ne + ${fiscalPpJuQuestions.length} fiscal-pp-ju + ${fiscalPpBjQuestions.length} fiscal-pp-bj + 2 documents (s23+s24)`,
+    `[qa-lexa] fixtures: ${classifyFixtures.length} classify + ${tvaQuestions.length} tva + ${fiscalPpQuestions.length} fiscal-pp-vs + ${fiscalPpGeQuestions.length} fiscal-pp-ge + ${fiscalPpVdQuestions.length} fiscal-pp-vd + ${fiscalPpFrQuestions.length} fiscal-pp-fr + ${fiscalPpNeQuestions.length} fiscal-pp-ne + ${fiscalPpJuQuestions.length} fiscal-pp-ju + ${fiscalPpBjQuestions.length} fiscal-pp-bj + 2 documents (s25-ocr-e2e+s24-apply)`,
   );
 
   // Health gate (public)
@@ -1128,8 +1222,8 @@ async function main(): Promise<void> {
     `  ${r5.pass ? "✓" : "✗"} ${r5.id}  ${r5.latencyMs}ms  ${r5.reason ?? ""}`,
   );
 
-  // Documents OCR pipeline (session 23)
-  const r6 = await runDocumentsUploadSynth();
+  // Documents OCR pipeline E2E — upload PDF réel (session 25, remplace route-list S23)
+  const r6 = await runDocumentsUploadOcrCertSalaire();
   results.push(r6);
   console.log(
     `  ${r6.pass ? "✓" : "✗"} ${r6.id}  ${r6.latencyMs}ms  ${r6.reason ?? ""}`,
