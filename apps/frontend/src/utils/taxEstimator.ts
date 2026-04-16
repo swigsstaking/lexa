@@ -1,11 +1,12 @@
 /**
- * Lexa — Simulateur fiscal V1 (frontend)
- * Session 22 (Lane A)
+ * Lexa — Simulateur fiscal frontend
+ * Mis à jour Session Lane E (BUG-P2-04) — barèmes officiels S33/S36
  *
- * Clone client-side du taxEstimator backend.
- * Barèmes tabulés simplifiés 2026 pour VS, GE, VD, FR.
+ * Utilise les mêmes barèmes que le backend (TaxScaleLoader YAML ingérés),
+ * reproduits ici en JSON pour usage côté client synchrone.
+ * Logique identique : getMarginalRate × revenuImposable (pas progressif par tranches).
  *
- * TODO session 23+ : remplacer par appel API avec barèmes officiels ingérés
+ * Cantons : VS, GE, VD, FR — PP 2026
  */
 
 export type TaxEstimate = {
@@ -16,121 +17,205 @@ export type TaxEstimate = {
   disclaimer: string;
 };
 
+type Tranche = {
+  threshold: number;
+  threshold_max?: number;
+  rate: number;
+};
+
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-function progressiveTax(
-  revenu: number,
-  brackets: Array<{ max: number; rate: number }>,
-): number {
-  if (revenu <= 0) return 0;
-  let tax = 0;
-  let remaining = revenu;
-  let prevMax = 0;
-  for (const bracket of brackets) {
-    const slice = Math.min(remaining, bracket.max - prevMax);
-    if (slice <= 0) break;
-    tax += slice * (bracket.rate / 100);
-    remaining -= slice;
-    prevMax = bracket.max;
-    if (remaining <= 0) break;
+// ── Logique taux marginal (même algo que backend calcIccPpFromScale) ─────────
+// Retourne le taux (décimal) applicable : dernier seuil <= revenu
+function getMarginalRate(tranches: Tranche[], revenu: number): number {
+  let rate = tranches[0]?.rate ?? 0;
+  for (const t of tranches) {
+    if (revenu >= t.threshold) {
+      rate = t.rate;
+    } else {
+      break;
+    }
   }
-  if (remaining > 0) {
-    const lastRate = brackets[brackets.length - 1].rate;
-    tax += remaining * (lastRate / 100);
-  }
-  return round2(tax);
+  return rate;
 }
 
-// ── IFD 2026 ──────────────────────────────────────────────────────────────────
-const IFD_BRACKETS_SINGLE = [
-  { max: 17800, rate: 0 },
-  { max: 31600, rate: 0.77 },
-  { max: 41400, rate: 0.88 },
-  { max: 55200, rate: 2.64 },
-  { max: 72500, rate: 2.97 },
-  { max: 78100, rate: 5.94 },
-  { max: 103600, rate: 6.6 },
-  { max: 134600, rate: 8.8 },
-  { max: 176000, rate: 11.0 },
-  { max: 755200, rate: 13.2 },
-  { max: Infinity, rate: 11.5 },
+// ── Barème IFD 2026 ── (identique backend taxEstimator.ts — RS 642.11 Art. 36)
+const IFD_BRACKETS_SINGLE: Tranche[] = [
+  { threshold: 0, rate: 0 },
+  { threshold: 17801, rate: 0.0077 },
+  { threshold: 31601, rate: 0.0088 },
+  { threshold: 41401, rate: 0.0264 },
+  { threshold: 55201, rate: 0.0297 },
+  { threshold: 72501, rate: 0.0594 },
+  { threshold: 78101, rate: 0.0660 },
+  { threshold: 103601, rate: 0.0880 },
+  { threshold: 134601, rate: 0.1100 },
+  { threshold: 176001, rate: 0.1320 },
+  { threshold: 755201, rate: 0.1150 },
 ];
 
-const IFD_BRACKETS_MARRIED = [
-  { max: 28300, rate: 0 },
-  { max: 50900, rate: 1.0 },
-  { max: 58400, rate: 2.0 },
-  { max: 75300, rate: 3.0 },
-  { max: 90300, rate: 4.0 },
-  { max: 103400, rate: 5.0 },
-  { max: 114700, rate: 6.0 },
-  { max: 124200, rate: 7.0 },
-  { max: 131700, rate: 8.0 },
-  { max: 137300, rate: 9.0 },
-  { max: 141200, rate: 10.0 },
-  { max: 143100, rate: 11.0 },
-  { max: 895900, rate: 13.0 },
-  { max: Infinity, rate: 11.5 },
+const IFD_BRACKETS_MARRIED: Tranche[] = [
+  { threshold: 0, rate: 0 },
+  { threshold: 28301, rate: 0.0100 },
+  { threshold: 50901, rate: 0.0200 },
+  { threshold: 58401, rate: 0.0300 },
+  { threshold: 75301, rate: 0.0400 },
+  { threshold: 90301, rate: 0.0500 },
+  { threshold: 103401, rate: 0.0600 },
+  { threshold: 114701, rate: 0.0700 },
+  { threshold: 124201, rate: 0.0800 },
+  { threshold: 131701, rate: 0.0900 },
+  { threshold: 137301, rate: 0.1000 },
+  { threshold: 141201, rate: 0.1100 },
+  { threshold: 143101, rate: 0.1300 },
+  { threshold: 895901, rate: 0.1150 },
 ];
 
-// ── Barèmes cantonaux ─────────────────────────────────────────────────────────
-const ICC_BRACKETS: Record<string, {
-  single: Array<{ max: number; rate: number }>;
-  married: Array<{ max: number; rate: number }>;
-}> = {
-  VS: {
-    single: [
-      { max: 11000, rate: 0 }, { max: 16000, rate: 1.5 }, { max: 22000, rate: 3.0 },
-      { max: 32000, rate: 4.5 }, { max: 45000, rate: 6.0 }, { max: 70000, rate: 7.5 },
-      { max: 100000, rate: 9.0 }, { max: 150000, rate: 11.0 }, { max: 250000, rate: 12.5 },
-      { max: Infinity, rate: 14.0 },
-    ],
-    married: [
-      { max: 14000, rate: 0 }, { max: 20000, rate: 1.0 }, { max: 28000, rate: 2.5 },
-      { max: 40000, rate: 4.0 }, { max: 60000, rate: 5.5 }, { max: 90000, rate: 7.0 },
-      { max: 130000, rate: 9.0 }, { max: 200000, rate: 11.0 }, { max: Infinity, rate: 13.0 },
-    ],
-  },
-  GE: {
-    single: [
-      { max: 16100, rate: 0 }, { max: 22200, rate: 3.0 }, { max: 29300, rate: 5.0 },
-      { max: 37900, rate: 7.0 }, { max: 47000, rate: 9.0 }, { max: 57500, rate: 11.0 },
-      { max: 70000, rate: 13.0 }, { max: 85000, rate: 15.0 }, { max: 110000, rate: 17.0 },
-      { max: 150000, rate: 18.0 }, { max: Infinity, rate: 19.0 },
-    ],
-    married: [
-      { max: 23800, rate: 0 }, { max: 32000, rate: 2.5 }, { max: 44000, rate: 5.0 },
-      { max: 58000, rate: 7.5 }, { max: 76000, rate: 10.0 }, { max: 100000, rate: 13.0 },
-      { max: 140000, rate: 16.0 }, { max: Infinity, rate: 17.5 },
-    ],
-  },
-  VD: {
-    single: [
-      { max: 13600, rate: 0 }, { max: 22700, rate: 1.5 }, { max: 32000, rate: 3.0 },
-      { max: 44700, rate: 4.5 }, { max: 61800, rate: 6.0 }, { max: 86600, rate: 7.5 },
-      { max: 120600, rate: 9.0 }, { max: 174600, rate: 11.0 }, { max: Infinity, rate: 15.5 },
-    ],
-    married: [
-      { max: 18700, rate: 0 }, { max: 31200, rate: 1.5 }, { max: 44500, rate: 3.0 },
-      { max: 61800, rate: 5.0 }, { max: 87900, rate: 7.0 }, { max: 125500, rate: 9.0 },
-      { max: Infinity, rate: 13.5 },
-    ],
-  },
-  FR: {
-    single: [
-      { max: 12600, rate: 0 }, { max: 18900, rate: 2.0 }, { max: 27200, rate: 3.5 },
-      { max: 39500, rate: 5.0 }, { max: 56000, rate: 6.5 }, { max: 80000, rate: 8.0 },
-      { max: 115000, rate: 9.5 }, { max: 165000, rate: 11.0 }, { max: Infinity, rate: 13.5 },
-    ],
-    married: [
-      { max: 18200, rate: 0 }, { max: 28000, rate: 1.5 }, { max: 40000, rate: 3.0 },
-      { max: 58000, rate: 5.0 }, { max: 82000, rate: 7.0 }, { max: 120000, rate: 9.0 },
-      { max: Infinity, rate: 12.0 },
-    ],
-  },
-};
+// ── Barèmes ICC PP cantonaux (YAML baremes officiels S33/S36) ─────────────────
+
+// VS — tarif_cantonal (LF VS Art. 32 Annexe 1) — taux marginal
+// Source : vs-pp-2026.yaml — confidence: medium
+const VS_TRANCHES_SINGLE: Tranche[] = [
+  { threshold: 500, rate: 0.0200 },
+  { threshold: 6400, rate: 0.027992 },
+  { threshold: 12800, rate: 0.036915 },
+  { threshold: 19100, rate: 0.045982 },
+  { threshold: 25500, rate: 0.062978 },
+  { threshold: 38200, rate: 0.076975 },
+  { threshold: 50900, rate: 0.089974 },
+  { threshold: 63600, rate: 0.104963 },
+  { threshold: 76300, rate: 0.117962 },
+  { threshold: 89000, rate: 0.129960 },
+  { threshold: 101700, rate: 0.132989 },
+  { threshold: 114400, rate: 0.134992 },
+  { threshold: 127100, rate: 0.135498 },
+  { threshold: 139800, rate: 0.1359 },
+  { threshold: 152500, rate: 0.1364 },
+  { threshold: 165200, rate: 0.1368 },
+  { threshold: 190600, rate: 0.1376 },
+  { threshold: 228700, rate: 0.1385 },
+  { threshold: 279600, rate: 0.1392 },
+  { threshold: 355900, rate: 0.1396 },
+  { threshold: 457600, rate: 0.1399 },
+  { threshold: 755200, rate: 0.14 },
+];
+
+// VS marié : rabais conjugal 35% (Art. 32a LF VS), min 680 CHF, max 4870 CHF
+function calcVsMarried(revenuImposable: number): number {
+  const base = getMarginalRate(VS_TRANCHES_SINGLE, revenuImposable) * revenuImposable;
+  const reduction = Math.min(Math.max(base * 0.35, 680), 4870);
+  return Math.max(0, round2(base - reduction));
+}
+
+// GE — tarif_single (LIPP Art. 41 al. 1) — taux marginal × revenu
+// Source : ge-pp-2026.yaml — confidence: high
+const GE_TRANCHES_SINGLE: Tranche[] = [
+  { threshold: 0, rate: 0.0000 },
+  { threshold: 17494, rate: 0.0730 },
+  { threshold: 21077, rate: 0.0820 },
+  { threshold: 23185, rate: 0.0910 },
+  { threshold: 25292, rate: 0.1000 },
+  { threshold: 27400, rate: 0.1090 },
+  { threshold: 32669, rate: 0.1130 },
+  { threshold: 36884, rate: 0.1230 },
+  { threshold: 41100, rate: 0.1280 },
+  { threshold: 45315, rate: 0.1320 },
+  { threshold: 72714, rate: 0.1420 },
+  { threshold: 119082, rate: 0.1500 },
+  { threshold: 160180, rate: 0.1560 },
+  { threshold: 181257, rate: 0.1580 },
+  { threshold: 259239, rate: 0.1600 },
+  { threshold: 276100, rate: 0.1680 },
+  { threshold: 388858, rate: 0.1760 },
+  { threshold: 609104, rate: 0.1800 },
+];
+
+// GE marié : splitting 50% (Art. 41 al. 2 LIPP-GE)
+function calcGeMarried(revenuImposable: number): number {
+  const halfRevenu = revenuImposable / 2;
+  const rate = getMarginalRate(GE_TRANCHES_SINGLE, halfRevenu);
+  return Math.max(0, round2(revenuImposable * rate));
+}
+
+// VD — tarif_base (LI VD Art. 47 + Art. 2 coeff) — taux marginal × revenu × coeff
+// Source : vd-pp-2026.yaml — confidence: medium
+// Coefficient annuel 2026 ≈ 1.55 (Art. 2 LI VD)
+const VD_COEFFICIENT = 1.55;
+const VD_TRANCHES: Tranche[] = [
+  { threshold: 0, rate: 0.0000 },
+  { threshold: 14301, rate: 0.0150 },
+  { threshold: 20501, rate: 0.0230 },
+  { threshold: 28101, rate: 0.0310 },
+  { threshold: 35701, rate: 0.0390 },
+  { threshold: 43301, rate: 0.0500 },
+  { threshold: 57401, rate: 0.0600 },
+  { threshold: 71601, rate: 0.0700 },
+  { threshold: 85701, rate: 0.0800 },
+  { threshold: 107201, rate: 0.0900 },
+  { threshold: 142901, rate: 0.1000 },
+  { threshold: 214301, rate: 0.1050 },
+];
+
+// FR — tarif_single (LICD RSF 631.1) — taux marginal × revenu
+// Source : fr-pp-2026.yaml — confidence: medium
+const FR_TRANCHES_SINGLE: Tranche[] = [
+  { threshold: 0, rate: 0.0000 },
+  { threshold: 13701, rate: 0.0150 },
+  { threshold: 19601, rate: 0.0250 },
+  { threshold: 27401, rate: 0.0340 },
+  { threshold: 39201, rate: 0.0450 },
+  { threshold: 56901, rate: 0.0560 },
+  { threshold: 78501, rate: 0.0680 },
+  { threshold: 117801, rate: 0.0790 },
+  { threshold: 176701, rate: 0.0880 },
+  { threshold: 294501, rate: 0.0935 },
+];
+
+// ── Estimation ICC PP (même logique que backend estimateIccWithSource) ────────
+
+function calcIcc(
+  revenuImposable: number,
+  canton: string,
+  civilStatus: 'single' | 'married',
+): number {
+  if (revenuImposable <= 0) return 0;
+  switch (canton) {
+    case 'VS': {
+      if (civilStatus === 'married') return calcVsMarried(revenuImposable);
+      return round2(getMarginalRate(VS_TRANCHES_SINGLE, revenuImposable) * revenuImposable);
+    }
+    case 'GE': {
+      if (civilStatus === 'married') return calcGeMarried(revenuImposable);
+      return round2(getMarginalRate(GE_TRANCHES_SINGLE, revenuImposable) * revenuImposable);
+    }
+    case 'VD': {
+      const rate = getMarginalRate(VD_TRANCHES, revenuImposable);
+      return round2(revenuImposable * rate * VD_COEFFICIENT);
+    }
+    case 'FR': {
+      const rate = getMarginalRate(FR_TRANCHES_SINGLE, revenuImposable);
+      return round2(revenuImposable * rate);
+    }
+    default:
+      return 0;
+  }
+}
+
+// ── Estimation IFD 2026 (Art. 36 LIFD) ───────────────────────────────────────
+// Utilise la même logique getMarginalRate (cohérence avec backend)
+
+function calcIfd(
+  revenuImposable: number,
+  civilStatus: 'single' | 'married',
+): number {
+  if (revenuImposable <= 0) return 0;
+  const brackets = civilStatus === 'married' ? IFD_BRACKETS_MARRIED : IFD_BRACKETS_SINGLE;
+  return round2(getMarginalRate(brackets, revenuImposable) * revenuImposable);
+}
+
+// ── Export principal ──────────────────────────────────────────────────────────
 
 export function estimateTaxDue(params: {
   canton: string;
@@ -140,26 +225,18 @@ export function estimateTaxDue(params: {
   const { canton, revenuImposable, civilStatus = 'single' } = params;
   if (revenuImposable <= 0) return null;
 
-  const ifdBrackets = civilStatus === 'married' ? IFD_BRACKETS_MARRIED : IFD_BRACKETS_SINGLE;
-  const ifd = progressiveTax(revenuImposable, ifdBrackets);
-
-  const cantonBrackets = ICC_BRACKETS[canton];
-  if (!cantonBrackets) return null;
-  const icc = progressiveTax(
-    revenuImposable,
-    civilStatus === 'married' ? cantonBrackets.married : cantonBrackets.single,
-  );
-
-  const total = round2(ifd + icc);
+  const icc = calcIcc(revenuImposable, canton, civilStatus);
+  const ifd = calcIfd(revenuImposable, civilStatus);
+  const total = round2(icc + ifd);
 
   return {
-    icc: round2(icc),
-    ifd: round2(ifd),
+    icc,
+    ifd,
     total,
     effectiveRate: round2(total / revenuImposable),
     disclaimer:
-      'Estimation indicative — barèmes 2026 simplifiés. ' +
-      'Le montant réel dépend de votre commune et des règles cantonales fines. ' +
+      'Estimation indicative — barèmes officiels S33/S36 (taux marginal, mêmes données que PDF). ' +
+      'Le montant exact dépend de votre commune, déductions additionnelles et règles cantonales. ' +
       'Vérifiez avec votre fiduciaire.',
   };
 }
