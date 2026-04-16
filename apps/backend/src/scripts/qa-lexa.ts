@@ -14,6 +14,8 @@
  */
 
 import axios, { type AxiosInstance } from "axios";
+import { randomUUID } from "node:crypto";
+import { execSync } from "node:child_process";
 
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:3010";
 const QA_EMAIL = process.env.QA_EMAIL ?? "qa@lexa.test";
@@ -27,15 +29,25 @@ const http: AxiosInstance = axios.create({
 });
 
 let authToken: string | null = null;
+let qaTenantId: string | null = null;
 
 async function loginQaUser(): Promise<void> {
   try {
-    const { data } = await http.post<{ token: string }>("/auth/login", {
+    const { data } = await http.post<{ token: string; user?: { tenantId?: string } }>("/auth/login", {
       email: QA_EMAIL,
       password: QA_PASSWORD,
     });
     authToken = data.token;
     http.defaults.headers.common["Authorization"] = `Bearer ${authToken}`;
+    // Extraire le tenantId du payload JWT (base64url decode du segment 2)
+    if (data.user?.tenantId) {
+      qaTenantId = data.user.tenantId;
+    } else if (authToken) {
+      try {
+        const payload = JSON.parse(Buffer.from(authToken.split(".")[1], "base64url").toString()) as { tenantId?: string };
+        qaTenantId = payload.tenantId ?? null;
+      } catch { /* ignore */ }
+    }
   } catch (err) {
     if (axios.isAxiosError(err)) {
       if (err.response?.status === 401) {
@@ -813,6 +825,171 @@ async function runDocumentsUploadSynth(): Promise<TestResult> {
   }
 }
 
+/**
+ * Fixture: documents-2-apply-to-draft-fr — Session 24
+ *
+ * Vérifie le pipeline auto-fill complet :
+ * 1. Crée un draft fiscal 2026 pour le qa tenant
+ * 2. Injecte un document certificat_salaire synthétique dans Mongo (skip OCR)
+ * 3. POST /documents/:id/apply-to-draft year=2026
+ * 4. Assert response.fieldsApplied contient "step2.salaireBrut"
+ * 5. GET /taxpayers/draft?year=2026 → assert state.step2.salaireBrut === 85000
+ * 6. GET /taxpayers/draft/2026/field-sources → assert "step2.salaireBrut" présent
+ * 7. Cleanup Mongo
+ *
+ * Timeout : 30s (pas d'OCR).
+ */
+async function runDocumentsApplyToDraft(): Promise<TestResult> {
+  const started = Date.now();
+  const synthDocId = randomUUID();
+  const GROSS_SALARY = 85000;
+
+  // Vérifier que le tenantId est disponible (requis pour l'injection Mongo)
+  if (!qaTenantId) {
+    return {
+      id: "documents-2-apply-to-draft-fr",
+      kind: "documents",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: "qaTenantId not available (login may have failed)",
+    };
+  }
+
+  // Vérifier que mongosh est disponible (fixture s'exécute sur le serveur)
+  let mongoshAvailable = false;
+  try {
+    execSync("which mongosh", { stdio: "pipe" });
+    mongoshAvailable = true;
+  } catch {
+    mongoshAvailable = false;
+  }
+
+  if (!mongoshAvailable) {
+    // Pas de mongosh disponible (ex: exécution locale) — skip avec avertissement
+    return {
+      id: "documents-2-apply-to-draft-fr",
+      kind: "documents",
+      pass: true,
+      latencyMs: Date.now() - started,
+      reason: "SKIP: mongosh not available (ok when running locally without server access)",
+    };
+  }
+
+  const cleanupDoc = () => {
+    try {
+      execSync(
+        `mongosh lexa-documents --quiet --eval "db.documents_meta.deleteOne({documentId:'${synthDocId}'})"`,
+        { stdio: "pipe" },
+      );
+    } catch { /* ignore cleanup errors */ }
+  };
+
+  try {
+    // 1. S'assurer qu'un draft 2026 existe (getOrCreate)
+    await http.get("/taxpayers/draft?year=2026");
+
+    // 2. Injecter doc synthétique dans Mongo
+    const insertScript = `
+      db.documents_meta.insertOne({
+        documentId:"${synthDocId}",
+        tenantId:"${qaTenantId}",
+        gridfsId:"synth-qa",
+        filename:"qa-cert-salaire-s24.pdf",
+        mimetype:"application/pdf",
+        size:2200,
+        uploadedAt:new Date(),
+        ocrResult:{
+          type:"certificat_salaire",
+          rawText:"CERTIFICAT DE SALAIRE 2025 Salaire brut: 85000",
+          extractionMethod:"pdf-parse",
+          ocrConfidence:0.95,
+          extractedFields:{employer:"Lexa Test SA", grossSalary:${GROSS_SALARY}, netSalary:72500, year:2025},
+          durationMs:100
+        },
+        appliedToDrafts:[]
+      })
+    `.replace(/\n/g, " ");
+
+    execSync(`mongosh lexa-documents --quiet --eval "${insertScript.replace(/"/g, '\\"')}"`, { stdio: "pipe" });
+
+    // 3. Apply doc → draft
+    const applyResp = await http.post<{ ok: boolean; fieldsApplied: string[]; message: string }>(
+      `/documents/${synthDocId}/apply-to-draft`,
+      { year: 2026 },
+    );
+
+    if (!applyResp.data.ok) {
+      cleanupDoc();
+      return {
+        id: "documents-2-apply-to-draft-fr",
+        kind: "documents",
+        pass: false,
+        latencyMs: Date.now() - started,
+        reason: `apply returned ok=false: ${applyResp.data.message}`,
+      };
+    }
+
+    if (!applyResp.data.fieldsApplied.includes("step2.salaireBrut")) {
+      cleanupDoc();
+      return {
+        id: "documents-2-apply-to-draft-fr",
+        kind: "documents",
+        pass: false,
+        latencyMs: Date.now() - started,
+        reason: `fieldsApplied missing step2.salaireBrut: ${JSON.stringify(applyResp.data.fieldsApplied)}`,
+      };
+    }
+
+    // 4. Vérifier le draft mis à jour
+    const draftResp = await http.get<{ draft: { state: { step2: { salaireBrut?: number } } } }>(
+      "/taxpayers/draft?year=2026",
+    );
+    const actualSalary = draftResp.data.draft?.state?.step2?.salaireBrut;
+    if (actualSalary !== GROSS_SALARY) {
+      cleanupDoc();
+      return {
+        id: "documents-2-apply-to-draft-fr",
+        kind: "documents",
+        pass: false,
+        latencyMs: Date.now() - started,
+        reason: `draft.state.step2.salaireBrut expected ${GROSS_SALARY}, got ${actualSalary}`,
+      };
+    }
+
+    // 5. Vérifier field-sources
+    const sourcesResp = await http.get<Record<string, { documentId: string; filename: string }>>(
+      "/taxpayers/draft/2026/field-sources",
+    );
+    if (!sourcesResp.data["step2.salaireBrut"]) {
+      cleanupDoc();
+      return {
+        id: "documents-2-apply-to-draft-fr",
+        kind: "documents",
+        pass: false,
+        latencyMs: Date.now() - started,
+        reason: `field-sources missing step2.salaireBrut: ${JSON.stringify(sourcesResp.data)}`,
+      };
+    }
+
+    cleanupDoc();
+    return {
+      id: "documents-2-apply-to-draft-fr",
+      kind: "documents",
+      pass: true,
+      latencyMs: Date.now() - started,
+    };
+  } catch (err) {
+    cleanupDoc();
+    return {
+      id: "documents-2-apply-to-draft-fr",
+      kind: "documents",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
 // ── Main ───────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -821,7 +998,7 @@ async function main(): Promise<void> {
 
   console.log(`[qa-lexa] BASE_URL=${BASE_URL} user=${QA_EMAIL}`);
   console.log(
-    `[qa-lexa] fixtures: ${classifyFixtures.length} classify + ${tvaQuestions.length} tva + ${fiscalPpQuestions.length} fiscal-pp-vs + ${fiscalPpGeQuestions.length} fiscal-pp-ge + ${fiscalPpVdQuestions.length} fiscal-pp-vd + ${fiscalPpFrQuestions.length} fiscal-pp-fr + ${fiscalPpNeQuestions.length} fiscal-pp-ne + ${fiscalPpJuQuestions.length} fiscal-pp-ju + ${fiscalPpBjQuestions.length} fiscal-pp-bj`,
+    `[qa-lexa] fixtures: ${classifyFixtures.length} classify + ${tvaQuestions.length} tva + ${fiscalPpQuestions.length} fiscal-pp-vs + ${fiscalPpGeQuestions.length} fiscal-pp-ge + ${fiscalPpVdQuestions.length} fiscal-pp-vd + ${fiscalPpFrQuestions.length} fiscal-pp-fr + ${fiscalPpNeQuestions.length} fiscal-pp-ne + ${fiscalPpJuQuestions.length} fiscal-pp-ju + ${fiscalPpBjQuestions.length} fiscal-pp-bj + 2 documents (s23+s24)`,
   );
 
   // Health gate (public)
@@ -956,6 +1133,13 @@ async function main(): Promise<void> {
   results.push(r6);
   console.log(
     `  ${r6.pass ? "✓" : "✗"} ${r6.id}  ${r6.latencyMs}ms  ${r6.reason ?? ""}`,
+  );
+
+  // Documents apply-to-draft E2E (session 24)
+  const r7 = await runDocumentsApplyToDraft();
+  results.push(r7);
+  console.log(
+    `  ${r7.pass ? "✓" : "✗"} ${r7.id}  ${r7.latencyMs}ms  ${r7.reason ?? ""}`,
   );
 
   const totalMs = Date.now() - started;
