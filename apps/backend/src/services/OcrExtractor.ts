@@ -21,6 +21,7 @@ import { createCanvas } from "@napi-rs/canvas";
 import { config } from "../config/index.js";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { scanAndParseQrBill, type SwissQrBill } from "./QrFactureParser.js";
 
 const OLLAMA_URL = config.OLLAMA_URL;
 const VISION_MODEL = "qwen3-vl-ocr";
@@ -202,14 +203,39 @@ async function extractRawText(
   text: string;
   method: OcrResult["extractionMethod"];
   confidence: number;
+  qrBill?: SwissQrBill;
 }> {
+  // Stage 0.5 : scan QR code en parallèle (non-bloquant)
+  // Détecte le QR-facture suisse avant même l'OCR textuel.
+  // Pour un PDF, on a besoin du PNG — on le génère si nécessaire.
+  let pngBufferForQr: Buffer | null = null;
+  let qrBill: SwissQrBill | undefined;
+
   if (mimeType === "application/pdf") {
     // Path 1 : PDF avec texte embarqué (pdfkit/Word/LibreOffice avec embed)
     try {
       const parsed = await pdfParse(buffer);
       if (parsed.text?.trim().length > 50) {
         console.log("[ocr] pdf-parse: text extracted, length:", parsed.text.trim().length);
-        return { text: parsed.text, method: "pdf-parse", confidence: 0.95 };
+        // Pour le scan QR, on convertit quand même en PNG (en parallèle si possible)
+        try {
+          pngBufferForQr = await pdfToPng(buffer);
+        } catch {
+          // Non-bloquant — le scan QR est best-effort
+        }
+        // Scan QR sur le PNG si dispo
+        if (pngBufferForQr) {
+          try {
+            const detected = await scanAndParseQrBill(pngBufferForQr);
+            if (detected) {
+              console.log("[ocr] QR-facture detected (pdf-parse path):", detected.iban);
+              qrBill = detected;
+            }
+          } catch (err) {
+            console.warn("[ocr] QR scan failed (non-blocking):", (err as Error).message);
+          }
+        }
+        return { text: parsed.text, method: "pdf-parse", confidence: 0.95, qrBill };
       }
       console.log("[ocr] pdf-parse: text too short (<50 chars), will convert to PNG");
     } catch (err) {
@@ -224,8 +250,25 @@ async function extractRawText(
     // Path 2 : PDF scanné OU pdfkit OU texte trop court → convertir en PNG
     console.log("[ocr] converting PDF to PNG via pdfjs-dist...");
     buffer = await pdfToPng(buffer);
+    pngBufferForQr = buffer;
     mimeType = "image/png";
     console.log("[ocr] PDF→PNG conversion done, PNG size:", buffer.length, "bytes");
+  } else if (mimeType === "image/png" || mimeType === "image/jpeg" || mimeType === "image/jpg") {
+    // Image directe : scanner le QR maintenant
+    pngBufferForQr = buffer;
+  }
+
+  // Scan QR sur le PNG / image directe (si pas encore fait)
+  if (pngBufferForQr && !qrBill) {
+    try {
+      const detected = await scanAndParseQrBill(pngBufferForQr);
+      if (detected) {
+        console.log("[ocr] QR-facture detected:", detected.iban);
+        qrBill = detected;
+      }
+    } catch (err) {
+      console.warn("[ocr] QR scan failed (non-blocking):", (err as Error).message);
+    }
   }
 
   // Image directe (JPEG/PNG) ou PNG issu du preprocessing PDF
@@ -259,7 +302,7 @@ async function extractRawText(
 
   const parsedText = parseOcrModelOutput(rawContent);
   // method = "qwen3-vl-ocr" qu'on soit passé par une image directe ou via PDF→PNG preprocessing
-  return { text: parsedText, method: "qwen3-vl-ocr", confidence: 0.85 };
+  return { text: parsedText, method: "qwen3-vl-ocr", confidence: 0.85, qrBill };
 }
 
 // ── Stage 2 : classification + structuration ─────────────────────────────────
@@ -366,12 +409,35 @@ export async function extractDocument(
 
   const stage2 = await structureDocument(stage1.text);
 
+  // Si un QR-facture a été détecté, on force le type à "facture" et on
+  // enrichit les extractedFields avec les données structurées du QR.
+  let finalType = stage2.type;
+  let finalFields = stage2.extractedFields;
+
+  if (stage1.qrBill) {
+    // Le QR-facture est une preuve certaine que c'est une facture
+    if (finalType === "autre") {
+      finalType = "facture";
+    }
+    // Merge qrBill dans extractedFields — le QR est prioritaire sur l'OCR
+    // pour les champs financiers (IBAN, montant, référence)
+    finalFields = {
+      ...finalFields,
+      qrBill: stage1.qrBill,
+      // Surcharge les champs facture standard avec les données QR si disponibles
+      ...(stage1.qrBill.iban ? { iban: stage1.qrBill.iban } : {}),
+      ...(stage1.qrBill.amount !== undefined ? { amountTtc: stage1.qrBill.amount } : {}),
+      ...(stage1.qrBill.reference ? { reference: stage1.qrBill.reference } : {}),
+      ...(stage1.qrBill.creditor?.name ? { vendor: stage1.qrBill.creditor.name } : {}),
+    };
+  }
+
   return {
     rawText: stage1.text,
     extractionMethod: stage1.method,
     ocrConfidence: stage1.confidence,
-    type: stage2.type,
-    extractedFields: stage2.extractedFields,
+    type: finalType,
+    extractedFields: finalFields,
     durationMs: Date.now() - started,
   };
 }
