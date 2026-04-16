@@ -1,9 +1,9 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 24.5 — 2026-04-16](2026-04-16-session-24-5.md) (benchmark OCR, infra)
-**Prochaine session** : Session 25 — À décider (options ci-dessous)
+**Dernière session** : [Session 25 — 2026-04-16](2026-04-16-session-25.md) (fix pipeline OCR, bench définitif, fixture E2E réelle)
+**Prochaine session** : Session 26 — Option A (Fiscal-PM) ou B (Agent Conseiller)
 
-> Session 24 a livré l'auto-fill wizard depuis documents OCR : DocumentMapper, route apply-to-draft, field-sources, badges wizard, PDF de test stable. qa-lexa **23/23** (cible).
+> Session 25 a fixé le pipeline OCR (pdf-parse + PDF→PNG via pdfjs-dist + flattenJsonToText), benchmarké les 2 modèles (GARDER qwen3-vl-ocr, deepseek-ocr vide), et remplacé la fixture documents-1 par une E2E réelle. qa-lexa **23/23** (maintenu, désormais E2E réel).
 
 ---
 
@@ -19,7 +19,9 @@
 | `lexa-documents` DB sur `127.0.0.1:27017` | OK session 23 |
 | Collection `documents_meta` (metadata + ocrResult + appliedToDrafts) | OK |
 | **Pipeline OCR** | |
-| Stage 1 pdf-parse + Stage 2 classification | OK session 23 |
+| Stage 1 pdf-parse (embed text) → fallback PDF→PNG via pdfjs-dist + @napi-rs/canvas | **OK session 25** |
+| Stage 2 classification + extraction JSON structurée | OK session 23 |
+| parseOcrModelOutput — flatten récursif JSON imbriqué multi-niveaux | **OK session 25** |
 | Types : certificat_salaire, attestation_3a, facture, releve_bancaire, autre | OK |
 | **Routes documents** | |
 | `POST /documents/upload` | OK session 23 |
@@ -42,8 +44,9 @@
 | Qdrant `swiss_law` 9846 pts | OK |
 | **Agents actifs (10)** | classifier, reasoning, tva, fiscal-pp-vs/ge/vd/fr/ne/ju/bj |
 | **Tests auto** | |
-| qa-lexa **23/23** | **OK session 24** |
-| PDF de test stable embarqué (2.2 KB) | **OK session 24** |
+| qa-lexa **23/23** — fixture documents-1 désormais E2E réelle | **OK session 25** |
+| PDF de test stable embarqué (2.2 KB) | OK session 24 |
+| Benchmark OCR qwen3-vl-ocr (100%) vs deepseek-ocr (0%) — GARDER qwen | **OK session 25** |
 
 ---
 
@@ -89,9 +92,9 @@ Fonctionnalités :
 
 ---
 
-## Dette technique — Session 24.5
+## ✅ Dette technique — Session 24.5 RÉSOLUE en S25
 
-### OCR : Benchmark incomplet (priorité session 25)
+### OCR : Benchmark et fix pipeline COMPLÉTÉS
 
 Le benchmark qwen3-vl-ocr vs deepseek-ocr (session 24.5) n'a pas pu être finalisé :
 - **Cause 1** : PDF envoyé directement à Ollama `images[]` → HTTP 500. Corrigé : utiliser PNG.
@@ -135,4 +138,10 @@ Solution : remplacer `pdf-parse` par `pdfjs-dist` ou `pdf2json`.
 
 ---
 
-**Dernière mise à jour** : 2026-04-16 (session 24.5 — benchmark OCR préparé, dette pdf-parse documentée, NEXT-SESSION enrichi)
+15. **pdfToPng via pdfjs-dist** : utilise `legacy/build/pdf.mjs` + `disableWorker: true` — ne pas utiliser le build principal (DOMMatrix undefined)
+16. **@napi-rs/canvas** : bindings natifs Linux 22.04 installés sur .59, inclus dans package.json
+17. **deepseek-ocr** : inutilisable pour OCR (retourne empty) — garder qwen3-vl-ocr
+18. **qa-lexa doit tourner sur `http://127.0.0.1:3010`** depuis .59 (pas `https://lexa.swigs.online` — route /health sans préfixe /api)
+19. **flattenJsonToText** : gère les JSON imbriqués multi-niveaux de qwen3-vl-ocr — ne pas supprimer
+
+**Dernière mise à jour** : 2026-04-16 (session 25 — fix OCR pipeline, bench chiffré, fixture E2E réelle, 23/23)
