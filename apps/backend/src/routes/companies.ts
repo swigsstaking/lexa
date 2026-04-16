@@ -11,7 +11,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { query } from "../db/postgres.js";
-import { buildPmDeclarationVs, type PmDraft } from "../execution/PmFormBuilder.js";
+import { buildPmDeclarationVs, buildPmDeclaration, type PmDraft, type Canton } from "../execution/PmFormBuilder.js";
 import { renderPmPdf } from "../execution/PmPdfRenderer.js";
 
 export const companiesRouter = Router();
@@ -271,6 +271,53 @@ companiesRouter.post("/draft/:year/submit-vs", async (req, res) => {
   }
 });
 
+// ── POST /companies/draft/:year/submit-{ge,vd,fr} — génériques ───────────────
+// Clone strict de submit-vs avec buildPmDeclaration(canton)
+
+function makeSubmitRoute(canton: Canton) {
+  return async (req: import("express").Request, res: import("express").Response) => {
+    const yearParse = yearParamSchema.safeParse(req.params.year);
+    if (!yearParse.success) {
+      return res.status(400).json({ error: "invalid year param" });
+    }
+    const year = yearParse.data;
+    const tenantId = req.tenantId;
+
+    try {
+      const result = await query<{ id: string; state: Record<string, unknown> }>(
+        `SELECT id, state FROM company_drafts WHERE tenant_id=$1 AND year=$2 AND canton=$3 LIMIT 1`,
+        [tenantId, year, canton],
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: `draft ${canton} not found — créez un brouillon d'abord` });
+      }
+
+      const state = result.rows[0].state as Parameters<typeof mapStateToPmDraft>[0];
+      const pmDraft: PmDraft = mapStateToPmDraft(state, year, canton);
+      const formResult = buildPmDeclaration(canton, { tenantId, year, draft: pmDraft });
+      const pdfBuffer = await renderPmPdf(formResult);
+
+      return res.json({
+        formId: formResult.formId,
+        pdfBase64: pdfBuffer.toString("base64"),
+        structuredData: formResult,
+        taxEstimate: formResult.taxEstimate,
+        citations: formResult.citations,
+        authority: formResult.authority,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "unknown error";
+      console.error(`[companies.submit-${canton.toLowerCase()}]`, err);
+      return res.status(500).json({ error: `submit-${canton.toLowerCase()} failed`, message });
+    }
+  };
+}
+
+companiesRouter.post("/draft/:year/submit-ge", makeSubmitRoute("GE"));
+companiesRouter.post("/draft/:year/submit-vd", makeSubmitRoute("VD"));
+companiesRouter.post("/draft/:year/submit-fr", makeSubmitRoute("FR"));
+
 // ── Mapping state JSONB → PmDraft ────────────────────────────────────────────
 
 function mapStateToPmDraft(state: {
@@ -307,7 +354,7 @@ function mapStateToPmDraft(state: {
     reportBenefice?: number;
     capitalTotal?: number;
   };
-}, year: number): PmDraft {
+}, year: number, canton: Canton = "VS"): PmDraft {
   const s1 = state.step1 ?? {};
   const s2 = state.step2 ?? {};
   const s3 = state.step3 ?? {};
@@ -339,7 +386,7 @@ function mapStateToPmDraft(state: {
       legalName: s1.legalName ?? "Société inconnue",
       legalForm,
       ideNumber: s1.ideNumber,
-      canton: "VS",
+      canton,
       commune: s1.siegeCommune,
       registeredOffice: s1.siegeStreet
         ? `${s1.siegeStreet}, ${s1.siegeZip ?? ""} ${s1.siegeCommune ?? ""}`.trim()
