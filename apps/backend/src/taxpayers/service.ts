@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { query } from "../db/postgres.js";
+import { query, queryAsTenant } from "../db/postgres.js";
 import { eventStore } from "../events/EventStore.js";
 import {
   TaxpayerDraftStateSchema,
@@ -45,7 +45,8 @@ export async function getOrCreateDraft(
   tenantId: string,
   fiscalYear: number,
 ): Promise<TaxpayerDraft> {
-  const existing = await query<TaxpayerDraftRow>(
+  const existing = await queryAsTenant<TaxpayerDraftRow>(
+    tenantId,
     `SELECT * FROM taxpayer_drafts WHERE tenant_id = $1 AND fiscal_year = $2`,
     [tenantId, fiscalYear],
   );
@@ -54,7 +55,8 @@ export async function getOrCreateDraft(
   }
 
   const emptyState = TaxpayerDraftStateSchema.parse({});
-  const inserted = await query<TaxpayerDraftRow>(
+  const inserted = await queryAsTenant<TaxpayerDraftRow>(
+    tenantId,
     `INSERT INTO taxpayer_drafts (tenant_id, fiscal_year, state, current_step)
      VALUES ($1, $2, $3::jsonb, 1)
      RETURNING *`,
@@ -95,7 +97,8 @@ export async function updateField(params: {
   // Re-parse to validate (will throw on invalid types)
   const validated = TaxpayerDraftStateSchema.parse(nextState);
 
-  const updated = await query<TaxpayerDraftRow>(
+  const updated = await queryAsTenant<TaxpayerDraftRow>(
+    tenantId,
     `UPDATE taxpayer_drafts
      SET state = $1::jsonb, current_step = GREATEST(current_step, $2)
      WHERE tenant_id = $3 AND fiscal_year = $4
@@ -131,7 +134,8 @@ export async function markSubmitted(
   tenantId: string,
   fiscalYear: number,
 ): Promise<TaxpayerDraft> {
-  const updated = await query<TaxpayerDraftRow>(
+  const updated = await queryAsTenant<TaxpayerDraftRow>(
+    tenantId,
     `UPDATE taxpayer_drafts
      SET completed_at = NOW()
      WHERE tenant_id = $1 AND fiscal_year = $2
@@ -148,7 +152,8 @@ export async function resetDraft(
   tenantId: string,
   fiscalYear: number,
 ): Promise<void> {
-  await query(
+  await queryAsTenant(
+    tenantId,
     `DELETE FROM taxpayer_drafts WHERE tenant_id = $1 AND fiscal_year = $2`,
     [tenantId, fiscalYear],
   );

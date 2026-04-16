@@ -20,7 +20,7 @@ import { getBucket, getDb } from "../db/mongo.js";
 import { eventStore } from "../events/EventStore.js";
 import { extractDocument } from "../services/OcrExtractor.js";
 import { mapDocumentToFields } from "../services/DocumentMapper.js";
-import { query } from "../db/postgres.js";
+import { query, queryAsTenant } from "../db/postgres.js";
 
 export const documentsRouter = Router();
 
@@ -226,7 +226,8 @@ documentsRouter.post("/:id/apply-to-draft", async (req, res) => {
     }
 
     // 2. Récupérer le draft existant (on ne crée pas — le wizard doit exister)
-    const draftRes = await query<{ id: string; state: Record<string, unknown> }>(
+    const draftRes = await queryAsTenant<{ id: string; state: Record<string, unknown> }>(
+      tenantId,
       `SELECT id, state FROM taxpayer_drafts WHERE tenant_id=$1 AND fiscal_year=$2 LIMIT 1`,
       [tenantId, fiscalYear],
     );
@@ -259,7 +260,8 @@ documentsRouter.post("/:id/apply-to-draft", async (req, res) => {
     }
 
     // 5. Persister le draft mis à jour (Postgres)
-    await query(
+    await queryAsTenant(
+      tenantId,
       `UPDATE taxpayer_drafts SET state=$1::jsonb, updated_at=now() WHERE id=$2`,
       [JSON.stringify(newState), draft.id],
     );

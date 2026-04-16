@@ -10,7 +10,7 @@ import {
   resetDraft,
   updateField,
 } from "../taxpayers/service.js";
-import { query } from "../db/postgres.js";
+import { query, queryAsTenant } from "../db/postgres.js";
 import { getDb } from "../db/mongo.js";
 import { buildVsPpDeclaration } from "../execution/VsPpFormBuilder.js";
 import { renderVsPpPdf } from "../execution/VsPpPdfRenderer.js";
@@ -466,7 +466,8 @@ taxpayersRouter.get("/draft/:year/field-sources", async (req, res) => {
 
   try {
     // 1. Trouver le draft
-    const draftRes = await query<{ id: string }>(
+    const draftRes = await queryAsTenant<{ id: string }>(
+      tenantId,
       `SELECT id FROM taxpayer_drafts WHERE tenant_id=$1 AND fiscal_year=$2 LIMIT 1`,
       [tenantId, fiscalYear],
     );
