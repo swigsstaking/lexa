@@ -1,0 +1,87 @@
+# Barème ICC Genève — Personnes Morales 2026
+# Source : Loi sur l'imposition des personnes morales (LIPM — RSG D 3 15)
+#   - Art. 20 : Taux impôt bénéfice sociétés de capitaux et coopératives
+#   - Art. 33 : Taux impôt capital sociétés de capitaux et coopératives
+#   - Art. 34 : Imposition réduite capital (participations, prêts groupe)
+#   - Art. 36 : Impôt capital associations/fondations/autres PM (progressif)
+# Ingéré dans Qdrant : LIPM-GE Arts. 20, 33, 34, 36
+
+canton: GE
+year: 2026
+entity: PM
+source:
+  authority: "Administration fiscale cantonale Genève (AFC-GE)"
+  law: "Loi sur l'imposition des personnes morales (LIPM — RSG D 3 15)"
+  articles:
+    - "Art. 20 — Taux impôt bénéfice SA/Sàrl/SC"
+    - "Art. 33 — Taux impôt capital SA/Sàrl/SC"
+    - "Art. 34 — Taux réduit capital (participations)"
+    - "Art. 36 — Impôt capital associations/fondations"
+  url: "https://silgeneve.ch/legis/data/rsg_D3_15.htm"
+  document: "LIPM GE — Arts. 20, 33, 34, 36"
+  fetched_at: "2026-04-16"
+  confidence: high
+  note: >
+    Taux extraits directement des articles de loi LIPM-GE ingérés dans swiss_law.
+    Les taux de l'art. 20 et 33 sont fixes (pas indexés annuellement).
+
+# Sociétés de capitaux et coopératives (SA, Sàrl, SC)
+impot_benefice:
+  # Art. 20 al. 1 LIPM-GE
+  structure: flat
+  rate: 0.0333
+  description: "3.33% du bénéfice net"
+  source_article: "Art. 20 al. 1 LIPM-GE"
+  note: >
+    Taux unique fixe. Art. 20 al. 2 : majorable dans cas particuliers (relations internationales).
+    GE = taux bénéfice PM parmi les plus bas de Suisse romande (réforme fiscale RFFA 2020).
+
+impot_capital:
+  # Art. 33 LIPM-GE — Sociétés de capitaux et coopératives
+  standard:
+    structure: flat
+    rate_permille: 1.8
+    description: "1.8‰ du capital propre imposable"
+    source_article: "Art. 33 LIPM-GE"
+
+  # Art. 34 LIPM-GE — Taux réduit pour participations et prêts groupe
+  reduit_participations:
+    structure: flat
+    rate_permille: 0.005
+    description: "0.005‰ pour capital afférent aux droits de participation, droits art. 12A, prêts groupe"
+    source_article: "Art. 34 LIPM-GE"
+
+  # Art. 36 LIPM-GE — Associations, fondations, placements collectifs et autres PM
+  associations_fondations:
+    structure: progressif_par_tranche
+    tranches:
+      - threshold: 1
+        threshold_max: 50000
+        rate_permille: 0.75
+        impot_max_tranche: 37.50
+      - threshold: 50001
+        threshold_max: 150000
+        rate_permille: 1.00
+        impot_max_tranche: 100.00
+      - threshold: 150001
+        threshold_max: 300000
+        rate_permille: 1.25
+        impot_max_tranche: 187.50
+      - threshold: 300001
+        threshold_max: 500000
+        rate_permille: 1.50
+        impot_max_tranche: 300.00
+      - threshold: 500001
+        threshold_max: 750000
+        rate_permille: 1.75
+        impot_max_tranche: 437.50
+    source_article: "Art. 36 LIPM-GE"
+    note: "Barème déduit du tableau complet de l'art. 36 (chunk ingéré)"
+
+# Note fiscale GE PM
+note_fiscale: >
+  Genève (post-RFFA 2020) : taux bénéfice PM fixé à 3.33% (art. 20 LIPM), très compétitif.
+  Taux effectif ICC PM pour une SA standard : ~13-14% total (cantonal + IFD 8.5%).
+  Capital imposé à 1.8‰ standard.
+  GE = système ICC unifié (pas de centimes communaux séparés pour PM).
+  Impôt minimum PM : voir art. LCP-GE (taxe personnelle PM).

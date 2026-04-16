@@ -1,0 +1,99 @@
+# Barème ICC cantonal Valais — Personnes Morales 2026
+# Source : VS Loi fiscale (RSVS 642.1)
+#   - Art. 89 al. 1 : impôt bénéfice cantonal (sociétés de capitaux / coopératives)
+#   - Art. 99 al. 1 : impôt capital cantonal (sociétés de capitaux / coopératives)
+#   - Art. 93 al. 1 : impôt bénéfice associations/fondations/autres PM
+#   - Art. 100 : impôt capital associations/fondations/autres PM
+#   - Art. 180a : taux communal bénéfice PM (différent du cantonal)
+# Ingéré dans Qdrant : VS-Loi-fiscale Art. 89, 90, 93, 99, 100, 180a
+
+canton: VS
+year: 2026
+entity: PM
+source:
+  authority: "Service cantonal des contributions Valais (SCC)"
+  law: "Loi fiscale du canton du Valais (RSVS 642.1)"
+  articles:
+    - "Art. 89 — Impôt bénéfice cantonal SA/Sàrl/coopératives"
+    - "Art. 99 — Impôt capital cantonal SA/Sàrl/coopératives"
+    - "Art. 93 — Impôt bénéfice associations/fondations"
+    - "Art. 100 — Impôt capital associations/fondations"
+    - "Art. 180a — Impôt bénéfice communal PM"
+  url: "https://lex.vs.ch/app/fr/texts_of_law/642.1"
+  document: "Loi fiscale VS — Arts. 89, 99, 93, 100, 180a"
+  fetched_at: "2026-04-16"
+  confidence: high
+  note: >
+    Taux extraits directement des articles de loi ingérés dans swiss_law.
+    ATTENTION : VS distingue l'impôt cantonal (Art. 89) de l'impôt communal (Art. 180a).
+    L'ICC total = cantonal + communal. Les deux barèmes sont reproduits ci-dessous.
+
+# Sociétés de capitaux et coopératives (SA, Sàrl, SC)
+impot_benefice:
+  # Art. 89 — Impôt CANTONAL sur le bénéfice
+  cantonal:
+    structure: progressif_par_tranche
+    tranches:
+      - threshold: 0
+        rate: 0.0225
+        description: "2.25% jusqu'à 250'000 CHF de bénéfice net"
+      - threshold: 250001
+        rate: 0.052
+        description: "5.2% dès 250'001 CHF"
+    minimum_taux_pct: 2.25
+    source_article: "Art. 89 al. 1 LF VS"
+    note: >
+      L'impôt ne peut être inférieur à 2.25% avant déductions arts 88b, 88e et T1-2.
+      Réduction pour holdings/participations : art. 90 LF VS (proportionnelle au rendement net).
+
+  # Art. 180a — Impôt COMMUNAL sur le bénéfice (même taux applicable dans communes)
+  communal:
+    structure: progressif_par_tranche
+    tranches:
+      - threshold: 0
+        rate: 0.0275
+        description: "2.75% jusqu'à 250'000 CHF"
+      - threshold: 250001
+        rate: 0.0675
+        description: "6.75% dès 250'001 CHF"
+    minimum_taux_pct: 2.75
+    source_article: "Art. 180a al. 1 LF VS"
+
+  # Art. 93 — Associations, fondations, autres personnes morales
+  associations_fondations:
+    structure: flat
+    rate: 0.04
+    seuil_exoneration_chf: 20000
+    source_article: "Art. 93 al. 1 LF VS"
+    note: "Bénéfice net non imposé si < 20'000 CHF"
+
+impot_capital:
+  # Art. 99 — Impôt CANTONAL sur le capital (SA/Sàrl/coopératives)
+  cantonal:
+    structure: progressif_par_tranche
+    tranches:
+      - threshold: 0
+        rate: 0.001
+        description: "1‰ jusqu'à 500'000 CHF de capital propre"
+      - threshold: 500001
+        rate: 0.0025
+        description: "2.5‰ dès 500'001 CHF"
+    minimum_chf: 200
+    source_article: "Art. 99 al. 1 LF VS"
+    note: >
+      Réduction 90% sur la part de capital afférant aux droits de participation (art. 90),
+      aux brevets (art. 88a) et aux prêts à long terme à sociétés affiliées.
+
+  # Art. 100 — Impôt capital associations/fondations/autres PM
+  associations_fondations:
+    structure: "selon taux impôt fortune PP (Art. 60 LF VS)"
+    seuil_exoneration_chf: 100000
+    source_article: "Art. 100 LF VS"
+    note: "Calculé d'après les taux de l'impôt sur la fortune des PP (Art. 60)"
+
+# Note structure fiscale VS PM
+note_fiscale: >
+  En Valais, les PM paient un impôt cantonal (Arts. 89, 99) ET un impôt communal (Art. 178ss).
+  Le taux communal varie selon la commune (centimes additionnels sur base cantonale).
+  Art. 180a fixe les taux communaux pour les PM spécifiquement.
+  Taux effectif ICC combiné approximatif : ~11-12% pour une SA standard (bénéfice < 250k).

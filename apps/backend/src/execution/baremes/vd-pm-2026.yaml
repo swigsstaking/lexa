@@ -1,0 +1,88 @@
+# Barème ICC Vaud — Personnes Morales 2026
+# Source : Loi sur les impôts directs cantonaux Vaud (LI — BLV 642.11)
+#   - Art. 105 : Taux impôt bénéfice SA/Sàrl/coopératives (cantonal)
+#   - Art. 111 : Taux impôt bénéfice associations/fondations/autres PM
+#   - Art. 118 : Taux impôt capital PM standard
+#   - Art. 277i : Taux capital (sociétés à statut spécial, transitoire 2019)
+# Ingéré dans Qdrant : LI-VD Arts. 105, 111, 118, 277i
+
+canton: VD
+year: 2026
+entity: PM
+source:
+  authority: "Administration cantonale des impôts Vaud (ACI)"
+  law: "Loi sur les impôts directs cantonaux (LI — BLV 642.11)"
+  articles:
+    - "Art. 105 — Taux impôt bénéfice SA/Sàrl/SC"
+    - "Art. 111 — Taux bénéfice associations/fondations"
+    - "Art. 118 — Taux impôt capital PM"
+  url: "https://prestations.vd.ch/pub/blv-publication/api/actes/CONSOLIDE?id=8df99d51-8df8-49ed-9ef5-2fa4817d0004"
+  document: "LI VD — Arts. 105, 111, 118"
+  fetched_at: "2026-04-16"
+  confidence: high
+  note: >
+    Taux extraits directement des articles de loi LI-VD ingérés dans swiss_law.
+    Arts. 105 et 118 : taux fixes (pas de coefficient annuel pour PM).
+
+# Sociétés de capitaux et coopératives (SA, Sàrl, SC)
+impot_benefice:
+  # Art. 105 al. 1 LI VD
+  structure: progressif_par_tranche
+  tranches:
+    - threshold: 0
+      threshold_max: 10000000
+      rate: 0.03333
+      description: "3⅓% (3.333%) pour bénéfice net imposable VD jusqu'à 10 millions CHF"
+    - threshold: 10000001
+      rate: 0.0375
+      description: "3.75% pour la tranche excédentaire au-delà de 10 millions CHF"
+  source_article: "Art. 105 al. 1 LI VD"
+  note: >
+    Taux fixés par la LI VD directement (pas de coefficient annuel pour PM bénéfice).
+    Art. 105 al. 2 : majorable dans cas particuliers relations internationales.
+    Fractions inférieures à 100 CHF abandonnées (art. 105 al. 3).
+
+  # Art. 111 — Associations, fondations, autres PM
+  associations_fondations:
+    structure: progressif_par_tranche
+    tranches:
+      - threshold: 0
+        threshold_max: 10000000
+        rate: 0.03333
+        description: "3⅓% jusqu'à 10 millions CHF"
+      - threshold: 10000001
+        rate: 0.0375
+        description: "3.75% au-delà de 10 millions CHF"
+    placements_collectifs_immeubles:
+      rate: 0.0475
+      description: "4.75% pour placements collectifs de capitaux avec immeubles en propriété directe"
+    seuil_exoneration_chf: 20000
+    source_article: "Art. 111 al. 1 et 1bis LI VD"
+
+impot_capital:
+  # Art. 118 al. 1 LI VD — Taux standard
+  standard:
+    structure: flat
+    rate_permille: 0.6
+    description: "0.6‰ du capital propre imposable"
+    source_article: "Art. 118 al. 1 LI VD"
+
+  # Art. 118 al. 5 — Réduction participations/prêts groupe
+  reduit_participations:
+    pourcentage_base_imposable: 50
+    description: "50% du capital propre afférent aux droits de participation (art. 106), droits art. 94a, prêts groupe"
+    source_article: "Art. 118 al. 5 LI VD"
+
+  # Art. 118 al. 4 — Associations, fondations
+  associations_fondations:
+    structure: "taux art. 59 LI VD (impôt gains immobiliers)"
+    seuil_exoneration_chf: 200000
+    source_article: "Art. 118 al. 4 LI VD"
+
+# Note fiscale VD PM
+note_fiscale: >
+  Vaud (post-RFFA 2019) : taux bénéfice PM unifié à 3.333% (cantonal).
+  Taux ICC total PM VD (cantonal + IFD) ≈ 11.83% pour une SA standard.
+  Capital imposé à 0.6‰ (l'un des plus bas de Suisse romande).
+  Les communes vaudoises n'ajoutent PAS de centimes additionnels sur PM.
+  Impôt minimum PM VD : art. 123+ LI VD (impôt minimum forfaitaire).

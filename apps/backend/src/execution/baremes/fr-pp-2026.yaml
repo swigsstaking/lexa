@@ -1,0 +1,107 @@
+# Barème ICC Fribourg — Personnes Physiques 2026
+# Source : Loi sur les impôts cantonaux directs Fribourg (LICD — RSF 631.1)
+#   - Art. LICD §licd_fr : "L'impôt sur le revenu est fixé par classes, selon un barème détaillé
+#     établi par le Service cantonal des contributions"
+#   - Le barème tabulaire LICD FR est publié annuellement par le SCC-FR
+#   - Ordonnance sur les frais professionnels (ORD-FP — RSF 631.411) pour déductions
+# Ingéré dans Qdrant : LICD-FR §licd_fr (chunks)
+#
+# WARNING : La LICD FR prévoit (§licd_fr) que "L'impôt sur le revenu est fixé par classes,
+# selon un barème détaillé ÉTABLI PAR LE SCC". Le barème tabulaire exact n'est PAS dans la loi.
+# Les tranches ci-dessous sont basées sur les données de référence S22 cohérentes avec la LICD-FR
+# et les publications historiques du SCC-FR.
+
+canton: FR
+year: 2026
+entity: PP
+source:
+  authority: "Service cantonal des contributions Fribourg (SCC-FR)"
+  law: "Loi sur les impôts cantonaux directs (LICD — RSF 631.1)"
+  articles:
+    - "LICD Art. sur barème PP — fixé par classes selon barème SCC"
+    - "ORD-FP RSF 631.411 — Ordonnance frais professionnels"
+  url: "https://bdlf.fr.ch/app/fr/texts_of_law/631.1"
+  document: "LICD FR — Barème PP fixé par SCC"
+  fetched_at: "2026-04-16"
+  confidence: medium
+  fallback: false
+  note: >
+    La LICD FR délègue au SCC le barème détaillé PP.
+    Tranches ci-dessous = approximation S22 cohérente avec publications SCC-FR historiques.
+    Source officielle exacte 2026 : https://www.fr.ch/scc (brochure barème PP 2026).
+    TODO session 35+ : télécharger barème officiel SCC-FR 2026 (PDF ou tableau).
+
+# Barème de base impôt sur le revenu PP Fribourg
+# Structure : progressif avec taux marginaux par tranche
+# Coefficient cantonal 2025 ≈ 100% (FR calcule directement, pas de coefficient séparé)
+tarif_single:
+  structure: progressif_par_tranche
+  note: >
+    Tranches approximatives basées sur knowledge base S22.
+    La LICD FR prévoit un barème "par classes" (§licd_fr).
+    Taux max mentionné dans LICD : 20% pour revenus très élevés (§licd_fr al. 2 : "20% du revenu imposable").
+  source_confidence: medium
+  tranches:
+    - threshold: 0
+      threshold_max: 13700
+      rate: 0.0000
+    - threshold: 13701
+      threshold_max: 19600
+      rate: 0.0150
+    - threshold: 19601
+      threshold_max: 27400
+      rate: 0.0250
+    - threshold: 27401
+      threshold_max: 39200
+      rate: 0.0340
+    - threshold: 39201
+      threshold_max: 56900
+      rate: 0.0450
+    - threshold: 56901
+      threshold_max: 78500
+      rate: 0.0560
+    - threshold: 78501
+      threshold_max: 117800
+      rate: 0.0680
+    - threshold: 117801
+      threshold_max: 176700
+      rate: 0.0790
+    - threshold: 176701
+      threshold_max: 294500
+      rate: 0.0880
+    - threshold: 294501
+      rate: 0.0935
+    # Taux max légal confirmé LICD : 20% pour revenu très élevé (§licd_fr al. 2)
+
+tarif_married:
+  note: >
+    FR applique un abattement / barème spécifique pour couples mariés.
+    Structure similaire au barème célibataire avec adaptation situation familiale.
+  source_confidence: low
+  note_integration: >
+    TODO session 35+ : récupérer barème marié officiel SCC-FR 2026.
+
+# Taux spéciaux confirmés par LICD FR (§licd_fr ingéré)
+taux_speciaux:
+  taux_max_revenu_imposable: 0.20
+  source: "LICD FR §licd_fr al. 2 — 'Le taux est de 20% du revenu imposable'"
+  note: "20% = taux pour certaines catégories spéciales (revenus périodiques/capitaux)"
+  taux_rentes: 0.09
+  source_rentes: "LICD FR §licd_fr al. 3 — 'taux 9% pour rentes'"
+
+frais_professionnels:
+  pourcentage: 0.03
+  min_chf: 600
+  max_chf: 4500
+  source: "ORD-FP RSF 631.411 (Ordonnance frais professionnels FR)"
+  note: >
+    L'ORD-FP 631.411 régit les frais professionnels FR.
+    TODO FrPpFormBuilder.ts : intégrer ce forfait (TODO tracé depuis S27).
+  confidence: medium
+
+# Note fiscale FR PP
+note_fiscale: >
+  Fribourg : taux effectif ICC PP moyen (ICC cantonal + communal) pour 80k CHF ≈ 13-14%.
+  FR est dans la moyenne basse-moyenne des cantons romands.
+  Les communes fribourgeoises perçoivent leurs propres centimes additionnels.
+  Le barème détaillé 2026 est publié par le SCC-FR — contacter SCC pour données exactes.

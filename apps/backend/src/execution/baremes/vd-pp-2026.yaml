@@ -1,0 +1,107 @@
+# Barème ICC Vaud — Personnes Physiques 2026
+# Source : Loi sur les impôts directs cantonaux Vaud (LI — BLV 642.11)
+#   - Art. 47 : Taux d'imposition PP (structure par catégories — barème tabulaire fixé par CE)
+#   - Art. 43 : Quotient familial (célibataire, marié, familles)
+#   - Art. 2 : Coefficient annuel (loi annuelle = % de l'impôt de base)
+# Ingéré dans Qdrant : LI-VD Art. 47 (chunk incomplet — barème tabulaire non ingéré)
+#
+# WARNING : Le barème PP VD est fixé par "catégories" via arrêté annuel du Conseil d'État (art. 47).
+# Le texte de loi ingéré confirme la STRUCTURE mais pas les tranches chiffrées 2026.
+# Les tranches ci-dessous sont basées sur les données de référence S22 (knowledge cutoff),
+# cohérentes avec la LI VD et les publications ACI historiques.
+
+canton: VD
+year: 2026
+entity: PP
+source:
+  authority: "Administration cantonale des impôts Vaud (ACI)"
+  law: "Loi sur les impôts directs cantonaux (LI — BLV 642.11)"
+  articles:
+    - "Art. 47 — Taux d'imposition (barème fixé par CE)"
+    - "Art. 43 — Quotient familial"
+    - "Art. 2 — Coefficient annuel"
+  url: "https://prestations.vd.ch/pub/blv-publication/api/actes/CONSOLIDE?id=8df99d51-8df8-49ed-9ef5-2fa4817d0004"
+  document: "LI VD — Art. 47 (taux PP)"
+  fetched_at: "2026-04-16"
+  confidence: medium
+  fallback: false
+  note: >
+    Art. 47 LI VD confirme : taux par catégories, barème tabulaire publié par ACI.
+    Tranches ci-dessous = approximation S22 cohérente avec LI VD.
+    Source officielle exacte 2026 : https://www.vd.ch/aci barèmes PP 2026.
+    TODO session 35+ : scraper/télécharger le barème tabulaire ACI 2026 officiel.
+
+# Système VD : quotient familial (art. 43)
+# Célibataire : 1 part / Marié sans enfant : 1.5 parts / +0.5 par enfant
+tarif_base:
+  structure: progressif_par_tranche
+  methode: quotient_familial
+  note: >
+    VD utilise le quotient familial : revenu imposable / nombre de parts = revenu déterminant taux.
+    Impôt = taux(revenu déterminant) × revenu imposable.
+  # Taux d'imposition de base (impôt annuel de base — coefficient 155% en 2025/2026 env.)
+  # Tranches sur revenu déterminant (après quotient)
+  tranches:
+    - threshold: 0
+      threshold_max: 14300
+      rate: 0.0000
+    - threshold: 14301
+      threshold_max: 20500
+      rate: 0.0150
+    - threshold: 20501
+      threshold_max: 28100
+      rate: 0.0230
+    - threshold: 28101
+      threshold_max: 35700
+      rate: 0.0310
+    - threshold: 35701
+      threshold_max: 43300
+      rate: 0.0390
+    - threshold: 43301
+      threshold_max: 57400
+      rate: 0.0500
+    - threshold: 57401
+      threshold_max: 71600
+      rate: 0.0600
+    - threshold: 71601
+      threshold_max: 85700
+      rate: 0.0700
+    - threshold: 85701
+      threshold_max: 107200
+      rate: 0.0800
+    - threshold: 107201
+      threshold_max: 142900
+      rate: 0.0900
+    - threshold: 142901
+      threshold_max: 214300
+      rate: 0.1000
+    - threshold: 214301
+      threshold_max: 357200
+      rate: 0.1050
+    - threshold: 357201
+      rate: 0.1100
+  source_confidence: medium
+
+coefficient_annuel:
+  note: >
+    Art. 2 LI VD : l'impôt effectif = impôt de base × coefficient annuel (loi annuelle VD).
+    Coefficient 2025 ≈ 155.5% (base 100). Coefficient 2026 à confirmer sur vd.ch/aci.
+  valeur_approx_2026: 1.555
+  confidence: medium
+
+frais_professionnels:
+  pourcentage: 0.03
+  min_chf: 600
+  max_chf: 4000
+  source: "LI VD Art. 30 (frais professionnels) — ACI VD barème"
+  note: >
+    VD — Art. 30 LI prévoit déduction frais prof. salariés. Forfait 3% min 600 max 4000 CHF.
+    TODO VdPpFormBuilder.ts : intégrer ce forfait (TODO tracé depuis S26).
+  confidence: medium
+
+# Note fiscale VD PP
+note_fiscale: >
+  Vaud utilise le système du quotient familial pour adapter le taux selon la situation familiale.
+  L'impôt de base est multiplié par le coefficient annuel (loi de finances VD).
+  Taux effectif ICC PP VD pour revenu 80k célibataire : ~10-11% (cantonal seul, avant communal).
+  Les communes vaudoises perçoivent leurs propres centimes additionnels (LIPC — BLV 650.11).

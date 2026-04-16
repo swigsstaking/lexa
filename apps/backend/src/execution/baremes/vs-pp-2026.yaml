@@ -1,0 +1,91 @@
+# Barème ICC cantonal Valais — Personnes Physiques 2026
+# Source : VS Loi fiscale (RSVS 642.1) Art. 32 al. 1 (impôts cantonaux) + Art. 178 (impôts communaux)
+# Ingéré dans Qdrant : VS-Loi-fiscale Art. 32 et Art. 178
+# Note : Le barème de l'annexe 1 est indexé annuellement (Conseil d'État adapte les classes, pas les taux).
+# Les tranches ci-dessous sont celles de la loi telles qu'ingérées. La version exacte 2026 peut différer
+# légèrement après indexation renchérissement.
+
+canton: VS
+year: 2026
+entity: PP
+source:
+  authority: "Service cantonal des contributions Valais (SCC)"
+  law: "Loi fiscale du canton du Valais (RSVS 642.1)"
+  articles: ["Art. 32 al. 1 (barème cantonal)", "Art. 178 (barème communal)"]
+  url: "https://lex.vs.ch/app/fr/texts_of_law/642.1"
+  document: "Loi fiscale VS — Art. 32 Annexe 1 (impôt cantonal PP)"
+  fetched_at: "2026-04-16"
+  confidence: medium
+  note: >
+    Tranches extraites de l'art. 32 LF VS ingéré dans swiss_law. Taux législatifs fixes (2%-14%).
+    Classes de revenu indexées annuellement par le Conseil d'État ; version 2026 peut varier
+    légèrement. Coefficient cantonal 2026 = 100% de l'impôt de base.
+
+# Barème cantonal impôt de base (Art. 32 LF VS — Annexe 1)
+# Structure : taux marginal par classe (interpolation entre classes)
+tarif_cantonal:
+  structure: progressif_par_classe
+  taux_min_pct: 2.00
+  taux_max_pct: 14.00
+  tranches:
+    - threshold: 500
+      rate: 0.0200
+    - threshold: 6400
+      rate: 0.027992
+    - threshold: 12800
+      rate: 0.036915
+    - threshold: 19100
+      rate: 0.045982
+    - threshold: 25500
+      rate: 0.062978
+    - threshold: 38200
+      rate: 0.076975
+    - threshold: 50900
+      rate: 0.089974
+    - threshold: 63600
+      rate: 0.104963
+    - threshold: 76300
+      rate: 0.117962
+    - threshold: 89000
+      rate: 0.129960
+    - threshold: 101700
+      rate: 0.132989
+    - threshold: 114400
+      rate: 0.134992
+    - threshold: 127100
+      rate: 0.135498
+    - threshold: 139800
+      rate: 0.1359
+    # Au-delà : taux max 14% (interpolation jusqu'au plafond)
+    - threshold: 755200
+      rate: 0.14
+  note: >
+    Art. 32 al. 1 : "fixé entre 2% et 14% selon la classe de revenu, conformément au tableau
+    de l'annexe 1". Les tranches hautes (>152'400) sont tronquées dans le chunk ingéré.
+    Taux de 14% confirmé comme maximum légal.
+
+# Réductions / déductions fiscales spécifiques
+deductions:
+  maries_vivant_menage_commun:
+    reduction_pct: 35
+    min_chf: 680
+    max_chf: 4870
+    source: "Guide PP VS 2024, section 86 — art. 32a LF VS"
+  charge_famille:
+    reduction_par_enfant_max_chf: 2435
+    reduction_pct: 2
+    source: "Guide PP VS 2024, section 91 — art. 33b al. 4 LF VS"
+
+frais_professionnels:
+  pourcentage: 0.025
+  min_chf: 2000
+  max_chf: 4000
+  note: "Approximation basée sur pratique VS ; confirmer avec Guide PP officiel 2026"
+  confidence: low
+
+# Note sur la structure fiscale VS
+note_fiscale: >
+  En Valais, l'impôt cantonal PP est calculé sur la base du barème de l'annexe 1 de la LF VS.
+  Les communes fixent leur propre coefficient (centimes additionnels) sur ce même barème.
+  Le taux communal varie de 70% à 130% environ selon la commune.
+  L'impôt communal a son propre barème (Art. 178 LF VS, max 10%).
