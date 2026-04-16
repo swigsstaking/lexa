@@ -10,6 +10,7 @@ import { PmWizardVs } from '@/routes/company/PmWizardVs';
 import { PmWizardCanton } from '@/routes/company/PmWizardCanton';
 import { CloseYear } from '@/routes/close/CloseYear';
 import { AuditYear } from '@/routes/audit/AuditYear';
+import { Conseiller } from '@/routes/conseiller/Conseiller';
 import { cantonGE } from '@/config/cantons/ge';
 import { cantonVD } from '@/config/cantons/vd';
 import { cantonVS } from '@/config/cantons/vs';
@@ -152,6 +153,15 @@ export default function App() {
         element={
           <RequireAuth>
             <AuditYear />
+          </RequireAuth>
+        }
+      />
+      {/* Conseiller fiscal proactif — Session 31 */}
+      <Route
+        path="/conseiller/:year"
+        element={
+          <RequireAuth>
+            <Conseiller />
           </RequireAuth>
         }
       />

@@ -319,6 +319,106 @@ export const lexa = {
         generatedAt: string;
       }>(`/audit/trail/${year}`)
       .then((r) => r.data),
+
+  // Conseiller agent (session 31)
+  askConseiller: (input: {
+    question: string;
+    year?: number;
+    context?: {
+      canton?: 'VS' | 'GE' | 'VD' | 'FR';
+      entityType?: 'pp' | 'pm';
+      civilStatus?: 'single' | 'married';
+      currentIncome?: number;
+      companyProfit?: number;
+    };
+  }) =>
+    api
+      .post<{
+        answer: string;
+        citations: Array<{ law: string; article: string; heading?: string; score: number; url?: string }>;
+        disclaimer: string;
+        durationMs: number;
+        model: string;
+      }>('/agents/conseiller/ask', input)
+      .then((r) => r.data),
+
+  // Simulations fiscales (session 31)
+  simulateRachatLpp: (input: {
+    canton: 'VS' | 'GE' | 'VD' | 'FR';
+    year: number;
+    currentIncome: number;
+    additionalLppPurchase: number;
+    civilStatus?: 'single' | 'married';
+  }) =>
+    api
+      .post<{
+        additionalLppPurchase: number;
+        baseTax: number;
+        afterLppTax: number;
+        savings: number;
+        effectiveSavingsRate: number;
+        incomeAfterDeduction: number;
+        citation: { law: string; article: string; alinea: string };
+        disclaimer: string;
+      }>('/simulate/rachat-lpp', input)
+      .then((r) => r.data),
+
+  simulatePilier3a: (input: {
+    canton: 'VS' | 'GE' | 'VD' | 'FR';
+    year: number;
+    currentIncome: number;
+    current3a: number;
+    target3a: number;
+    hasLpp?: boolean;
+    civilStatus?: 'single' | 'married';
+  }) =>
+    api
+      .post<{
+        current3a: number;
+        target3a: number;
+        additionalContribution: number;
+        cappedAdditionalContribution: number;
+        baseTax: number;
+        afterTax: number;
+        savings: number;
+        effectiveSavingsRate: number;
+        plafond2026: number;
+        citation: { law: string; article: string; alinea: string };
+        disclaimer: string;
+      }>('/simulate/pilier-3a', input)
+      .then((r) => r.data),
+
+  simulateDividendVsSalary: (input: {
+    amountAvailable: number;
+    shareholderMarginalRate: number;
+    canton: 'VS' | 'GE' | 'VD' | 'FR';
+    legalForm: 'sarl' | 'sa';
+  }) =>
+    api
+      .post<{
+        amountAvailable: number;
+        salary: {
+          grossToEmployee: number;
+          avsEmployeeCharge: number;
+          avsEmployerCharge: number;
+          taxableIncome: number;
+          incomeTax: number;
+          netInHand: number;
+          companyCost: number;
+        };
+        dividend: {
+          corporateTaxIfd: number;
+          corporateTaxCantonal: number;
+          dividendPayable: number;
+          dividendTax: number;
+          netInHand: number;
+        };
+        recommendation: 'dividend' | 'salary' | 'equal';
+        savingsByDividend: number;
+        citations: Array<{ law: string; article?: string; alinea?: string; note?: string }>;
+        disclaimer: string;
+      }>('/simulate/dividend-vs-salary', input)
+      .then((r) => r.data),
 };
 
 export type TaxpayerDraft = {
