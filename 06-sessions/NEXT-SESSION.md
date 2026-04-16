@@ -1,35 +1,36 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 31 — 2026-04-16](2026-04-16-session-31.md) (Agent Conseiller — 7e et dernier rôle whitepaper, TaxSimulator, /conseiller/:year, 14 agents actifs, qa-lexa 35/35)
-**Prochaine session** : **Session 32 — Swissdec salaires OU mode fiduciaire multi-clients**
+**Dernière session** : [Session 32 — 2026-04-16](2026-04-16-session-32.md) (Mode fiduciaire multi-clients — migration 008, MembershipService, JWT étendu, switch-tenant, isolation 403, seed fiduciaire@lexa.test + Acme SA, frontend switcher, 37/37 qa-lexa)
+**Prochaine session** : **Session 33 — Swissdec salaires + polish préparation launch**
 
-> Session 31 a livré le 7e et dernier rôle whitepaper (Agent Conseiller), le 15e modèle Spark (lexa-conseiller), TaxSimulator (simulateRachatLpp + simulatePilier3a + simulateDividendVsSalary), 3 endpoints /simulate/*, la page /conseiller/:year avec 3 cards simulations et le chat agent, +2 fixtures qa-lexa (35/35). Score MVP ~99%.
+> Session 32 a livré le mode fiduciaire complet : migration fiduciary_memberships (39 owners backfillés), MembershipService, JWT étendu (activeTenantId + memberships[]), POST /auth/switch-tenant, GET /fiduciary/clients, POST /fiduciary/invite, RLS préparée (migration 009 + queryAsTenant wrapper prêt), seed fiduciaire@lexa.test (2 memberships) + Acme SA GE, frontend switcher dropdown, +2 fixtures qa-lexa fiduciary (37/37). Score MVP ~99.3%.
 
 ---
 
-## Ce qui marche après session 31
+## Ce qui marche après session 32
 
 | Composant | État |
 |---|---|
 | **Plateforme** | |
 | `https://lexa.swigs.online` HTTPS + proxy /api | OK |
 | Auth JWT + rate limit + trust proxy 1 | OK |
-| **Agents actifs (14)** | classifier, reasoning, tva, fiscal-pp-vs/ge/vd/fr/ne/ju/bj, fiscal-pm, cloture, audit, **conseiller** |
-| **Spark modèles** | 15 modèles lexa (+ 1 test intermédiaire = 16) |
-| **Routes simulate** | |
-| `POST /simulate/rachat-lpp` | **OK session 31** |
-| `POST /simulate/pilier-3a` | **OK session 31** |
-| `POST /simulate/dividend-vs-salary` | **OK session 31** |
-| **Agent Conseiller** | |
-| `POST /agents/conseiller/ask` | **OK session 31** |
-| `/conseiller/:year` — 3 cards simu + briefing + chat | **OK session 31** |
-| Bouton "Conseiller" (Lightbulb) dans Workspace | **OK session 31** |
+| **JWT étendu (S32)** | `activeTenantId + memberships[]` dans payload |
+| **Agents actifs (14)** | classifier, reasoning, tva, fiscal-pp-vs/ge/vd/fr/ne/ju/bj, fiscal-pm, cloture, audit, conseiller |
+| **Spark modèles** | 15 modèles lexa |
+| **Mode fiduciaire (S32)** | |
+| `POST /auth/switch-tenant` | **OK session 32** |
+| `GET /fiduciary/clients` | **OK session 32** |
+| `POST /fiduciary/invite` | **OK session 32** |
+| Switcher dropdown dans header | **OK session 32** |
+| `fiduciaire@lexa.test` avec 2 clients (demo + acme) | **OK session 32** |
+| Isolation 403 (non-member switch) | **OK session 32** |
+| **RLS** | Préparée (migration 009 + queryAsTenant prêt), inactive V1 |
 | **Tests auto** | |
-| qa-lexa **35/35** | **S31** |
+| qa-lexa **37/37** | **S32** |
 
 ---
 
-## Session 32 — Options
+## Session 33 — Objectif principal
 
 ### Option A (recommandée) : Swissdec salaires
 
@@ -37,64 +38,63 @@
 - Générateur certificats salaire (formulaire officiel AFC)
 - Source légale : LIFD art. 127 (attestation salaire)
 - Modèle : lexa-salaire (16e modèle Spark)
-- +2 fixtures qa-lexa → 37/37
+- +2 fixtures qa-lexa → 39/39
 
-### Option B : Mode fiduciaire multi-clients
+### Option B : Polish préparation launch
 
-- Refactor multi-tenant profond avec RLS Postgres
-- Interface fiduciaire : vue multi-clients, switch company, rapports consolidés
-- Source légale : CO art. 959 (comptabilité séparée)
+- Code splitting React.lazy() — bundle 856KB → ~400KB
+- RLS activation (migration queryAsTenant complète)
+- Suppression DEV_BYPASS_AUTH apps
+- Tests de charge
 
 ---
 
-## Dettes identifiées (accumulées)
+## Dettes identifiées (accumulées S32)
 
-1. **Käfer accountName complet** : 80 comptes hardcodés → jointure Qdrant (500 comptes)
-2. **Détection écritures manquantes avancée** : provisions, accruals, cohérence inter-exercices
-3. **Génération annexe CO 959c** (PDF structuré)
-4. **Refresh ledger_entries** : MV doit être rafraîchie manuellement
-5. **DEV_BYPASS_AUTH** : plusieurs apps — à retirer avant launch
-6. **Bundle frontend** : ~854 KB — code splitting à implémenter avant launch
-7. **lexa-conseiller-test + lexa-fiscal-pp-fr-test** : supprimer de Spark (modèles intermédiaires)
-8. **Simulator achat véhicule / embauche** : V2 — non implémenté S31
+1. **RLS activation** : migration 009 préparée, queryAsTenant wrapper prêt → activer pre-launch après migration complète
+2. **Bundle frontend** : 856 KB — code splitting React.lazy() (S33+ polish)
+3. **Email invitation fiduciaire** : V2 (actuellement: grant via fixture seed uniquement)
+4. **Audit log switches tenant** : V2
+5. **Test de charge Ollama** : GPU contention Spark observée en S31-S32
+6. **Käfer accountName complet** : 80 comptes hardcodés → jointure Qdrant (500 comptes)
+7. **lexa-conseiller-test + lexa-fiscal-pp-fr-test** : supprimer de Spark
+8. **Refresh ledger_entries** : MV doit être rafraîchie manuellement
 
 ---
 
 ## Décisions tranchées — ne plus réinterpréter
 
-(reprise sessions 11-31)
+(reprise sessions 11-32)
 
-1-39. (voir archives sessions précédentes)
+1-50. (voir archives sessions précédentes)
 
-40-45. (voir NEXT-SESSION S30)
-
-46. **TaxSimulator** : réutilise estimateTaxDue() de taxEstimator.ts — ne pas dupliquer les barèmes
-47. **simulateDividendVsSalary** : réduction 60% uniquement si participation qualifiée ≥10% — assumption explicite dans disclaimer
-48. **Taux AVS 2026** : employé 6.35% (5.3 AVS + 1.0 AI + 0.05 APG), employeur 6.45% (+ 0.10 AC)
-49. **GE dividende** : IS PM GE 14% → souvent salaire plus avantageux qu'ailleurs pour marginal <35%
-50. **lexa-conseiller** : créé via API Ollama `from` + `system` + `parameters` (identique lexa-audit)
+51. **tenant_id users** : colonne est maintenant NULLABLE (ALTER TABLE S32) pour fiduciaires sans tenant propre
+52. **fiduciaire@lexa.test** : UUID `00000000-0000-0000-0000-000000000100`, tenant_id NULL, memberships demo + acme
+53. **ACME_TENANT_ID** : `00000000-0000-0000-0000-000000000101`, company Acme SA GE
+54. **Switch-tenant** : valide membership DB (pas trust JWT seul) — sécurité en profondeur
+55. **RLS V1** : inactive, isolation app-level via req.tenantId (JWT activeTenantId) suffit pour beta T4 2026
 
 ---
 
-## Avertissements (héritage sessions 11-31)
+## Avertissements (héritage sessions 11-32)
 
 1. `.env` prod jamais rsync
 2. `trust proxy 1` ne pas retirer
-3. qa-lexa **35/35 baseline** — si un test fail, investiguer avant push
+3. qa-lexa **37/37 baseline** — si un test fail, investiguer avant push
 4. HMAC Pro→Lexa : ne jamais JSON.stringify deux fois
 5. JWT override req.tenantId — header X-Tenant-Id ignoré sur routes protégées
 6. Disclaimer PDF/XML obligatoire
 7. qwen3-vl-ocr sur Spark : output JSON non-déterministe, utiliser parseOcrModelOutput()
 8. LEXA_ENABLED=true côté Pro : ne jamais passer à false
 9. Backend = tsx watch src/ (pas dist compilé)
-10. Templates YAML dans src/execution/templates/
-11. MONGO_URL = mongodb://127.0.0.1:27017
-12. Rate limit login strict — utiliser http://localhost:3010 depuis serveur pour tests
-13. Ollama images[] = PNG/JPEG uniquement — ne jamais envoyer PDF brut en base64
-14. qa-lexa doit tourner sur http://127.0.0.1:3010 depuis .59
-15. **Ollama create API** : utiliser `from` + `system` + `parameters` dans body JSON
-16. **company_drafts** : table séparée de taxpayer_drafts
-17. **seed-fixture-data** : DEMO_TENANT_ID = "00000000-0000-0000-0000-000000000099"
-18. **verify-citations** : filtre Qdrant sur `law` field + match exact article_num
+10. MONGO_URL = mongodb://127.0.0.1:27017
+11. Rate limit login strict — utiliser http://localhost:3010 depuis serveur pour tests
+12. Ollama images[] = PNG/JPEG uniquement — ne jamais envoyer PDF brut en base64
+13. qa-lexa doit tourner sur `BASE_URL=http://localhost:3010` depuis .59
+14. **Ollama create API** : utiliser `from` + `system` + `parameters` dans body JSON
+15. **company_drafts** : table séparée de taxpayer_drafts
+16. **seed-fixture-data** : DEMO_TENANT_ID = "00000000-0000-0000-0000-000000000099"
+17. **verify-citations** : filtre Qdrant sur `law` field + match exact article_num
+18. **fiduciary fixtures qa-lexa** : `FIDU_EMAIL_QA = fiduciaire@lexa.test`, `FIDU_PASSWORD_QA = LexaFidu2026!`
 
-**Dernière mise à jour** : 2026-04-16 (session 31 — Agent Conseiller, 15 modèles Spark, 14 agents, /conseiller/:year, 35/35 qa-lexa)
+**Dernière mise à jour** : 2026-04-16 (session 32 — mode fiduciaire, 37/37 qa-lexa, RLS préparée)
