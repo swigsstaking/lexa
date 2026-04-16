@@ -305,11 +305,23 @@ export function Workspace() {
       </header>
 
       {/* Canvas hero */}
-      <main className="flex-1 relative min-h-0">
-        <LedgerCanvas />
+      <main className="flex-1 relative min-h-0 overflow-hidden">
+        {/* Fallback mobile — canvas inutilisable sur petit écran */}
+        <div className="md:hidden flex flex-col items-center justify-center h-full gap-4 p-6 text-center">
+          <Network className="w-10 h-10 text-muted" />
+          <div>
+            <p className="text-sm font-medium text-ink mb-1">Vue comptable</p>
+            <p className="text-xs text-muted leading-relaxed">Utilisez le menu ci-dessus pour accéder aux déclarations, à la comptabilité et aux outils IA.</p>
+          </div>
+        </div>
 
-        {/* Floating agents indicator */}
-        <div className="absolute top-4 left-4 card-elevated px-3 py-2 flex items-center gap-2 pointer-events-none">
+        {/* LedgerCanvas — desktop seulement */}
+        <div className="hidden md:block absolute inset-0">
+          <LedgerCanvas />
+        </div>
+
+        {/* Floating agents indicator — desktop seulement */}
+        <div className="hidden md:flex absolute top-3 left-4 card-elevated px-3 py-2 items-center gap-2 pointer-events-none z-10">
           <Activity className="w-3.5 h-3.5 text-accent" />
           <span className="text-2xs uppercase tracking-wider text-muted">Agents</span>
           <div className="flex gap-1">
@@ -319,7 +331,8 @@ export function Workspace() {
           </div>
         </div>
 
-        <div className="absolute top-4 right-4 card-elevated px-3 py-2 flex items-center gap-2 pointer-events-none">
+        {/* Hint Cmd+K — desktop seulement, pas sur mobile */}
+        <div className="hidden md:flex absolute top-3 right-4 card-elevated px-3 py-2 items-center gap-2 pointer-events-none z-10">
           <Command className="w-3.5 h-3.5 text-muted" />
           <span className="text-2xs text-muted">Cmd+K pour interroger l'IA</span>
         </div>
