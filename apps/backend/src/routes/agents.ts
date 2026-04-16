@@ -10,6 +10,7 @@ import { fiscalPpJuAgent } from "../agents/fiscalPpJu/FiscalPpJuAgent.js";
 import { fiscalPpBjAgent } from "../agents/fiscalPpBj/FiscalPpBjAgent.js";
 import { fiscalPmAgent } from "../agents/fiscalPm/FiscalPmAgent.js";
 import { clotureAgent } from "../agents/cloture/ClotureAgent.js";
+import { auditAgent } from "../agents/audit/AuditAgent.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 
 export const agentsRouter = Router();
@@ -307,6 +308,41 @@ agentsRouter.post("/cloture/ask", requireAuth, async (req, res) => {
   }
 });
 
+const AuditAskSchema = z.object({
+  question: z.string().min(3).max(2000),
+  year: z.number().int().optional(),
+  context: z
+    .object({
+      recentDecisions: z
+        .array(
+          z.object({
+            agent: z.string(),
+            confidence: z.number(),
+            citations: z.array(
+              z.object({ law: z.string(), article: z.string() }),
+            ),
+          }),
+        )
+        .optional(),
+    })
+    .optional(),
+});
+
+/** POST /agents/audit/ask — Audit agent (CO 958f, LTVA 70, nLPD) — vérif citations + intégrité IA */
+agentsRouter.post("/audit/ask", requireAuth, async (req, res) => {
+  const parsed = AuditAskSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
+  }
+  try {
+    const result = await auditAgent.ask(parsed.data);
+    res.json(result);
+  } catch (err) {
+    console.error("Audit agent error:", err);
+    res.status(500).json({ error: "audit agent failed", message: (err as Error).message });
+  }
+});
+
 /** GET /agents — list of available agents */
 agentsRouter.get("/", (_req, res) => {
   res.json({
@@ -392,10 +428,16 @@ agentsRouter.get("/", (_req, res) => {
         description:
           "Agent cloture continue CO 957-963 — bilan+resultat projection temps reel + detection ecritures manquantes",
       },
+      {
+        id: "audit",
+        endpoint: "POST /agents/audit/ask",
+        model: "lexa-audit",
+        description:
+          "Agent audit — verification citations legales (CO 958f, LTVA 70) + detection hallucinations + audit trail immuable",
+      },
     ],
     planned: [
-      { id: "conseiller", description: "Optimisation proactive" },
-      { id: "audit", description: "Audit trail + vérification cohérence" },
+      { id: "conseiller", description: "Optimisation proactive — session 31" },
     ],
   });
 });

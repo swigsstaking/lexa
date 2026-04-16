@@ -14,6 +14,7 @@ import { taxpayersRouter } from "./routes/taxpayers.js";
 import { companiesRouter } from "./routes/companies.js";
 import { requireAuth } from "./middleware/requireAuth.js";
 import { documentsRouter } from "./routes/documents.js";
+import { auditRouter } from "./routes/audit.js";
 import { connectMongo } from "./db/mongo.js";
 
 const app = express();
@@ -69,6 +70,7 @@ app.use("/documents", requireAuth, documentsRouter);
 // /agents est mixte : GET / (listing) public, POST /* protégé via les
 // handlers eux-mêmes dans routes/agents.ts.
 app.use("/agents", agentsRouter);
+app.use("/audit", requireAuth, auditRouter);
 
 // 404
 app.use((_req, res) => {
