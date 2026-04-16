@@ -19,12 +19,12 @@
 | Cantonal VS — **loi fiscale** | 1 | **1 (RSVS 642.1, 339 articles via Playwright v2)** | **100% ✓** |
 | Cantonal VS — directives / guides | ~10 | **4 (Guide 2024, barème 2026, déductions, impôt source)** | ~40% |
 | Autres cantons SR | 6 | **3 (NE, JU, BE-Jura session 25)** | **50%** |
-| Standards techniques | 4 (eCH-0217, Swissdec, CAMT.053, QR) | 0 | 0% |
+| Standards techniques | 4 (eCH-0217, Swissdec, CAMT.053, QR) | **1 (Swissdec Guidelines 5.0 — 33 chunks, cases 1-15 + sections)** | **25%** |
 | Plan comptable Käfer | 1 (structuré) | 1 (dans system prompt, à extraire) | 100%* |
 
 *existe mais pas en format ingéré/requêtable
 
-**Total Qdrant collection `swiss_law`** : **9854 points** (au 2026-04-16)
+**Total Qdrant collection `swiss_law`** : **9887 points** (au 2026-04-16)
 - Session 01 : 791 (LIFD + LTVA + CO + résumés manuels)
 - Session 02 : +108 LHID → 899
 - Session 03 : +1880 AFC + 228 VS docs → 3007
@@ -36,6 +36,7 @@
 - Sessions 20-24 : +2071 (Fribourg LICD+LIC+ORD, fédéral supplémentaire, VS guides v2) → **~8213**
 - Session 25 (Lane B) : **+390 NE (LCdir 329 + RGI 3 + ORD-FP 58) + +174 JU (LI via PDF) + +1069 BE-Jura (LI-BE)** → **9846**
 - **S32 Lane B** : **+8 barèmes ICC officiels 2026 (VS/GE/VD/FR × PP/PM)** → **9854**
+- **S34** : **+33 Swissdec Guidelines 5.0 (cases 1-15 + sections, topic=swissdec)** → **9887**
 
 Voir [`federal/circulaires-afc-index.md`](federal/circulaires-afc-index.md) pour le détail des documents AFC ingérés.
 
