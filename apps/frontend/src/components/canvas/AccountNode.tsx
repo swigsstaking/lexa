@@ -33,7 +33,7 @@ export function AccountNode({ data, selected }: NodeProps) {
         scale: 1,
       }}
       transition={{ duration: 0.3 }}
-      className={`relative min-w-[220px] rounded-xl border bg-surface px-4 py-3 transition-all ${
+      className={`relative min-w-[240px] rounded-xl border bg-surface px-4 py-3.5 transition-all ${
         selected
           ? 'border-accent shadow-glow-accent'
           : d.recent
@@ -48,17 +48,17 @@ export function AccountNode({ data, selected }: NodeProps) {
       />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-2xs font-mono uppercase tracking-wider text-muted">{d.code}</div>
-          <div className="text-sm font-medium text-ink truncate max-w-[180px]">{d.label}</div>
+          <div className="text-2xs font-mono uppercase tracking-wider text-muted leading-none mb-0.5">{d.code}</div>
+          <div className="text-sm font-medium text-ink truncate max-w-[180px] leading-snug">{d.label}</div>
         </div>
-        <span className={`text-2xs font-mono uppercase ${accentCls}`}>
+        <span className={`text-2xs font-mono uppercase flex-shrink-0 ${accentCls}`}>
           {d.category[0]?.toUpperCase()}
         </span>
       </div>
-      <div className="mt-2 pt-2 border-t border-border flex items-center justify-between">
+      <div className="mt-2.5 pt-2.5 border-t border-border flex items-center justify-between">
         <span className="text-2xs text-subtle uppercase tracking-wider">Solde</span>
         <span
-          className={`mono-num text-sm font-semibold ${
+          className={`mono-num text-base font-semibold ${
             d.balance < 0 ? 'text-danger' : 'text-ink'
           }`}
         >
