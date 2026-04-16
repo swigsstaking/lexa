@@ -13,6 +13,22 @@ import { clotureAgent } from "../agents/cloture/ClotureAgent.js";
 import { auditAgent } from "../agents/audit/AuditAgent.js";
 import { conseillerAgent } from "../agents/conseiller/ConseillerAgent.js";
 import { requireAuth } from "../middleware/requireAuth.js";
+import { enqueueLlmCall, registerLlmHandler } from "../services/LlmQueue.js";
+
+// ── Register all agent handlers (no circular imports — agents imported here) ──
+
+registerLlmHandler("tva", (p) => tvaAgent.ask(p as Parameters<typeof tvaAgent.ask>[0]));
+registerLlmHandler("fiscal-pp-vs", (p) => fiscalPpVsAgent.ask(p as Parameters<typeof fiscalPpVsAgent.ask>[0]));
+registerLlmHandler("fiscal-pp-ge", (p) => fiscalPpGeAgent.ask(p as Parameters<typeof fiscalPpGeAgent.ask>[0]));
+registerLlmHandler("fiscal-pp-vd", (p) => fiscalPpVdAgent.ask(p as Parameters<typeof fiscalPpVdAgent.ask>[0]));
+registerLlmHandler("fiscal-pp-fr", (p) => fiscalPpFrAgent.ask(p as Parameters<typeof fiscalPpFrAgent.ask>[0]));
+registerLlmHandler("fiscal-pp-ne", (p) => fiscalPpNeAgent.ask(p as Parameters<typeof fiscalPpNeAgent.ask>[0]));
+registerLlmHandler("fiscal-pp-ju", (p) => fiscalPpJuAgent.ask(p as Parameters<typeof fiscalPpJuAgent.ask>[0]));
+registerLlmHandler("fiscal-pp-bj", (p) => fiscalPpBjAgent.ask(p as Parameters<typeof fiscalPpBjAgent.ask>[0]));
+registerLlmHandler("fiscal-pm", (p) => fiscalPmAgent.ask(p as Parameters<typeof fiscalPmAgent.ask>[0]));
+registerLlmHandler("cloture", (p) => clotureAgent.ask(p as Parameters<typeof clotureAgent.ask>[0]));
+registerLlmHandler("audit", (p) => auditAgent.ask(p as Parameters<typeof auditAgent.ask>[0]));
+registerLlmHandler("conseiller", (p) => conseillerAgent.ask(p as Parameters<typeof conseillerAgent.ask>[0]));
 
 export const agentsRouter = Router();
 
@@ -34,7 +50,7 @@ agentsRouter.post("/tva/ask", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
   }
   try {
-    const result = await tvaAgent.ask(parsed.data);
+    const result = await enqueueLlmCall(req.tenantId, "tva", parsed.data);
     res.json(result);
   } catch (err) {
     console.error("TVA agent error:", err);
@@ -61,7 +77,7 @@ agentsRouter.post("/fiscal-pp/ask", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
   }
   try {
-    const result = await fiscalPpVsAgent.ask(parsed.data);
+    const result = await enqueueLlmCall(req.tenantId, "fiscal-pp-vs", parsed.data);
     res.json(result);
   } catch (err) {
     console.error("FiscalPpVs agent error:", err);
@@ -94,7 +110,7 @@ agentsRouter.post("/fiscal-pp-ge/ask", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
   }
   try {
-    const result = await fiscalPpGeAgent.ask(parsed.data);
+    const result = await enqueueLlmCall(req.tenantId, "fiscal-pp-ge", parsed.data);
     res.json(result);
   } catch (err) {
     console.error("FiscalPpGe agent error:", err);
@@ -123,7 +139,7 @@ agentsRouter.post("/fiscal-pp-vd/ask", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
   }
   try {
-    const result = await fiscalPpVdAgent.ask(parsed.data);
+    const result = await enqueueLlmCall(req.tenantId, "fiscal-pp-vd", parsed.data);
     res.json(result);
   } catch (err) {
     console.error("FiscalPpVd agent error:", err);
@@ -153,7 +169,7 @@ agentsRouter.post("/fiscal-pp-fr/ask", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
   }
   try {
-    const result = await fiscalPpFrAgent.ask(parsed.data);
+    const result = await enqueueLlmCall(req.tenantId, "fiscal-pp-fr", parsed.data);
     res.json(result);
   } catch (err) {
     console.error("FiscalPpFr agent error:", err);
@@ -181,7 +197,7 @@ agentsRouter.post("/fiscal-pp-ne/ask", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
   }
   try {
-    const result = await fiscalPpNeAgent.ask(parsed.data);
+    const result = await enqueueLlmCall(req.tenantId, "fiscal-pp-ne", parsed.data);
     res.json(result);
   } catch (err) {
     console.error("FiscalPpNe agent error:", err);
@@ -209,7 +225,7 @@ agentsRouter.post("/fiscal-pp-ju/ask", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
   }
   try {
-    const result = await fiscalPpJuAgent.ask(parsed.data);
+    const result = await enqueueLlmCall(req.tenantId, "fiscal-pp-ju", parsed.data);
     res.json(result);
   } catch (err) {
     console.error("FiscalPpJu agent error:", err);
@@ -237,7 +253,7 @@ agentsRouter.post("/fiscal-pp-bj/ask", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
   }
   try {
-    const result = await fiscalPpBjAgent.ask(parsed.data);
+    const result = await enqueueLlmCall(req.tenantId, "fiscal-pp-bj", parsed.data);
     res.json(result);
   } catch (err) {
     console.error("FiscalPpBj agent error:", err);
@@ -266,7 +282,7 @@ agentsRouter.post("/fiscal-pm/ask", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
   }
   try {
-    const result = await fiscalPmAgent.ask(parsed.data);
+    const result = await enqueueLlmCall(req.tenantId, "fiscal-pm", parsed.data);
     res.json(result);
   } catch (err) {
     console.error("FiscalPm agent error:", err);
@@ -301,7 +317,7 @@ agentsRouter.post("/cloture/ask", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
   }
   try {
-    const result = await clotureAgent.ask(parsed.data);
+    const result = await enqueueLlmCall(req.tenantId, "cloture", parsed.data);
     res.json(result);
   } catch (err) {
     console.error("Cloture agent error:", err);
@@ -336,7 +352,7 @@ agentsRouter.post("/audit/ask", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
   }
   try {
-    const result = await auditAgent.ask(parsed.data);
+    const result = await enqueueLlmCall(req.tenantId, "audit", parsed.data);
     res.json(result);
   } catch (err) {
     console.error("Audit agent error:", err);
@@ -365,7 +381,7 @@ agentsRouter.post("/conseiller/ask", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
   }
   try {
-    const result = await conseillerAgent.ask(parsed.data);
+    const result = await enqueueLlmCall(req.tenantId, "conseiller", parsed.data);
     res.json(result);
   } catch (err) {
     console.error("Conseiller agent error:", err);

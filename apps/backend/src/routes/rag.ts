@@ -2,6 +2,12 @@ import { Router } from "express";
 import { z } from "zod";
 import { ragQuery } from "../rag/ragQuery.js";
 import { classifierAgent } from "../agents/classifier/ClassifierAgent.js";
+import { enqueueLlmCall, registerLlmHandler } from "../services/LlmQueue.js";
+
+// Register classify handler once at module load (no circular import — agent is imported here)
+registerLlmHandler("classifier", (payload) =>
+  classifierAgent.classify(payload as Parameters<typeof classifierAgent.classify>[0]),
+);
 
 export const ragRouter = Router();
 
@@ -17,13 +23,23 @@ ragRouter.post("/ask", async (req, res) => {
   }
 
   try {
-    const answer = await ragQuery(parsed.data);
+    // ragQuery uses embedder + Ollama — goes through queue to avoid concurrent timeouts
+    const answer = await enqueueLlmCall(
+      req.tenantId ?? "public",
+      "rag-ask",
+      parsed.data,
+    );
     res.json(answer);
   } catch (err) {
     console.error("RAG error:", err);
     res.status(500).json({ error: "rag failed", message: (err as Error).message });
   }
 });
+
+// Register rag-ask handler
+registerLlmHandler("rag-ask", (payload) =>
+  ragQuery(payload as Parameters<typeof ragQuery>[0]),
+);
 
 const ClassifySchema = z.object({
   date: z.string(),
@@ -40,7 +56,11 @@ ragRouter.post("/classify", async (req, res) => {
   }
 
   try {
-    const result = await classifierAgent.classify(parsed.data);
+    const result = await enqueueLlmCall(
+      req.tenantId ?? "public",
+      "classifier",
+      parsed.data,
+    );
     res.json(result);
   } catch (err) {
     console.error("Classify error:", err);

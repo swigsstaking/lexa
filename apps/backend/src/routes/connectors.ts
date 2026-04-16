@@ -2,7 +2,8 @@ import { Router } from "express";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { eventStore } from "../events/EventStore.js";
-import { classifierAgent } from "../agents/classifier/ClassifierAgent.js";
+import type { ClassificationResult } from "../agents/classifier/ClassifierAgent.js";
+import { enqueueLlmCall } from "../services/LlmQueue.js";
 import { query, queryAsTenant } from "../db/postgres.js";
 import { requireHmac } from "../middleware/requireHmac.js";
 import { config } from "../config/index.js";
@@ -111,13 +112,13 @@ connectorsRouter.post("/bank/ingest", requireHmac, async (req, res) => {
         continue;
       }
 
-      const classification = await classifierAgent.classify({
+      const classification = (await enqueueLlmCall(tenantId, "classifier", {
         date: tx.bookingDate,
         description,
         amount: signedAmount,
         currency: tx.currency,
         counterpartyIban: tx.counterpartyIban,
-      });
+      })) as ClassificationResult;
 
       const classifiedEvent = await eventStore.append({
         tenantId,

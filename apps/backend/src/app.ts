@@ -17,6 +17,7 @@ import { documentsRouter } from "./routes/documents.js";
 import { auditRouter } from "./routes/audit.js";
 import { simulateRouter } from "./routes/simulate.js";
 import { fiduciaryRouter } from "./routes/fiduciary.js";
+import { jobsRouter } from "./routes/jobs.js";
 import { connectMongo } from "./db/mongo.js";
 
 const app = express();
@@ -75,6 +76,7 @@ app.use("/agents", agentsRouter);
 app.use("/audit", requireAuth, auditRouter);
 app.use("/simulate", requireAuth, simulateRouter);
 app.use("/fiduciary", fiduciaryRouter); // requireAuth géré dans le routeur
+app.use("/jobs", jobsRouter); // LLM queue job status (session 37)
 
 // 404
 app.use((_req, res) => {

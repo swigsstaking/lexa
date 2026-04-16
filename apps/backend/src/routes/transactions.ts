@@ -2,7 +2,8 @@ import { Router } from "express";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { eventStore } from "../events/EventStore.js";
-import { classifierAgent } from "../agents/classifier/ClassifierAgent.js";
+import type { ClassificationResult } from "../agents/classifier/ClassifierAgent.js";
+import { enqueueLlmCall } from "../services/LlmQueue.js";
 import { query, queryAsTenant } from "../db/postgres.js";
 
 export const transactionsRouter = Router();
@@ -54,14 +55,14 @@ transactionsRouter.post("/", async (req, res) => {
       metadata: { requestId: req.header("x-request-id") ?? randomUUID() },
     });
 
-    // Step 2 — classify
-    const classification = await classifierAgent.classify({
+    // Step 2 — classify (via LlmQueue to serialize concurrent requests per tenant)
+    const classification = (await enqueueLlmCall(tenantId, "classifier", {
       date,
       description,
       amount,
       currency,
       counterpartyIban,
-    });
+    })) as ClassificationResult;
 
     // Step 3 — classified event
     const classifiedEvent = await eventStore.append({
