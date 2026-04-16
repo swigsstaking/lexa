@@ -1,7 +1,7 @@
 # Base de connaissances Lexa — Index
 
-**Version** : 0.1
-**Date** : 2026-04-13
+**Version** : 0.2
+**Date** : 2026-04-16 (Lane B S32 : +8 barèmes ICC)
 
 ---
 
@@ -24,7 +24,7 @@
 
 *existe mais pas en format ingéré/requêtable
 
-**Total Qdrant collection `swiss_law`** : **9846 points** (au 2026-04-15)
+**Total Qdrant collection `swiss_law`** : **9854 points** (au 2026-04-16)
 - Session 01 : 791 (LIFD + LTVA + CO + résumés manuels)
 - Session 02 : +108 LHID → 899
 - Session 03 : +1880 AFC + 228 VS docs → 3007
@@ -35,8 +35,45 @@
 - Session 18 : **+381 Canton Vaud (LI 310 + LIPC 62 + RLI 9)** → **6142**
 - Sessions 20-24 : +2071 (Fribourg LICD+LIC+ORD, fédéral supplémentaire, VS guides v2) → **~8213**
 - Session 25 (Lane B) : **+390 NE (LCdir 329 + RGI 3 + ORD-FP 58) + +174 JU (LI via PDF) + +1069 BE-Jura (LI-BE)** → **9846**
+- **S32 Lane B** : **+8 barèmes ICC officiels 2026 (VS/GE/VD/FR × PP/PM)** → **9854**
 
 Voir [`federal/circulaires-afc-index.md`](federal/circulaires-afc-index.md) pour le détail des documents AFC ingérés.
+
+---
+
+## Barèmes fiscaux officiels 2026 — Lane B S32
+
+> Ingérés le 2026-04-16 via `01-knowledge-base/scripts/ingest_baremes_icc_2026.py`
+> Fichiers sources : `01-knowledge-base/baremes/*-2026.yaml` (8 fichiers)
+> **law tag Qdrant** : `baremes-officiels-icc` (permet filtre ciblé, distinct des chunks de lois)
+
+| Canton | PP | PM | Source confiance | Source loi | Articles clés |
+|---|---|---|---|---|---|
+| **VS** | ✅ ingéré | ✅ ingéré | PP: medium / PM: high | LF VS (RSVS 642.1) | Art. 32, 89, 93, 99, 100, 180a |
+| **GE** | ✅ ingéré | ✅ ingéré | PP: high / PM: high | LIPP RSG D 3 08 + LIPM RSG D 3 15 | Art. 41 complet (18 tranches), Art. 20, 33, 34 |
+| **VD** | ✅ ingéré | ✅ ingéré | PP: medium / PM: high | LI BLV 642.11 | Art. 47 (struct.), Art. 105, 111, 118 |
+| **FR** | ✅ ingéré | ✅ ingéré | PP: medium / PM: high | LICD RSF 631.1 | §licd_fr (bénéfice 4%, capital 1‰, 0.1‰) |
+
+**Total : 8 barèmes = 9854 points Qdrant** (9846 → +8)
+
+### Sources par canton
+
+| Canton | URL loi PP | URL loi PM | Confiance barème PP |
+|---|---|---|---|
+| VS | https://lex.vs.ch/app/fr/texts_of_law/642.1 | idem | Medium (tranches Art. 32 partiellement tronquées dans chunk) |
+| GE | https://silgeneve.ch/legis/data/rsg_D3_08.htm | https://silgeneve.ch/legis/data/rsg_D3_15.htm | **High** (Art. 41 complet avec 18 tranches) |
+| VD | https://prestations.vd.ch/pub/blv-publication/api/... | idem | Medium (barème délégué au CE par Art. 47 LI) |
+| FR | https://bdlf.fr.ch/app/fr/texts_of_law/631.1 | idem | Medium (barème délégué au SCC par LICD) |
+
+### Dettes session 35+
+
+1. **VS PP tranches hautes** : Art. 32 chunk tronqué au-delà de 152'400 CHF — récupérer via direct scraping lex.vs.ch
+2. **VD PP barème tabulaire 2026** : Tranches fixées par arrêté CE annuel — scraper vd.ch/aci
+3. **FR PP barème tabulaire 2026** : Fixé par SCC-FR — contacter SCC ou télécharger brochure PDF
+4. **VS PP tarif marié** : Non extrait de la loi fiscale VS — récupérer Art. 32a+
+5. **GE PP tarif marié** : Art. 41 al. 2 LIPP non ingéré complet — récupérer
+6. **FR PM capital SA/Sàrl standard** : Confirmer taux capital standard (art. LICD non trouvé dans Qdrant)
+7. **Intégration backend** : Remplacer approximations S22 dans `taxEstimator.ts` + `pmTaxEstimator.ts` par ces YAML — session post-S32
 
 ---
 
