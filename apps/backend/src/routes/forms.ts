@@ -17,6 +17,7 @@ import {
 } from "../execution/idempotence.js";
 import { buildVsPpDeclaration } from "../execution/VsPpFormBuilder.js";
 import { renderVsPpPdf } from "../execution/VsPpPdfRenderer.js";
+import { estimateTaxDue } from "../execution/taxEstimator.js";
 import { buildGePpDeclaration } from "../execution/GePpFormBuilder.js";
 import { renderGePpPdf } from "../execution/GePpPdfRenderer.js";
 import { buildVdPpDeclaration } from "../execution/VdPpFormBuilder.js";
@@ -582,6 +583,30 @@ formsRouter.post("/pm-declaration-vs", requireAuth, async (req, res) => {
  * V1 : pas de transmission électronique eCH-0217, pas de calcul paie auto.
  * Base légale : LIFD art. 127 al. 1 lit. a + Swissdec Guidelines 5.0.
  */
+// ── Preview estimation fiscale (BUG-P2-04) ───────────────────────────────────
+
+/**
+ * POST /forms/preview/tax-estimate — Estimation ICC + IFD sans persistance.
+ * Retourne uniquement { icc, ifd, total, effectiveRate, iccSource, disclaimer }.
+ * Source unique : même `estimateTaxDue()` utilisé dans tous les Form Builders.
+ * Permet au frontend de toujours afficher les mêmes montants que le PDF.
+ */
+const previewTaxEstimateSchema = z.object({
+  canton: z.enum(["VS", "GE", "VD", "FR"]),
+  year: z.number().int().min(2024).max(2030).optional().default(2026),
+  revenuImposable: z.number().min(0),
+  civilStatus: z.enum(["single", "married"]).optional().default("single"),
+});
+
+formsRouter.post("/preview/tax-estimate", requireAuth, (req, res) => {
+  const parse = previewTaxEstimateSchema.safeParse(req.body);
+  if (!parse.success) {
+    return res.status(400).json({ error: "invalid body", details: parse.error.issues });
+  }
+  const estimate = estimateTaxDue(parse.data);
+  res.json(estimate);
+});
+
 formsRouter.post("/swissdec-certificate", requireAuth, async (req, res) => {
   const parse = CertificateInput.safeParse(req.body);
   if (!parse.success) {

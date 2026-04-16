@@ -124,6 +124,24 @@ export const lexa = {
       .post<VsPpDeclarationResponse>('/forms/vs-declaration-pp', input)
       .then((r) => r.data),
 
+  // Preview estimation fiscale — BUG-P2-04 : source unique backend (même barèmes que PDF)
+  previewTaxEstimate: (input: {
+    canton: string;
+    year: number;
+    revenuImposable: number;
+    civilStatus?: 'single' | 'married';
+  }) =>
+    api
+      .post<{
+        icc: number;
+        ifd: number;
+        total: number;
+        effectiveRate: number;
+        iccSource: 'official-scale' | 'approximation';
+        disclaimer: string;
+      }>('/forms/preview/tax-estimate', input)
+      .then((r) => r.data),
+
   // Taxpayers (session 15 wizard)
   getTaxpayerDraft: (year: number) =>
     api

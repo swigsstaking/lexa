@@ -1,12 +1,25 @@
+import { useEffect, useRef, useState } from 'react';
 import type { TaxpayerDraft } from '@/api/lexa';
 import type { CantonConfig } from '@/config/cantons/types';
-import { FileText, Info } from 'lucide-react';
-import { estimateTaxDue } from '@/utils/taxEstimator';
+import { FileText, Info, Loader2 } from 'lucide-react';
+import { lexa } from '@/api/lexa';
+
+// BUG-P2-04 fix : remplace calcul local par appel backend preview
+// Le frontend n'a plus de barèmes dupliqués — source unique = estimateTaxDue() backend
 
 interface Props {
   draft: TaxpayerDraft;
   canton: CantonConfig;
 }
+
+type TaxPreview = {
+  icc: number;
+  ifd: number;
+  total: number;
+  effectiveRate: number;
+  iccSource: 'official-scale' | 'approximation';
+  disclaimer: string;
+};
 
 function chf(n: number | undefined): string {
   if (n === undefined || n === null || Number.isNaN(n)) return '—';
@@ -90,11 +103,40 @@ export function WizardSummary({ draft, canton }: Props) {
       ? 'married'
       : 'single';
 
-  const taxEstimate = estimateTaxDue({
-    canton: canton.code,
-    revenuImposable,
-    civilStatus,
-  });
+  // BUG-P2-04 : appel backend debounced 800ms — source unique (pas de calcul local)
+  const [taxPreview, setTaxPreview] = useState<TaxPreview | null>(null);
+  const [taxLoading, setTaxLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (revenuImposable <= 0) {
+      setTaxPreview(null);
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setTaxLoading(true);
+      lexa
+        .previewTaxEstimate({
+          canton: canton.code,
+          year: draft.fiscalYear ?? 2026,
+          revenuImposable,
+          civilStatus,
+        })
+        .then((data) => {
+          setTaxPreview(data);
+        })
+        .catch(() => {
+          // Silently fail — estimation is indicative only
+          setTaxPreview(null);
+        })
+        .finally(() => setTaxLoading(false));
+    }, 800);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revenuImposable, civilStatus, canton.code]);
 
   return (
     <div className="sticky top-6 space-y-4">
@@ -211,22 +253,33 @@ export function WizardSummary({ draft, canton }: Props) {
             />
           </div>
 
-          {taxEstimate && (
-            <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-4 -mx-4 -mb-4">
-              <div className="text-[10px] uppercase tracking-wide text-amber-400 mb-1">
-                Estimation impôt {canton.code} 2026
-              </div>
-              <div className="text-xl font-bold text-amber-300">
-                {chf(taxEstimate.total)} CHF
-              </div>
-              <div className="text-[10px] text-amber-200/70 mt-1">
-                ICC {chf(taxEstimate.icc)} · IFD {chf(taxEstimate.ifd)} · Taux {(taxEstimate.effectiveRate * 100).toFixed(1)}%
-              </div>
-              <div className="text-[9px] text-amber-200/50 mt-2 leading-tight">
-                {taxEstimate.disclaimer}
-              </div>
+          <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-4 -mx-4 -mb-4">
+            <div className="text-[10px] uppercase tracking-wide text-amber-400 mb-1">
+              Estimation impôt {canton.code} 2026
             </div>
-          )}
+            {taxLoading ? (
+              <div className="flex items-center gap-2 text-amber-300/70">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                <span className="text-xs">Calcul…</span>
+              </div>
+            ) : taxPreview ? (
+              <>
+                <div className="text-xl font-bold text-amber-300">
+                  {chf(taxPreview.total)} CHF
+                </div>
+                <div className="text-[10px] text-amber-200/70 mt-1">
+                  ICC {chf(taxPreview.icc)} · IFD {chf(taxPreview.ifd)} · Taux {(taxPreview.effectiveRate * 100).toFixed(1)}%
+                </div>
+                <div className="text-[9px] text-amber-200/50 mt-2 leading-tight">
+                  {taxPreview.disclaimer}
+                </div>
+              </>
+            ) : revenuImposable > 0 ? (
+              <div className="text-xs text-amber-200/50">Estimation indisponible</div>
+            ) : (
+              <div className="text-xs text-amber-200/50">Saisissez vos revenus pour estimer</div>
+            )}
+          </div>
         </div>
       </div>
 
