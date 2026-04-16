@@ -13,6 +13,8 @@ export type LedgerEdge = {
   id: string;
   source: string;
   target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
   type: 'transaction';
   animated: true;
   data: TransactionEdgeData;
@@ -134,9 +136,16 @@ export function buildCanvas(
     });
   }
 
+  // Map de colonne par compte pour déterminer handles + direction flux
+  const colByAccount = new Map<string, number>();
+  for (const col of [0, 1, 2]) {
+    for (const a of accountsByCol[col]) {
+      colByAccount.set(a.account, col);
+    }
+  }
+
   // Aggregate edges par paire (source, target) : 1 edge par paire de comptes,
-  // avec montant total + nombre de transactions. Évite la forêt de labels superposés
-  // quand on a plusieurs transactions entre les mêmes comptes.
+  // avec montant total + nombre de transactions.
   type AggregatedEdge = {
     source: string;
     target: string;
@@ -170,19 +179,43 @@ export function buildCanvas(
     }
   }
 
-  const edges: LedgerEdge[] = Array.from(aggregated.entries()).map(([key, agg]) => ({
-    id: `edge-${key}`,
-    source: agg.source,
-    target: agg.target,
-    type: 'transaction',
-    animated: true,
-    data: {
-      amount: agg.totalAmount,
-      currency: agg.currency,
-      count: agg.count,
-      lastOccurredAt: agg.lastOccurredAt,
-    },
-  }));
+  const edges: LedgerEdge[] = Array.from(aggregated.entries()).map(([key, agg]) => {
+    const sourceCol = colByAccount.get(agg.source) ?? 1;
+    const targetCol = colByAccount.get(agg.target) ?? 1;
+    // Handle choisi selon position relative des colonnes (évite les croisements)
+    // Source à gauche de target → source.right → target.left
+    // Source à droite de target → source.left-src → target.right-tgt (revient)
+    const leftToRight = sourceCol <= targetCol;
+    const sourceHandle = leftToRight ? 'r' : 'l-src';
+    const targetHandle = leftToRight ? 'l' : 'r-tgt';
+
+    // Direction flux comptable (du point de vue des actifs/banque en col 1) :
+    // - target est actif (col 1) → entrée de cash (vert)
+    // - source est actif (col 1) → sortie de cash (orange)
+    // - autre → neutre (gris)
+    const targetCategory = classifyAccount(extractCode(agg.target));
+    const sourceCategory = classifyAccount(extractCode(agg.source));
+    let direction: 'in' | 'out' | 'neutral' = 'neutral';
+    if (targetCategory === 'actif') direction = 'in';
+    else if (sourceCategory === 'actif') direction = 'out';
+
+    return {
+      id: `edge-${key}`,
+      source: agg.source,
+      target: agg.target,
+      sourceHandle,
+      targetHandle,
+      type: 'transaction',
+      animated: true,
+      data: {
+        amount: agg.totalAmount,
+        currency: agg.currency,
+        count: agg.count,
+        lastOccurredAt: agg.lastOccurredAt,
+        direction,
+      },
+    };
+  });
 
   return { nodes, edges };
 }

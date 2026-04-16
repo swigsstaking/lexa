@@ -105,3 +105,17 @@
     @apply font-mono tabular-nums;
   }
 }
+
+/* ── Canvas edges flow animation ───────────────────────────────────────────
+   stroke-dashoffset animé → tirets "coulent" de la source vers la target.
+   L'edge react-flow pointe source → target, l'animation visualise le flux
+   (entrée : 3xxx→1xxx vers banque ; sortie : 1xxx→5/6/7xxx depuis banque).
+*/
+@keyframes edge-flow {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -24; }
+}
+.animate-flow {
+  animation: edge-flow 1.2s linear infinite;
+}
+

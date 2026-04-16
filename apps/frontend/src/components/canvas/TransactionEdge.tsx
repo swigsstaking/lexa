@@ -5,6 +5,7 @@ export interface TransactionEdgeData extends Record<string, unknown> {
   currency: string;
   count?: number;
   lastOccurredAt?: string;
+  direction?: 'in' | 'out' | 'neutral';
 }
 
 const fmtChf = (n: number) =>
@@ -29,16 +30,30 @@ export function TransactionEdge({
     targetPosition,
   });
   const d = data as TransactionEdgeData | undefined;
+  const direction = d?.direction ?? 'neutral';
+
+  // Couleur du trait selon direction du flux (du point de vue banque/actif) :
+  //   in  = argent entrant dans la banque (produit → actif) : vert
+  //   out = argent sortant de la banque (actif → charge/passif) : orange
+  //   neutral = mouvement interne entre passifs ou autres
+  const strokeColor = selected
+    ? 'rgb(var(--accent))'
+    : direction === 'in'
+      ? 'rgb(34 197 94)' // emerald-500
+      : direction === 'out'
+        ? 'rgb(251 146 60)' // orange-400
+        : 'rgb(var(--border-strong))';
 
   return (
     <>
       <BaseEdge
         path={path}
         style={{
-          stroke: selected ? 'rgb(var(--accent))' : 'rgb(var(--border-strong))',
-          strokeWidth: selected ? 2 : 1.5,
+          stroke: strokeColor,
+          strokeWidth: selected ? 2.5 : 1.8,
           strokeDasharray: '6 6',
           strokeDashoffset: 0,
+          opacity: selected ? 1 : 0.85,
         }}
         className="animate-flow"
       />

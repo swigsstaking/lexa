@@ -101,7 +101,7 @@ function AccountDetails({
     <>
       <div className="mb-6">
         <div className="text-2xs uppercase tracking-wider font-mono text-muted">{code}</div>
-        <h2 className="text-lg font-semibold text-ink mt-0.5">{label}</h2>
+        <h2 className="text-lg font-semibold text-ink mt-0.5 break-words leading-tight">{label}</h2>
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-6">
@@ -170,10 +170,10 @@ function EdgeDetails({
 
 function Stat({ label, value, emphasize }: { label: string; value: string; emphasize?: boolean }) {
   return (
-    <div className="card-elevated px-3 py-2">
-      <div className="text-2xs uppercase tracking-wider text-subtle font-mono">{label}</div>
+    <div className="card-elevated px-3 py-2 min-w-0">
+      <div className="text-2xs uppercase tracking-wider text-subtle font-mono truncate">{label}</div>
       <div
-        className={`mono-num mt-1 ${
+        className={`mono-num mt-1 truncate ${
           emphasize ? 'text-base font-semibold text-ink' : 'text-sm text-ink'
         }`}
       >
@@ -185,17 +185,19 @@ function Stat({ label, value, emphasize }: { label: string; value: string; empha
 
 function TxRow({ tx }: { tx: LedgerEntry }) {
   return (
-    <li className="flex items-start justify-between gap-3 px-3 py-2 rounded border border-border bg-bg hover:border-border-strong transition-colors">
-      <div className="min-w-0 flex-1">
+    <li className="flex items-start justify-between gap-2 px-3 py-2 rounded border border-border bg-bg hover:border-border-strong transition-colors">
+      <div className="min-w-0 flex-1 overflow-hidden">
         <div className="flex items-center gap-2 text-2xs text-subtle font-mono">
           <span>{fmtDate(tx.occurredAt)}</span>
           <span className="text-muted">·</span>
           <span>{tx.lineType === 'debit' ? 'D' : 'C'}</span>
         </div>
-        <div className="text-xs text-ink truncate mt-0.5">{tx.description || '—'}</div>
+        <div className="text-xs text-ink truncate mt-0.5" title={tx.description || '—'}>
+          {tx.description || '—'}
+        </div>
       </div>
       <div
-        className={`mono-num text-xs font-medium whitespace-nowrap ${
+        className={`mono-num text-xs font-medium whitespace-nowrap shrink-0 ${
           tx.lineType === 'debit' ? 'text-ink' : 'text-muted'
         }`}
       >

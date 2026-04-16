@@ -43,8 +43,15 @@ export function AccountNode({ data, selected }: NodeProps) {
     >
       <Handle
         type="target"
-        position={Position.Top}
+        position={Position.Left}
+        id="l"
         className="!w-2 !h-2 !bg-border-strong !border-0"
+      />
+      <Handle
+        type="source"
+        position={Position.Left}
+        id="l-src"
+        className="!w-2 !h-2 !bg-border-strong !border-0 !opacity-0"
       />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -70,8 +77,15 @@ export function AccountNode({ data, selected }: NodeProps) {
       )}
       <Handle
         type="source"
-        position={Position.Bottom}
+        position={Position.Right}
+        id="r"
         className="!w-2 !h-2 !bg-border-strong !border-0"
+      />
+      <Handle
+        type="target"
+        position={Position.Right}
+        id="r-tgt"
+        className="!w-2 !h-2 !bg-border-strong !border-0 !opacity-0"
       />
     </motion.div>
   );
