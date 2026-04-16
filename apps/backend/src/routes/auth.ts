@@ -11,6 +11,10 @@ import {
   type JwtPayload,
 } from "../auth/jwt.js";
 import { requireAuth } from "../middleware/requireAuth.js";
+import {
+  listUserMemberships,
+  validateMembership,
+} from "../services/MembershipService.js";
 
 export const authRouter = Router();
 
@@ -220,9 +224,17 @@ authRouter.post("/login", loginLimiter, async (req: Request, res: Response) => {
       [user.id],
     );
 
+    // S32 : charger les memberships pour le JWT étendu
+    const memberships = await listUserMemberships(user.id);
+    const membershipIds = memberships.map((m) => m.tenantId);
+    // Priorité : tenant_id legacy (owner) ; fiduciaires sans tenant_id prennent le 1er membership
+    const activeTenantId = user.tenant_id ?? membershipIds[0] ?? "";
+
     const token = signToken({
       sub: user.id,
-      tenantId: user.tenant_id,
+      tenantId: activeTenantId, // legacy compat
+      activeTenantId,
+      memberships: membershipIds,
       email: user.email,
     });
 
@@ -269,6 +281,51 @@ const AdminResetSchema = z.object({
   email: z.string().email(),
   newPassword: z.string().min(8).max(200),
 });
+
+// ── POST /auth/switch-tenant (S32) ────────────────────────────────────────
+// Permet à un fiduciaire de changer de tenant actif.
+// Valide le membership, puis émet un nouveau JWT avec activeTenantId mis à jour.
+
+const SwitchTenantSchema = z.object({
+  tenantId: z.string().uuid(),
+});
+
+authRouter.post("/switch-tenant", requireAuth, async (req: Request, res: Response) => {
+  const jwtUser = req.user as JwtPayload;
+  const parsed = SwitchTenantSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "tenantId (uuid) required" });
+  }
+  const { tenantId } = parsed.data;
+
+  try {
+    const allowed = await validateMembership(jwtUser.sub, tenantId);
+    if (!allowed) {
+      return res.status(403).json({ error: "no membership for this tenant" });
+    }
+
+    // Re-charger les memberships pour avoir la liste à jour
+    const memberships = await listUserMemberships(jwtUser.sub);
+    const membershipIds = memberships.map((m) => m.tenantId);
+
+    const token = signToken({
+      sub: jwtUser.sub,
+      tenantId,  // legacy compat
+      activeTenantId: tenantId,
+      memberships: membershipIds,
+      email: jwtUser.email,
+    });
+
+    res.json({ token, activeTenantId: tenantId });
+  } catch (err) {
+    console.error("[auth.switch-tenant]", err);
+    res.status(500).json({ error: "switch-tenant failed" });
+  }
+});
+
+// ── POST /auth/admin/reset-password ────────────────────────────────────────
+// Filet de sécurité pour ne jamais bloquer un testeur. Le header
+// X-Admin-Secret est un shared secret dev, pas une solution prod.
 
 authRouter.post(
   "/admin/reset-password",

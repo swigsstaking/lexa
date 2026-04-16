@@ -33,7 +33,8 @@ export function requireAuth(
   try {
     const payload = verifyToken(token);
     req.user = payload;
-    req.tenantId = payload.tenantId;
+    // S32 : priorité à activeTenantId (fiduciaire switch-tenant), fallback tenantId legacy
+    req.tenantId = payload.activeTenantId ?? payload.tenantId;
     next();
   } catch (err) {
     const message =

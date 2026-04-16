@@ -4,7 +4,9 @@ import { config } from "../config/index.js";
 
 export type JwtPayload = {
   sub: string; // userId
-  tenantId: string;
+  tenantId: string; // legacy — alias de activeTenantId pour compatibilité
+  activeTenantId?: string; // S32 : tenant actif (peut être changé via switch-tenant)
+  memberships?: string[]; // S32 : liste des tenant_ids accessibles au user
   email: string;
 };
 
@@ -33,8 +35,12 @@ export function verifyToken(token: string): JwtPayload {
   const decoded = jwt.verify(token, config.JWT_SECRET, {
     algorithms: ["HS256"],
   }) as JwtPayload;
-  if (!decoded.sub || !decoded.tenantId || !decoded.email) {
+  if (!decoded.sub || !decoded.email) {
     throw new Error("invalid jwt payload");
+  }
+  // Tolère les JWT legacy (sans activeTenantId) — tenantId reste valide
+  if (!decoded.tenantId && !decoded.activeTenantId) {
+    throw new Error("invalid jwt payload: missing tenantId");
   }
   return decoded;
 }
