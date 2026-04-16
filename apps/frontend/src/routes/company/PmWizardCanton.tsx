@@ -25,7 +25,7 @@ import {
   X,
 } from 'lucide-react';
 import { lexa, type CompanyDraft } from '@/api/lexa';
-import { Step1IdentityVs } from '@/components/company/vs/Step1IdentityVs';
+import { Step1IdentityCanton } from '@/components/company/shared/Step1IdentityCanton';
 import { Step2FinancialsVs } from '@/components/company/vs/Step2FinancialsVs';
 import { Step3CorrectionsVs } from '@/components/company/vs/Step3CorrectionsVs';
 import { Step4CapitalVs } from '@/components/company/vs/Step4CapitalVs';
@@ -219,7 +219,7 @@ export function PmWizardCanton({ canton }: Props) {
             className="lg:col-span-2 space-y-6"
           >
             {currentStep === 1 && (
-              <Step1IdentityVs state={draft.state} onPatch={handlePatch} />
+              <Step1IdentityCanton state={draft.state} onPatch={handlePatch} canton={canton} />
             )}
             {currentStep === 2 && (
               <Step2FinancialsVs state={draft.state} onPatch={handlePatch} />
