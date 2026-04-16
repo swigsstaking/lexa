@@ -75,7 +75,7 @@ async function loginQaUser(): Promise<void> {
 
 type TestResult = {
   id: string;
-  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm" | "cloture" | "ledger";
+  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm" | "cloture" | "ledger" | "audit";
   pass: boolean;
   latencyMs: number;
   reason?: string;
@@ -1451,6 +1451,88 @@ async function runLedgerBalanceSheet(): Promise<TestResult> {
   }
 }
 
+// ── Audit verify-citations (session 30) ─────────────────────
+async function runAuditVerifyCo957(): Promise<TestResult> {
+  const TEST_ID = "audit-1-verify-co-957";
+  const started = Date.now();
+  try {
+    const { data } = await http.post("/audit/verify-citations", {
+      citations: [
+        { law: "CO", article: "957" },
+      ],
+    });
+    // Expect: results array, results[0].verified === true (CO 957 est dans Qdrant)
+    const results = Array.isArray(data.results) ? data.results : [];
+    const co957 = results.find(
+      (r: { citation: { law: string; article: string }; verified: boolean }) =>
+        r.citation.law === "CO" && r.citation.article === "957",
+    );
+    const verified = co957?.verified === true;
+    const statsOk = typeof data.stats?.total === "number";
+    return {
+      id: TEST_ID,
+      kind: "audit",
+      pass: verified && statsOk,
+      latencyMs: Date.now() - started,
+      reason:
+        !statsOk
+          ? "stats.total not a number"
+          : !verified
+            ? `CO art.957 verified=${co957?.verified} (expected true)`
+            : undefined,
+    };
+  } catch (err) {
+    return {
+      id: TEST_ID,
+      kind: "audit",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
+// ── Audit agent ask — CO 958f conservation 10 ans ──────────
+async function runAuditAgentAsk(): Promise<TestResult> {
+  const TEST_ID = "audit-2-agent-ask-co-958f";
+  const started = Date.now();
+  try {
+    const { data } = await http.post("/agents/audit/ask", {
+      question: "Resume le role de l agent Audit selon CO art. 958f conservation 10 ans ?",
+      year: 2026,
+    });
+    const answerStr = typeof data.answer === "string" ? data.answer : "";
+    const citations = Array.isArray(data.citations) ? data.citations.length : 0;
+    // Expect: ≥1 citation, answer mentions "958" or "10 ans" or conservation
+    const hasCo958 = answerStr.includes("958") || answerStr.includes("958f");
+    const has10ans = /10 ans/.test(answerStr) || /dix ans/.test(answerStr.toLowerCase());
+    const hasConservation = answerStr.toLowerCase().includes("conservation") || answerStr.toLowerCase().includes("conserver");
+    const hasDisclaimer = data.disclaimer?.includes("indicatif") || answerStr.toLowerCase().includes("indicatif");
+    return {
+      id: TEST_ID,
+      kind: "audit",
+      pass: citations >= 1 && (hasCo958 || has10ans || hasConservation),
+      latencyMs: Date.now() - started,
+      citations,
+      agentDurationMs: data.durationMs,
+      reason:
+        citations === 0
+          ? "no citations"
+          : !(hasCo958 || has10ans || hasConservation)
+            ? "answer missing CO 958f / 10 ans / conservation reference"
+            : undefined,
+    };
+  } catch (err) {
+    return {
+      id: TEST_ID,
+      kind: "audit",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
 async function main(): Promise<void> {
   const started = Date.now();
   const results: TestResult[] = [];
@@ -1660,6 +1742,20 @@ async function main(): Promise<void> {
     `  ${rBalanceSheet.pass ? "✓" : "✗"} ${rBalanceSheet.id}  ${rBalanceSheet.latencyMs}ms  ${rBalanceSheet.reason ?? ""}`,
   );
 
+  // Agent Audit + verify-citations (session 30)
+  console.log("\n[S30] Agent Audit + verify-citations");
+  const rAuditVerify = await runAuditVerifyCo957();
+  results.push(rAuditVerify);
+  console.log(
+    `  ${rAuditVerify.pass ? "✓" : "✗"} ${rAuditVerify.id}  ${rAuditVerify.latencyMs}ms  ${rAuditVerify.reason ?? ""}`,
+  );
+
+  const rAuditAsk = await runAuditAgentAsk();
+  results.push(rAuditAsk);
+  console.log(
+    `  ${rAuditAsk.pass ? "✓" : "✗"} ${rAuditAsk.id}  ${rAuditAsk.latencyMs}ms  cites=${rAuditAsk.citations ?? "?"}  ${rAuditAsk.reason ?? ""}`,
+  );
+
   const totalMs = Date.now() - started;
   const pass = results.filter((r) => r.pass).length;
   const fail = results.length - pass;
@@ -1691,6 +1787,7 @@ async function main(): Promise<void> {
       "company-pm": { total: byKind("company-pm").length, passed: byKind("company-pm").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("company-pm")) },
       cloture: { total: byKind("cloture").length, passed: byKind("cloture").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("cloture")) },
       ledger: { total: byKind("ledger").length, passed: byKind("ledger").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("ledger")) },
+      audit: { total: byKind("audit").length, passed: byKind("audit").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("audit")) },
     },
     failures: results.filter((r) => !r.pass).map((r) => ({ id: r.id, kind: r.kind, reason: r.reason })),
     generatedAt: new Date().toISOString(),
