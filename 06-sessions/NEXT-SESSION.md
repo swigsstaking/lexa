@@ -1,9 +1,9 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 33 — 2026-04-16](2026-04-16-session-33-integration-baremes.md) (Intégration barèmes officiels ICC 2026 — TaxScaleLoader, 8 YAML embarqués, 6 TODOs résolus, 0 régression qa-lexa)
-**Prochaine session** : **Session 34 — Swissdec salaires (ingestion XSD + certificat salaire Form 11)**
+**Dernière session** : [Session 35 — 2026-04-16](2026-04-16-session-35-rls.md) (RLS activation — 27 queries migrées vers queryAsTenant, RLS+FORCE actif sur taxpayer_drafts+company_drafts, test isolation psql raw 0 rows)
+**Prochaine session** : **Session 36 — Fix ownership events+ai_decisions (sudo) + Ollama tuning NUM_PARALLEL=2**
 
-> Session 32 a livré le mode fiduciaire complet : migration fiduciary_memberships (39 owners backfillés), MembershipService, JWT étendu (activeTenantId + memberships[]), POST /auth/switch-tenant, GET /fiduciary/clients, POST /fiduciary/invite, RLS préparée (migration 009 + queryAsTenant wrapper prêt), seed fiduciaire@lexa.test (2 memberships) + Acme SA GE, frontend switcher dropdown, +2 fixtures qa-lexa fiduciary (37/37). Score MVP ~99.3%.
+> Session 35 a migré 27 queries vers queryAsTenant, corrigé le bug SET LOCAL $1 → set_config, activé RLS+FORCE sur 2/4 tables critiques. Blocage : events et ai_decisions owned by postgres (pas lexa_app) → nécessite accès superuser pour 010b_rls_ownership_fix.sql. Ollama tuning bloqué par sudo également.
 
 ---
 
@@ -24,9 +24,9 @@
 | Switcher dropdown dans header | **OK session 32** |
 | `fiduciaire@lexa.test` avec 2 clients (demo + acme) | **OK session 32** |
 | Isolation 403 (non-member switch) | **OK session 32** |
-| **RLS** | Préparée (migration 009 + queryAsTenant prêt), inactive V1 |
+| **RLS** | **PARTIELLE S35** : active + FORCE sur taxpayer_drafts + company_drafts. events + ai_decisions : en attente superuser |
 | **Tests auto** | |
-| qa-lexa **37/37** | **S32** |
+| qa-lexa **38/38** | **S34** (swissdec) |
 
 ---
 
@@ -51,7 +51,7 @@
 
 ## Dettes identifiées (accumulées S32)
 
-1. **RLS activation** : migration 009 préparée, queryAsTenant wrapper prêt → activer pre-launch après migration complète
+1. **RLS activation S36 CRITIQUE** : events + ai_decisions bloquées — owner = postgres. Exécuter `010b_rls_ownership_fix.sql` avec `sudo -u postgres psql lexa`. Ollama tuning aussi bloqué (sudo requis DGX)
 2. **Bundle frontend** : 856 KB — code splitting React.lazy() (S33+ polish)
 3. **Email invitation fiduciaire** : V2 (actuellement: grant via fixture seed uniquement)
 4. **Audit log switches tenant** : V2
@@ -72,7 +72,7 @@
 52. **fiduciaire@lexa.test** : UUID `00000000-0000-0000-0000-000000000100`, tenant_id NULL, memberships demo + acme
 53. **ACME_TENANT_ID** : `00000000-0000-0000-0000-000000000101`, company Acme SA GE
 54. **Switch-tenant** : valide membership DB (pas trust JWT seul) — sécurité en profondeur
-55. **RLS V1** : inactive, isolation app-level via req.tenantId (JWT activeTenantId) suffit pour beta T4 2026
+55. **RLS S35** : active sur taxpayer_drafts + company_drafts (FORCE RLS). events + ai_decisions en attente superuser (migration 010b)
 
 ---
 
@@ -101,4 +101,8 @@
 20. **qa-lexa seuils PM** : GE=25000, VD=25000, FR=30000 (post-barèmes officiels S33 — taux réels inférieurs aux approximations V1)
 21. **barèmes PP** : taux marginal × revenu total (pas tranches classiques pour VS/GE/FR). VD utilise coefficient annuel 1.555.
 
-**Dernière mise à jour** : 2026-04-16 (session 33 — barèmes officiels 2026, TaxScaleLoader, 0 régression qa-lexa)
+22. **queryAsTenant** : utiliser `SELECT set_config('app.active_tenant', $1, true)` — SET LOCAL $1 non supporté par Postgres. Wrapper dans `db/postgres.ts`.
+23. **RLS FORCE** : sans FORCE ROW LEVEL SECURITY, le owner de la table bypass RLS silencieusement. Toujours activer FORCE pour sécurité réelle.
+24. **events + ai_decisions owner** : owned by `postgres` (superuser setup initial). Pour activer RLS dessus → `ALTER TABLE events OWNER TO lexa_app` en superuser d'abord.
+
+**Dernière mise à jour** : 2026-04-16 (session 35 — RLS activation partielle, fix set_config, 27 queries migrées)
