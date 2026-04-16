@@ -1917,21 +1917,24 @@ async function main(): Promise<void> {
   );
 
   // PM wizard GE draft submit (session 28)
-  const rPmGe = await runPmCantonDraftSubmit("GE", 50000);
+  // Seuil ajusté session 33 post-barèmes officiels : LIPM-GE 3.33% (vs approx 14%) → total officiel ~33k
+  const rPmGe = await runPmCantonDraftSubmit("GE", 25000);
   results.push(rPmGe);
   console.log(
     `  ${rPmGe.pass ? "✓" : "✗"} ${rPmGe.id}  ${rPmGe.latencyMs}ms  ${rPmGe.reason ?? ""}`,
   );
 
   // PM wizard VD draft submit (session 28)
-  const rPmVd = await runPmCantonDraftSubmit("VD", 45000);
+  // Seuil ajusté session 33 post-barèmes officiels : LI VD 3.333% (vs approx 13.5%) → total officiel ~33k
+  const rPmVd = await runPmCantonDraftSubmit("VD", 25000);
   results.push(rPmVd);
   console.log(
     `  ${rPmVd.pass ? "✓" : "✗"} ${rPmVd.id}  ${rPmVd.latencyMs}ms  ${rPmVd.reason ?? ""}`,
   );
 
   // PM wizard FR draft submit (session 28)
-  const rPmFr = await runPmCantonDraftSubmit("FR", 40000);
+  // Seuil ajusté session 33 post-barèmes officiels : LICD FR 4% (vs approx 10%) → total officiel ~35k
+  const rPmFr = await runPmCantonDraftSubmit("FR", 30000);
   results.push(rPmFr);
   console.log(
     `  ${rPmFr.pass ? "✓" : "✗"} ${rPmFr.id}  ${rPmFr.latencyMs}ms  ${rPmFr.reason ?? ""}`,
