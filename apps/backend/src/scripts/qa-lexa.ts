@@ -2097,6 +2097,119 @@ async function runCamt053UploadE2e(): Promise<TestResult> {
   }
 }
 
+// ── Lane J : QR-facture suisse — test unitaire parser ─────────────────────────
+// Vérifie que parseQrBillString() extrait correctement les champs d'une chaîne
+// QR-facture standard SPC/0200. Test local (pas de requête réseau).
+async function runQrFactureParseString(): Promise<TestResult> {
+  const TEST_ID = "qr-facture-1-parse-string";
+  const started = Date.now();
+
+  try {
+    const { parseQrBillString } = await import("../services/QrFactureParser.js");
+
+    // Fixture QR-facture conforme spec Swiss Payment Standards v2.2
+    // Source : exemple officiel simplifié (section 4.3 du guide)
+    const fixture = [
+      "SPC",           // 0  qrType
+      "0200",          // 1  version
+      "1",             // 2  coding UTF-8
+      "CH4431999123000889012", // 3  IBAN
+      "S",             // 4  creditor addressType (Structured)
+      "Robert Schneider AG", // 5  creditor name
+      "Rue du Lac",    // 6  creditor street
+      "1268/2/22",     // 7  creditor buildingNumber
+      "2501",          // 8  creditor postalCode
+      "Bienne",        // 9  creditor city
+      "CH",            // 10 creditor country
+      "",              // 11 ultimateCreditor addressType (vide)
+      "",              // 12 ultimateCreditor name (vide)
+      "",              // 13 ultimateCreditor street
+      "",              // 14 ultimateCreditor buildingNumber
+      "",              // 15 ultimateCreditor postalCode
+      "",              // 16 ultimateCreditor city
+      "",              // 17 ultimateCreditor country
+      "1949.75",       // 18 amount
+      "CHF",           // 19 currency
+      "K",             // 20 debtor addressType (Combined)
+      "Pia Rutschmann Muster", // 21 debtor name
+      "Marktgasse 28", // 22 debtor street/combined line 1
+      "9400 Rorschach",// 23 debtor combined line 2
+      "",              // 24 debtor postalCode (vide pour type K)
+      "",              // 25 debtor city (vide pour type K)
+      "CH",            // 26 debtor country
+      "QRR",           // 27 referenceType
+      "210000000003139471430009017", // 28 reference (27 chars QRR)
+      "Commande du 15.04.2026", // 29 unstructuredMessage
+      "EPD",           // 30 trailer
+      "//S1/10/10201409/11/200305/20/14000000/22/36958/30/CH106017086/40/1020/41/3010", // 31 billInformation
+      "eBill/UV;UV;UVinvoice0.0.3", // 32 alternativeScheme AV1
+    ].join("\n");
+
+    const result = parseQrBillString(fixture);
+
+    // Assertions strictes
+    const isNotNull = result !== null;
+    const correctType = result?.qrType === "SPC";
+    const correctVersion = result?.version === "0200";
+    const correctIban = result?.iban === "CH4431999123000889012";
+    const correctCreditorName = result?.creditor?.name === "Robert Schneider AG";
+    const correctAmount = result?.amount === 1949.75;
+    const correctCurrency = result?.currency === "CHF";
+    const correctRefType = result?.referenceType === "QRR";
+    const correctRef = result?.reference === "210000000003139471430009017";
+    const correctTrailer = result?.trailer === "EPD";
+    const correctDebtorName = result?.debtor?.name === "Pia Rutschmann Muster";
+    const hasAltScheme = (result?.alternativeSchemes?.length ?? 0) > 0;
+
+    const ok =
+      isNotNull &&
+      correctType &&
+      correctVersion &&
+      correctIban &&
+      correctCreditorName &&
+      correctAmount &&
+      correctCurrency &&
+      correctRefType &&
+      correctRef &&
+      correctTrailer &&
+      correctDebtorName &&
+      hasAltScheme;
+
+    return {
+      id: TEST_ID,
+      kind: "camt053", // réutilise le kind existant (pas de "qr-facture" dans le type)
+      pass: ok,
+      latencyMs: Date.now() - started,
+      reason: ok
+        ? undefined
+        : [
+            !isNotNull && "result=null",
+            !correctType && "qrType!=SPC",
+            !correctVersion && "version!=0200",
+            !correctIban && `iban=${result?.iban}`,
+            !correctCreditorName && `creditor.name=${result?.creditor?.name}`,
+            !correctAmount && `amount=${result?.amount}`,
+            !correctCurrency && `currency=${result?.currency}`,
+            !correctRefType && `referenceType=${result?.referenceType}`,
+            !correctRef && `reference=${result?.reference}`,
+            !correctTrailer && "trailer!=EPD",
+            !correctDebtorName && `debtor.name=${result?.debtor?.name}`,
+            !hasAltScheme && "noAlternativeSchemes",
+          ]
+            .filter(Boolean)
+            .join(", "),
+    };
+  } catch (err) {
+    return {
+      id: TEST_ID,
+      kind: "camt053",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
 // ── fix-p1-01 : Cache-Control no-store sur routes user-sensitive ───────────────
 // Vérifie que GET /fiduciary/clients renvoie Cache-Control: no-store.
 // Régression guard pour BUG-P1-01 (fuite session via 304 Not Modified).
@@ -2551,6 +2664,14 @@ async function main(): Promise<void> {
   results.push(rCamt053Upload);
   console.log(
     `  ${rCamt053Upload.pass ? "✓" : "✗"} ${rCamt053Upload.id}  ${rCamt053Upload.latencyMs}ms  ${rCamt053Upload.reason ?? ""}`,
+  );
+
+  // Lane J — QR-facture suisse ISO 20022
+  console.log("\n[qa-lexa] QR-facture (Lane J)");
+  const rQrFactureParse = await runQrFactureParseString();
+  results.push(rQrFactureParse);
+  console.log(
+    `  ${rQrFactureParse.pass ? "✓" : "✗"} ${rQrFactureParse.id}  ${rQrFactureParse.latencyMs}ms  ${rQrFactureParse.reason ?? ""}`,
   );
 
   const totalMs = Date.now() - started;
