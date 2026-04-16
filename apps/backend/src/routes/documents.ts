@@ -1,12 +1,14 @@
 /**
  * Routes documents — upload + OCR pipeline + storage GridFS.
  *
- * POST /documents/upload    → upload multipart, OCR 2-stages, stockage GridFS
- * GET  /documents           → liste docs du tenant (100 derniers)
- * GET  /documents/:id       → métadonnées d'un doc
- * GET  /documents/:id/binary → stream binaire depuis GridFS
+ * POST /documents/upload           → upload multipart, OCR 2-stages, stockage GridFS
+ * GET  /documents                  → liste docs du tenant (100 derniers)
+ * GET  /documents/:id              → métadonnées d'un doc
+ * GET  /documents/:id/binary       → stream binaire depuis GridFS
+ * POST /documents/:id/apply-to-draft → applique les champs OCR sur le draft wizard
  *
  * Session 23 — pipeline OCR initial.
+ * Session 24 — auto-fill wizard depuis documents OCR.
  */
 
 import { Router } from "express";
@@ -17,6 +19,8 @@ import { ObjectId } from "mongodb";
 import { getBucket, getDb } from "../db/mongo.js";
 import { eventStore } from "../events/EventStore.js";
 import { extractDocument } from "../services/OcrExtractor.js";
+import { mapDocumentToFields } from "../services/DocumentMapper.js";
+import { query } from "../db/postgres.js";
 
 export const documentsRouter = Router();
 
@@ -190,3 +194,134 @@ documentsRouter.get("/:id/binary", async (req, res) => {
     return res.status(500).json({ error: "binary failed", message: (err as Error).message });
   }
 });
+
+/**
+ * POST /documents/:id/apply-to-draft — session 24
+ *
+ * Applique les champs OCR extraits du document sur le brouillon de déclaration
+ * wizard du tenant courant pour l'année fiscale demandée.
+ *
+ * Body : { year: number }   (ex: { year: 2026 })
+ * Réponse : { ok: boolean, fieldsApplied: string[], message: string }
+ */
+documentsRouter.post("/:id/apply-to-draft", async (req, res) => {
+  const tenantId = req.tenantId!;
+  const documentId = req.params.id;
+  const { year } = req.body as { year?: unknown };
+
+  if (!year || !Number.isInteger(year) || (year as number) < 2020 || (year as number) > 2100) {
+    return res.status(400).json({ error: "year is required and must be an integer (2020–2100)" });
+  }
+  const fiscalYear = year as number;
+
+  try {
+    // 1. Récupérer le document (isolation tenant stricte)
+    const db = getDb();
+    const doc = await db.collection("documents_meta").findOne({ documentId, tenantId });
+    if (!doc) return res.status(404).json({ error: "document not found" });
+
+    const ocrResult = doc.ocrResult as { type: string; extractedFields: Record<string, unknown> } | null;
+    if (!ocrResult?.type) {
+      return res.status(422).json({ error: "document has no OCR result" });
+    }
+
+    // 2. Récupérer le draft existant (on ne crée pas — le wizard doit exister)
+    const draftRes = await query<{ id: string; state: Record<string, unknown> }>(
+      `SELECT id, state FROM taxpayer_drafts WHERE tenant_id=$1 AND fiscal_year=$2 LIMIT 1`,
+      [tenantId, fiscalYear],
+    );
+    if (draftRes.rows.length === 0) {
+      return res.status(404).json({
+        error: `no draft for year ${fiscalYear}`,
+        hint: "create a wizard declaration first",
+      });
+    }
+    const draft = draftRes.rows[0];
+
+    // 3. Mapper les champs
+    const mappings = mapDocumentToFields({
+      type: ocrResult.type as Parameters<typeof mapDocumentToFields>[0]["type"],
+      extractedFields: ocrResult.extractedFields,
+    });
+
+    if (mappings.length === 0) {
+      return res.json({
+        ok: false,
+        fieldsApplied: [],
+        message: `Aucun champ mappable pour le type "${ocrResult.type}"`,
+      });
+    }
+
+    // 4. Mettre à jour l'état du draft (deep set sans mutation partielle)
+    const newState = structuredClone(draft.state ?? {});
+    for (const { fieldPath, value } of mappings) {
+      setDeep(newState, fieldPath, value);
+    }
+
+    // 5. Persister le draft mis à jour (Postgres)
+    await query(
+      `UPDATE taxpayer_drafts SET state=$1::jsonb, updated_at=now() WHERE id=$2`,
+      [JSON.stringify(newState), draft.id],
+    );
+
+    // 6. Provenance : ajouter une entrée dans documents_meta.appliedToDrafts
+    await db.collection("documents_meta").updateOne(
+      { documentId },
+      {
+        $push: {
+          // @ts-expect-error — MongoDB $push typings are loose
+          appliedToDrafts: {
+            draftId: draft.id,
+            fiscalYear,
+            fieldsApplied: mappings.map((m) => m.fieldPath),
+            appliedAt: new Date(),
+          },
+        },
+        $set: { updatedAt: new Date() },
+      },
+    );
+
+    // 7. Event store — streamId doit être un UUID valide (contrainte Postgres)
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const streamId = UUID_REGEX.test(documentId) ? documentId : randomUUID();
+    await eventStore.append({
+      tenantId,
+      streamId,
+      event: {
+        type: "DocumentAppliedToDraft",
+        payload: {
+          documentId,
+          draftId: draft.id,
+          fiscalYear,
+          fieldsApplied: mappings.map((m) => m.fieldPath),
+        },
+      },
+    });
+
+    return res.json({
+      ok: true,
+      fieldsApplied: mappings.map((m) => m.fieldPath),
+      message: `${mappings.length} champ(s) pré-rempli(s) dans votre déclaration ${fiscalYear}`,
+    });
+  } catch (err) {
+    console.error("[documents.apply-to-draft]", err);
+    return res.status(500).json({ error: "apply failed", message: (err as Error).message });
+  }
+});
+
+/**
+ * Écrit une valeur en profondeur dans un objet selon un dot-path.
+ * Ex: setDeep({}, "step2.salaireBrut", 85000) → { step2: { salaireBrut: 85000 } }
+ */
+function setDeep(obj: Record<string, unknown>, path: string, value: unknown): void {
+  const parts = path.split(".");
+  let cur = obj;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const key = parts[i];
+    if (typeof cur[key] !== "object" || cur[key] === null) {
+      cur[key] = {};
+    }
+    cur = cur[key] as Record<string, unknown>;
+  }
+  cur[parts[parts.length - 1]] = value;
+}

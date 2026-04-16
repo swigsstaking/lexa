@@ -11,6 +11,7 @@ import {
   updateField,
 } from "../taxpayers/service.js";
 import { query } from "../db/postgres.js";
+import { getDb } from "../db/mongo.js";
 import { buildVsPpDeclaration } from "../execution/VsPpFormBuilder.js";
 import { renderVsPpPdf } from "../execution/VsPpPdfRenderer.js";
 import { buildGePpDeclaration } from "../execution/GePpFormBuilder.js";
@@ -437,5 +438,87 @@ taxpayersRouter.post("/draft/submit-vd", async (req, res) => {
     const message = err instanceof Error ? err.message : "unknown error";
     console.error("[taxpayers.submit-vd]", err);
     res.status(500).json({ error: "submit-vd failed", message });
+  }
+});
+
+// ─── Session 24 — auto-fill provenance ─────────────────────────────────────
+
+const fieldSourcesQuerySchema = z.object({
+  year: z.coerce.number().int().min(2020).max(2100).default(new Date().getFullYear()),
+});
+
+/**
+ * GET /taxpayers/draft/:year/field-sources — session 24
+ *
+ * Retourne un dictionnaire fieldPath → source du document qui a pré-rempli
+ * ce champ. Si plusieurs documents ont touché le même champ, le plus récent
+ * est retenu.
+ *
+ * Ex: { "step2.salaireBrut": { documentId, filename, appliedAt } }
+ */
+taxpayersRouter.get("/draft/:year/field-sources", async (req, res) => {
+  const parse = fieldSourcesQuerySchema.safeParse({ year: req.params.year });
+  if (!parse.success) {
+    return res.status(400).json({ error: "invalid year param" });
+  }
+  const fiscalYear = parse.data.year;
+  const tenantId = req.tenantId!;
+
+  try {
+    // 1. Trouver le draft
+    const draftRes = await query<{ id: string }>(
+      `SELECT id FROM taxpayer_drafts WHERE tenant_id=$1 AND fiscal_year=$2 LIMIT 1`,
+      [tenantId, fiscalYear],
+    );
+    if (draftRes.rows.length === 0) {
+      return res.json({});
+    }
+    const draftId = draftRes.rows[0].id;
+
+    // 2. Trouver les documents qui ont été appliqués à ce draft
+    const db = getDb();
+    const docs = await db
+      .collection("documents_meta")
+      .find(
+        { tenantId, "appliedToDrafts.draftId": draftId },
+        { projection: { _id: 0, documentId: 1, filename: 1, appliedToDrafts: 1 } },
+      )
+      .toArray();
+
+    // 3. Construire le reverse map fieldPath → source (plus récente)
+    const sourceMap: Record<
+      string,
+      { documentId: string; filename: string; appliedAt: string }
+    > = {};
+
+    for (const doc of docs) {
+      const entries = (doc.appliedToDrafts ?? []) as Array<{
+        draftId: string;
+        fiscalYear: number;
+        fieldsApplied: string[];
+        appliedAt: Date | string;
+      }>;
+      for (const entry of entries) {
+        if (entry.draftId !== draftId) continue;
+        for (const fieldPath of entry.fieldsApplied ?? []) {
+          const appliedAt = entry.appliedAt instanceof Date
+            ? entry.appliedAt.toISOString()
+            : String(entry.appliedAt);
+          const existing = sourceMap[fieldPath];
+          if (!existing || appliedAt > existing.appliedAt) {
+            sourceMap[fieldPath] = {
+              documentId: doc.documentId as string,
+              filename: doc.filename as string,
+              appliedAt,
+            };
+          }
+        }
+      }
+    }
+
+    return res.json(sourceMap);
+  } catch (err) {
+    console.error("[taxpayers.field-sources]", err);
+    return res.status(500).json({ error: "field-sources failed", message: (err as Error).message });
   }
 });
