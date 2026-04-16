@@ -28,8 +28,10 @@ source:
   note: >
     La LICD FR délègue au SCC le barème détaillé PP.
     Tranches ci-dessous = approximation S22 cohérente avec publications SCC-FR historiques.
-    Source officielle exacte 2026 : https://www.fr.ch/scc (brochure barème PP 2026).
-    TODO session 35+ : télécharger barème officiel SCC-FR 2026 (PDF ou tableau).
+    S36 : tentative de fetch fr.ch/scc → 404 / JS redirect. Source officielle exacte 2026
+    non récupérable via WebFetch. SCC publie "Principales nouveautés fiscales 2025/2026"
+    (2026-01-19) — accès manuel requis. Dette inchangée S36.
+    Source officielle : https://www.fr.ch/scc (brochure barème PP 2026 — accès manuel).
 
 # Barème de base impôt sur le revenu PP Fribourg
 # Structure : progressif avec taux marginaux par tranche

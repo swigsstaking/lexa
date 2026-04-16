@@ -88,16 +88,20 @@ tarif_single:
       rate: 0.1800
 
 # Art. 41 al. 2 — Tarif marié (personnes mariées vivant en ménage commun)
-# Le barème marié est distinct du barème célibataire (splitting partiel genevois)
+# GE applique un splitting à 50% : le taux est celui correspondant à 50% du revenu combiné.
+# Source : silgeneve.ch Art. 41 al. 2 LIPP-GE — confirmé S36 via WebFetch silgeneve.ch
 tarif_married:
+  methode: splitting_50pct
+  rule: >
+    Art. 41 al. 2 LIPP-GE : "Pour les époux vivant en ménage commun, le taux appliqué
+    à leur revenu est celui qui correspond à 50% de ce dernier."
+    Calcul : revenu_combiné / 2 → taux depuis tarif_single → impôt = taux × revenu_combiné.
+  source: "Art. 41 al. 2 LIPP-GE — RSG D 3 08, confirmé silgeneve.ch S36"
+  source_confidence: high
   note: >
-    Art. 41 al. 2 LIPP prévoit un barème spécifique pour les époux vivant en ménage commun.
-    Ce barème n'est pas reproduit intégralement dans le chunk ingéré.
-    GE applique un système de quotient conjugal (1 part + 0.5 part pour le conjoint).
-  source_confidence: medium
-  # Approximation basée sur structure LIPP-GE (barème distinct al. 2)
-  note_integration: >
-    TODO session 35+ : récupérer le texte complet de l'al. 2 art. 41 LIPP-GE pour le tarif marié.
+    Pas de barème tabulaire séparé pour les mariés : GE utilise un splitting pur à 50%.
+    Le tarif_single ci-dessus s'applique au revenu divisé par 2 pour déterminer le taux.
+    Dette S35 résolue S36 — confirmation officielle via silgeneve.ch Art. 41 al. 2.
 
 # Impôt sur la fortune (LIPP Art. 59) — inclus pour contexte ICC complet
 impot_fortune:

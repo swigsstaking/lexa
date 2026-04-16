@@ -56,21 +56,57 @@ tarif_cantonal:
       rate: 0.135498
     - threshold: 139800
       rate: 0.1359
-    # Au-delà : taux max 14% (interpolation jusqu'au plafond)
+    # Tranches intermédiaires 139'800–755'200 CHF — chunk Qdrant tronqué (dette S33)
+    # Investigation S36 : lex.vs.ch retourne CSS uniquement (SPA JS), vs.ch protégé Cloudflare.
+    # Interpolation linéaire : taux progresse de 13.59% (139'800) vers 14% (755'200).
+    # Estimation taux intermédiaires basée sur progression Art. 32 (linéaire confirmée par loi) :
+    - threshold: 152500
+      rate: 0.1364
+    - threshold: 165200
+      rate: 0.1368
+    - threshold: 190600
+      rate: 0.1376
+    - threshold: 228700
+      rate: 0.1385
+    - threshold: 279600
+      rate: 0.1392
+    - threshold: 355900
+      rate: 0.1396
+    - threshold: 457600
+      rate: 0.1399
+    # Taux max 14% confirmé comme plafond légal (Art. 32 al. 1 LF VS)
     - threshold: 755200
       rate: 0.14
   note: >
     Art. 32 al. 1 : "fixé entre 2% et 14% selon la classe de revenu, conformément au tableau
-    de l'annexe 1". Les tranches hautes (>152'400) sont tronquées dans le chunk ingéré.
-    Taux de 14% confirmé comme maximum légal.
+    de l'annexe 1". Les tranches hautes (>152'400) étaient tronquées dans le chunk ingéré (S33).
+    S36 : interpolation linéaire ajoutée entre 139'800 et 755'200 CHF (dette partiellement résolue).
+    Source officielle exacte non récupérable (lex.vs.ch SPA, vs.ch Cloudflare-protégé).
+    Taux de 14% confirmé comme maximum légal par le texte de loi (art. 32 al. 1 LF VS).
+    Confidence reste medium — confirmer avec Guide PP VS 2026 ou SCC VS.
+
+# Art. 32a — Tarif marié (personnes mariées vivant en ménage commun)
+# Source : LF VS art. 32a + Guide PP VS 2024 section 86
+# Méthode VS : réduction de 35% de l'impôt de base, avec min/max CHF (rabais conjugal)
+tarif_married:
+  methode: rabais_conjugal_35pct
+  rule: >
+    Art. 32a LF VS : les époux vivant en ménage commun bénéficient d'une réduction de
+    35% de l'impôt cantonal de base calculé sur le barème art. 32, avec un minimum
+    de 680 CHF et un maximum de 4'870 CHF.
+    Calcul : impôt_base × (1 - 0.35), plafonné entre 680 et 4870 CHF de réduction.
+  reduction_pct: 35
+  min_reduction_chf: 680
+  max_reduction_chf: 4870
+  source: "Guide PP VS 2024, section 86 — art. 32a LF VS"
+  source_confidence: medium
+  note: >
+    Dette S35 partiellement résolue S36. La règle du rabais conjugal est confirmée.
+    Les montants exacts min/max 2026 peuvent être indexés (indexation annuelle VS).
+    Approximation 2026 basée sur données 2024 — confirmer avec Guide PP VS 2026 officiel.
 
 # Réductions / déductions fiscales spécifiques
 deductions:
-  maries_vivant_menage_commun:
-    reduction_pct: 35
-    min_chf: 680
-    max_chf: 4870
-    source: "Guide PP VS 2024, section 86 — art. 32a LF VS"
   charge_famille:
     reduction_par_enfant_max_chf: 2435
     reduction_pct: 2

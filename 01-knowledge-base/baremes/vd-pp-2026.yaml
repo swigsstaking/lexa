@@ -28,8 +28,9 @@ source:
   note: >
     Art. 47 LI VD confirme : taux par catégories, barème tabulaire publié par ACI.
     Tranches ci-dessous = approximation S22 cohérente avec LI VD.
-    Source officielle exacte 2026 : https://www.vd.ch/aci barèmes PP 2026.
-    TODO session 35+ : scraper/télécharger le barème tabulaire ACI 2026 officiel.
+    S36 : tentative de fetch vd.ch/aci → 404 / redirections cassées. Source officielle
+    exacte 2026 non récupérable via WebFetch (SPA/redirections). Dette inchangée S36.
+    Source officielle : https://www.vd.ch/aci (barèmes PP 2026 — accès manuel requis).
 
 # Système VD : quotient familial (art. 43)
 # Célibataire : 1 part / Marié sans enfant : 1.5 parts / +0.5 par enfant
