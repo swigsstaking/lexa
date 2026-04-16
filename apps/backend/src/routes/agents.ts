@@ -8,6 +8,7 @@ import { fiscalPpFrAgent } from "../agents/fiscalPpFr/FiscalPpFrAgent.js";
 import { fiscalPpNeAgent } from "../agents/fiscalPpNe/FiscalPpNeAgent.js";
 import { fiscalPpJuAgent } from "../agents/fiscalPpJu/FiscalPpJuAgent.js";
 import { fiscalPpBjAgent } from "../agents/fiscalPpBj/FiscalPpBjAgent.js";
+import { fiscalPmAgent } from "../agents/fiscalPm/FiscalPmAgent.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 
 export const agentsRouter = Router();
@@ -241,6 +242,35 @@ agentsRouter.post("/fiscal-pp-bj/ask", requireAuth, async (req, res) => {
   }
 });
 
+const FiscalPmAskSchema = z.object({
+  question: z.string().min(3).max(2000),
+  context: z
+    .object({
+      legalForm: z.enum(["sarl", "sa", "association", "fondation", "autre"]).optional(),
+      canton: z.enum(["VS", "GE", "VD", "FR", "NE", "JU", "BE"]).optional(),
+      year: z.number().int().optional(),
+      revenuNet: z.number().optional(),
+      fondsPropres: z.number().optional(),
+      ideNumber: z.string().optional(),
+    })
+    .optional(),
+});
+
+/** POST /agents/fiscal-pm/ask — specialized corporate income tax agent (Sàrl/SA) */
+agentsRouter.post("/fiscal-pm/ask", requireAuth, async (req, res) => {
+  const parsed = FiscalPmAskSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
+  }
+  try {
+    const result = await fiscalPmAgent.ask(parsed.data);
+    res.json(result);
+  } catch (err) {
+    console.error("FiscalPm agent error:", err);
+    res.status(500).json({ error: "fiscal-pm agent failed", message: (err as Error).message });
+  }
+});
+
 /** GET /agents — list of available agents */
 agentsRouter.get("/", (_req, res) => {
   res.json({
@@ -312,9 +342,15 @@ agentsRouter.get("/", (_req, res) => {
         description:
           "Agent specialise fiscalite PP Jura bernois (LIFD, LHID, LI BE RSB 661.11, OI BE RSB 661.111)",
       },
+      {
+        id: "fiscal-pm",
+        endpoint: "POST /agents/fiscal-pm/ask",
+        model: "lexa-fiscal-pm",
+        description:
+          "Agent specialise fiscalite PM Sarl/SA (LIFD art.57-79, CO art.957-963b, LHID art.24-31, lois cantonales PM)",
+      },
     ],
     planned: [
-      { id: "fiscal-pm", description: "Fiscal personnes morales (SA/Sàrl)" },
       { id: "cloture", description: "Clôture continue CO" },
       { id: "conseiller", description: "Optimisation proactive" },
       { id: "audit", description: "Audit trail + vérification cohérence" },

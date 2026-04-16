@@ -75,7 +75,7 @@ async function loginQaUser(): Promise<void> {
 
 type TestResult = {
   id: string;
-  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "taxpayer" | "documents";
+  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents";
   pass: boolean;
   latencyMs: number;
   reason?: string;
@@ -195,6 +195,15 @@ const fiscalPpBjQuestions = [
     id: "pp-bj-1-pilier-3a",
     question: "Plafond pilier 3a salarie Moutier 2026 ?",
     context: { commune: "Moutier" },
+  },
+];
+
+// ── Fiscal PM fixtures (session 26) ───────────────────
+const fiscalPmQuestions = [
+  {
+    id: "pp-pm-1-ifd-sarl",
+    question: "Taux IFD sur le benefice net Sarl suisse 2026 ?",
+    context: { legalForm: "sarl" as const, canton: "VS" as const },
   },
 ];
 
@@ -683,6 +692,85 @@ async function runFiscalPpBjQuestion(
   }
 }
 
+// ── Fiscal PM (session 26) ─────────────────────────────
+
+async function runFiscalPmQuestion(
+  fixture: (typeof fiscalPmQuestions)[number],
+): Promise<TestResult> {
+  const started = Date.now();
+  try {
+    const { data } = await http.post("/agents/fiscal-pm/ask", {
+      question: fixture.question,
+      context: fixture.context,
+    });
+    const citations = Array.isArray(data.citations) ? data.citations.length : 0;
+    const answerStr = typeof data.answer === "string" ? data.answer : "";
+    const has85 = answerStr.includes("8.5") || answerStr.includes("8,5");
+    const hasLifd = answerStr.toLowerCase().includes("lifd") || answerStr.includes("68");
+    return {
+      id: fixture.id,
+      kind: "fiscal-pm",
+      pass: citations > 0 && has85 && hasLifd,
+      latencyMs: Date.now() - started,
+      citations,
+      agentDurationMs: data.durationMs,
+      reason:
+        citations === 0
+          ? "no citations"
+          : !has85
+            ? "answer missing IFD rate 8.5%"
+            : !hasLifd
+              ? "answer missing LIFD reference"
+              : undefined,
+    };
+  } catch (err) {
+    return {
+      id: fixture.id,
+      kind: "fiscal-pm",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
+// ── PM form declaration VS (session 26) ────────────────
+
+async function runPmDeclarationVs(): Promise<TestResult> {
+  const TEST_ID = "pm-1-form-vs-sarl";
+  const started = Date.now();
+  try {
+    const { data } = await http.post("/forms/pm-declaration-vs", {
+      year: 2026,
+      company: { legalName: "QA Test Sarl", legalForm: "sarl", canton: "VS" },
+      financials: { benefitAccounting: 250000, corrections: 15000, capital: 100000 },
+    });
+    const benefitImposable = data.benefitImposable;
+    const ifd = data.taxEstimate?.ifd;
+    const ifdOk = typeof ifd === "number" && ifd > 0;
+    const benefitOk = benefitImposable === 265000;
+    return {
+      id: TEST_ID,
+      kind: "taxpayer",
+      pass: ifdOk && benefitOk,
+      latencyMs: Date.now() - started,
+      reason: !benefitOk
+        ? `benefitImposable ${benefitImposable} !== 265000`
+        : !ifdOk
+          ? "taxEstimate.ifd missing or zero"
+          : undefined,
+    };
+  } catch (err) {
+    return {
+      id: TEST_ID,
+      kind: "taxpayer",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
 // ── Wizard GE form generation (session 17) ─────────────
 
 async function runGeTaxpayerWizard(): Promise<TestResult> {
@@ -1092,7 +1180,7 @@ async function main(): Promise<void> {
 
   console.log(`[qa-lexa] BASE_URL=${BASE_URL} user=${QA_EMAIL}`);
   console.log(
-    `[qa-lexa] fixtures: ${classifyFixtures.length} classify + ${tvaQuestions.length} tva + ${fiscalPpQuestions.length} fiscal-pp-vs + ${fiscalPpGeQuestions.length} fiscal-pp-ge + ${fiscalPpVdQuestions.length} fiscal-pp-vd + ${fiscalPpFrQuestions.length} fiscal-pp-fr + ${fiscalPpNeQuestions.length} fiscal-pp-ne + ${fiscalPpJuQuestions.length} fiscal-pp-ju + ${fiscalPpBjQuestions.length} fiscal-pp-bj + 2 documents (s25-ocr-e2e+s24-apply)`,
+    `[qa-lexa] fixtures: ${classifyFixtures.length} classify + ${tvaQuestions.length} tva + ${fiscalPpQuestions.length} fiscal-pp-vs + ${fiscalPpGeQuestions.length} fiscal-pp-ge + ${fiscalPpVdQuestions.length} fiscal-pp-vd + ${fiscalPpFrQuestions.length} fiscal-pp-fr + ${fiscalPpNeQuestions.length} fiscal-pp-ne + ${fiscalPpJuQuestions.length} fiscal-pp-ju + ${fiscalPpBjQuestions.length} fiscal-pp-bj + ${fiscalPmQuestions.length} fiscal-pm + 1 pm-form-vs + 2 documents (s25-ocr-e2e+s24-apply)`,
   );
 
   // Health gate (public)
@@ -1189,6 +1277,22 @@ async function main(): Promise<void> {
     );
   }
 
+  // Fiscal PM (session 26)
+  for (const f of fiscalPmQuestions) {
+    const r = await runFiscalPmQuestion(f);
+    results.push(r);
+    console.log(
+      `  ${r.pass ? "✓" : "✗"} ${r.id}  ${r.latencyMs}ms  cites=${r.citations ?? "?"}  ${r.reason ?? ""}`,
+    );
+  }
+
+  // PM declaration VS form (session 26)
+  const rPm = await runPmDeclarationVs();
+  results.push(rPm);
+  console.log(
+    `  ${rPm.pass ? "✓" : "✗"} ${rPm.id}  ${rPm.latencyMs}ms  ${rPm.reason ?? ""}`,
+  );
+
   // Taxpayer wizard (session 15)
   const r1 = await runTaxpayerDraftCreate();
   results.push(r1);
@@ -1261,6 +1365,7 @@ async function main(): Promise<void> {
       "fiscal-pp-ne": { total: byKind("fiscal-pp-ne").length, passed: byKind("fiscal-pp-ne").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiscal-pp-ne")) },
       "fiscal-pp-ju": { total: byKind("fiscal-pp-ju").length, passed: byKind("fiscal-pp-ju").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiscal-pp-ju")) },
       "fiscal-pp-bj": { total: byKind("fiscal-pp-bj").length, passed: byKind("fiscal-pp-bj").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiscal-pp-bj")) },
+      "fiscal-pm": { total: byKind("fiscal-pm").length, passed: byKind("fiscal-pm").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiscal-pm")) },
       taxpayer: { total: byKind("taxpayer").length, passed: byKind("taxpayer").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("taxpayer")) },
       documents: { total: byKind("documents").length, passed: byKind("documents").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("documents")) },
     },

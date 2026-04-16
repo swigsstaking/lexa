@@ -23,6 +23,8 @@ import { buildVdPpDeclaration } from "../execution/VdPpFormBuilder.js";
 import { renderVdPpPdf } from "../execution/VdPpPdfRenderer.js";
 import { buildFrPpDeclaration } from "../execution/FrPpFormBuilder.js";
 import { renderFrPpPdf } from "../execution/FrPpPdfRenderer.js";
+import { buildPmDeclarationVs } from "../execution/PmFormBuilder.js";
+import { requireAuth } from "../middleware/requireAuth.js";
 import type { FilledForm } from "../execution/types.js";
 
 export const formsRouter = Router();
@@ -506,5 +508,60 @@ formsRouter.post("/fr-declaration-pp", async (req, res) => {
     const message = err instanceof Error ? err.message : "unknown error";
     console.error("[forms.fr-declaration-pp]", err);
     res.status(500).json({ error: "fr-declaration-pp failed", message });
+  }
+});
+
+// ── Déclaration fiscale PM Valais (V1 — calcul structurel, pas de PDF) ────────
+
+const pmDeclarationVsBodySchema = z.object({
+  year: z.number().int().min(2020).max(2100),
+  company: z.object({
+    legalName: z.string().min(1).max(200),
+    legalForm: z.enum(["sarl", "sa"]),
+    ideNumber: z.string().optional(),
+    canton: z.string().default("VS"),
+    commune: z.string().optional(),
+    registeredOffice: z.string().optional(),
+  }),
+  financials: z.object({
+    benefitAccounting: z.number(),
+    corrections: z.number(),
+    capital: z.number().min(0),
+    dividendsPaid: z.number().optional(),
+  }),
+});
+
+/**
+ * POST /forms/pm-declaration-vs — déclaration fiscale PM Canton du Valais (V1).
+ *
+ * Calcule le bénéfice imposable (comptable + corrections) et estime :
+ *   - IFD 8.5% (art. 68 LIFD)
+ *   - ICC VS ~8.5% (simplifié V1 — TODO session 28+ : taux officiels)
+ *   - Impôt sur capital 0.15% (simplifié V1)
+ *
+ * V1 : pas de rendu PDF — retourne les données structurées + citations légales.
+ * Le PDF arrives en session 27 avec le wizard PM frontend.
+ * requireAuth : l'accès aux données PM est strictement authifié.
+ */
+formsRouter.post("/pm-declaration-vs", requireAuth, async (req, res) => {
+  const parse = pmDeclarationVsBodySchema.safeParse(req.body);
+  if (!parse.success) {
+    return res
+      .status(400)
+      .json({ error: "invalid body", details: parse.error.issues });
+  }
+  const { year, company, financials } = parse.data;
+  try {
+    const declaration = buildPmDeclarationVs({
+      tenantId: req.tenantId,
+      year,
+      draft: { company, year, financials },
+    });
+
+    res.json(declaration);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "unknown error";
+    console.error("[forms.pm-declaration-vs]", err);
+    res.status(500).json({ error: "pm-declaration-vs failed", message });
   }
 });
