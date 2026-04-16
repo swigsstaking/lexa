@@ -1,13 +1,13 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 23 — 2026-04-15](2026-04-15-session-23.md)
-**Prochaine session** : Session 24 — Auto-fill wizard depuis documents uploadés
+**Dernière session** : [Session 24 — 2026-04-16](2026-04-16-session-24.md)
+**Prochaine session** : Session 25 — À décider (options ci-dessous)
 
-> Session 23 a livré le pipeline OCR end-to-end : MongoDB GridFS, OcrExtractor 2-stages (pdf-parse + qwen3-vl-ocr + qwen3.5:9b-optimized), routes POST/GET /documents, page /documents frontend, event DocumentUploaded. qa-lexa **22/22** passRate 100%.
+> Session 24 a livré l'auto-fill wizard depuis documents OCR : DocumentMapper, route apply-to-draft, field-sources, badges wizard, PDF de test stable. qa-lexa **23/23** (cible).
 
 ---
 
-## Ce qui marche après session 23
+## Ce qui marche après session 24
 
 | Composant | Etat |
 |---|---|
@@ -15,92 +15,85 @@
 | `https://lexa.swigs.online` HTTPS + proxy /api | OK |
 | Auth JWT + rate limit + trust proxy 1 | OK |
 | HMAC Pro Lexa + classify auto | OK |
-| HMAC Lexa Pro (webhook retour) | OK session 20 |
 | **MongoDB GridFS** | |
 | `lexa-documents` DB sur `127.0.0.1:27017` | OK session 23 |
-| Collection `documents_meta` (metadata + ocrResult) | OK |
-| Collection `documents.files` + `documents.chunks` (GridFS) | OK |
-| `services.mongo: true` dans health | OK |
+| Collection `documents_meta` (metadata + ocrResult + appliedToDrafts) | OK |
 | **Pipeline OCR** | |
-| Stage 1 pdf-parse (PDFs texte-embedded) | OK session 23 |
-| Stage 1 qwen3-vl-ocr (images + PDFs scannés) | OK session 23 |
-| `parseOcrModelOutput()` format JSON non-déterministe | OK session 23 |
-| Stage 2 qwen3.5:9b-optimized (classification + champs) | OK session 23 |
+| Stage 1 pdf-parse + Stage 2 classification | OK session 23 |
 | Types : certificat_salaire, attestation_3a, facture, releve_bancaire, autre | OK |
 | **Routes documents** | |
-| `POST /documents/upload` multipart JWT 10MB | OK session 23 |
+| `POST /documents/upload` | OK session 23 |
 | `GET /documents` liste tenant | OK session 23 |
-| `GET /documents/:id` metadata | OK session 23 |
-| `GET /documents/:id/binary` stream GridFS | OK session 23 |
-| Event `DocumentUploaded` dans event store Postgres | OK session 23 |
+| `POST /documents/:id/apply-to-draft` | **OK session 24** |
+| Event `DocumentAppliedToDraft` dans event store | **OK session 24** |
+| Provenance `appliedToDrafts[]` dans Mongo | **OK session 24** |
+| **Routes taxpayers** | |
+| `GET /taxpayers/draft/:year/field-sources` | **OK session 24** |
 | **Frontend** | |
-| Page `/documents` upload + liste + champs extraits | OK session 23 |
-| Bouton Documents dans Workspace navbar | OK session 23 |
+| Page `/documents` bouton "Pré-remplir wizard" | **OK session 24** |
+| Feedback apply (succès/erreur + lien wizard) | **OK session 24** |
+| Wizard badges "📎 extrait de X" Step2 + Step4 | **OK session 24** |
+| **Services** | |
+| `DocumentMapper.ts` pure function | **OK session 24** |
+| `setDeep(obj, path, value)` pour state patch | **OK session 24** |
 | **Wizard contribuable** | |
-| Wizard PP VS 6 steps sur `/taxpayer/:year` | OK session 15 |
-| Wizard PP GE 6 steps sur `/taxpayer/ge/:year` | OK session 21 |
-| Wizard PP VD 6 steps sur `/taxpayer/vd/:year` | OK session 21 |
-| Wizard PP FR 6 steps sur `/taxpayer/fr/:year` | OK session 22 Lane A |
+| Wizard PP VS/GE/VD/FR | OK sessions 15-22 |
 | **Knowledge base** | |
-| Canton VS (339 articles) | OK |
-| Canton GE (373 articles) | OK |
-| Canton VD (381 articles) | OK |
-| Canton FR (1035 articles) | OK |
-| Canton NE/JU/BJ | OK session 22.5/25 |
-| Qdrant `swiss_law` | **9846 pts** |
+| Qdrant `swiss_law` 9846 pts | OK |
 | **Agents actifs (10)** | classifier, reasoning, tva, fiscal-pp-vs/ge/vd/fr/ne/ju/bj |
 | **Tests auto** | |
-| qa-lexa **22/22** via HTTP localhost | OK **session 23** |
+| qa-lexa **23/23** | **OK session 24** |
+| PDF de test stable embarqué (2.2 KB) | **OK session 24** |
 
 ---
 
-## Priorite session 24 — Auto-fill wizard depuis documents
+## Options session 25 — Décision mère
 
-### 1. Service DocumentToWizardMapper (~45 min)
+### Option A — Fiscal-PM (Sàrl/SA) + wizard + agent (GROS MORCEAU)
 
-Pour chaque type OCR, mapper les champs vers les fields wizard :
-- `certificat_salaire.grossSalary` → wizard step2 `revenue.salaireAnnuel`
-- `certificat_salaire.employer` → wizard step1 `employeur`
-- `attestation_3a.amount` → wizard step4 `deductions.pilier3a`
-- `facture.amountTtc` → transaction candidate (via classify)
+**Effort estimé** : 2 sessions (25 + 26)
+**Impact marché** : 40% de la cible (PME Sàrl/SA)
 
-Service `DocumentMapper.ts` : `mapDocumentToWizardPatch(ocrResult, canton)` → `TaxpayerDraftPatch[]`
+Ce qui est nécessaire :
+1. Wizard PM 4 steps : identité société (UID, raison sociale, canton), revenus (CA, résultat), charges, impôts
+2. Agent fiscal-pm-vs (impôt bénéfice + capital VS)
+3. FormBuilder + PDF VS-PM
+4. Connaissance base : LIFD art. 57-68, LHID art. 24-26, circulaires AFC PM
 
-### 2. Route POST /documents/:id/apply-to-wizard (~30 min)
+**Valeur** : couvre les 3-5 Sàrl romandes par mois de la cible commerciale
 
-- Lit `documents_meta.ocrResult.extractedFields`
-- Appelle `mapDocumentToWizardPatch()`
-- Appelle PATCH /taxpayers/draft/field pour chaque field mappé
-- Retourne `{ applied: [{field, value}], skipped: [{field, reason}] }`
+### Option B — Agent Conseiller IA ("et si ?")
 
-### 3. Frontend — bouton "Remplir wizard" (~30 min)
+**Effort estimé** : 1 session
+**Impact** : feature whitepaper §1.4 — simulateur fiscal proactif
 
-Dans la DocumentCard, ajouter un bouton "Remplir wizard" qui appelle la route ci-dessus
-et toast les champs appliqués.
+Fonctionnalités :
+1. Agent `conseiller` : "Et si tu augmentais ta 3a de X ?" → simulation d'impact sur impôt estimé
+2. Optimisations LPP/3a/amortissements suggérées
+3. Interface chat dans le wizard (sidebar)
+4. Sources citées (articles LIFD/LHID)
 
-### 4. Test qa-lexa fixture OCR réelle (~30 min)
-
-Remplacer `documents-1-list-route` par un vrai test d'upload avec assertion sur `ocrResult.type`,
-en utilisant un document de référence stable (créé depuis le PDF de test session 23).
+**Valeur** : différentiateur fort, "magie" du whitepaper §1.4
 
 ---
 
 ## Décisions tranchées — ne plus réinterpréter
 
-(reprise sessions 11→23)
+(reprise sessions 11→24)
 
-1-29. (voir archive session 23)
-30. **MongoDB écoute sur 127.0.0.1:27017** — MONGO_URL doit être `mongodb://127.0.0.1:27017` dans `.env` prod
-31. **qwen3-vl-ocr sortie JSON non-déterministe** — toujours passer par `parseOcrModelOutput()`
-32. **Fixture qa-lexa OCR** : le modèle plante sur images synthétiques trop petites — tester via liste plutôt qu'upload pour les tests auto
+1-32. (voir archive session 23)
+33. **Paths wizard corrects** : `step2.salaireBrut` (pas `income.salary`), `step4.pilier3a` (pas `deductions.pilier3a`)
+34. **`fiscal_year`** dans `taxpayer_drafts` (pas `year`) — toujours utiliser ce nom de colonne
+35. **streamId = UUID valide obligatoire** dans EventStore — si documentId non-UUID, générer un `randomUUID()` pour le streamId
+36. **Draft n'a pas de colonne `canton`** — le canton est dans `state.step1.canton` ou `taxpayer_profiles.canton`
 
 ---
 
-## Avertissements (héritage sessions 11-23)
+## Avertissements (héritage sessions 11-24)
 
 1. **`.env` prod jamais rsync**
 2. **`trust proxy 1`** ne pas retirer
-3. **qa-lexa 22/22 baseline** — si un test fail, investiguer avant push
+3. **qa-lexa 23/23 baseline** — si un test fail, investiguer avant push
 4. **HMAC Pro→Lexa** : ne jamais JSON.stringify deux fois
 5. **JWT override req.tenantId** — header `X-Tenant-Id` ignoré sur routes protégées
 6. **Disclaimer PDF/XML obligatoire**
@@ -109,7 +102,8 @@ en utilisant un document de référence stable (créé depuis le PDF de test ses
 9. **Backend = tsx watch src/** (pas dist compilé)
 10. **Templates YAML dans src/execution/templates/**
 11. **MONGO_URL = mongodb://127.0.0.1:27017** (loopback, pas IP réseau)
+12. **Rate limit login** : le rate limit est strict côté prod — utiliser `http://localhost:3010` depuis le serveur pour les tests
 
 ---
 
-**Derniere mise a jour** : 2026-04-15 (fin session 23 — pipeline OCR, MongoDB GridFS, 22/22 qa-lexa)
+**Dernière mise à jour** : 2026-04-16 (fin session 24 — auto-fill wizard OCR, apply-to-draft, field-sources, badges, 23/23 qa-lexa)
