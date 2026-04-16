@@ -253,6 +253,72 @@ export const lexa = {
     incomeStatement?: { revenuesTotal: number; chargesTotal: number; netResult: number };
   }) =>
     api.post<AgentAnswer>('/agents/cloture/ask', body).then((r) => r.data),
+
+  // Audit (session 30)
+  askAudit: (body: {
+    question: string;
+    year?: number;
+    context?: {
+      recentDecisions?: Array<{
+        agent: string;
+        confidence: number;
+        citations: Array<{ law: string; article: string }>;
+      }>;
+    };
+  }) =>
+    api.post<AgentAnswer & { disclaimer: string }>('/agents/audit/ask', body).then((r) => r.data),
+
+  verifyCitations: (citations: Array<{ law: string; article: string }>) =>
+    api
+      .post<{
+        results: Array<{
+          citation: { law: string; article: string };
+          verified: boolean;
+          matchedText?: string;
+          matchedArticle?: string;
+          score?: number;
+          searchedQuery: string;
+          note?: string;
+        }>;
+        stats: { total: number; verified: number; unverified: number };
+        durationMs: number;
+      }>('/audit/verify-citations', { citations })
+      .then((r) => r.data),
+
+  getAuditTrail: (year: number) =>
+    api
+      .get<{
+        tenantId: string;
+        year: number;
+        events: Array<{
+          eventId: number;
+          streamId: string;
+          occurredAt: string;
+          type: string;
+          description?: string;
+          amount?: number;
+          currency?: string;
+          aiDecision?: {
+            id: string;
+            agent: string;
+            model: string;
+            confidence: number;
+            reasoning?: string;
+            citations: Array<{ law: string; article: string; rs?: string }>;
+          };
+        }>;
+        stats: {
+          totalEvents: number;
+          totalAiDecisions: number;
+          averageConfidence: number | null;
+          citationsCount: number;
+          lowConfidenceCount: number;
+          eventTypes: Record<string, number>;
+        };
+        legalBasis: { conservation: string; tva: string };
+        generatedAt: string;
+      }>(`/audit/trail/${year}`)
+      .then((r) => r.data),
 };
 
 export type TaxpayerDraft = {

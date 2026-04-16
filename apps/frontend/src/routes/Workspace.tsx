@@ -13,6 +13,7 @@ import {
   LogOut,
   Sparkles,
   Briefcase,
+  Shield,
 } from 'lucide-react';
 import { lexa } from '@/api/lexa';
 import { useActiveCompany, useCompaniesStore } from '@/stores/companiesStore';
@@ -186,6 +187,15 @@ export function Workspace() {
           >
             <FileText className="w-3.5 h-3.5" />
             <span className="text-xs hidden md:inline">Documents</span>
+          </button>
+
+          <button
+            onClick={() => navigate(`/audit/${new Date().getFullYear()}`)}
+            className="btn-ghost !px-3 !py-1.5"
+            title="Audit intégrité IA — CO 958f"
+          >
+            <Shield className="w-3.5 h-3.5" />
+            <span className="text-xs hidden md:inline">Audit</span>
           </button>
 
           <button onClick={handleLogout} className="btn-ghost !px-2 !py-1.5" aria-label="logout">
