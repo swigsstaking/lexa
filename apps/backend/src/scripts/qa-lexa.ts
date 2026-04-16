@@ -81,7 +81,7 @@ const ACME_TENANT_QA = "00000000-0000-0000-0000-000000000101";
 
 type TestResult = {
   id: string;
-  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm" | "cloture" | "ledger" | "audit" | "conseiller" | "simulate" | "fiduciary" | "swissdec";
+  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm" | "cloture" | "ledger" | "audit" | "conseiller" | "simulate" | "fiduciary" | "swissdec" | "queue";
   pass: boolean;
   latencyMs: number;
   reason?: string;
@@ -1854,6 +1854,61 @@ async function runSwissdecCertificateGeneration(): Promise<TestResult> {
   }
 }
 
+/**
+ * S37 — Queue serialization test.
+ * Fire 2 classify requests for the same tenant in parallel.
+ * Both must succeed (200 + debitAccount not empty).
+ * With the queue, they serialize instead of timing out.
+ */
+async function runQueueSerialization(): Promise<TestResult> {
+  const TEST_ID = "queue-1-serialization";
+  const started = Date.now();
+
+  const payload = {
+    date: "2026-01-15",
+    description: "SWISSCOM FACTURE MENSUELLE",
+    amount: -89.0,
+    currency: "CHF",
+  };
+
+  try {
+    // Launch 2 requests for the same tenant simultaneously
+    const [r1, r2] = await Promise.all([
+      http.post<{ debitAccount?: string }>("/rag/classify", payload),
+      http.post<{ debitAccount?: string }>("/rag/classify", payload),
+    ]);
+
+    const ok1 = r1.status === 200 && typeof r1.data.debitAccount === "string" && r1.data.debitAccount.length > 0;
+    const ok2 = r2.status === 200 && typeof r2.data.debitAccount === "string" && r2.data.debitAccount.length > 0;
+
+    if (!ok1 || !ok2) {
+      return {
+        id: TEST_ID,
+        kind: "queue",
+        pass: false,
+        latencyMs: Date.now() - started,
+        reason: `r1.debitAccount=${r1.data.debitAccount ?? "?"} r2.debitAccount=${r2.data.debitAccount ?? "?"}`,
+      };
+    }
+
+    return {
+      id: TEST_ID,
+      kind: "queue",
+      pass: true,
+      latencyMs: Date.now() - started,
+      reason: `both requests succeeded via queue (r1=${r1.data.debitAccount} r2=${r2.data.debitAccount})`,
+    };
+  } catch (err) {
+    return {
+      id: TEST_ID,
+      kind: "queue",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: `exception: ${(err as Error).message}`,
+    };
+  }
+}
+
 async function main(): Promise<void> {
   const started = Date.now();
   const results: TestResult[] = [];
@@ -2116,6 +2171,14 @@ async function main(): Promise<void> {
     `  ${rSwissdec.pass ? "✓" : "✗"} ${rSwissdec.id}  ${rSwissdec.latencyMs}ms  ${rSwissdec.reason ?? ""}`,
   );
 
+  // S37 — Queue LLM serialization (2 concurrent classify requests same tenant)
+  console.log("\n[S37] LLM Queue — sérialisation par tenant (BullMQ)");
+  const rQueue = await runQueueSerialization();
+  results.push(rQueue);
+  console.log(
+    `  ${rQueue.pass ? "✓" : "✗"} ${rQueue.id}  ${rQueue.latencyMs}ms  ${rQueue.reason ?? ""}`,
+  );
+
   const totalMs = Date.now() - started;
   const pass = results.filter((r) => r.pass).length;
   const fail = results.length - pass;
@@ -2152,6 +2215,7 @@ async function main(): Promise<void> {
       simulate: { total: byKind("simulate").length, passed: byKind("simulate").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("simulate")) },
       fiduciary: { total: byKind("fiduciary").length, passed: byKind("fiduciary").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiduciary")) },
       swissdec: { total: byKind("swissdec").length, passed: byKind("swissdec").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("swissdec")) },
+      queue: { total: byKind("queue").length, passed: byKind("queue").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("queue")) },
     },
     failures: results.filter((r) => !r.pass).map((r) => ({ id: r.id, kind: r.kind, reason: r.reason })),
     generatedAt: new Date().toISOString(),
