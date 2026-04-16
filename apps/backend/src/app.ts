@@ -11,6 +11,7 @@ import { onboardingRouter } from "./routes/onboarding.js";
 import { formsRouter } from "./routes/forms.js";
 import { authRouter } from "./routes/auth.js";
 import { taxpayersRouter } from "./routes/taxpayers.js";
+import { companiesRouter } from "./routes/companies.js";
 import { requireAuth } from "./middleware/requireAuth.js";
 import { documentsRouter } from "./routes/documents.js";
 import { connectMongo } from "./db/mongo.js";
@@ -62,6 +63,7 @@ app.use("/transactions", requireAuth, transactionsRouter);
 app.use("/ledger", requireAuth, ledgerRouter);
 app.use("/forms", requireAuth, formsRouter);
 app.use("/taxpayers", requireAuth, taxpayersRouter);
+app.use("/companies", requireAuth, companiesRouter);
 app.use("/documents", requireAuth, documentsRouter);
 
 // /agents est mixte : GET / (listing) public, POST /* protégé via les
