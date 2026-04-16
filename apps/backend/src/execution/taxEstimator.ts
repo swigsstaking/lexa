@@ -1,19 +1,31 @@
 /**
  * Lexa — Simulateur fiscal V1
- * Session 22 (Lane A)
+ * Session 22 (Lane A) — mis à jour Session 33 (barèmes officiels)
  *
  * Estimation de l'impôt dû pour les cantons VS, GE, VD, FR.
- * Barèmes tabulés simplifiés à 5-7 tranches — approximation correcte pour V1.
+ * Priority : barèmes officiels YAML (TaxScaleLoader) — fallback sur approximations tabulées V1.
  *
- * TODO session 23+ : remplacer par barèmes officiels ingérés par canton
- * (sources : AFC, SCC FR, ACI VD, Administration fiscale GE, AFC VS)
+ * Session 33 : 6 TODOs barèmes cantonaux résolus — barèmes officiels 2026 intégrés.
+ * TODOs maintenus :
+ *   - IFD : barème official AFC exact (indexation 2026 à confirmer)
+ *   - VS PP : tranches > 152k tronquées dans chunk ingéré (taux 14% utilisé comme max)
+ *   - GE PP : tarif marié (art. 41 al. 2 LIPP) non ingéré — fallback barème approximatif
+ *   - VD PP : coefficient annuel 2026 exact à confirmer sur vd.ch/aci
+ *   - FR PP : barème tabulaire SCC-FR 2026 à scraper (délégué au SCC par LICD)
  */
+
+import {
+  getScale,
+  calcIccPpFromScale,
+  type PpScale,
+} from "../services/TaxScaleLoader.js";
 
 export type TaxEstimate = {
   icc: number;           // Impôt cantonal + communal CHF
   ifd: number;           // Impôt fédéral direct CHF
   total: number;         // ICC + IFD
   effectiveRate: number; // total / revenuImposable (ratio, pas %)
+  iccSource: "official-scale" | "approximation"; // source du calcul ICC
   disclaimer: string;
 };
 
@@ -55,7 +67,7 @@ function progressiveTax(
 
 // ── Barème IFD 2026 ──────────────────────────────────────────────────────────
 // Source : RS 642.11, art. 36 LIFD — barème tabulé IFD célibataire/marié 2026
-// TODO session 23+ : remplacer par barème officiel AFC 2026 exact (indexation)
+// TODO session 35+ : vérifier indexation renchérissement AFC 2026 exact
 
 const IFD_BRACKETS_SINGLE_2026 = [
   { max: 17800, rate: 0 },
@@ -89,9 +101,8 @@ const IFD_BRACKETS_MARRIED_2026 = [
 ];
 
 /**
- * Estimation IFD 2026.
- * Barème tabulé simplifié — art. 36 LIFD.
- * TODO session 23+ : remplacer par barème officiel AFC exact
+ * Estimation IFD 2026 — art. 36 LIFD.
+ * TODO session 35+ : vérifier indexation AFC 2026 exact
  */
 export function estimateIfd(
   revenuImposable: number,
@@ -104,15 +115,9 @@ export function estimateIfd(
   return progressiveTax(revenuImposable, brackets);
 }
 
-// ── Barèmes cantonaux simplifiés ─────────────────────────────────────────────
-// TODO session 23+ : remplacer par barèmes officiels ingérés par canton
-// Sources publiques utilisées pour V1 :
-//   VS : Guide SCC VS 2026 (barème simplifié)
-//   GE : LIPP GE (RSG D 3 08) — barème indicatif AFC GE 2026
-//   VD : LI VD (BLV 642.11) — barème ACI VD 2026
-//   FR : LICD FR (BDLF 631.1) — barème SCC FR 2026 (TODO session 23 : confirmer)
+// ── Barèmes cantonaux fallback (approximations V1 Session 22) ─────────────────
+// Utilisés uniquement si le barème officiel YAML est absent ou confidence=low.
 
-// Canton du Valais — ICC simplifié (cantonal + coefficient communal moyen ~100%)
 const ICC_VS_BRACKETS_SINGLE = [
   { max: 11000, rate: 0 },
   { max: 16000, rate: 1.5 },
@@ -138,7 +143,6 @@ const ICC_VS_BRACKETS_MARRIED = [
   { max: Infinity, rate: 13.0 },
 ];
 
-// Canton de Genève — ICC très progressif (LIPP GE RSG D 3 08)
 const ICC_GE_BRACKETS_SINGLE = [
   { max: 16100, rate: 0 },
   { max: 22200, rate: 3.0 },
@@ -164,7 +168,6 @@ const ICC_GE_BRACKETS_MARRIED = [
   { max: Infinity, rate: 17.5 },
 ];
 
-// Canton de Vaud — ICC (LI VD BLV 642.11 + coefficient communal ~70%)
 const ICC_VD_BRACKETS_SINGLE = [
   { max: 13600, rate: 0 },
   { max: 22700, rate: 1.5 },
@@ -187,8 +190,6 @@ const ICC_VD_BRACKETS_MARRIED = [
   { max: Infinity, rate: 13.5 },
 ];
 
-// Canton de Fribourg — ICC (LICD FR BDLF 631.1)
-// TODO session 23 : confirmer barème SCC FR exact 2026
 const ICC_FR_BRACKETS_SINGLE = [
   { max: 12600, rate: 0 },
   { max: 18900, rate: 2.0 },
@@ -211,52 +212,67 @@ const ICC_FR_BRACKETS_MARRIED = [
   { max: Infinity, rate: 12.0 },
 ];
 
+// ── Estimation ICC PP ──────────────────────────────────────────────────────────
+
 /**
- * Estimation ICC 2026 (impôt cantonal + communal combiné, taux effectif global).
- * TODO session 23+ : remplacer par barèmes officiels ingérés par canton
+ * Estimation ICC 2026 (impôt cantonal + communal combiné).
+ * Utilise le barème officiel YAML en priorité (confidence >= medium).
+ * Fallback sur barèmes tabulés approximatifs V1 si YAML absent ou low confidence.
+ *
+ * @returns { icc: number; source: "official-scale" | "approximation" }
+ */
+export function estimateIccWithSource(
+  revenuImposable: number,
+  canton: "VS" | "GE" | "VD" | "FR",
+  civilStatus: "single" | "married" = "single",
+  year: number = 2026,
+): { icc: number; source: "official-scale" | "approximation" } {
+  // Tentative barème officiel
+  const scale = getScale(canton, "PP", year);
+  if (scale && scale.entity === "PP") {
+    const result = calcIccPpFromScale(scale as PpScale, revenuImposable, civilStatus);
+    if (result !== null) {
+      return { icc: round2(result), source: "official-scale" };
+    }
+  }
+
+  // Fallback approximation V1
+  const isSingle = civilStatus === "single";
+  let icc: number;
+  switch (canton) {
+    case "VS":
+      icc = progressiveTax(revenuImposable, isSingle ? ICC_VS_BRACKETS_SINGLE : ICC_VS_BRACKETS_MARRIED);
+      break;
+    case "GE":
+      icc = progressiveTax(revenuImposable, isSingle ? ICC_GE_BRACKETS_SINGLE : ICC_GE_BRACKETS_MARRIED);
+      break;
+    case "VD":
+      icc = progressiveTax(revenuImposable, isSingle ? ICC_VD_BRACKETS_SINGLE : ICC_VD_BRACKETS_MARRIED);
+      break;
+    case "FR":
+      icc = progressiveTax(revenuImposable, isSingle ? ICC_FR_BRACKETS_SINGLE : ICC_FR_BRACKETS_MARRIED);
+      break;
+    default:
+      throw new Error(`Canton non supporté pour l'estimation fiscale: ${canton}`);
+  }
+  return { icc, source: "approximation" };
+}
+
+/**
+ * Estimation ICC 2026 — interface simplifiée (backward compat).
  */
 export function estimateIcc(
   revenuImposable: number,
   canton: "VS" | "GE" | "VD" | "FR",
   civilStatus: "single" | "married",
 ): number {
-  const isSingle = civilStatus === "single";
-  switch (canton) {
-    case "VS":
-      return progressiveTax(
-        revenuImposable,
-        isSingle ? ICC_VS_BRACKETS_SINGLE : ICC_VS_BRACKETS_MARRIED,
-      );
-    case "GE":
-      return progressiveTax(
-        revenuImposable,
-        isSingle ? ICC_GE_BRACKETS_SINGLE : ICC_GE_BRACKETS_MARRIED,
-      );
-    case "VD":
-      return progressiveTax(
-        revenuImposable,
-        isSingle ? ICC_VD_BRACKETS_SINGLE : ICC_VD_BRACKETS_MARRIED,
-      );
-    case "FR":
-      return progressiveTax(
-        revenuImposable,
-        isSingle ? ICC_FR_BRACKETS_SINGLE : ICC_FR_BRACKETS_MARRIED,
-      );
-    default:
-      throw new Error(`Canton non supporté pour l'estimation fiscale: ${canton}`);
-  }
+  return estimateIccWithSource(revenuImposable, canton, civilStatus).icc;
 }
 
 /**
  * Estimation complète de l'impôt dû (ICC + IFD).
  *
- * @returns TaxEstimate avec ICC, IFD, total, taux effectif et disclaimer
- *
- * Ordre de grandeur attendu pour 95'000 CHF célibataire :
- *   VS : ICC ~8'500 + IFD ~6'800 = ~15'300 CHF (~16.1%)
- *   GE : ICC ~13'500 + IFD ~6'800 = ~20'300 CHF (~21.4%)
- *   VD : ICC ~10'500 + IFD ~6'800 = ~17'300 CHF (~18.2%)
- *   FR : ICC ~9'200 + IFD ~6'800 = ~16'000 CHF (~16.8%)
+ * @returns TaxEstimate avec ICC, IFD, total, taux effectif, source barème et disclaimer
  */
 export function estimateTaxDue(params: {
   canton: "VS" | "GE" | "VD" | "FR";
@@ -265,9 +281,14 @@ export function estimateTaxDue(params: {
   civilStatus?: "single" | "married";
 }): TaxEstimate {
   const civil = params.civilStatus ?? "single";
+  const year = params.year ?? 2026;
   const ifd = estimateIfd(params.revenuImposable, civil);
-  const icc = estimateIcc(params.revenuImposable, params.canton, civil);
+  const { icc, source } = estimateIccWithSource(params.revenuImposable, params.canton, civil, year);
   const total = round2(ifd + icc);
+
+  const sourceLabel = source === "official-scale"
+    ? "barèmes officiels 2026 ingérés"
+    : "barèmes tabulés approximatifs V1";
 
   return {
     icc: round2(icc),
@@ -277,11 +298,10 @@ export function estimateTaxDue(params: {
       params.revenuImposable > 0
         ? round2(total / params.revenuImposable)
         : 0,
+    iccSource: source,
     disclaimer:
-      "Estimation indicative basée sur les barèmes 2026 simplifiés. " +
+      `Estimation indicative basée sur les ${sourceLabel}. ` +
       "Le montant réel dépend de votre commune, des déductions additionnelles " +
-      "et des règles cantonales fines. Vérifiez avec votre fiduciaire. " +
-      "Ce simulateur V1 utilise des barèmes tabulés approximatifs — " +
-      "TODO session 23+ : remplacer par barèmes officiels ingérés.",
+      "et des règles cantonales fines. Vérifiez avec votre fiduciaire.",
   };
 }

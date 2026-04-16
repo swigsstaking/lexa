@@ -247,8 +247,7 @@ async function projectFrPp(params: {
       : "draft"
     : "ledger";
 
-  // Simulateur fiscal V1 — barèmes tabulés approximatifs
-  // TODO session 23+ : remplacer par barèmes officiels ingérés
+  // Simulateur fiscal — barèmes officiels YAML (Session 33) avec fallback V1
   const taxEstimate = revenuImposable > 0
     ? estimateTaxDue({
         canton: "FR",
