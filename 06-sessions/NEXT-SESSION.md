@@ -1,6 +1,6 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 24 — 2026-04-16](2026-04-16-session-24.md)
+**Dernière session** : [Session 24.5 — 2026-04-16](2026-04-16-session-24-5.md) (benchmark OCR, infra)
 **Prochaine session** : Session 25 — À décider (options ci-dessous)
 
 > Session 24 a livré l'auto-fill wizard depuis documents OCR : DocumentMapper, route apply-to-draft, field-sources, badges wizard, PDF de test stable. qa-lexa **23/23** (cible).
@@ -89,7 +89,34 @@ Fonctionnalités :
 
 ---
 
-## Avertissements (héritage sessions 11-24)
+## Dette technique — Session 24.5
+
+### OCR : Benchmark incomplet (priorité session 25)
+
+Le benchmark qwen3-vl-ocr vs deepseek-ocr (session 24.5) n'a pas pu être finalisé :
+- **Cause 1** : PDF envoyé directement à Ollama `images[]` → HTTP 500. Corrigé : utiliser PNG.
+- **Cause 2** : `pdf-parse@1.1.1` incompatible avec PDF PDFKit (`bad XRef entry`). À corriger.
+- **Cause 3** : Réseau 192.168.110.0/24 inaccessible depuis la machine locale en fin de session.
+
+**À faire session 25 (5 min)** :
+```bash
+rsync -avz apps/backend/src/scripts/bench-ocr.ts \
+           apps/backend/src/scripts/fixtures/test-cert-salaire-1.png \
+           swigs@192.168.110.59:/home/swigs/lexa-backend/src/scripts/fixtures/
+# Copier le PNG aussi dans src/scripts/ (pour le path du script)
+ssh swigs@192.168.110.59 'cp /home/swigs/lexa-backend/src/scripts/fixtures/test-cert-salaire-1.png /home/swigs/lexa-backend/src/scripts/'
+ssh swigs@192.168.110.59 'cd /home/swigs/lexa-backend && OLLAMA_URL=http://192.168.110.103:11434 npx tsx src/scripts/bench-ocr.ts'
+```
+
+### pdf-parse incompatible avec PDFKit (impact prod)
+
+`pdf-parse@1.1.1` lève `bad XRef entry` sur les PDF PDFKit. En production, **tous les PDF PDFKit**
+envoyés par les clients tombent sur le fallback vision (qwen3-vl-ocr) même s'ils ont du texte embarqué.
+Solution : remplacer `pdf-parse` par `pdfjs-dist` ou `pdf2json`.
+
+---
+
+## Avertissements (héritage sessions 11-24.5)
 
 1. **`.env` prod jamais rsync**
 2. **`trust proxy 1`** ne pas retirer
@@ -103,7 +130,9 @@ Fonctionnalités :
 10. **Templates YAML dans src/execution/templates/**
 11. **MONGO_URL = mongodb://127.0.0.1:27017** (loopback, pas IP réseau)
 12. **Rate limit login** : le rate limit est strict côté prod — utiliser `http://localhost:3010` depuis le serveur pour les tests
+13. **Ollama images[] = PNG/JPEG uniquement** — ne jamais envoyer un PDF brut en base64, Ollama retourne HTTP 500
+14. **test-cert-salaire-1.png** = fixture correcte pour tests vision OCR (150 KB, 1 page A4)
 
 ---
 
-**Dernière mise à jour** : 2026-04-16 (fin session 24 — auto-fill wizard OCR, apply-to-draft, field-sources, badges, 23/23 qa-lexa)
+**Dernière mise à jour** : 2026-04-16 (session 24.5 — benchmark OCR préparé, dette pdf-parse documentée, NEXT-SESSION enrichi)
