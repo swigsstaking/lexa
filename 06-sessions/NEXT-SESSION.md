@@ -1,7 +1,7 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 32 — 2026-04-16](2026-04-16-session-32.md) (Mode fiduciaire multi-clients — migration 008, MembershipService, JWT étendu, switch-tenant, isolation 403, seed fiduciaire@lexa.test + Acme SA, frontend switcher, 37/37 qa-lexa)
-**Prochaine session** : **Session 33 — Swissdec salaires + polish préparation launch**
+**Dernière session** : [Session 33 — 2026-04-16](2026-04-16-session-33-integration-baremes.md) (Intégration barèmes officiels ICC 2026 — TaxScaleLoader, 8 YAML embarqués, 6 TODOs résolus, 0 régression qa-lexa)
+**Prochaine session** : **Session 34 — Swissdec salaires (ingestion XSD + certificat salaire Form 11)**
 
 > Session 32 a livré le mode fiduciaire complet : migration fiduciary_memberships (39 owners backfillés), MembershipService, JWT étendu (activeTenantId + memberships[]), POST /auth/switch-tenant, GET /fiduciary/clients, POST /fiduciary/invite, RLS préparée (migration 009 + queryAsTenant wrapper prêt), seed fiduciaire@lexa.test (2 memberships) + Acme SA GE, frontend switcher dropdown, +2 fixtures qa-lexa fiduciary (37/37). Score MVP ~99.3%.
 
@@ -97,4 +97,8 @@
 17. **verify-citations** : filtre Qdrant sur `law` field + match exact article_num
 18. **fiduciary fixtures qa-lexa** : `FIDU_EMAIL_QA = fiduciaire@lexa.test`, `FIDU_PASSWORD_QA = LexaFidu2026!`
 
-**Dernière mise à jour** : 2026-04-16 (session 32 — mode fiduciaire, 37/37 qa-lexa, RLS préparée)
+19. **TaxScaleLoader** : chargement lazy des YAML au 1er appel → log `[TaxScaleLoader] loaded 8 scales`. Fallback auto sur approx V1 si scale absent ou confidence=low.
+20. **qa-lexa seuils PM** : GE=25000, VD=25000, FR=30000 (post-barèmes officiels S33 — taux réels inférieurs aux approximations V1)
+21. **barèmes PP** : taux marginal × revenu total (pas tranches classiques pour VS/GE/FR). VD utilise coefficient annuel 1.555.
+
+**Dernière mise à jour** : 2026-04-16 (session 33 — barèmes officiels 2026, TaxScaleLoader, 0 régression qa-lexa)
