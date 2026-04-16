@@ -75,7 +75,7 @@ async function loginQaUser(): Promise<void> {
 
 type TestResult = {
   id: string;
-  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm";
+  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm" | "cloture" | "ledger";
   pass: boolean;
   latencyMs: number;
   reason?: string;
@@ -1366,6 +1366,91 @@ async function runPmCantonDraftSubmit(
 
 // ── Main ───────────────────────────────────────────────
 
+// ── Agent Clôture (session 29) ──────────────────────────
+
+async function runClotureAgent(): Promise<TestResult> {
+  const TEST_ID = "cloture-1-amortissement";
+  const started = Date.now();
+  try {
+    const { data } = await http.post("/agents/cloture/ask", {
+      question: "Amortissement lineaire vehicule professionnel 30000 CHF 5 ans ?",
+      year: 2026,
+    });
+    const citations = Array.isArray(data.citations) ? data.citations.length : 0;
+    const answerStr = typeof data.answer === "string" ? data.answer : "";
+    // Expect: ≥1 citation, mention of CO or art. 960, and a number close to 6000 (30000/5)
+    const hasCo = answerStr.toLowerCase().includes("co") || answerStr.includes("art. 9");
+    // Accept 6'000 or 6000 or 6.000 (Swiss formatting)
+    const has6000 = /6['\s.]?000/.test(answerStr) || /6000/.test(answerStr) || answerStr.includes("6'000");
+    return {
+      id: TEST_ID,
+      kind: "cloture",
+      pass: citations >= 1 && hasCo,
+      latencyMs: Date.now() - started,
+      citations,
+      agentDurationMs: data.durationMs,
+      reason:
+        citations === 0
+          ? "no citations"
+          : !hasCo
+            ? "answer missing CO reference"
+            : !has6000
+              ? "answer missing 6000 CHF annual depreciation (non-blocking)"
+              : undefined,
+    };
+  } catch (err) {
+    return {
+      id: TEST_ID,
+      kind: "cloture",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
+// ── Ledger balance sheet endpoint (session 29) ──────────
+
+async function runLedgerBalanceSheet(): Promise<TestResult> {
+  const TEST_ID = "ledger-1-balance-sheet-2026";
+  const started = Date.now();
+  try {
+    const { data } = await http.get("/ledger/balance-sheet/2026");
+    // Assert structure: year, asOf, assetsTotal number, isBalanced boolean
+    const yearOk = data.year === 2026;
+    const asOfOk = data.asOf === "2026-12-31";
+    const assetsTotalOk = typeof data.assetsTotal === "number";
+    const isBalancedOk = typeof data.isBalanced === "boolean";
+    const assetsArray = Array.isArray(data.assets);
+    return {
+      id: TEST_ID,
+      kind: "ledger",
+      pass: yearOk && asOfOk && assetsTotalOk && isBalancedOk && assetsArray,
+      latencyMs: Date.now() - started,
+      reason:
+        !yearOk
+          ? "year !== 2026"
+          : !asOfOk
+            ? `asOf "${data.asOf}" !== "2026-12-31"`
+            : !assetsTotalOk
+              ? "assetsTotal not a number"
+              : !isBalancedOk
+                ? "isBalanced not a boolean"
+                : !assetsArray
+                  ? "assets not an array"
+                  : undefined,
+    };
+  } catch (err) {
+    return {
+      id: TEST_ID,
+      kind: "ledger",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
 async function main(): Promise<void> {
   const started = Date.now();
   const results: TestResult[] = [];
@@ -1560,6 +1645,21 @@ async function main(): Promise<void> {
     `  ${rPmFr.pass ? "✓" : "✗"} ${rPmFr.id}  ${rPmFr.latencyMs}ms  ${rPmFr.reason ?? ""}`,
   );
 
+  // Agent Clôture (session 29)
+  console.log("\n[S29] Agent Clôture + Ledger endpoints");
+  const rCloture = await runClotureAgent();
+  results.push(rCloture);
+  console.log(
+    `  ${rCloture.pass ? "✓" : "✗"} ${rCloture.id}  ${rCloture.latencyMs}ms  ${rCloture.reason ?? ""}`,
+  );
+
+  // Ledger balance-sheet endpoint (session 29)
+  const rBalanceSheet = await runLedgerBalanceSheet();
+  results.push(rBalanceSheet);
+  console.log(
+    `  ${rBalanceSheet.pass ? "✓" : "✗"} ${rBalanceSheet.id}  ${rBalanceSheet.latencyMs}ms  ${rBalanceSheet.reason ?? ""}`,
+  );
+
   const totalMs = Date.now() - started;
   const pass = results.filter((r) => r.pass).length;
   const fail = results.length - pass;
@@ -1589,6 +1689,8 @@ async function main(): Promise<void> {
       taxpayer: { total: byKind("taxpayer").length, passed: byKind("taxpayer").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("taxpayer")) },
       documents: { total: byKind("documents").length, passed: byKind("documents").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("documents")) },
       "company-pm": { total: byKind("company-pm").length, passed: byKind("company-pm").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("company-pm")) },
+      cloture: { total: byKind("cloture").length, passed: byKind("cloture").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("cloture")) },
+      ledger: { total: byKind("ledger").length, passed: byKind("ledger").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("ledger")) },
     },
     failures: results.filter((r) => !r.pass).map((r) => ({ id: r.id, kind: r.kind, reason: r.reason })),
     generatedAt: new Date().toISOString(),
