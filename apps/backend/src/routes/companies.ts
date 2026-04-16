@@ -10,7 +10,7 @@
 
 import { Router } from "express";
 import { z } from "zod";
-import { query } from "../db/postgres.js";
+import { query, queryAsTenant } from "../db/postgres.js";
 import { buildPmDeclarationVs, buildPmDeclaration, type PmDraft, type Canton } from "../execution/PmFormBuilder.js";
 import { renderPmPdf } from "../execution/PmPdfRenderer.js";
 
@@ -66,7 +66,8 @@ companiesRouter.post("/draft", async (req, res) => {
 
   try {
     // Upsert : si draft existe, on met à jour le legalName dans step1
-    const existing = await query<{ id: string; state: Record<string, unknown> }>(
+    const existing = await queryAsTenant<{ id: string; state: Record<string, unknown> }>(
+      tenantId,
       `SELECT id, state FROM company_drafts WHERE tenant_id=$1 AND year=$2 AND canton=$3 LIMIT 1`,
       [tenantId, year, canton],
     );
@@ -76,7 +77,8 @@ companiesRouter.post("/draft", async (req, res) => {
       const state = row.state as Record<string, unknown>;
       const step1 = (state.step1 ?? {}) as Record<string, unknown>;
       const newState = { ...state, step1: { ...step1, legalName } };
-      await query(
+      await queryAsTenant(
+        tenantId,
         `UPDATE company_drafts SET state=$1 WHERE id=$2`,
         [JSON.stringify(newState), row.id],
       );
@@ -85,7 +87,8 @@ companiesRouter.post("/draft", async (req, res) => {
 
     // Créer nouveau draft
     const initState = { step1: { legalName } };
-    const result = await query<{ id: string; state: Record<string, unknown> }>(
+    const result = await queryAsTenant<{ id: string; state: Record<string, unknown> }>(
+      tenantId,
       `INSERT INTO company_drafts (tenant_id, year, canton, state)
        VALUES ($1, $2, $3, $4)
        RETURNING id, state`,
@@ -113,7 +116,7 @@ companiesRouter.get("/draft/:year", async (req, res) => {
   const tenantId = req.tenantId;
 
   try {
-    const result = await query<{
+    const result = await queryAsTenant<{
       id: string;
       tenant_id: string;
       year: number;
@@ -122,6 +125,7 @@ companiesRouter.get("/draft/:year", async (req, res) => {
       created_at: string;
       updated_at: string;
     }>(
+      tenantId,
       `SELECT id, tenant_id, year, canton, state, created_at, updated_at
        FROM company_drafts
        WHERE tenant_id=$1 AND year=$2 AND canton=$3
@@ -167,7 +171,8 @@ companiesRouter.patch("/draft/:year", async (req, res) => {
 
   try {
     // Récupère l'état actuel
-    const result = await query<{ id: string; state: Record<string, unknown> }>(
+    const result = await queryAsTenant<{ id: string; state: Record<string, unknown> }>(
+      tenantId,
       `SELECT id, state FROM company_drafts WHERE tenant_id=$1 AND year=$2 AND canton=$3 LIMIT 1`,
       [tenantId, year, canton],
     );
@@ -179,7 +184,8 @@ companiesRouter.patch("/draft/:year", async (req, res) => {
     const row = result.rows[0];
     const newState = setDeep(row.state, path, value);
 
-    await query(
+    await queryAsTenant(
+      tenantId,
       `UPDATE company_drafts SET state=$1 WHERE id=$2`,
       [JSON.stringify(newState), row.id],
     );
@@ -203,7 +209,8 @@ companiesRouter.post("/draft/:year/submit-vs", async (req, res) => {
 
   try {
     // 1. Charger le draft VS
-    const result = await query<{ id: string; state: Record<string, unknown> }>(
+    const result = await queryAsTenant<{ id: string; state: Record<string, unknown> }>(
+      tenantId,
       `SELECT id, state FROM company_drafts WHERE tenant_id=$1 AND year=$2 AND canton='VS' LIMIT 1`,
       [tenantId, year],
     );
@@ -284,7 +291,8 @@ function makeSubmitRoute(canton: Canton) {
     const tenantId = req.tenantId;
 
     try {
-      const result = await query<{ id: string; state: Record<string, unknown> }>(
+      const result = await queryAsTenant<{ id: string; state: Record<string, unknown> }>(
+        tenantId,
         `SELECT id, state FROM company_drafts WHERE tenant_id=$1 AND year=$2 AND canton=$3 LIMIT 1`,
         [tenantId, year, canton],
       );
