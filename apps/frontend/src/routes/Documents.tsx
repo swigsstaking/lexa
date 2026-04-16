@@ -18,6 +18,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Wand2,
+  QrCode,
 } from 'lucide-react';
 import { lexa, type DocumentMeta } from '@/api/lexa';
 import { useActiveCompany } from '@/stores/companiesStore';
@@ -42,6 +43,38 @@ const DOC_TYPE_COLORS: Record<string, string> = {
   releve_bancaire: 'text-amber-400 bg-amber-400/10',
   autre: 'text-zinc-400 bg-zinc-400/10',
 };
+
+/** Badge QR-facture suisse — affiché si extractedFields.qrBill présent (Lane J) */
+type QrBillData = {
+  amount?: number;
+  currency?: string;
+  creditor?: { name?: string };
+};
+
+function QrBadge({ qrBill }: { qrBill: unknown }) {
+  if (!qrBill || typeof qrBill !== 'object') return null;
+  const qr = qrBill as QrBillData;
+  return (
+    <div className="flex items-center gap-2 text-2xs">
+      <span className="inline-flex items-center gap-1 text-emerald-400">
+        <QrCode className="w-3 h-3" />
+        <span className="font-medium">QR-facture</span>
+      </span>
+      <span className="text-subtle">·</span>
+      <span className="text-ink">
+        {qr.amount != null
+          ? `${qr.amount.toLocaleString('fr-CH', { minimumFractionDigits: 2 })} ${qr.currency ?? 'CHF'}`
+          : `Montant libre · ${qr.currency ?? 'CHF'}`}
+      </span>
+      {qr.creditor?.name && (
+        <>
+          <span className="text-subtle">·</span>
+          <span className="text-subtle truncate max-w-[12rem]">{qr.creditor.name}</span>
+        </>
+      )}
+    </div>
+  );
+}
 
 function FileIcon({ mimetype }: { mimetype: string }) {
   if (mimetype === 'application/pdf') return <FileText className="w-4 h-4 text-red-400" />;
@@ -116,6 +149,9 @@ function DocumentCard({ doc, onApply, applyPending, applySuccess }: DocumentCard
           Durée : <span className="text-ink">{(doc.ocrResult.durationMs / 1000).toFixed(1)}s</span>
         </span>
       </div>
+
+      {/* Badge QR-facture — Lane J 2026-04-16 */}
+      <QrBadge qrBill={doc.ocrResult?.extractedFields?.qrBill} />
 
       {/* Bouton pré-remplir wizard — session 24 */}
       {canApply && (
