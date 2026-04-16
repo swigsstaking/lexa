@@ -75,7 +75,7 @@ async function loginQaUser(): Promise<void> {
 
 type TestResult = {
   id: string;
-  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents";
+  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm";
   pass: boolean;
   latencyMs: number;
   reason?: string;
@@ -1172,6 +1172,110 @@ async function runDocumentsApplyToDraft(): Promise<TestResult> {
   }
 }
 
+/**
+ * Fixture: pm-vs-1-draft-submit — Session 27
+ *
+ * Test E2E du wizard PM VS :
+ * 1. POST /companies/draft {year:2026, canton:"VS", legalName:"qa Sarl"}
+ * 2. PATCH step2.benefitAccounting = 265000
+ * 3. PATCH step3.chargesNonAdmises = 15000
+ * 4. PATCH step4.capitalTotal = 100000
+ * 5. POST /companies/draft/2026/submit-vs
+ * 6. Assert HTTP 200, pdfBase64.length > 1000, taxEstimate.total > 40000
+ */
+async function runPmVsDraftSubmit(): Promise<TestResult> {
+  const started = Date.now();
+  const TEST_ID = "pm-vs-1-draft-submit";
+  let draftId: string | null = null;
+
+  const cleanup = () => {
+    // Pas de DELETE implémenté V1 — laisser en DB (pas bloquant)
+  };
+
+  try {
+    // 1. Créer le draft
+    const createResp = await http.post<{ id: string; state: unknown }>("/companies/draft", {
+      year: 2026,
+      canton: "VS",
+      legalName: "qa Sarl",
+    });
+    draftId = createResp.data?.id ?? null;
+    if (!draftId) {
+      cleanup();
+      return {
+        id: TEST_ID, kind: "company-pm", pass: false,
+        latencyMs: Date.now() - started,
+        reason: `create draft: id absent de la réponse: ${JSON.stringify(createResp.data)}`,
+      };
+    }
+
+    // 2. Patch step2
+    await http.patch("/companies/draft/2026", {
+      canton: "VS", path: "step2.benefitAccounting", value: 265000,
+    });
+
+    // 3. Patch step3
+    await http.patch("/companies/draft/2026", {
+      canton: "VS", path: "step3.chargesNonAdmises", value: 15000,
+    });
+
+    // 4. Patch step4
+    await http.patch("/companies/draft/2026", {
+      canton: "VS", path: "step4.capitalTotal", value: 100000,
+    });
+
+    // 5. Submit
+    const submitResp = await http.post<{
+      formId?: string;
+      pdfBase64?: string;
+      taxEstimate?: { total?: number; ifd?: number; icc?: number; benefit?: number };
+    }>("/companies/draft/2026/submit-vs");
+
+    const { formId, pdfBase64, taxEstimate } = submitResp.data;
+
+    // 6. Asserts
+    if (formId !== "VS-declaration-pm") {
+      cleanup();
+      return {
+        id: TEST_ID, kind: "company-pm", pass: false,
+        latencyMs: Date.now() - started,
+        reason: `formId expected "VS-declaration-pm", got "${formId}"`,
+      };
+    }
+    if (!pdfBase64 || pdfBase64.length < 1000) {
+      cleanup();
+      return {
+        id: TEST_ID, kind: "company-pm", pass: false,
+        latencyMs: Date.now() - started,
+        reason: `pdfBase64.length=${pdfBase64?.length ?? 0} < 1000`,
+      };
+    }
+    if (!taxEstimate || (taxEstimate.total ?? 0) < 40000) {
+      cleanup();
+      return {
+        id: TEST_ID, kind: "company-pm", pass: false,
+        latencyMs: Date.now() - started,
+        reason: `taxEstimate.total=${taxEstimate?.total ?? 0} < 40000`,
+      };
+    }
+
+    cleanup();
+    return {
+      id: TEST_ID,
+      kind: "company-pm",
+      pass: true,
+      latencyMs: Date.now() - started,
+    };
+  } catch (err) {
+    cleanup();
+    return {
+      id: TEST_ID, kind: "company-pm", pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
 // ── Main ───────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -1180,7 +1284,7 @@ async function main(): Promise<void> {
 
   console.log(`[qa-lexa] BASE_URL=${BASE_URL} user=${QA_EMAIL}`);
   console.log(
-    `[qa-lexa] fixtures: ${classifyFixtures.length} classify + ${tvaQuestions.length} tva + ${fiscalPpQuestions.length} fiscal-pp-vs + ${fiscalPpGeQuestions.length} fiscal-pp-ge + ${fiscalPpVdQuestions.length} fiscal-pp-vd + ${fiscalPpFrQuestions.length} fiscal-pp-fr + ${fiscalPpNeQuestions.length} fiscal-pp-ne + ${fiscalPpJuQuestions.length} fiscal-pp-ju + ${fiscalPpBjQuestions.length} fiscal-pp-bj + ${fiscalPmQuestions.length} fiscal-pm + 1 pm-form-vs + 2 documents (s25-ocr-e2e+s24-apply)`,
+    `[qa-lexa] fixtures: ${classifyFixtures.length} classify + ${tvaQuestions.length} tva + ${fiscalPpQuestions.length} fiscal-pp-vs + ${fiscalPpGeQuestions.length} fiscal-pp-ge + ${fiscalPpVdQuestions.length} fiscal-pp-vd + ${fiscalPpFrQuestions.length} fiscal-pp-fr + ${fiscalPpNeQuestions.length} fiscal-pp-ne + ${fiscalPpJuQuestions.length} fiscal-pp-ju + ${fiscalPpBjQuestions.length} fiscal-pp-bj + ${fiscalPmQuestions.length} fiscal-pm + 1 pm-form-vs + 2 documents (s25-ocr-e2e+s24-apply) + 1 company-pm (s27-pm-vs-wizard)`,
   );
 
   // Health gate (public)
@@ -1340,6 +1444,13 @@ async function main(): Promise<void> {
     `  ${r7.pass ? "✓" : "✗"} ${r7.id}  ${r7.latencyMs}ms  ${r7.reason ?? ""}`,
   );
 
+  // PM wizard VS draft submit (session 27)
+  const rPmVs = await runPmVsDraftSubmit();
+  results.push(rPmVs);
+  console.log(
+    `  ${rPmVs.pass ? "✓" : "✗"} ${rPmVs.id}  ${rPmVs.latencyMs}ms  ${rPmVs.reason ?? ""}`,
+  );
+
   const totalMs = Date.now() - started;
   const pass = results.filter((r) => r.pass).length;
   const fail = results.length - pass;
@@ -1368,6 +1479,7 @@ async function main(): Promise<void> {
       "fiscal-pm": { total: byKind("fiscal-pm").length, passed: byKind("fiscal-pm").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiscal-pm")) },
       taxpayer: { total: byKind("taxpayer").length, passed: byKind("taxpayer").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("taxpayer")) },
       documents: { total: byKind("documents").length, passed: byKind("documents").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("documents")) },
+      "company-pm": { total: byKind("company-pm").length, passed: byKind("company-pm").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("company-pm")) },
     },
     failures: results.filter((r) => !r.pass).map((r) => ({ id: r.id, kind: r.kind, reason: r.reason })),
     generatedAt: new Date().toISOString(),
