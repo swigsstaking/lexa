@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { usePeriodStore } from '@/stores/periodStore';
 
 interface Props {
   year?: number;
@@ -13,12 +14,14 @@ const MONTHS_FR = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
  * Bandeau fiscal 60px en bas du workspace.
  * 3 zones : passé consolidé (success), présent (warning), futur prédit (subtle pointillé).
  */
-export function FiscalTimeline({ year, selected, onSelect }: Props) {
+export function FiscalTimeline({ year, selected }: Props) {
   const now = new Date();
   const y = year ?? now.getFullYear();
   const cursor = selected ?? now;
+  const period = usePeriodStore((s) => s.period);
+  const openModal = usePeriodStore((s) => s.openModal);
 
-  const { progress, months } = useMemo(() => {
+  const { progress, months, periodRange } = useMemo(() => {
     const start = new Date(y, 0, 1).getTime();
     const end = new Date(y + 1, 0, 1).getTime();
     const nowT = now.getTime();
@@ -30,36 +33,42 @@ export function FiscalTimeline({ year, selected, onSelect }: Props) {
       const mPct = (mStart - start) / (end - start);
       return { label, pct: mPct, index: i };
     });
-    return { progress: { now: progressPct, cursor: cursorPct }, months: monthsArr };
-  }, [y, cursor, now]);
-
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!onSelect) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
-    const start = new Date(y, 0, 1).getTime();
-    const end = new Date(y + 1, 0, 1).getTime();
-    const t = start + pct * (end - start);
-    onSelect(new Date(t));
-  };
+    // Période active highlight range
+    const pStart = new Date(period.start).getTime();
+    const pEnd = new Date(period.end).getTime();
+    const pStartPct = Math.max(0, Math.min(1, (pStart - start) / (end - start)));
+    const pEndPct = Math.max(0, Math.min(1, (pEnd - start) / (end - start)));
+    return {
+      progress: { now: progressPct, cursor: cursorPct },
+      months: monthsArr,
+      periodRange: { start: pStartPct, end: pEndPct },
+    };
+  }, [y, cursor, now, period]);
 
   return (
     <div className="h-[60px] bg-surface border-t border-border px-4 md:px-6 flex items-center gap-2 md:gap-4 select-none overflow-x-hidden flex-shrink-0">
       <div className="flex items-baseline gap-2">
-        <span className="text-2xs uppercase tracking-wider text-muted">Exercice</span>
-        <span className="text-sm font-semibold text-ink mono-num">{y}</span>
+        <span className="text-2xs uppercase tracking-wider text-muted">Période</span>
+        <span className="text-sm font-semibold text-ink truncate max-w-[200px]" title={period.label}>
+          {period.label}
+        </span>
       </div>
-      <div
-        className="flex-1 relative h-8 cursor-pointer group"
-        onClick={handleClick}
-        role="slider"
-        aria-label="Timeline fiscale"
-        aria-valuemin={0}
-        aria-valuemax={365}
-        aria-valuenow={Math.round(progress.cursor * 365)}
+      <button
+        type="button"
+        onClick={openModal}
+        className="flex-1 relative h-8 cursor-pointer group hover:opacity-95 transition-opacity text-left"
+        aria-label="Changer la période"
       >
         {/* Track */}
         <div className="absolute inset-y-3 left-0 right-0 bg-elevated rounded-full border border-border" />
+        {/* Range de la période sélectionnée (par dessus le track) */}
+        <div
+          className="absolute inset-y-3 bg-accent/25 border-y border-accent/60 rounded"
+          style={{
+            left: `${periodRange.start * 100}%`,
+            width: `${(periodRange.end - periodRange.start) * 100}%`,
+          }}
+        />
         {/* Passé consolidé */}
         <div
           className="absolute inset-y-3 left-0 bg-success/25 rounded-l-full border-y border-l border-success/40"
@@ -91,14 +100,11 @@ export function FiscalTimeline({ year, selected, onSelect }: Props) {
             </div>
           ))}
         </div>
-      </div>
-      <div className="hidden sm:flex items-center gap-2 text-2xs text-muted flex-shrink-0">
-        <span className="w-2 h-2 rounded-full bg-success/60" />
-        <span>Passé</span>
-        <span className="w-2 h-2 rounded-full bg-warning ml-2" />
-        <span>Présent</span>
-        <span className="w-2 h-2 rounded-full border border-dashed border-subtle ml-2" />
-        <span>Futur prédit</span>
+      </button>
+      <div className="hidden lg:flex items-center gap-1.5 text-2xs text-subtle flex-shrink-0 font-mono">
+        <span>{y}</span>
+        <span className="text-muted">·</span>
+        <span>clic pour changer</span>
       </div>
     </div>
   );

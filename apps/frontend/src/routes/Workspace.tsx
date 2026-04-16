@@ -264,16 +264,6 @@ export function Workspace() {
             )}
           </div>
 
-          {/* ── Bouton Canvas spatial ── */}
-          <button
-            onClick={() => navigate('/canvas')}
-            title="Vue canvas spatial — agents &amp; entités IA"
-            className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-stone-700 bg-stone-900 text-stone-400 hover:text-stone-200 hover:border-stone-500 hover:bg-stone-800 transition-colors text-xs font-mono"
-          >
-            <Network className="w-3.5 h-3.5" />
-            <span className="hidden lg:inline">Canvas IA</span>
-          </button>
-
           {/* ── Nav desktop (md+) : 4 dropdowns ── */}
           <nav className="hidden md:flex items-center gap-1" aria-label="Navigation principale">
             <NavDropdown

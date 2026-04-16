@@ -17,6 +17,8 @@ import { TransactionEdge } from './TransactionEdge';
 import { buildCanvas } from './layout';
 import { CanvasSkeleton } from './CanvasSkeleton';
 import { LedgerDrawer, type LedgerSelection } from './LedgerDrawer';
+import { PeriodModal } from './PeriodModal';
+import { usePeriodStore } from '@/stores/periodStore';
 
 const nodeTypes: NodeTypes = { account: AccountNode };
 const edgeTypes: EdgeTypes = { transaction: TransactionEdge };
@@ -26,10 +28,26 @@ export function LedgerCanvas() {
   const entries = useQuery({ queryKey: ['ledger', 200], queryFn: () => lexa.ledgerList(200) });
   const [selection, setSelection] = useState<LedgerSelection>(null);
 
+  // Période de filtre depuis store partagé (ouvert via click sur FiscalTimeline)
+  const period = usePeriodStore((s) => s.period);
+  const modalOpen = usePeriodStore((s) => s.modalOpen);
+  const closeModal = usePeriodStore((s) => s.closeModal);
+  const setPeriod = usePeriodStore((s) => s.setPeriod);
+  const currentYear = new Date().getFullYear();
+
+  const filteredEntries = useMemo(() => {
+    const all = entries.data?.entries ?? [];
+    return all.filter((e) => {
+      if (!e.occurredAt) return true;
+      const d = e.occurredAt.slice(0, 10);
+      return d >= period.start && d <= period.end;
+    });
+  }, [entries.data, period]);
+
   const graph = useMemo(() => {
-    if (!balance.data || !entries.data) return { nodes: [], edges: [] };
-    return buildCanvas(balance.data.accounts, entries.data.entries);
-  }, [balance.data, entries.data]);
+    if (!balance.data) return { nodes: [], edges: [] };
+    return buildCanvas(balance.data.accounts, filteredEntries);
+  }, [balance.data, filteredEntries]);
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelection({ kind: 'account', accountId: node.id });
@@ -54,6 +72,7 @@ export function LedgerCanvas() {
         edgeTypes={edgeTypes}
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
+        onPaneClick={closeDrawer}
         fitView
         fitViewOptions={{ padding: 0.12, maxZoom: 1.6 }}
         minZoom={0.3}
@@ -72,8 +91,15 @@ export function LedgerCanvas() {
       <LedgerDrawer
         selection={selection}
         accounts={balance.data?.accounts ?? []}
-        entries={entries.data?.entries ?? []}
+        entries={filteredEntries}
         onClose={closeDrawer}
+      />
+      <PeriodModal
+        open={modalOpen}
+        onClose={closeModal}
+        year={currentYear}
+        current={period}
+        onSelect={setPeriod}
       />
     </div>
   );
