@@ -1999,6 +1999,115 @@ async function runCacheHeadersCheck(): Promise<TestResult> {
   }
 }
 
+// ── fix-p2-04 : Preview tax-estimate endpoint — régression guard ─────────────────
+// Vérifie que POST /forms/preview/tax-estimate retourne icc + ifd cohérents.
+// Le même calcul que le PDF backend (estimateTaxDue). Divergence < 1% attendue.
+async function runPreviewTaxEstimate(): Promise<TestResult> {
+  const TEST_ID = "fix-p2-04-preview-tax-estimate";
+  const started = Date.now();
+
+  // Revenu test : 80k VS célibataire 2026 — valeurs de référence connues
+  const testInput = { canton: "VS", year: 2026, revenuImposable: 80000, civilStatus: "single" };
+
+  try {
+    const resp = await http.post<{
+      icc: number;
+      ifd: number;
+      total: number;
+      effectiveRate: number;
+      iccSource: string;
+      disclaimer: string;
+    }>("/forms/preview/tax-estimate", testInput, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+
+    const { icc, ifd, total, effectiveRate } = resp.data;
+
+    // Vérifications structurelles
+    if (typeof icc !== "number" || icc <= 0) {
+      return { id: TEST_ID, kind: "taxpayer", pass: false, latencyMs: Date.now() - started, reason: `icc invalide: ${icc}` };
+    }
+    if (typeof ifd !== "number" || ifd <= 0) {
+      return { id: TEST_ID, kind: "taxpayer", pass: false, latencyMs: Date.now() - started, reason: `ifd invalide: ${ifd}` };
+    }
+    if (Math.abs(total - (icc + ifd)) > 1) {
+      return { id: TEST_ID, kind: "taxpayer", pass: false, latencyMs: Date.now() - started, reason: `total=${total} != icc+ifd=${icc + ifd}` };
+    }
+    if (effectiveRate <= 0 || effectiveRate >= 1) {
+      return { id: TEST_ID, kind: "taxpayer", pass: false, latencyMs: Date.now() - started, reason: `effectiveRate hors plage: ${effectiveRate}` };
+    }
+
+    return { id: TEST_ID, kind: "taxpayer", pass: true, latencyMs: Date.now() - started };
+  } catch (err) {
+    const status = (err as { response?: { status: number } }).response?.status;
+    return {
+      id: TEST_ID,
+      kind: "taxpayer",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: `HTTP ${status ?? "ERR"}: ${(err as Error).message}`,
+    };
+  }
+}
+
+// ── fix-p2-05 : OCR mapping étendu certificat_salaire ────────────────────────
+// Vérifie que mapDocumentToFields retourne >= 3 champs pour un cert_salaire complet.
+// Test unitaire inline (pas de requête réseau — pure function).
+async function runOcrMappingExtended(): Promise<TestResult> {
+  const TEST_ID = "fix-p2-05-ocr-mapping-extended";
+  const started = Date.now();
+
+  try {
+    // Import direct du DocumentMapper (même process)
+    const { mapDocumentToFields } = await import("../services/DocumentMapper.js");
+
+    const mockDoc = {
+      type: "certificat_salaire" as const,
+      extractedFields: {
+        grossSalary: 85000,
+        netSalary: 72000,
+        deductionsAvsLpp: 8500,
+        employeeName: "Marie Dupont",
+        year: 2026,
+        period: "annuel",
+      },
+    };
+
+    const fields = mapDocumentToFields(mockDoc);
+
+    if (!Array.isArray(fields) || fields.length < 3) {
+      return {
+        id: TEST_ID,
+        kind: "documents",
+        pass: false,
+        latencyMs: Date.now() - started,
+        reason: `mapDocumentToFields retourne ${fields.length} champs (attendu >= 3)`,
+      };
+    }
+
+    const paths = fields.map((f) => f.fieldPath);
+    if (!paths.includes("step2.salaireBrut")) {
+      return { id: TEST_ID, kind: "documents", pass: false, latencyMs: Date.now() - started, reason: "step2.salaireBrut absent" };
+    }
+    if (!paths.includes("step2.netSalary") && !paths.includes("step2.salaireNet")) {
+      return { id: TEST_ID, kind: "documents", pass: false, latencyMs: Date.now() - started, reason: "step2.salaireNet absent" };
+    }
+    if (!paths.includes("step1.firstName") && !paths.includes("step1.lastName")) {
+      return { id: TEST_ID, kind: "documents", pass: false, latencyMs: Date.now() - started, reason: "step1.firstName/lastName absent" };
+    }
+
+    return { id: TEST_ID, kind: "documents", pass: true, latencyMs: Date.now() - started };
+  } catch (err) {
+    return {
+      id: TEST_ID,
+      kind: "documents",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: `exception: ${(err as Error).message}`,
+    };
+  }
+}
+
 async function main(): Promise<void> {
   const started = Date.now();
   const results: TestResult[] = [];
@@ -2281,6 +2390,20 @@ async function main(): Promise<void> {
   results.push(rOcrUpload);
   console.log(
     `  ${rOcrUpload.pass ? "✓" : "✗"} ${rOcrUpload.id}  ${rOcrUpload.latencyMs}ms  ${rOcrUpload.reason ?? ""}`,
+  );
+
+  // Lane F — BUG-P2-04 + BUG-P2-05 (session finition beta)
+  console.log("\n[Lane-F] Régression guards — preview tax-estimate + OCR mapping étendu");
+  const rPreviewTax = await runPreviewTaxEstimate();
+  results.push(rPreviewTax);
+  console.log(
+    `  ${rPreviewTax.pass ? "✓" : "✗"} ${rPreviewTax.id}  ${rPreviewTax.latencyMs}ms  ${rPreviewTax.reason ?? ""}`,
+  );
+
+  const rOcrMapping = await runOcrMappingExtended();
+  results.push(rOcrMapping);
+  console.log(
+    `  ${rOcrMapping.pass ? "✓" : "✗"} ${rOcrMapping.id}  ${rOcrMapping.latencyMs}ms  ${rOcrMapping.reason ?? ""}`,
   );
 
   const totalMs = Date.now() - started;
