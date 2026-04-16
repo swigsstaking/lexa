@@ -33,12 +33,12 @@ export function AccountNode({ data, selected }: NodeProps) {
         scale: 1,
       }}
       transition={{ duration: 0.3 }}
-      className={`relative min-w-[220px] rounded-xl border bg-surface px-4 py-3 transition-all ${
+      className={`relative min-w-[220px] rounded-xl border bg-surface px-4 py-3 transition-all cursor-pointer hover:shadow-md ${
         selected
           ? 'border-accent shadow-glow-accent'
           : d.recent
-            ? 'border-accent/50'
-            : 'border-border hover:border-border-strong'
+            ? 'border-accent/50 hover:border-accent'
+            : 'border-border hover:border-accent/60'
       }`}
     >
       <Handle

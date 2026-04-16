@@ -50,7 +50,7 @@ export function TransactionEdge({
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
               pointerEvents: 'all',
             }}
-            className="card-elevated px-2 py-1 flex items-center gap-1.5 text-2xs"
+            className="card-elevated px-2 py-1 flex items-center gap-1.5 text-2xs cursor-pointer hover:border-accent/60 transition-colors"
           >
             <span className="mono-num text-ink font-medium">
               {fmtChf(d.amount)} {d.currency}
