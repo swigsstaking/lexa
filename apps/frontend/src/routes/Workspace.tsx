@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +17,7 @@ import {
   Shield,
   Lightbulb,
   Users,
-  Settings,
+  ChevronDown,
 } from 'lucide-react';
 import { lexa } from '@/api/lexa';
 import { useActiveCompany, useCompaniesStore } from '@/stores/companiesStore';
@@ -44,6 +44,8 @@ export function Workspace() {
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const [cursorDate, setCursorDate] = useState<Date>(new Date());
   const [switchingTenant, setSwitchingTenant] = useState(false);
+  const [logoMenuOpen, setLogoMenuOpen] = useState(false);
+  const logoMenuRef = useRef<HTMLDivElement>(null);
 
   // S32 : Charger les clients fiduciaires (si membership multiple)
   const { data: fiduClients } = useQuery({
@@ -89,6 +91,17 @@ export function Workspace() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
+
+  // Fermer le menu logo si click dehors
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (logoMenuRef.current && !logoMenuRef.current.contains(e.target as Node)) {
+        setLogoMenuOpen(false);
+      }
+    };
+    if (logoMenuOpen) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [logoMenuOpen]);
 
   const handleLogout = () => {
     authLogout();
@@ -171,25 +184,33 @@ export function Workspace() {
       icon: Lightbulb,
       title: 'Conseiller fiscal — optimisation proactive',
     },
+  ];
+
+  // Items fiduciaire pour le menu logo (multi-clients)
+  const fiduItems = hasMultipleClients && fiduClients
+    ? fiduClients.map((client) => ({
+        label: client.tenantName ?? client.tenantId.slice(0, 8),
+        onClick: () => { handleSwitchTenant(client.tenantId); setLogoMenuOpen(false); },
+        icon: Users,
+        active: client.tenantId === activeTenantId,
+        title: `Passer au client ${client.tenantName ?? client.tenantId}`,
+      }))
+    : [];
+
+  // ── Groupes pour mobile ─────────────────────────────────────────────────
+  const mobileGroups = [
+    { label: 'Déclarations', items: declarationsItems },
+    { label: 'Comptabilité', items: comptaItems },
+    { label: 'IA', items: iaItems },
+  ];
+
+  const mobileQuickActions = [
     {
-      label: 'Mode expert',
+      label: 'Grand livre',
       onClick: () => setLedgerOpen(true),
       icon: Calculator,
       title: 'Grand livre expert (⌘⇧L)',
     },
-  ];
-
-  // Dropdown Paramètres — inclut switcher fiduciaire si multi-clients
-  const parametresItems = [
-    ...(hasMultipleClients && fiduClients
-      ? fiduClients.map((client) => ({
-          label: client.tenantName ?? client.tenantId.slice(0, 8),
-          onClick: () => handleSwitchTenant(client.tenantId),
-          icon: Users,
-          active: client.tenantId === activeTenantId,
-          title: `Passer au client ${client.tenantName ?? client.tenantId}`,
-        }))
-      : []),
     {
       label: 'Déconnexion',
       onClick: handleLogout,
@@ -198,25 +219,56 @@ export function Workspace() {
     },
   ];
 
-  // ── Groupes pour mobile ─────────────────────────────────────────────────
-  const mobileGroups = [
-    { label: 'Déclarations', items: declarationsItems },
-    { label: 'Comptabilité', items: comptaItems },
-    { label: 'IA', items: iaItems },
-    { label: 'Paramètres', items: parametresItems },
-  ];
-
   return (
     <div className="h-screen w-screen flex flex-col bg-bg text-ink">
       {/* Top bar */}
       <header className="h-12 flex items-center justify-between px-4 border-b border-border bg-surface flex-shrink-0">
-        {/* ── Gauche : logo + société ── */}
+        {/* ── Gauche : logo cliquable + société ── */}
         <div className="flex items-center gap-4 min-w-0">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-accent text-accent-fg grid place-items-center font-semibold text-xs">
-              L
-            </div>
-            <span className="text-sm font-semibold">{t('app.name')}</span>
+          {/* Logo — click ouvre switcher si multi-clients, sinon navigue / */}
+          <div className="relative" ref={logoMenuRef}>
+            <button
+              type="button"
+              onClick={() => hasMultipleClients ? setLogoMenuOpen((o) => !o) : navigate('/')}
+              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+              title={hasMultipleClients ? 'Changer de client' : t('app.name')}
+            >
+              <div className="w-6 h-6 rounded-md bg-accent text-accent-fg grid place-items-center font-semibold text-xs">
+                L
+              </div>
+              <span className="text-sm font-semibold">{t('app.name')}</span>
+              {hasMultipleClients && (
+                <ChevronDown
+                  className={`w-3 h-3 text-muted transition-transform duration-150 ${logoMenuOpen ? 'rotate-180' : ''}`}
+                />
+              )}
+            </button>
+
+            {/* Menu switcher fiduciaire */}
+            {logoMenuOpen && hasMultipleClients && (
+              <div
+                role="menu"
+                className="absolute left-0 top-full mt-1 min-w-[200px] rounded-lg border border-border bg-surface shadow-lg z-50 py-1"
+              >
+                {fiduItems.map((item, i) => {
+                  const ItemIcon = item.icon;
+                  return (
+                    <button
+                      key={i}
+                      role="menuitem"
+                      title={item.title}
+                      onClick={item.onClick}
+                      className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 hover:bg-elevated transition-colors ${
+                        item.active ? 'text-accent font-medium' : 'text-ink'
+                      }`}
+                    >
+                      {ItemIcon && <ItemIcon className="w-3.5 h-3.5 flex-shrink-0 text-muted" />}
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <span className="w-px h-5 bg-border" />
@@ -264,7 +316,7 @@ export function Workspace() {
             )}
           </div>
 
-          {/* ── Nav desktop (md+) : 4 dropdowns ── */}
+          {/* ── Nav desktop (md+) : dropdowns + boutons directs ── */}
           <nav className="hidden md:flex items-center gap-1" aria-label="Navigation principale">
             <NavDropdown
               label="Déclarations"
@@ -281,16 +333,31 @@ export function Workspace() {
               icon={Sparkles}
               items={iaItems}
             />
-            <NavDropdown
-              label="Paramètres"
-              icon={Settings}
-              items={parametresItems}
-              badge={hasMultipleClients ? fiduClients?.length : undefined}
-            />
+            {/* Grand livre — bouton direct (pas de dropdown) */}
+            <button
+              type="button"
+              onClick={() => setLedgerOpen(true)}
+              title="Grand livre expert (⌘⇧L)"
+              className="btn-ghost !px-3 !py-1.5"
+            >
+              <Calculator className="w-3.5 h-3.5" />
+              <span className="text-xs hidden md:inline">Grand livre</span>
+            </button>
           </nav>
 
+          {/* Bouton logout — icône tout à droite */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Déconnexion"
+            aria-label="Déconnexion"
+            className="hidden md:flex btn-ghost !px-2 !py-1.5 text-muted hover:text-danger transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+
           {/* ── Mobile burger (<md) ── */}
-          <MobileMenu groups={mobileGroups} />
+          <MobileMenu groups={mobileGroups} quickActions={mobileQuickActions} />
         </div>
       </header>
 
