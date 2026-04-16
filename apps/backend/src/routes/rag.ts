@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ragQuery } from "../rag/ragQuery.js";
 import { classifierAgent } from "../agents/classifier/ClassifierAgent.js";
 import { enqueueLlmCall, registerLlmHandler } from "../services/LlmQueue.js";
+import { handleLlmError } from "./_llmErrorHandler.js";
 
 // Register classify handler once at module load (no circular import — agent is imported here)
 registerLlmHandler("classifier", (payload) =>
@@ -31,8 +32,7 @@ ragRouter.post("/ask", async (req, res) => {
     );
     res.json(answer);
   } catch (err) {
-    console.error("RAG error:", err);
-    res.status(500).json({ error: "rag failed", message: (err as Error).message });
+    handleLlmError(err, res, "RAG");
   }
 });
 
@@ -63,7 +63,6 @@ ragRouter.post("/classify", async (req, res) => {
     );
     res.json(result);
   } catch (err) {
-    console.error("Classify error:", err);
-    res.status(500).json({ error: "classify failed", message: (err as Error).message });
+    handleLlmError(err, res, "Classifier");
   }
 });

@@ -14,6 +14,7 @@ import { auditAgent } from "../agents/audit/AuditAgent.js";
 import { conseillerAgent } from "../agents/conseiller/ConseillerAgent.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { enqueueLlmCall, registerLlmHandler } from "../services/LlmQueue.js";
+import { handleLlmError } from "./_llmErrorHandler.js";
 
 // ── Register all agent handlers (no circular imports — agents imported here) ──
 
@@ -54,7 +55,7 @@ agentsRouter.post("/tva/ask", requireAuth, async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("TVA agent error:", err);
-    res.status(500).json({ error: "tva agent failed", message: (err as Error).message });
+    handleLlmError(err, res, "TVA");
   }
 });
 
@@ -81,7 +82,7 @@ agentsRouter.post("/fiscal-pp/ask", requireAuth, async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("FiscalPpVs agent error:", err);
-    res.status(500).json({ error: "fiscal-pp agent failed", message: (err as Error).message });
+    handleLlmError(err, res, "Fiscal PP VS");
   }
 });
 
@@ -114,7 +115,7 @@ agentsRouter.post("/fiscal-pp-ge/ask", requireAuth, async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("FiscalPpGe agent error:", err);
-    res.status(500).json({ error: "fiscal-pp-ge agent failed", message: (err as Error).message });
+    handleLlmError(err, res, "Fiscal PP GE");
   }
 });
 
@@ -143,7 +144,7 @@ agentsRouter.post("/fiscal-pp-vd/ask", requireAuth, async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("FiscalPpVd agent error:", err);
-    res.status(500).json({ error: "fiscal-pp-vd agent failed", message: (err as Error).message });
+    handleLlmError(err, res, "Fiscal PP VD");
   }
 });
 
@@ -173,7 +174,7 @@ agentsRouter.post("/fiscal-pp-fr/ask", requireAuth, async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("FiscalPpFr agent error:", err);
-    res.status(500).json({ error: "fiscal-pp-fr agent failed", message: (err as Error).message });
+    handleLlmError(err, res, "Fiscal PP FR");
   }
 });
 
@@ -201,7 +202,7 @@ agentsRouter.post("/fiscal-pp-ne/ask", requireAuth, async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("FiscalPpNe agent error:", err);
-    res.status(500).json({ error: "fiscal-pp-ne agent failed", message: (err as Error).message });
+    handleLlmError(err, res, "Fiscal PP NE");
   }
 });
 
@@ -229,7 +230,7 @@ agentsRouter.post("/fiscal-pp-ju/ask", requireAuth, async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("FiscalPpJu agent error:", err);
-    res.status(500).json({ error: "fiscal-pp-ju agent failed", message: (err as Error).message });
+    handleLlmError(err, res, "Fiscal PP JU");
   }
 });
 
@@ -257,7 +258,7 @@ agentsRouter.post("/fiscal-pp-bj/ask", requireAuth, async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("FiscalPpBj agent error:", err);
-    res.status(500).json({ error: "fiscal-pp-bj agent failed", message: (err as Error).message });
+    handleLlmError(err, res, "Fiscal PP BJ");
   }
 });
 
@@ -286,7 +287,7 @@ agentsRouter.post("/fiscal-pm/ask", requireAuth, async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("FiscalPm agent error:", err);
-    res.status(500).json({ error: "fiscal-pm agent failed", message: (err as Error).message });
+    handleLlmError(err, res, "Fiscal PM");
   }
 });
 
@@ -321,7 +322,7 @@ agentsRouter.post("/cloture/ask", requireAuth, async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("Cloture agent error:", err);
-    res.status(500).json({ error: "cloture agent failed", message: (err as Error).message });
+    handleLlmError(err, res, "Clôture");
   }
 });
 
@@ -356,7 +357,7 @@ agentsRouter.post("/audit/ask", requireAuth, async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("Audit agent error:", err);
-    res.status(500).json({ error: "audit agent failed", message: (err as Error).message });
+    handleLlmError(err, res, "Audit");
   }
 });
 
@@ -384,8 +385,7 @@ agentsRouter.post("/conseiller/ask", requireAuth, async (req, res) => {
     const result = await enqueueLlmCall(req.tenantId, "conseiller", parsed.data);
     res.json(result);
   } catch (err) {
-    console.error("Conseiller agent error:", err);
-    res.status(500).json({ error: "conseiller agent failed", message: (err as Error).message });
+    handleLlmError(err, res, "Conseiller");
   }
 });
 
