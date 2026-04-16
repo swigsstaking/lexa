@@ -306,35 +306,193 @@ export function Workspace() {
 
       {/* Canvas hero */}
       <main className="flex-1 relative min-h-0 overflow-hidden">
-        {/* Fallback mobile — canvas inutilisable sur petit écran */}
-        <div className="md:hidden flex flex-col items-center justify-center h-full gap-4 p-6 text-center">
-          <Network className="w-10 h-10 text-muted" />
-          <div>
-            <p className="text-sm font-medium text-ink mb-1">Vue comptable</p>
-            <p className="text-xs text-muted leading-relaxed">Utilisez le menu ci-dessus pour accéder aux déclarations, à la comptabilité et aux outils IA.</p>
+        {/* Dashboard mobile — accès rapide aux fonctions clés */}
+        <div className="md:hidden h-full overflow-y-auto">
+          <div className="p-4 pb-6 flex flex-col gap-4">
+            {/* En-tête */}
+            <div className="pt-2">
+              <h1 className="text-base font-semibold text-ink">Tableau de bord</h1>
+              <p className="text-xs text-muted mt-0.5">Exercice {year} · {company?.name ?? '—'}</p>
+            </div>
+
+            {/* Déclarations */}
+            <section>
+              <h2 className="text-2xs uppercase tracking-wider text-subtle mb-2">Déclarations</h2>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => navigate(taxpayerPath)}
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-surface border border-border text-left hover:border-border-strong hover:bg-elevated transition-colors"
+                >
+                  <FileSignature className="w-4 h-4 text-accent flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-ink">Déclaration PP {canton && `(${canton})`}</p>
+                    <p className="text-2xs text-muted">Personne physique · {year}</p>
+                  </div>
+                  <span className="ml-auto text-muted text-sm">→</span>
+                </button>
+                <button
+                  onClick={() => navigate(pmPath)}
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-surface border border-border text-left hover:border-border-strong hover:bg-elevated transition-colors"
+                >
+                  <Briefcase className="w-4 h-4 text-accent flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-ink">Déclaration PM {canton && `(${canton})`}</p>
+                    <p className="text-2xs text-muted">Personne morale · {year}</p>
+                  </div>
+                  <span className="ml-auto text-muted text-sm">→</span>
+                </button>
+              </div>
+            </section>
+
+            {/* Comptabilité */}
+            <section>
+              <h2 className="text-2xs uppercase tracking-wider text-subtle mb-2">Comptabilité</h2>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => navigate('/documents')}
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-surface border border-border text-left hover:border-border-strong hover:bg-elevated transition-colors"
+                >
+                  <FileText className="w-4 h-4 text-muted flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-ink">Documents OCR</p>
+                    <p className="text-2xs text-muted">Certificats de salaire, factures</p>
+                  </div>
+                  <span className="ml-auto text-muted text-sm">→</span>
+                </button>
+                <button
+                  onClick={() => navigate(`/close/${year}`)}
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-surface border border-border text-left hover:border-border-strong hover:bg-elevated transition-colors"
+                >
+                  <BookOpen className="w-4 h-4 text-muted flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-ink">Clôture continue</p>
+                    <p className="text-2xs text-muted">CO art. 957–963</p>
+                  </div>
+                  <span className="ml-auto text-muted text-sm">→</span>
+                </button>
+              </div>
+            </section>
+
+            {/* IA */}
+            <section>
+              <h2 className="text-2xs uppercase tracking-wider text-subtle mb-2">Intelligence artificielle</h2>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => setChatOpen(true)}
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-accent/10 border border-accent/30 text-left hover:bg-accent/15 transition-colors"
+                >
+                  <Sparkles className="w-4 h-4 text-accent flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-ink">Chat IA fiscal</p>
+                    <p className="text-2xs text-muted">Interrogez Lexa en langage naturel</p>
+                  </div>
+                  <span className="ml-auto text-accent text-sm">→</span>
+                </button>
+                <button
+                  onClick={() => navigate(`/conseiller/${year}`)}
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-surface border border-border text-left hover:border-border-strong hover:bg-elevated transition-colors"
+                >
+                  <Lightbulb className="w-4 h-4 text-muted flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-ink">Conseiller fiscal</p>
+                    <p className="text-2xs text-muted">Optimisation proactive</p>
+                  </div>
+                  <span className="ml-auto text-muted text-sm">→</span>
+                </button>
+              </div>
+            </section>
           </div>
         </div>
 
-        {/* LedgerCanvas — desktop seulement */}
-        <div className="hidden md:block absolute inset-0">
-          <LedgerCanvas />
-        </div>
+        {/* Layout desktop — sidebar gauche + canvas */}
+        <div className="hidden md:flex h-full">
+          {/* Sidebar actions — colonne gauche fixe */}
+          <aside className="w-56 flex-shrink-0 flex flex-col gap-1 p-3 border-r border-border bg-surface overflow-y-auto">
+            {/* Statut agents */}
+            <div className="flex items-center gap-2 px-2 py-2 mb-1">
+              <Activity className="w-3.5 h-3.5 text-accent" />
+              <span className="text-2xs uppercase tracking-wider text-muted">Agents actifs</span>
+              <div className="flex gap-1 ml-auto">
+                <span className="w-1.5 h-1.5 rounded-full bg-success" title="classifier" />
+                <span className="w-1.5 h-1.5 rounded-full bg-success" title="reasoning" />
+                <span className="w-1.5 h-1.5 rounded-full bg-success" title="tva" />
+              </div>
+            </div>
 
-        {/* Floating agents indicator — desktop seulement */}
-        <div className="hidden md:flex absolute top-3 left-4 card-elevated px-3 py-2 items-center gap-2 pointer-events-none z-10">
-          <Activity className="w-3.5 h-3.5 text-accent" />
-          <span className="text-2xs uppercase tracking-wider text-muted">Agents</span>
-          <div className="flex gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-success" title="classifier" />
-            <span className="w-1.5 h-1.5 rounded-full bg-success" title="reasoning" />
-            <span className="w-1.5 h-1.5 rounded-full bg-success" title="tva" />
+            <div className="h-px bg-border mb-1" />
+
+            {/* Section Déclarations */}
+            <p className="text-2xs uppercase tracking-wider text-subtle px-2 py-1">Déclarations</p>
+            <button
+              onClick={() => navigate(taxpayerPath)}
+              className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-left text-sm text-ink hover:bg-elevated transition-colors group"
+            >
+              <FileSignature className="w-3.5 h-3.5 text-accent flex-shrink-0" />
+              <span className="truncate">PP {canton && `· ${canton}`}</span>
+            </button>
+            <button
+              onClick={() => navigate(pmPath)}
+              className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-left text-sm text-ink hover:bg-elevated transition-colors group"
+            >
+              <Briefcase className="w-3.5 h-3.5 text-muted flex-shrink-0" />
+              <span className="truncate">PM {canton && `· ${canton}`}</span>
+            </button>
+
+            <div className="h-px bg-border my-1" />
+
+            {/* Section Comptabilité */}
+            <p className="text-2xs uppercase tracking-wider text-subtle px-2 py-1">Comptabilité</p>
+            <button
+              onClick={() => navigate('/documents')}
+              className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-left text-sm text-ink hover:bg-elevated transition-colors"
+            >
+              <FileText className="w-3.5 h-3.5 text-muted flex-shrink-0" />
+              <span className="truncate">Documents OCR</span>
+            </button>
+            <button
+              onClick={() => navigate(`/close/${year}`)}
+              className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-left text-sm text-ink hover:bg-elevated transition-colors"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-muted flex-shrink-0" />
+              <span className="truncate">Clôture</span>
+            </button>
+            <button
+              onClick={() => navigate(`/audit/${year}`)}
+              className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-left text-sm text-ink hover:bg-elevated transition-colors"
+            >
+              <Shield className="w-3.5 h-3.5 text-muted flex-shrink-0" />
+              <span className="truncate">Audit</span>
+            </button>
+
+            <div className="h-px bg-border my-1" />
+
+            {/* Section IA */}
+            <p className="text-2xs uppercase tracking-wider text-subtle px-2 py-1">IA</p>
+            <button
+              onClick={() => setChatOpen(true)}
+              className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-left text-sm text-accent hover:bg-accent/10 transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="truncate">Chat IA · ⌘K</span>
+            </button>
+            <button
+              onClick={() => navigate(`/conseiller/${year}`)}
+              className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-left text-sm text-ink hover:bg-elevated transition-colors"
+            >
+              <Lightbulb className="w-3.5 h-3.5 text-muted flex-shrink-0" />
+              <span className="truncate">Conseiller</span>
+            </button>
+          </aside>
+
+          {/* Canvas zone — prend le reste */}
+          <div className="flex-1 relative min-w-0">
+            <LedgerCanvas />
+            {/* Hint Cmd+K */}
+            <div className="absolute top-3 right-4 card-elevated px-3 py-2 flex items-center gap-2 pointer-events-none z-10">
+              <Command className="w-3.5 h-3.5 text-muted" />
+              <span className="text-2xs text-muted">Cmd+K pour interroger l'IA</span>
+            </div>
           </div>
-        </div>
-
-        {/* Hint Cmd+K — desktop seulement, pas sur mobile */}
-        <div className="hidden md:flex absolute top-3 right-4 card-elevated px-3 py-2 items-center gap-2 pointer-events-none z-10">
-          <Command className="w-3.5 h-3.5 text-muted" />
-          <span className="text-2xs text-muted">Cmd+K pour interroger l'IA</span>
         </div>
       </main>
 
