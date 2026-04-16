@@ -81,7 +81,7 @@ const ACME_TENANT_QA = "00000000-0000-0000-0000-000000000101";
 
 type TestResult = {
   id: string;
-  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm" | "cloture" | "ledger" | "audit" | "conseiller" | "simulate" | "fiduciary";
+  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm" | "cloture" | "ledger" | "audit" | "conseiller" | "simulate" | "fiduciary" | "swissdec";
   pass: boolean;
   latencyMs: number;
   reason?: string;
@@ -1743,6 +1743,117 @@ async function runFiduciaryIsolation(): Promise<TestResult> {
   }
 }
 
+// ── S34 Swissdec certificate generation ───────────────────────────────────────
+
+/**
+ * Fixture: swissdec-1-certificate-generation — Session 34
+ *
+ * POST /forms/swissdec-certificate avec payload minimal employer+employee+cases 1-9.
+ * Assert :
+ *   - HTTP 200
+ *   - pdfBase64.length > 1500 (PDF bien généré)
+ *   - structuredData.cases.case1_salaireBrut === 85000
+ *   - structuredData.cases.case8_totalBrut === 85000
+ *   - structuredData.cases.case9_cotisationsSociales === 5525
+ *   - citations[].law inclut "LIFD" ou "Swissdec-Guidelines"
+ *   - generatedAt présent (ISO string)
+ */
+async function runSwissdecCertificateGeneration(): Promise<TestResult> {
+  const TEST_ID = "swissdec-1-certificate-generation";
+  const started = Date.now();
+  try {
+    const { data } = await http.post("/forms/swissdec-certificate", {
+      employer: {
+        legalName: "Lexa Test SA",
+        address: "Rue du Grand-Pont 12, 1950 Sion",
+        ideNumber: "CHE-100.200.300",
+        avsNumber: "AVS-E-123",
+      },
+      employee: {
+        firstName: "Jean",
+        lastName: "TEST",
+        avsNumber: "756.1234.5678.97",
+        address: "Chemin des Fleurs 5, 1950 Sion",
+      },
+      year: 2026,
+      period: { start: "2026-01-01", end: "2026-12-31" },
+      cases: {
+        case1_salaireBrut: 85000,
+        case8_totalBrut: 85000,
+        case9_cotisationsSociales: 5525,
+        case10_lppOrdinaire: 5250,
+      },
+    });
+
+    const pdfBase64 = data.pdfBase64 as string | undefined;
+    const sd = data.structuredData as {
+      cases?: {
+        case1_salaireBrut?: number;
+        case8_totalBrut?: number;
+        case9_cotisationsSociales?: number;
+      };
+    } | undefined;
+    const citations = Array.isArray(data.citations) ? data.citations as Array<{ law?: string }> : [];
+    const generatedAt = data.generatedAt as string | undefined;
+
+    // Assert PDF length
+    if (!pdfBase64 || pdfBase64.length < 1500) {
+      return {
+        id: TEST_ID, kind: "swissdec", pass: false,
+        latencyMs: Date.now() - started,
+        reason: `pdfBase64.length=${pdfBase64?.length ?? 0} < 1500`,
+      };
+    }
+
+    // Assert structuredData cases
+    const case1Ok = sd?.cases?.case1_salaireBrut === 85000;
+    const case8Ok = sd?.cases?.case8_totalBrut === 85000;
+    const case9Ok = sd?.cases?.case9_cotisationsSociales === 5525;
+    if (!case1Ok || !case8Ok || !case9Ok) {
+      return {
+        id: TEST_ID, kind: "swissdec", pass: false,
+        latencyMs: Date.now() - started,
+        reason: `structuredData.cases: case1=${sd?.cases?.case1_salaireBrut} case8=${sd?.cases?.case8_totalBrut} case9=${sd?.cases?.case9_cotisationsSociales}`,
+      };
+    }
+
+    // Assert citations
+    const hasSwissdecCitation = citations.some(
+      (c) => c.law === "LIFD" || c.law === "Swissdec-Guidelines",
+    );
+    if (!hasSwissdecCitation) {
+      return {
+        id: TEST_ID, kind: "swissdec", pass: false,
+        latencyMs: Date.now() - started,
+        reason: `citations missing LIFD or Swissdec-Guidelines: ${JSON.stringify(citations)}`,
+      };
+    }
+
+    // Assert generatedAt
+    if (!generatedAt) {
+      return {
+        id: TEST_ID, kind: "swissdec", pass: false,
+        latencyMs: Date.now() - started,
+        reason: "generatedAt absent",
+      };
+    }
+
+    return {
+      id: TEST_ID,
+      kind: "swissdec",
+      pass: true,
+      latencyMs: Date.now() - started,
+      reason: `pdfLen=${pdfBase64.length} case1=85000 case8=85000 case9=5525`,
+    };
+  } catch (err) {
+    return {
+      id: TEST_ID, kind: "swissdec", pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
 async function main(): Promise<void> {
   const started = Date.now();
   const results: TestResult[] = [];
@@ -1997,6 +2108,14 @@ async function main(): Promise<void> {
     `  ${rFiduIsolation.pass ? "✓" : "✗"} ${rFiduIsolation.id}  ${rFiduIsolation.latencyMs}ms  ${rFiduIsolation.reason ?? ""}`,
   );
 
+  // Swissdec certificate generation (session 34)
+  console.log("\n[S34] Swissdec certificate generation (Form 11)");
+  const rSwissdec = await runSwissdecCertificateGeneration();
+  results.push(rSwissdec);
+  console.log(
+    `  ${rSwissdec.pass ? "✓" : "✗"} ${rSwissdec.id}  ${rSwissdec.latencyMs}ms  ${rSwissdec.reason ?? ""}`,
+  );
+
   const totalMs = Date.now() - started;
   const pass = results.filter((r) => r.pass).length;
   const fail = results.length - pass;
@@ -2032,6 +2151,7 @@ async function main(): Promise<void> {
       conseiller: { total: byKind("conseiller").length, passed: byKind("conseiller").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("conseiller")) },
       simulate: { total: byKind("simulate").length, passed: byKind("simulate").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("simulate")) },
       fiduciary: { total: byKind("fiduciary").length, passed: byKind("fiduciary").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiduciary")) },
+      swissdec: { total: byKind("swissdec").length, passed: byKind("swissdec").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("swissdec")) },
     },
     failures: results.filter((r) => !r.pass).map((r) => ({ id: r.id, kind: r.kind, reason: r.reason })),
     generatedAt: new Date().toISOString(),
