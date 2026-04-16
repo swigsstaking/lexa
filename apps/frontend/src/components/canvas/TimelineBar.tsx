@@ -101,8 +101,8 @@ export function TimelineBar({ events, year }: Props) {
         );
       })}
 
-      {/* Légende */}
-      <div className="flex-shrink-0 ml-3 pl-3 border-l border-stone-800 flex flex-col gap-1">
+      {/* Légende — masquée sur petits viewports pour éviter débordement */}
+      <div className="hidden lg:flex flex-shrink-0 ml-3 pl-3 border-l border-stone-800 flex-col gap-1">
         <div className="flex items-center gap-1">
           <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
           <span className="text-2xs text-stone-600">tx</span>
