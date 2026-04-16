@@ -1,13 +1,13 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 26 — 2026-04-16](2026-04-16-session-26.md) (agent Fiscal-PM, FormBuilder PM VS, pmTaxEstimator, 25/25)
-**Prochaine session** : Session 27 — Wizard PM frontend VS + PDF renderer PM + FormBuilder GE/VD/FR
+**Dernière session** : [Session 27 — 2026-04-16](2026-04-16-session-27.md) (wizard PM VS, PmPdfRenderer, migration 007, 26/26)
+**Prochaine session** : Session 28 — Clone wizard PM GE/VD/FR + barèmes ICC officiels
 
-> Session 26 a livré l'agent fiscal-pm (12e modèle Lexa, 11e agent actif), le moteur de calcul pmTaxEstimator (IFD 8.5% + ICC cantonal V1 + capital), et la route POST /forms/pm-declaration-vs. qa-lexa **25/25** (23 baseline + 1 fiscal-pm + 1 form PM).
+> Session 27 a livré le wizard PM VS end-to-end (6 steps frontend + PmPdfRenderer + 4 routes backend + migration 007 company_drafts). qa-lexa **26/26** (25 baseline S26 + 1 fixture pm-vs-1-draft-submit). Score MVP estimé ~93%.
 
 ---
 
-## Ce qui marche après session 26
+## Ce qui marche après session 27
 
 | Composant | Etat |
 |---|---|
@@ -28,43 +28,46 @@
 | **Agents actifs (11)** | classifier, reasoning, tva, fiscal-pp-vs/ge/vd/fr/ne/ju/bj, **fiscal-pm** |
 | **Routes PM** | |
 | `POST /agents/fiscal-pm/ask` | **OK session 26** |
-| `POST /forms/pm-declaration-vs` | **OK session 26** (calcul structurel, pas PDF) |
+| `POST /forms/pm-declaration-vs` | OK session 26 (calcul structurel) |
+| **Routes PM draft (Session 27)** | |
+| `POST /companies/draft` | **OK session 27** |
+| `GET /companies/draft/:year?canton=VS` | **OK session 27** |
+| `PATCH /companies/draft/:year` | **OK session 27** (auto-save dot-path) |
+| `POST /companies/draft/:year/submit-vs` | **OK session 27** |
+| **Migration** | |
+| `007_company_drafts.sql` | **OK session 27** (table prod) |
+| **PDF renderer PM** | |
+| `PmPdfRenderer.ts` | **OK session 27** (pdfBase64 length 5800) |
+| **Frontend wizard PM** | |
+| `/pm/vs/:year` — 6 steps + download PDF | **OK session 27** |
+| Bouton "Déclaration PM" Workspace | **OK session 27** |
 | **Modules PM** | |
-| `pmTaxEstimator.ts` (IFD 8.5%, ICC V1, capital V1) | **OK session 26** |
-| `PmFormBuilder.ts` VS | **OK session 26** |
-| **Spark modèles (12)** | 11 précédents + lexa-fiscal-pm | **OK session 26** |
+| `pmTaxEstimator.ts` (IFD 8.5%, ICC V1, capital V1) | OK session 26 |
+| `PmFormBuilder.ts` VS | OK session 26 |
+| **Spark modèles (12)** | 11 précédents + lexa-fiscal-pm | OK session 26 |
 | **Tests auto** | |
-| qa-lexa **25/25** — +1 fiscal-pm +1 form pm-vs | **OK session 26** |
+| qa-lexa **26/26** — +1 pm-vs-1-draft-submit | **OK session 27** |
 
 ---
 
-## Session 27 — Wizard PM frontend VS
+## Session 28 — Clone PM wizard GE/VD/FR + barèmes ICC officiels
 
 ### Objectif
-Livrer le wizard PM frontend VS (6 steps) + PDF renderer PM.
+Étendre le wizard PM aux cantons GE, VD, FR (clones triviaux de PmWizardVs)
+et remplacer les barèmes ICC V1 approximatifs par les taux officiels.
 
 ### Livrables
 
-1. **Page `/pm-declaration/:year`** — wizard 6 steps PM (clone pattern PP wizard)
-   - Step 1 : Identité société (raison sociale, IDE, canton, commune, legalForm)
-   - Step 2 : Exercice + bénéfice comptable (CA, résultat brut)
-   - Step 3 : Corrections fiscales (charges non admises, amortissements, provisions)
-   - Step 4 : Fonds propres (capital social + réserves + bénéfice reporté)
-   - Step 5 : Estimation fiscale (IFD + ICC VS + capital) — appel `pmTaxEstimator`
-   - Step 6 : Aperçu + bouton "Générer PDF"
+1. **`PmWizardGe.tsx`, `PmWizardVd.tsx`, `PmWizardFr.tsx`** — clones PmWizardVs avec canton hardcodé
+2. **Routes `/pm/ge/:year`, `/pm/vd/:year`, `/pm/fr/:year`** dans App.tsx
+3. **`GePmFormBuilder.ts`, `VdPmFormBuilder.ts`, `FrPmFormBuilder.ts`** — clones PmFormBuilder avec canton
+4. **`GePmPdfRenderer.ts`, `VdPmPdfRenderer.ts`, `FrPmPdfRenderer.ts`** — clones PmPdfRenderer
+5. **Barèmes ICC officiels** : remplacer taux V1 (VS 8.5%, GE 14%, VD 13.5%, FR 10%) par taux officiels ingérés
+6. **+3 fixtures qa-lexa** → cible **29/29**
 
-2. **`VsPmPdfRenderer.ts`** — PDF déclaration PM (clone `VsPpPdfRenderer.ts`)
-
-3. **FormBuilder PM GE/VD/FR** — `GePmFormBuilder.ts`, `VdPmFormBuilder.ts`, `FrPmFormBuilder.ts` (clones triviaux VS)
-
-4. **Route `POST /forms/pm-declaration-vs`** — mettre à jour pour retourner PDF en base64
-
-5. **+1 fixture qa-lexa wizard PM** → cible **26/26**
-
-### Exclus session 27
-- Pas de barèmes ICC officiels (session 28+)
-- Pas d'agent Clôture (session 28)
-- Pas d'annexes CO bilans fiscaux (session 28+)
+### Exclus session 28
+- Pas de refactor wizard générique PP/PM (V2)
+- Pas de multi-société par tenant (session 33)
 
 ---
 
@@ -103,4 +106,8 @@ Livrer le wizard PM frontend VS (6 steps) + PDF renderer PM.
 19. flattenJsonToText : gère JSON imbriqués multi-niveaux — ne pas supprimer
 20. **Ollama create API** : utiliser champ `from` + `system` + `parameters` dans le body JSON (pas Modelfile string) pour éviter l'erreur "neither 'from' or 'files' was specified"
 
-**Dernière mise à jour** : 2026-04-16 (session 26 — agent fiscal-pm, FormBuilder PM VS, 25/25)
+21. **company_drafts** : table séparée de taxpayer_drafts — schéma bilan/résultat PM ≠ schéma revenus/déductions PP
+22. **PmWizardVs hardcodé VS** : canton GE/VD/FR = sessions 28+. Ne pas généraliser prématurément.
+23. **qa-lexa rate-limit** : toujours lancer depuis http://localhost:3010 sur .59, jamais depuis Mac local
+
+**Dernière mise à jour** : 2026-04-16 (session 27 — wizard PM VS, PmPdfRenderer, migration 007, 26/26)
