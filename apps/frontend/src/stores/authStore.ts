@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { queryClient } from '@/queryClient';
 
 export type AuthUser = {
   id: string;
@@ -33,9 +34,21 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       user: null,
       activeTenantId: null,
-      setAuth: (token, user) => set({ token, user, activeTenantId: user.tenantId }),
-      setToken: (token, activeTenantId) => set({ token, activeTenantId }),
-      logout: () => set({ token: null, user: null, activeTenantId: null }),
+      setAuth: (token, user) => {
+        // Invalider le cache TanStack Query au login (évite fuites inter-sessions)
+        queryClient.removeQueries();
+        set({ token, user, activeTenantId: user.tenantId });
+      },
+      setToken: (token, activeTenantId) => {
+        // Invalider le cache TanStack Query lors du switch tenant
+        queryClient.removeQueries();
+        set({ token, activeTenantId });
+      },
+      logout: () => {
+        // Nuke complet du cache au logout — évite affichage données ex-session
+        queryClient.removeQueries();
+        set({ token: null, user: null, activeTenantId: null });
+      },
     }),
     {
       name: 'lexa.auth',
