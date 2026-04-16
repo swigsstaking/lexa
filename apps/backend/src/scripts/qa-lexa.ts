@@ -81,7 +81,7 @@ const ACME_TENANT_QA = "00000000-0000-0000-0000-000000000101";
 
 type TestResult = {
   id: string;
-  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm" | "cloture" | "ledger" | "audit" | "conseiller" | "simulate" | "fiduciary" | "swissdec" | "queue";
+  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm" | "cloture" | "ledger" | "audit" | "conseiller" | "simulate" | "fiduciary" | "swissdec" | "queue" | "ocr-healthcheck" | "cache-headers";
   pass: boolean;
   latencyMs: number;
   reason?: string;
@@ -1909,6 +1909,96 @@ async function runQueueSerialization(): Promise<TestResult> {
   }
 }
 
+// ── fix-p2-01 : OCR upload healthcheck ────────────────────────────────────────
+// Vérifie que POST /documents/upload répond HTTP 201 avec ocrResult.
+// Régression guard pour BUG-P2-01 (502 transitoire Lane A S37).
+async function runOcrUploadHealthcheck(): Promise<TestResult> {
+  const TEST_ID = "fix-p2-01-ocr-upload-healthcheck";
+  const started = Date.now();
+
+  const pdfPath = join(__qadirname, "fixtures", "test-cert-salaire.pdf");
+  let pdfBytes: Buffer;
+  try {
+    pdfBytes = Buffer.from(await readFile(pdfPath));
+  } catch {
+    return {
+      id: TEST_ID,
+      kind: "ocr-healthcheck",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: `fixture not found: ${pdfPath}`,
+    };
+  }
+
+  try {
+    // Utilise FormData via axios multipart/form-data
+    const { FormData, Blob } = await import("node:buffer") as unknown as { FormData: typeof globalThis.FormData; Blob: typeof globalThis.Blob };
+    const form = new FormData();
+    form.append("file", new Blob([pdfBytes], { type: "application/pdf" }), "test-cert-salaire.pdf");
+
+    const resp = await http.post("/documents/upload", form, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+        ...((form as unknown as { getHeaders?: () => Record<string, string> }).getHeaders?.() ?? {}),
+      },
+      timeout: 90_000,
+    });
+
+    const body = resp.data as { documentId?: string; ocrResult?: { rawText?: string } };
+    if (!body.documentId) {
+      return { id: TEST_ID, kind: "ocr-healthcheck", pass: false, latencyMs: Date.now() - started, reason: "missing documentId in response" };
+    }
+    if (!body.ocrResult?.rawText || body.ocrResult.rawText.length < 10) {
+      return { id: TEST_ID, kind: "ocr-healthcheck", pass: false, latencyMs: Date.now() - started, reason: "ocrResult.rawText vide ou trop court" };
+    }
+    return { id: TEST_ID, kind: "ocr-healthcheck", pass: true, latencyMs: Date.now() - started };
+  } catch (err) {
+    const status = (err as { response?: { status: number } }).response?.status;
+    return {
+      id: TEST_ID,
+      kind: "ocr-healthcheck",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: `HTTP ${status ?? "ERR"}: ${(err as Error).message}`,
+    };
+  }
+}
+
+// ── fix-p1-01 : Cache-Control no-store sur routes user-sensitive ───────────────
+// Vérifie que GET /fiduciary/clients renvoie Cache-Control: no-store.
+// Régression guard pour BUG-P1-01 (fuite session via 304 Not Modified).
+async function runCacheHeadersCheck(): Promise<TestResult> {
+  const TEST_ID = "fix-p1-01-cache-headers";
+  const started = Date.now();
+
+  try {
+    const resp = await http.get("/fiduciary/clients", {
+      headers: { Authorization: `Bearer ${authToken}` },
+      validateStatus: (s) => s < 500,
+    });
+
+    const cacheControl = (resp.headers["cache-control"] ?? "") as string;
+    if (!cacheControl.includes("no-store")) {
+      return {
+        id: TEST_ID,
+        kind: "cache-headers",
+        pass: false,
+        latencyMs: Date.now() - started,
+        reason: `Cache-Control manquant ou sans no-store — got: "${cacheControl}"`,
+      };
+    }
+    return { id: TEST_ID, kind: "cache-headers", pass: true, latencyMs: Date.now() - started };
+  } catch (err) {
+    return {
+      id: TEST_ID,
+      kind: "cache-headers",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: `exception: ${(err as Error).message}`,
+    };
+  }
+}
+
 async function main(): Promise<void> {
   const started = Date.now();
   const results: TestResult[] = [];
@@ -2179,6 +2269,20 @@ async function main(): Promise<void> {
     `  ${rQueue.pass ? "✓" : "✗"} ${rQueue.id}  ${rQueue.latencyMs}ms  ${rQueue.reason ?? ""}`,
   );
 
+  // Lane D — Régression guards BUG-P1-01 + BUG-P2-01
+  console.log("\n[Lane-D] Régression guards — noCache + OCR upload healthcheck");
+  const rCacheHeaders = await runCacheHeadersCheck();
+  results.push(rCacheHeaders);
+  console.log(
+    `  ${rCacheHeaders.pass ? "✓" : "✗"} ${rCacheHeaders.id}  ${rCacheHeaders.latencyMs}ms  ${rCacheHeaders.reason ?? ""}`,
+  );
+
+  const rOcrUpload = await runOcrUploadHealthcheck();
+  results.push(rOcrUpload);
+  console.log(
+    `  ${rOcrUpload.pass ? "✓" : "✗"} ${rOcrUpload.id}  ${rOcrUpload.latencyMs}ms  ${rOcrUpload.reason ?? ""}`,
+  );
+
   const totalMs = Date.now() - started;
   const pass = results.filter((r) => r.pass).length;
   const fail = results.length - pass;
@@ -2216,6 +2320,8 @@ async function main(): Promise<void> {
       fiduciary: { total: byKind("fiduciary").length, passed: byKind("fiduciary").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("fiduciary")) },
       swissdec: { total: byKind("swissdec").length, passed: byKind("swissdec").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("swissdec")) },
       queue: { total: byKind("queue").length, passed: byKind("queue").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("queue")) },
+      "ocr-healthcheck": { total: byKind("ocr-healthcheck").length, passed: byKind("ocr-healthcheck").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("ocr-healthcheck")) },
+      "cache-headers": { total: byKind("cache-headers").length, passed: byKind("cache-headers").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("cache-headers")) },
     },
     failures: results.filter((r) => !r.pass).map((r) => ({ id: r.id, kind: r.kind, reason: r.reason })),
     generatedAt: new Date().toISOString(),
