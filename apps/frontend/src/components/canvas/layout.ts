@@ -54,27 +54,34 @@ function extractLabel(accountLabel: string): string {
 /**
  * Project LedgerAccount[] + LedgerEntry[] → react-flow nodes + edges.
  *
- * Layout strategy (simple 4-column grid by category):
- *   Col 0 → actifs (gauche)
- *   Col 1 → passifs
- *   Col 2 → produits
- *   Col 3 → charges (droite)
- * Each column stacks vertically, 160px row height, 280px col width.
+ * Layout "flux comptable gauche-droite" :
+ *   Col 0 (gauche)  → Produits (3xxx) — sources de cash
+ *   Col 1 (centre)  → Actifs (1xxx) — hub (banque au centre)
+ *   Col 2 (droite)  → Charges (5/6/7/8xxx) + Passifs (2xxx) — destinations
+ *
+ * Toutes les edges vont gauche → droite (pas de croisement horizontal).
+ * Dans chaque colonne, comptes classés par activité (plus actif au milieu).
  */
+const FLOW_COL: Record<AccountNodeData['category'], number> = {
+  produit: 0,
+  actif: 1,
+  passif: 2,
+  charge: 2,
+  neutre: 1,
+};
+
 export function buildCanvas(
   accounts: LedgerAccount[],
   entries: LedgerEntry[],
 ): { nodes: LedgerNode[]; edges: LedgerEdge[] } {
-  const COL_W = 300;
+  const COL_W = 420;
   const ROW_H = 160;
-  const categoryCols: Record<AccountNodeData['category'], number> = {
-    actif: 0,
-    passif: 1,
-    produit: 2,
-    charge: 3,
-    neutre: 4,
-  };
-  const columnCounters: Record<number, number> = {};
+
+  // Count activity per account (transactions touching each)
+  const activityByAccount = new Map<string, number>();
+  for (const e of entries) {
+    activityByAccount.set(e.account, (activityByAccount.get(e.account) ?? 0) + 1);
+  }
 
   // Find which accounts have a recent transaction (last 5 entries)
   const recentAccounts = new Set<string>();
@@ -83,26 +90,49 @@ export function buildCanvas(
     if (e.counterpartAccount) recentAccounts.add(e.counterpartAccount);
   });
 
-  const nodes: LedgerNode[] = accounts.map((a) => {
+  // Group accounts by column, then sort by activity descending (most active → top)
+  const accountsByCol: Record<number, LedgerAccount[]> = { 0: [], 1: [], 2: [] };
+  for (const a of accounts) {
     const category = classifyAccount(extractCode(a.account));
-    const col = categoryCols[category];
-    const row = columnCounters[col] ?? 0;
-    columnCounters[col] = row + 1;
-    return {
-      id: a.account,
-      type: 'account',
-      position: { x: col * COL_W, y: row * ROW_H },
-      data: {
-        code: extractCode(a.account),
-        label: extractLabel(a.account),
-        balance: a.balance,
-        debit: a.totalDebit,
-        credit: a.totalCredit,
-        category,
-        recent: recentAccounts.has(a.account),
-      },
-    };
-  });
+    const col = FLOW_COL[category];
+    accountsByCol[col].push(a);
+  }
+  for (const col of [0, 1, 2]) {
+    accountsByCol[col].sort(
+      (a, b) => (activityByAccount.get(b.account) ?? 0) - (activityByAccount.get(a.account) ?? 0),
+    );
+  }
+
+  // Compute vertical centering : tallest column = full height, others centered
+  const maxRows = Math.max(
+    accountsByCol[0].length,
+    accountsByCol[1].length,
+    accountsByCol[2].length,
+  );
+
+  const nodes: LedgerNode[] = [];
+  for (const col of [0, 1, 2]) {
+    const colAccounts = accountsByCol[col];
+    const colHeight = colAccounts.length * ROW_H;
+    const centerOffset = ((maxRows * ROW_H) - colHeight) / 2;
+    colAccounts.forEach((a, i) => {
+      const category = classifyAccount(extractCode(a.account));
+      nodes.push({
+        id: a.account,
+        type: 'account',
+        position: { x: col * COL_W, y: centerOffset + i * ROW_H },
+        data: {
+          code: extractCode(a.account),
+          label: extractLabel(a.account),
+          balance: a.balance,
+          debit: a.totalDebit,
+          credit: a.totalCredit,
+          category,
+          recent: recentAccounts.has(a.account),
+        },
+      });
+    });
+  }
 
   // Aggregate edges par paire (source, target) : 1 edge par paire de comptes,
   // avec montant total + nombre de transactions. Évite la forêt de labels superposés

@@ -38,9 +38,9 @@ export function LedgerCanvas() {
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       fitView
-      fitViewOptions={{ padding: 0.2, maxZoom: 1.2 }}
+      fitViewOptions={{ padding: 0.12, maxZoom: 1.6 }}
       minZoom={0.3}
-      maxZoom={1.8}
+      maxZoom={2.2}
       proOptions={{ hideAttribution: true }}
       className="bg-bg"
     >
