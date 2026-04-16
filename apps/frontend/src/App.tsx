@@ -41,6 +41,11 @@ const Conseiller = lazy(() =>
     default: m.Conseiller,
   }))
 );
+const CanvasView = lazy(() =>
+  import('@/routes/canvas/CanvasView').then((m) => ({
+    default: m.CanvasView,
+  }))
+);
 
 // BUG-P2-06 : redirect /pp/:canton/:year → /taxpayer/:year (VS) ou /taxpayer/:canton/:year
 function RedirectToTaxpayer() {
@@ -109,6 +114,14 @@ export default function App() {
           element={
             <RequireAuth>
               <Workspace />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/canvas"
+          element={
+            <RequireAuth>
+              <CanvasView />
             </RequireAuth>
           }
         />
