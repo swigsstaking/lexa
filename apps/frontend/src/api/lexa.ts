@@ -204,6 +204,28 @@ export const lexa = {
         `/taxpayers/draft/${year}/field-sources`,
       )
       .then((r) => r.data),
+
+  // ── PM (Personnes Morales) — Session 27 ──────────────────────────────────
+
+  createCompanyDraft: (year: number, canton: string, legalName: string) =>
+    api
+      .post<{ id: string; state: CompanyDraftState }>('/companies/draft', { year, canton, legalName })
+      .then((r) => r.data),
+
+  getCompanyDraft: (year: number, canton = 'VS') =>
+    api
+      .get<CompanyDraft>(`/companies/draft/${year}`, { params: { canton } })
+      .then((r) => r.data),
+
+  patchCompanyDraft: (year: number, canton: string, path: string, value: unknown) =>
+    api
+      .patch<{ ok: boolean }>(`/companies/draft/${year}`, { canton, path, value })
+      .then((r) => r.data),
+
+  submitCompanyDraftVs: (year: number) =>
+    api
+      .post<PmSubmitResponse>(`/companies/draft/${year}/submit-vs`)
+      .then((r) => r.data),
 };
 
 export type TaxpayerDraft = {
@@ -373,4 +395,78 @@ export type UploadDocumentResponse = {
   documentId: string;
   filename: string;
   ocrResult: OcrResult;
+};
+
+// ── Types PM — Personnes Morales (session 27) ───────────────────────────────
+
+export type CompanyDraftState = {
+  step1?: {
+    legalName?: string;
+    legalForm?: 'sarl' | 'sa' | 'association' | 'fondation';
+    ideNumber?: string;
+    siegeStreet?: string;
+    siegeZip?: string;
+    siegeCommune?: string;
+    fiscalYearStart?: string;
+    fiscalYearEnd?: string;
+  };
+  step2?: {
+    chiffreAffaires?: number;
+    produits?: number;
+    chargesPersonnel?: number;
+    chargesMaterielles?: number;
+    amortissementsComptables?: number;
+    autresCharges?: number;
+    benefitAccounting?: number;
+  };
+  step3?: {
+    chargesNonAdmises?: number;
+    provisionsExcessives?: number;
+    amortissementsExcessifs?: number;
+    reservesLatentes?: number;
+    autresCorrections?: number;
+  };
+  step4?: {
+    capitalSocial?: number;
+    reservesLegales?: number;
+    reservesLibres?: number;
+    reportBenefice?: number;
+    capitalTotal?: number;
+  };
+};
+
+export type CompanyDraft = {
+  id: string;
+  tenantId: string;
+  year: number;
+  canton: string;
+  state: CompanyDraftState;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PmTaxEstimate = {
+  benefit: number;
+  capital: number;
+  ifd: number;
+  icc: number;
+  capitalTax: number;
+  total: number;
+  effectiveRate: number;
+  disclaimer: string;
+};
+
+export type PmSubmitResponse = {
+  formId: string;
+  pdfBase64: string;
+  structuredData: {
+    formId: string;
+    version: string;
+    year: number;
+    benefitImposable: number;
+    taxEstimate: PmTaxEstimate;
+    citations: Array<{ law: string; article: string; text: string }>;
+  };
+  taxEstimate: PmTaxEstimate;
+  citations: Array<{ law: string; article: string; text: string }>;
 };

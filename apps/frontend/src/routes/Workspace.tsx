@@ -11,6 +11,7 @@ import {
   FileText,
   LogOut,
   Sparkles,
+  Briefcase,
 } from 'lucide-react';
 import { lexa } from '@/api/lexa';
 import { useActiveCompany, useCompaniesStore } from '@/stores/companiesStore';
@@ -152,6 +153,18 @@ export function Workspace() {
           >
             <FileSignature className="w-3.5 h-3.5" />
             <span className="text-xs hidden md:inline">Déclaration PP</span>
+          </button>
+
+          <button
+            onClick={() => {
+              const year = new Date().getFullYear();
+              navigate(`/pm/vs/${year}`);
+            }}
+            className="btn-ghost !px-3 !py-1.5"
+            title="Déclaration fiscale PM (Sàrl/SA)"
+          >
+            <Briefcase className="w-3.5 h-3.5" />
+            <span className="text-xs hidden md:inline">Déclaration PM</span>
           </button>
 
           <button
