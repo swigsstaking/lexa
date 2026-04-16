@@ -53,6 +53,9 @@ export function Workspace() {
   });
 
   const hasMultipleClients = fiduClients && fiduClients.length > 1;
+  const activeTenantName = hasMultipleClients
+    ? (fiduClients?.find((c) => c.tenantId === activeTenantId)?.tenantName ?? null)
+    : null;
 
   const handleSwitchTenant = async (tenantId: string) => {
     if (tenantId === activeTenantId || switchingTenant) return;
@@ -224,6 +227,12 @@ export function Workspace() {
               <span className="text-2xs text-subtle mono-num">{company.uid}</span>
             )}
             {company?.canton && <span className="chip">{company.canton}</span>}
+            {hasMultipleClients && activeTenantName && (
+              <span className="text-xs text-stone-400 ml-1 hidden sm:inline">
+                Client :{' '}
+                <span className="font-medium text-stone-100">{activeTenantName}</span>
+              </span>
+            )}
           </div>
         </div>
 
