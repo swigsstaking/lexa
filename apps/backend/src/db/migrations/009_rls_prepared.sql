@@ -1,0 +1,39 @@
+-- Migration 009 : RLS Postgres — préparée mais INACTIVE en V1
+-- Session 32 — 2026-04-16
+-- DETTE TECHNIQUE : activation en session pre-launch après migration complète
+-- vers queryAsTenant() sur les 4 tables critiques.
+--
+-- Pour activer RLS sur un table :
+--   1. Migrer TOUTES ses queries vers queryAsTenant() dans le code app
+--   2. ALTER TABLE <table> ENABLE ROW LEVEL SECURITY;
+--   3. ALTER TABLE <table> FORCE ROW LEVEL SECURITY; -- bloque même le superuser app
+--
+-- Policies à appliquer quand prêt :
+-- ─────────────────────────────────────────────────────────────────────────────
+-- V1 : app-level isolation via req.tenantId (JWT activeTenantId) suffit pour
+-- la beta privée T4 2026. RLS sera activée avant GA.
+-- ─────────────────────────────────────────────────────────────────────────────
+--
+-- SQL de référence (NE PAS EXÉCUTER avant migration queryAsTenant complète) :
+--
+-- ALTER TABLE taxpayer_drafts ENABLE ROW LEVEL SECURITY;
+-- CREATE POLICY tenant_iso_td ON taxpayer_drafts
+--   FOR ALL USING (tenant_id = current_setting('app.active_tenant', true)::uuid);
+--
+-- ALTER TABLE company_drafts ENABLE ROW LEVEL SECURITY;
+-- CREATE POLICY tenant_iso_cd ON company_drafts
+--   FOR ALL USING (tenant_id = current_setting('app.active_tenant', true)::uuid);
+--
+-- ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+-- CREATE POLICY tenant_iso_ev ON events
+--   FOR ALL USING (tenant_id = current_setting('app.active_tenant', true)::uuid);
+--
+-- ALTER TABLE ai_decisions ENABLE ROW LEVEL SECURITY;
+-- CREATE POLICY tenant_iso_ai ON ai_decisions
+--   FOR ALL USING (tenant_id = current_setting('app.active_tenant', true)::uuid);
+--
+-- WRAPPER queryAsTenant à utiliser dans le code app :
+-- Voir apps/backend/src/db/postgres.ts (wrapper préparé, non utilisé V1)
+
+-- Ce fichier est un NO-OP intentionnel en V1.
+SELECT 'RLS migration 009 — prepared, not yet active (V1 app-level isolation)' AS status;

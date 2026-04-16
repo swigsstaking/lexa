@@ -24,3 +24,32 @@ export async function query<T extends pg.QueryResultRow = pg.QueryResultRow>(
 export async function closePool(): Promise<void> {
   await pool.end();
 }
+
+/**
+ * queryAsTenant — wrapper RLS V2 (préparé S32, activé session pre-launch)
+ *
+ * Exécute une query dans une transaction avec SET LOCAL app.active_tenant
+ * pour que les policies RLS Postgres puissent filtrer par tenant.
+ *
+ * Usage actuel : NON activé en V1. Isolation = app-level via req.tenantId (JWT).
+ * Activation : après migration 009 + ENABLE ROW LEVEL SECURITY sur les 4 tables.
+ */
+export async function queryAsTenant<T extends pg.QueryResultRow = pg.QueryResultRow>(
+  tenantId: string,
+  sql: string,
+  params?: unknown[],
+): Promise<pg.QueryResult<T>> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("SET LOCAL app.active_tenant = $1", [tenantId]);
+    const result = await client.query<T>(sql, params as never);
+    await client.query("COMMIT");
+    return result;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
