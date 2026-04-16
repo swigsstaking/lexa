@@ -1,66 +1,49 @@
 # NEXT SESSION — Point de reprise
 
-**Dernière session** : [Session 30 — 2026-04-16](2026-04-16-session-30.md) (Seed fixture data + Agent Audit, 14e modèle Spark, 13 agents actifs, /audit/:year, verify-citations Qdrant)
-**Prochaine session** : **Session 31 — Agent Conseiller** (7e et dernier rôle whitepaper, simulateur "et si ?" LPP/3a/amortissements)
+**Dernière session** : [Session 31 — 2026-04-16](2026-04-16-session-31.md) (Agent Conseiller — 7e et dernier rôle whitepaper, TaxSimulator, /conseiller/:year, 14 agents actifs, qa-lexa 35/35)
+**Prochaine session** : **Session 32 — Swissdec salaires OU mode fiduciaire multi-clients**
 
-> Session 30 a livré le seed fixture data (tenant demo réaliste — 35 tx, 3 docs, 2 drafts, 5 ai_decisions), le 14e modèle Spark (lexa-audit), l'Agent Audit avec CitationVerifier + AuditTrail, 3 endpoints audit, la page /audit/:year et +2 fixtures qa-lexa. Score MVP estimé ~98%.
+> Session 31 a livré le 7e et dernier rôle whitepaper (Agent Conseiller), le 15e modèle Spark (lexa-conseiller), TaxSimulator (simulateRachatLpp + simulatePilier3a + simulateDividendVsSalary), 3 endpoints /simulate/*, la page /conseiller/:year avec 3 cards simulations et le chat agent, +2 fixtures qa-lexa (35/35). Score MVP ~99%.
 
 ---
 
-## Ce qui marche après session 29
+## Ce qui marche après session 31
 
 | Composant | État |
 |---|---|
 | **Plateforme** | |
 | `https://lexa.swigs.online` HTTPS + proxy /api | OK |
 | Auth JWT + rate limit + trust proxy 1 | OK |
-| HMAC Pro Lexa + classify auto | OK |
-| **MongoDB GridFS** | |
-| `lexa-documents` DB sur `127.0.0.1:27017` | OK session 23 |
-| **Pipeline OCR** | |
-| pdf-parse + fallback PDF→PNG + parseOcrModelOutput | OK session 25 |
-| **Routes documents** | |
-| `POST /documents/upload` | OK session 23 |
-| `POST /documents/:id/apply-to-draft` | OK session 24 |
-| **Routes taxpayers PP** | |
-| Wizard PP VS/GE/VD/FR | OK sessions 15-22 |
-| **Agents actifs (12)** | classifier, reasoning, tva, fiscal-pp-vs/ge/vd/fr/ne/ju/bj, fiscal-pm, **cloture** |
-| **Routes PM** | |
-| `POST /agents/fiscal-pm/ask` | OK session 26 |
-| `POST /forms/pm-declaration-vs` | OK session 26 |
-| `POST /companies/draft/:year/submit-{vs,ge,vd,fr}` | OK sessions 27-28 |
-| **Frontend PM** | |
-| `/pm/vs/:year` + `/pm/ge/:year` + `/pm/vd/:year` + `/pm/fr/:year` | OK sessions 27-28 |
-| **Clôture continue (Session 29)** | |
-| `POST /agents/cloture/ask` | **OK session 29** |
-| `GET /ledger/balance-sheet/:year` | **OK session 29** |
-| `GET /ledger/income-statement/:year` | **OK session 29** |
-| `GET /ledger/health/:year` | **OK session 29** |
-| `/close/:year` — page 3 tabs + chat Clôture | **OK session 29** |
-| Bouton "Clôture" dans Workspace | **OK session 29** |
-| **Spark modèles (14)** | 13 précédents + **lexa-audit** | OK session 30 |
-| **Seed fixture data** | |
-| `seed-fixture-data.ts` — tenant demo, 35 tx, 3 docs, 2 drafts | **OK session 30** |
-| **Agent Audit (Session 30)** | |
-| `POST /agents/audit/ask` | **OK session 30** |
-| `POST /audit/verify-citations` | **OK session 30** |
-| `GET /audit/trail/:year` | **OK session 30** |
-| `/audit/:year` — page timeline + verify widget + chat | **OK session 30** |
-| Bouton "Audit" (Shield) dans Workspace | **OK session 30** |
+| **Agents actifs (14)** | classifier, reasoning, tva, fiscal-pp-vs/ge/vd/fr/ne/ju/bj, fiscal-pm, cloture, audit, **conseiller** |
+| **Spark modèles** | 15 modèles lexa (+ 1 test intermédiaire = 16) |
+| **Routes simulate** | |
+| `POST /simulate/rachat-lpp` | **OK session 31** |
+| `POST /simulate/pilier-3a` | **OK session 31** |
+| `POST /simulate/dividend-vs-salary` | **OK session 31** |
+| **Agent Conseiller** | |
+| `POST /agents/conseiller/ask` | **OK session 31** |
+| `/conseiller/:year` — 3 cards simu + briefing + chat | **OK session 31** |
+| Bouton "Conseiller" (Lightbulb) dans Workspace | **OK session 31** |
 | **Tests auto** | |
-| qa-lexa **31/31 baseline** — +2 audit (1 PASS, 1 flaky Spark) | **S30 — cible 33/33** |
+| qa-lexa **35/35** | **S31** |
 
 ---
 
-## Session 31 — Agent Conseiller (7e et dernier rôle whitepaper)
+## Session 32 — Options
 
-Simulateur "et si ?" — optimisations LPP/3a/amortissements
-- `lexa-conseiller` Modelfile (from lexa-fiscal-pm, 15e modèle Spark)
-- `ConseillerAgent.ts` : tier 0 = LPP + LIFD art.33 (3a) + CO 960a (amortissements)
-- `POST /agents/conseiller/ask` avec contexte financier (revenu, capital, situation, canton)
-- Page `/conseiller` : formulaire scénarios + réponse comparative ("si 3a = 7260 → économie de X CHF")
-- 2 fixtures qa-lexa → **35/35**
-- Score MVP estimé : **~99%**
+### Option A (recommandée) : Swissdec salaires
+
+- Ingestion standard XML Swissdec 5.0
+- Générateur certificats salaire (formulaire officiel AFC)
+- Source légale : LIFD art. 127 (attestation salaire)
+- Modèle : lexa-salaire (16e modèle Spark)
+- +2 fixtures qa-lexa → 37/37
+
+### Option B : Mode fiduciaire multi-clients
+
+- Refactor multi-tenant profond avec RLS Postgres
+- Interface fiduciaire : vue multi-clients, switch company, rapports consolidés
+- Source légale : CO art. 959 (comptabilité séparée)
 
 ---
 
@@ -68,34 +51,36 @@ Simulateur "et si ?" — optimisations LPP/3a/amortissements
 
 1. **Käfer accountName complet** : 80 comptes hardcodés → jointure Qdrant (500 comptes)
 2. **Détection écritures manquantes avancée** : provisions, accruals, cohérence inter-exercices
-3. **Génération annexe CO 959c** (PDF structuré) — session 30+
-4. **Refresh ledger_entries** : MV doit être rafraîchie manuellement — auto-refresh sur import transaction
+3. **Génération annexe CO 959c** (PDF structuré)
+4. **Refresh ledger_entries** : MV doit être rafraîchie manuellement
 5. **DEV_BYPASS_AUTH** : plusieurs apps — à retirer avant launch
-6. **barèmes ICC PM** : VS 8.5%, GE 14%, VD 13.5%, FR 10% — approximatifs, source officielle S30+
-7. **Bundle frontend** : 821 KB (249 KB gzip) — code splitting à implémenter avant launch
+6. **Bundle frontend** : ~854 KB — code splitting à implémenter avant launch
+7. **lexa-conseiller-test + lexa-fiscal-pp-fr-test** : supprimer de Spark (modèles intermédiaires)
+8. **Simulator achat véhicule / embauche** : V2 — non implémenté S31
 
 ---
 
 ## Décisions tranchées — ne plus réinterpréter
 
-(reprise sessions 11-29)
+(reprise sessions 11-31)
 
 1-39. (voir archives sessions précédentes)
 
-40. **`fiscal-pm` re-ranking** : tier 4 = LIFD art.57-79 + CO art.957-963, tier 3 = LHID art.24-31
-41. **`cloture` re-ranking** : tier 4 = CO art.957-963b uniquement (+ LIFD art.58 tier 3)
-42. **ledger_entries MV** : basée sur `TransactionClassified` (pas `EntryPosted`). Colonnes : tenant_id, account, line_type, amount, transaction_date.
-43. **Balance sheet split** : classe 1 = actifs, classe 2 comptes 20-27 = passifs, 28-29 = fonds propres.
-44. **isBalanced tolérance** : 0.05 CHF (CO art. 959a — arrondi admis).
-45. **Tenant vide** : retourner structure à 0 avec isBalanced=true, jamais d'erreur 500.
+40-45. (voir NEXT-SESSION S30)
+
+46. **TaxSimulator** : réutilise estimateTaxDue() de taxEstimator.ts — ne pas dupliquer les barèmes
+47. **simulateDividendVsSalary** : réduction 60% uniquement si participation qualifiée ≥10% — assumption explicite dans disclaimer
+48. **Taux AVS 2026** : employé 6.35% (5.3 AVS + 1.0 AI + 0.05 APG), employeur 6.45% (+ 0.10 AC)
+49. **GE dividende** : IS PM GE 14% → souvent salaire plus avantageux qu'ailleurs pour marginal <35%
+50. **lexa-conseiller** : créé via API Ollama `from` + `system` + `parameters` (identique lexa-audit)
 
 ---
 
-## Avertissements (héritage sessions 11-29)
+## Avertissements (héritage sessions 11-31)
 
 1. `.env` prod jamais rsync
 2. `trust proxy 1` ne pas retirer
-3. qa-lexa **31/31 baseline** — si un test fail, investiguer avant push
+3. qa-lexa **35/35 baseline** — si un test fail, investiguer avant push
 4. HMAC Pro→Lexa : ne jamais JSON.stringify deux fois
 5. JWT override req.tenantId — header X-Tenant-Id ignoré sur routes protégées
 6. Disclaimer PDF/XML obligatoire
@@ -106,19 +91,10 @@ Simulateur "et si ?" — optimisations LPP/3a/amortissements
 11. MONGO_URL = mongodb://127.0.0.1:27017
 12. Rate limit login strict — utiliser http://localhost:3010 depuis serveur pour tests
 13. Ollama images[] = PNG/JPEG uniquement — ne jamais envoyer PDF brut en base64
-14. test-cert-salaire-1.png = fixture correcte pour tests vision OCR
-15. pdfToPng via pdfjs-dist : utilise legacy/build/pdf.mjs + disableWorker: true
-16. @napi-rs/canvas : bindings natifs Linux 22.04 sur .59
-17. deepseek-ocr : inutilisable (retourne empty) — garder qwen3-vl-ocr
-18. qa-lexa doit tourner sur http://127.0.0.1:3010 depuis .59
-19. flattenJsonToText : gère JSON imbriqués multi-niveaux — ne pas supprimer
-20. **Ollama create API** : utiliser `from` + `system` + `parameters` dans body JSON (pas Modelfile string)
-21. **company_drafts** : table séparée de taxpayer_drafts
-22. **PmWizardCanton** : générique GE/VD/FR, PmWizardVs reste spécifique VS
-23. **qa-lexa rate-limit** : toujours lancer depuis http://localhost:3010 sur .59
+14. qa-lexa doit tourner sur http://127.0.0.1:3010 depuis .59
+15. **Ollama create API** : utiliser `from` + `system` + `parameters` dans body JSON
+16. **company_drafts** : table séparée de taxpayer_drafts
+17. **seed-fixture-data** : DEMO_TENANT_ID = "00000000-0000-0000-0000-000000000099"
+18. **verify-citations** : filtre Qdrant sur `law` field + match exact article_num
 
-24. **lexa-audit Modelfile** : créé via API Ollama v0.20.3 avec `from` + `system` + `parameters` (pas modelfile string)
-25. **seed-fixture-data** : DEMO_TENANT_ID = "00000000-0000-0000-0000-000000000099" — UUID hors range prod
-26. **verify-citations** : filtre Qdrant sur `law` field + match exact article_num — retourne verified/false/null
-
-**Dernière mise à jour** : 2026-04-16 (session 30 — Seed fixture data + Agent Audit, 14 modèles Spark, 13 agents, /audit/:year)
+**Dernière mise à jour** : 2026-04-16 (session 31 — Agent Conseiller, 15 modèles Spark, 14 agents, /conseiller/:year, 35/35 qa-lexa)
