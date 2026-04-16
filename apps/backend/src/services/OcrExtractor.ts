@@ -273,7 +273,24 @@ async function structureDocument(rawText: string): Promise<{
 - "extractedFields" : les champs structurés selon le type détecté
 
 Schémas attendus par type :
-- certificat_salaire : { employer (string), employeeName (string), grossSalary (number CHF), netSalary (number CHF), year (number), period (string), avsLpp (number CHF) }
+
+- certificat_salaire : Pour un certificat de salaire suisse, utilise la nomenclature Swissdec officielle.
+  Les cases numérotées 1-15 sont normées dans le Lohnausweis. Extrait-les précisément si présentes :
+  - Case 1 : Salaire annuel brut soumis AVS (case1_salaireBrut, number CHF)
+  - Case 7 : Autres prestations périodiques — 13ème, bonus, gratifications (case7_autresPrestations, number CHF)
+  - Case 8 : Total salaire brut (case8_totalBrut, number CHF)
+  - Case 9 : Cotisations sociales employé AVS/AI/APG/AC (case9_cotisationsSociales, number CHF)
+  - Case 10 : Cotisations LPP ordinaires employé (case10_lppOrdinaire, number CHF)
+  - Case 11 : Rachats LPP volontaires (case11_lppRachats, number CHF)
+  - Case 12 : Autres déductions (case12_autresDeductions, number CHF)
+  - Case 13 : Frais effectifs remboursés (case13_fraisEffectifs, number CHF)
+  - Case 14 : Prestations non soumises AVS (case14_prestationsNonSoumises, number CHF)
+  - Case 15 : Remarques (case15_remarques, string)
+  Inclure aussi les champs généraux : employer (string), employeeName (string), year (number), period (string)
+  Inclure les agrégats legacy pour compatibilité : grossSalary (= case8_totalBrut ou case1_salaireBrut, number CHF), netSalary (number CHF), avsLpp (= case9 + case10, number CHF)
+  IMPORTANT : Si une case Swissdec n'est pas visible dans le document, omets-la (ne pas mettre 0 par défaut).
+  Préfère les champs case* si les cases sont explicitement numérotées ; sinon utilise les champs legacy.
+
 - attestation_3a : { institution (string), amount (number CHF), year (number), contributorName (string) }
 - facture : { vendor (string), date (string YYYY-MM-DD), amountTtc (number CHF), amountHt (number CHF), tva (number CHF), iban (string), reference (string) }
 - releve_bancaire : { bank (string), iban (string), period (string), transactionCount (number) }

@@ -2,6 +2,9 @@
  * Génère un PDF de certificat de salaire de test stable.
  * Utilisé pour les fixtures qa-lexa (session 24).
  *
+ * Session 34 : PDF enrichi avec cases Swissdec explicites (1, 8, 9, 10)
+ * pour permettre à l'OCR stage 2 d'extraire les champs case* normalisés.
+ *
  * Exécution : tsx src/scripts/gen-test-cert-salaire.ts
  * Output : src/scripts/fixtures/test-cert-salaire.pdf
  */
@@ -31,7 +34,7 @@ doc.moveDown(0.5);
 doc
   .fontSize(10)
   .font("Helvetica")
-  .text("Formulaire officiel — AFC Suisse", { align: "center" });
+  .text("Formulaire officiel — AFC Suisse / Swissdec Form 11", { align: "center" });
 
 doc.moveDown(1.5);
 
@@ -47,6 +50,7 @@ doc
   .font("Helvetica")
   .text("Employeur : Lexa Test SA")
   .text("Adresse : Rue du Grand-Pont 12, 1950 Sion")
+  .text("IDE : CHE-100.200.300")
   .text("Numéro AVS employeur : 109.123.456");
 
 doc.moveDown(1);
@@ -68,39 +72,38 @@ doc
 
 doc.moveDown(1);
 
-// Salaires
+// Cases Swissdec (nomenclature officielle Lohnausweis)
 doc
   .fontSize(12)
   .font("Helvetica-Bold")
-  .text("Rémunération");
+  .text("Rémunération — Cases Swissdec (Lohnausweis Form 11)");
 
 doc.moveDown(0.5);
 doc
   .fontSize(11)
   .font("Helvetica")
-  .text("Salaire brut annuel : CHF 85'000.00")
-  .text("Déductions AVS/AI/APG : CHF 4'420.00")
-  .text("Déductions AC : CHF 1'147.50")
-  .text("Déductions AANP (si applicable) : CHF 512.50")
-  .text("Déductions LPP : CHF 6'420.00")
-  .text("Total déductions salariales : CHF 12'500.00")
-  .text("Salaire net versé : CHF 72'500.00");
+  .text("Case 1 - Salaire annuel brut soumis AVS : CHF 85'000.00")
+  .text("Case 7 - Autres prestations (13ème salaire) : CHF 0.00")
+  .text("Case 8 - Total salaire brut : CHF 85'000.00")
+  .text("Case 9 - Cotisations AVS/AI/APG/AC (employé) : CHF 5'525.00")
+  .text("Case 10 - Cotisations LPP ordinaires : CHF 5'250.00")
+  .text("Case 12 - Autres déductions : CHF 0.00")
+  .text("Case 13 - Frais effectifs remboursés : CHF 0.00");
 
 doc.moveDown(1);
 
-// Autres informations
+// Récapitulatif calcul net
 doc
   .fontSize(12)
   .font("Helvetica-Bold")
-  .text("Autres informations");
+  .text("Récapitulatif");
 
 doc.moveDown(0.5);
 doc
   .fontSize(11)
   .font("Helvetica")
-  .text("Chiffre 9 (cotisations LPP) : CHF 6'420.00")
-  .text("Chiffre 12.1 (frais effectifs) : Non")
-  .text("Impôt à la source prélevé : Non");
+  .text("Total déductions salariales : CHF 10'775.00")
+  .text("Salaire net versé : CHF 74'225.00");
 
 doc.moveDown(2);
 
@@ -116,10 +119,14 @@ doc.end();
 
 stream.on("finish", () => {
   console.log(`[gen-test-cert] PDF généré : ${OUTPUT_PATH}`);
-  console.log("[gen-test-cert] Contenu attendu par l'OCR :");
+  console.log("[gen-test-cert] Contenu attendu par l'OCR (session 34 — Swissdec) :");
   console.log("  - type: certificat_salaire");
-  console.log("  - grossSalary: 85000");
-  console.log("  - netSalary: 72500");
+  console.log("  - case1_salaireBrut: 85000");
+  console.log("  - case8_totalBrut: 85000");
+  console.log("  - case9_cotisationsSociales: 5525");
+  console.log("  - case10_lppOrdinaire: 5250");
+  console.log("  - grossSalary: 85000 (legacy compat)");
+  console.log("  - netSalary: 74225");
   console.log("  - employer: Lexa Test SA");
 });
 
