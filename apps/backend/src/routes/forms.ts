@@ -24,6 +24,10 @@ import { renderVdPpPdf } from "../execution/VdPpPdfRenderer.js";
 import { buildFrPpDeclaration } from "../execution/FrPpFormBuilder.js";
 import { renderFrPpPdf } from "../execution/FrPpPdfRenderer.js";
 import { buildPmDeclarationVs } from "../execution/PmFormBuilder.js";
+import {
+  buildSwissdecCertificate,
+  CertificateInput,
+} from "../execution/SwissdecCertificateBuilder.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import type { FilledForm } from "../execution/types.js";
 
@@ -563,5 +567,32 @@ formsRouter.post("/pm-declaration-vs", requireAuth, async (req, res) => {
     const message = err instanceof Error ? err.message : "unknown error";
     console.error("[forms.pm-declaration-vs]", err);
     res.status(500).json({ error: "pm-declaration-vs failed", message });
+  }
+});
+
+// ── Certificat de salaire Swissdec (Form 11) — Session 34 ────────────────────
+
+/**
+ * POST /forms/swissdec-certificate — Génère un certificat de salaire conforme
+ * Swissdec Guidelines 5.0 (Lohnausweis Form 11).
+ *
+ * Input : employer, employee, year, period, cases (1-15 Swissdec normalisées).
+ * Output : { pdfBase64, structuredData, citations, generatedAt }
+ *
+ * V1 : pas de transmission électronique eCH-0217, pas de calcul paie auto.
+ * Base légale : LIFD art. 127 al. 1 lit. a + Swissdec Guidelines 5.0.
+ */
+formsRouter.post("/swissdec-certificate", requireAuth, async (req, res) => {
+  const parse = CertificateInput.safeParse(req.body);
+  if (!parse.success) {
+    return res.status(400).json({ error: "invalid body", details: parse.error.issues });
+  }
+  try {
+    const result = await buildSwissdecCertificate(parse.data);
+    res.json(result);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "unknown error";
+    console.error("[forms.swissdec-certificate]", err);
+    res.status(500).json({ error: "swissdec-certificate failed", message });
   }
 });
