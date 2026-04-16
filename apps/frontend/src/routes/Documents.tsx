@@ -200,7 +200,14 @@ export function Documents() {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
     },
     onError: (err: Error) => {
-      setUploadError(err.message || 'Erreur lors de l\'upload');
+      // BUG msg erreur 502 user-friendly
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 502) {
+        setUploadError('Le service OCR est temporairement indisponible. Réessayez dans quelques instants.');
+      } else {
+        const apiMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        setUploadError(apiMsg || err.message || 'Erreur lors de l\'upload');
+      }
     },
   });
 
