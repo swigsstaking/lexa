@@ -13,6 +13,7 @@ import { authRouter } from "./routes/auth.js";
 import { taxpayersRouter } from "./routes/taxpayers.js";
 import { companiesRouter } from "./routes/companies.js";
 import { requireAuth } from "./middleware/requireAuth.js";
+import { noCache } from "./middleware/noCache.js";
 import { documentsRouter } from "./routes/documents.js";
 import { auditRouter } from "./routes/audit.js";
 import { simulateRouter } from "./routes/simulate.js";
@@ -53,6 +54,17 @@ app.use((req, res, next) => {
 });
 
 app.use(tenantMiddleware);
+
+// ── No-cache sur toutes les routes user-sensitive ──────
+// Fix BUG-P1-01 : empêche la fuite de session via 304 Not Modified
+// après logout+login d'un autre compte.
+app.use((req, res, next) => {
+  if (/^\/(fiduciary|taxpayers|companies|audit|documents|ledger|forms|agents|rag|simulate|jobs)/.test(req.path)) {
+    noCache(req, res, next);
+  } else {
+    next();
+  }
+});
 
 // ── Public routes (pas d'auth) ─────────────────────────
 app.use(healthRouter);
