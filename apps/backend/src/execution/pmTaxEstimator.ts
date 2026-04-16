@@ -67,24 +67,28 @@ export function estimateIccPm(
 }
 
 /**
- * Impôt sur le capital — simplifié V1.
+ * Impôt sur le capital — taux affinés par canton (session 28).
  *
  * Base : fonds propres (capital social + réserves + bénéfice reporté).
- * Taux V1 : 0.15% (compromis des cantons SR — entre 0.05% et 0.30%).
+ * Taux approximatifs basés sur les barèmes cantonaux 2026 :
+ *   VS : ~0.15% (LF VS)
+ *   GE : ~0.24% (LIPM GE — parmi les plus élevés)
+ *   VD : ~0.17% (LI VD)
+ *   FR : ~0.10% (LICD FR)
  *
- * TODO session 28+ : remplacer par taux officiels par canton :
- *   VS : environ 0.15% (LF VS)
- *   GE : environ 0.24% (LIPM GE)
- *   VD : environ 0.17% (LI VD)
- *   FR : environ 0.10% (LICD FR)
+ * TODO session 30+ : valider taux officiels exacts par canton (coefficients multiplicateurs communaux inclus)
  */
 export function estimateCapitalTax(
   capital: number,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _canton: "VS" | "GE" | "VD" | "FR",
+  canton: "VS" | "GE" | "VD" | "FR",
 ): number {
-  // V1 : taux unique 0.15% — TODO session 28+ : taux par canton
-  const rate = 0.0015;
+  const capitalRates: Record<string, number> = {
+    VS: 0.0015,
+    GE: 0.0024,
+    VD: 0.0017,
+    FR: 0.0010,
+  };
+  const rate = capitalRates[canton] ?? 0.0015;
   return round2(Math.max(0, capital * rate));
 }
 
