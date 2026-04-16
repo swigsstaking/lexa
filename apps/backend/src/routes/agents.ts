@@ -9,6 +9,7 @@ import { fiscalPpNeAgent } from "../agents/fiscalPpNe/FiscalPpNeAgent.js";
 import { fiscalPpJuAgent } from "../agents/fiscalPpJu/FiscalPpJuAgent.js";
 import { fiscalPpBjAgent } from "../agents/fiscalPpBj/FiscalPpBjAgent.js";
 import { fiscalPmAgent } from "../agents/fiscalPm/FiscalPmAgent.js";
+import { clotureAgent } from "../agents/cloture/ClotureAgent.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 
 export const agentsRouter = Router();
@@ -271,6 +272,41 @@ agentsRouter.post("/fiscal-pm/ask", requireAuth, async (req, res) => {
   }
 });
 
+const ClotureAskSchema = z.object({
+  question: z.string().min(3).max(2000),
+  year: z.number().int().optional(),
+  balanceSheet: z
+    .object({
+      assetsTotal: z.number(),
+      liabilitiesTotal: z.number(),
+      equityTotal: z.number(),
+      isBalanced: z.boolean(),
+    })
+    .optional(),
+  incomeStatement: z
+    .object({
+      revenuesTotal: z.number(),
+      chargesTotal: z.number(),
+      netResult: z.number(),
+    })
+    .optional(),
+});
+
+/** POST /agents/cloture/ask — specialized continuous closing agent (CO 957-963) */
+agentsRouter.post("/cloture/ask", requireAuth, async (req, res) => {
+  const parsed = ClotureAskSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
+  }
+  try {
+    const result = await clotureAgent.ask(parsed.data);
+    res.json(result);
+  } catch (err) {
+    console.error("Cloture agent error:", err);
+    res.status(500).json({ error: "cloture agent failed", message: (err as Error).message });
+  }
+});
+
 /** GET /agents — list of available agents */
 agentsRouter.get("/", (_req, res) => {
   res.json({
@@ -349,9 +385,15 @@ agentsRouter.get("/", (_req, res) => {
         description:
           "Agent specialise fiscalite PM Sarl/SA (LIFD art.57-79, CO art.957-963b, LHID art.24-31, lois cantonales PM)",
       },
+      {
+        id: "cloture",
+        endpoint: "POST /agents/cloture/ask",
+        model: "lexa-cloture",
+        description:
+          "Agent cloture continue CO 957-963 — bilan+resultat projection temps reel + detection ecritures manquantes",
+      },
     ],
     planned: [
-      { id: "cloture", description: "Clôture continue CO" },
       { id: "conseiller", description: "Optimisation proactive" },
       { id: "audit", description: "Audit trail + vérification cohérence" },
     ],
