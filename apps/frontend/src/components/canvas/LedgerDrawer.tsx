@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { X, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { LedgerAccount, LedgerEntry } from '@/api/types';
+import { accountDisplayLabel } from './kaferLabels';
 
 const fmtChf = (n: number) =>
   new Intl.NumberFormat('fr-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
@@ -28,20 +29,38 @@ type Props = {
 };
 
 export function LedgerDrawer({ selection, accounts, entries, onClose }: Props) {
-  // Fermeture ESC
+  const drawerRef = useRef<HTMLElement | null>(null);
+
+  // Fermeture ESC + click extérieur
   useEffect(() => {
     if (!selection) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
     }
+    function onMouseDown(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+      // Ignorer les clicks sur nodes/edges react-flow (pour permettre de switcher
+      // entre sélections sans fermer-rouvrir)
+      const isCanvasNode = target.closest('.react-flow__node');
+      const isCanvasEdge = target.closest('.react-flow__edge, .react-flow__edge-label');
+      if (isCanvasNode || isCanvasEdge) return;
+      if (drawerRef.current && !drawerRef.current.contains(target)) {
+        onClose();
+      }
+    }
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('mousedown', onMouseDown);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('mousedown', onMouseDown);
+    };
   }, [selection, onClose]);
 
   return (
     <AnimatePresence>
       {selection && (
         <motion.aside
+          ref={drawerRef}
           initial={{ x: '100%' }}
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
@@ -95,7 +114,8 @@ function AccountDetails({
     .slice(0, 20);
 
   const code = account.account.match(/^(\d+)/)?.[1] ?? account.account;
-  const label = account.account.replace(/^\d+\s*-\s*/, '').trim();
+  const rawLabel = account.account.replace(/^\d+\s*-\s*/, '').trim();
+  const label = accountDisplayLabel(code, rawLabel);
 
   return (
     <>

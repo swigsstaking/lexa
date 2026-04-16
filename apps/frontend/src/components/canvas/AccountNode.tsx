@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { motion } from 'framer-motion';
+import { accountDisplayLabel } from './kaferLabels';
 
 export interface AccountNodeData extends Record<string, unknown> {
   code: string;
@@ -56,7 +57,9 @@ export function AccountNode({ data, selected }: NodeProps) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-2xs font-mono uppercase tracking-wider text-muted">{d.code}</div>
-          <div className="text-sm font-medium text-ink truncate max-w-[180px]">{d.label}</div>
+          <div className="text-sm font-medium text-ink truncate max-w-[180px]" title={accountDisplayLabel(d.code, d.label)}>
+            {accountDisplayLabel(d.code, d.label)}
+          </div>
         </div>
         <span className={`text-2xs font-mono uppercase ${accentCls}`}>
           {d.category[0]?.toUpperCase()}
