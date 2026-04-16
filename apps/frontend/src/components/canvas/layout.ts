@@ -104,31 +104,55 @@ export function buildCanvas(
     };
   });
 
-  // Dedupe edges: one per (debit→credit account, eventId) pair.
-  // We use the debit side of each entry as canonical source.
-  const seenEdges = new Set<string>();
-  const edges: LedgerEdge[] = [];
+  // Aggregate edges par paire (source, target) : 1 edge par paire de comptes,
+  // avec montant total + nombre de transactions. Évite la forêt de labels superposés
+  // quand on a plusieurs transactions entre les mêmes comptes.
+  type AggregatedEdge = {
+    source: string;
+    target: string;
+    totalAmount: number;
+    currency: string;
+    count: number;
+    lastOccurredAt?: string;
+  };
+  const aggregated = new Map<string, AggregatedEdge>();
+
   for (const e of entries) {
     if (e.lineType !== 'debit') continue;
     if (!e.counterpartAccount) continue;
-    const key = `${e.eventId}-${e.account}-${e.counterpartAccount}`;
-    if (seenEdges.has(key)) continue;
-    seenEdges.add(key);
-    edges.push({
-      id: `edge-${e.eventId}-${e.account}`,
-      source: e.counterpartAccount,
-      target: e.account,
-      type: 'transaction',
-      animated: true,
-      data: {
-        amount: e.amount,
+    const key = `${e.counterpartAccount}->${e.account}`;
+    const existing = aggregated.get(key);
+    if (existing) {
+      existing.totalAmount += e.amount;
+      existing.count += 1;
+      if (e.occurredAt && (!existing.lastOccurredAt || e.occurredAt > existing.lastOccurredAt)) {
+        existing.lastOccurredAt = e.occurredAt;
+      }
+    } else {
+      aggregated.set(key, {
+        source: e.counterpartAccount,
+        target: e.account,
+        totalAmount: e.amount,
         currency: e.currency,
-        tvaCode: e.tvaCode,
-        description: e.description,
-        occurredAt: e.occurredAt,
-      },
-    });
+        count: 1,
+        lastOccurredAt: e.occurredAt,
+      });
+    }
   }
+
+  const edges: LedgerEdge[] = Array.from(aggregated.entries()).map(([key, agg]) => ({
+    id: `edge-${key}`,
+    source: agg.source,
+    target: agg.target,
+    type: 'transaction',
+    animated: true,
+    data: {
+      amount: agg.totalAmount,
+      currency: agg.currency,
+      count: agg.count,
+      lastOccurredAt: agg.lastOccurredAt,
+    },
+  }));
 
   return { nodes, edges };
 }

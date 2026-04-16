@@ -3,13 +3,12 @@ import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@xyf
 export interface TransactionEdgeData extends Record<string, unknown> {
   amount: number;
   currency: string;
-  tvaCode?: string;
-  description?: string;
-  occurredAt?: string;
+  count?: number;
+  lastOccurredAt?: string;
 }
 
 const fmtChf = (n: number) =>
-  new Intl.NumberFormat('fr-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+  new Intl.NumberFormat('fr-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
 
 export function TransactionEdge({
   sourceX,
@@ -56,7 +55,9 @@ export function TransactionEdge({
             <span className="mono-num text-ink font-medium">
               {fmtChf(d.amount)} {d.currency}
             </span>
-            {d.tvaCode && <span className="chip !py-0 !px-1 text-subtle">{d.tvaCode}</span>}
+            {d.count && d.count > 1 && (
+              <span className="chip !py-0 !px-1 text-subtle">{d.count} tx</span>
+            )}
           </div>
         </EdgeLabelRenderer>
       )}
