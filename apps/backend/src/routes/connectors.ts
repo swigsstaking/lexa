@@ -1,15 +1,36 @@
 import { Router } from "express";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
+import multer from "multer";
 import { eventStore } from "../events/EventStore.js";
 import type { ClassificationResult } from "../agents/classifier/ClassifierAgent.js";
 import { enqueueLlmCall } from "../services/LlmQueue.js";
 import { query, queryAsTenant } from "../db/postgres.js";
 import { requireHmac } from "../middleware/requireHmac.js";
+import { requireAuth } from "../middleware/requireAuth.js";
 import { config } from "../config/index.js";
 import { proWebhookClient } from "../services/ProWebhookClient.js";
+import { parseCamt053 } from "../services/Camt053Parser.js";
 
 export const connectorsRouter = Router();
+
+// ── Multer pour upload CAMT.053 XML ───────────────────────────────────────────
+// Limite 10 MB (les CAMT réels font 50 KB–500 KB en général)
+const xmlUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  fileFilter: (_req, file, cb) => {
+    const isXml =
+      file.mimetype === "application/xml" ||
+      file.mimetype === "text/xml" ||
+      file.originalname.toLowerCase().endsWith(".xml");
+    if (!isXml) {
+      cb(new Error(`Expected XML file, got: ${file.mimetype} (${file.originalname})`));
+    } else {
+      cb(null, true);
+    }
+  },
+});
 
 const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -220,10 +241,262 @@ connectorsRouter.get("/bank/formats", (_req, res) => {
         schema: "array of {amount, creditDebit, counterpartyName, reference, bookingDate, ...}",
         endpoint: "POST /connectors/bank/ingest",
       },
+      {
+        id: "camt053",
+        description: "ISO 20022 CAMT.053 XML (relevé bancaire standard suisse)",
+        schema: "multipart/form-data, field 'file' = fichier XML CAMT.053",
+        endpoint: "POST /connectors/camt053/upload",
+        auth: "JWT Bearer",
+      },
     ],
     planned: [
-      { id: "camt053", description: "ISO 20022 CAMT.053 XML" },
       { id: "csv", description: "Generic CSV with configurable column mapping" },
     ],
   });
 });
+
+// ── CAMT.053 upload — ingestion bancaire standard suisse ISO 20022 ────────────
+
+/**
+ * Ingère une liste de ParsedTransaction dans l'event store avec déduplication.
+ *
+ * Stratégie :
+ *  - Check dedup via `messageId + txId` dans la table events
+ *  - Append TransactionIngested (fire) puis enqueue classifier (forget)
+ *  - Retourne stats : ingested / skipped (dedup) / failed
+ */
+async function ingestCamt053Transactions(
+  tenantId: string,
+  transactions: import("../services/Camt053Parser.js").ParsedTransaction[],
+): Promise<{ ingested: number; skipped: number; failed: number; streamIds: string[] }> {
+  let ingested = 0;
+  let skipped = 0;
+  let failed = 0;
+  const streamIds: string[] = [];
+
+  for (const tx of transactions) {
+    try {
+      // ── Déduplication ─────────────────────────────────────────────────────
+      const dupCheck = await queryAsTenant<{ id: string }>(
+        tenantId,
+        `SELECT id FROM events
+         WHERE tenant_id = $1
+           AND type = 'TransactionIngested'
+           AND metadata->>'source' = 'camt053'
+           AND metadata->>'txId' = $2
+         LIMIT 1`,
+        [tenantId, tx.txId],
+      );
+      if (dupCheck.rows.length > 0) {
+        skipped++;
+        continue;
+      }
+
+      const streamId = randomUUID();
+
+      // CRDT = entrée banque (amount positif), DBIT = sortie (amount négatif)
+      const signedAmount = tx.creditDebit === "DBIT" ? -tx.amount : tx.amount;
+
+      // Description enrichie pour le classifier (RAG match optimal)
+      const descParts = [
+        tx.counterpartyName,
+        tx.reference,
+        tx.structuredRef,
+      ].filter(Boolean);
+      const description = descParts.join(" | ") || `${tx.creditDebit} ${tx.currency} ${tx.amount}`;
+
+      // ── Append event TransactionIngested ──────────────────────────────────
+      await eventStore.append({
+        tenantId,
+        streamId,
+        event: {
+          type: "TransactionIngested",
+          payload: {
+            source: "camt053",
+            date: tx.bookingDate,
+            description,
+            amount: signedAmount,
+            currency: tx.currency,
+            counterpartyIban: tx.counterpartyIban,
+          },
+        },
+        metadata: {
+          source: "camt053",
+          txId: tx.txId,
+          messageId: tx.messageId,
+          statementId: tx.statementId,
+          accountIban: tx.accountIban,
+          accountName: tx.accountName,
+          counterpartyName: tx.counterpartyName,
+          valueDate: tx.valueDate,
+          structuredRef: tx.structuredRef,
+        },
+      });
+
+      streamIds.push(streamId);
+
+      // ── Enqueue classifier (fire-and-forget) ──────────────────────────────
+      // Ne pas await : la classification tourne en background via LlmQueue
+      enqueueLlmCall(tenantId, "classifier", {
+        date: tx.bookingDate,
+        description,
+        amount: signedAmount,
+        currency: tx.currency,
+        counterpartyIban: tx.counterpartyIban,
+      }).then(async (classification) => {
+        const cl = classification as import("../agents/classifier/ClassifierAgent.js").ClassificationResult;
+        try {
+          const classifiedEvent = await eventStore.append({
+            tenantId,
+            streamId,
+            event: {
+              type: "TransactionClassified",
+              payload: {
+                transactionStreamId: streamId,
+                agent: "classifier",
+                model: "lexa-classifier",
+                confidence: cl.confidence,
+                debitAccount: cl.debitAccount,
+                creditAccount: cl.creditAccount,
+                amountHt: cl.amountHt,
+                amountTtc: cl.amountTtc,
+                tvaRate: cl.tvaRate,
+                tvaCode: cl.tvaCode,
+                costCenter: cl.costCenter,
+                reasoning: cl.reasoning,
+                citations: cl.citations,
+                alternatives: cl.alternatives,
+              },
+            },
+            metadata: { durationMs: cl.durationMs },
+          });
+
+          await queryAsTenant(
+            tenantId,
+            `INSERT INTO ai_decisions
+             (event_id, tenant_id, agent, model, confidence, reasoning, citations, alternatives, duration_ms)
+             VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9)`,
+            [
+              classifiedEvent.id,
+              tenantId,
+              "classifier",
+              "lexa-classifier",
+              cl.confidence,
+              cl.reasoning,
+              JSON.stringify(cl.citations),
+              JSON.stringify(cl.alternatives),
+              cl.durationMs,
+            ],
+          );
+        } catch (classErr) {
+          console.warn(
+            `[camt053] classifier bg failed for ${streamId}:`,
+            (classErr as Error).message,
+          );
+        }
+      }).catch((err) => {
+        console.warn(
+          `[camt053] enqueue classifier failed for ${tx.txId}:`,
+          (err as Error).message,
+        );
+      });
+
+      ingested++;
+    } catch (err) {
+      console.error(`[camt053] ingest failed for ${tx.txId}:`, (err as Error).message);
+      failed++;
+    }
+  }
+
+  return { ingested, skipped, failed, streamIds };
+}
+
+/**
+ * POST /connectors/camt053/upload
+ *
+ * Upload d'un fichier XML CAMT.053 (ISO 20022) — relevé bancaire standard suisse.
+ * Authentification JWT Bearer (requireAuth).
+ *
+ * Body : multipart/form-data, champ "file" = fichier XML
+ *
+ * Response 201 :
+ *   { messageId, accountIban, accountName, currency,
+ *     transactionsCount, ingested, skipped, failed, streamIds, warnings }
+ *
+ * Erreurs :
+ *   400 — fichier manquant ou type incorrect
+ *   422 — XML invalide ou structure CAMT.053 incorrecte
+ *   500 — erreur d'ingestion
+ *
+ * Idempotence : un même upload (messageId+txId) est ignoré silencieusement
+ * (skipped++), pas d'erreur.
+ */
+connectorsRouter.post(
+  "/camt053/upload",
+  requireAuth,
+  xmlUpload.single("file"),
+  async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "missing file — field name must be 'file'" });
+    }
+
+    // Déjà filtré par multer fileFilter, double-check explicite
+    const isXml =
+      req.file.mimetype === "application/xml" ||
+      req.file.mimetype === "text/xml" ||
+      req.file.originalname.toLowerCase().endsWith(".xml");
+    if (!isXml) {
+      return res.status(400).json({
+        error: "expected XML file",
+        got: req.file.mimetype,
+      });
+    }
+
+    const xmlContent = req.file.buffer.toString("utf-8");
+
+    let parseResult: import("../services/Camt053Parser.js").Camt053ParseResult;
+    try {
+      parseResult = parseCamt053(xmlContent);
+    } catch (err) {
+      return res.status(422).json({
+        error: "CAMT.053 parse failed",
+        message: (err as Error).message,
+      });
+    }
+
+    if (parseResult.warnings.length > 0) {
+      console.warn("[camt053] parse warnings:", parseResult.warnings);
+    }
+
+    const tenantId = req.tenantId!;
+    const { transactions, messageId, accountIban, accountName, currency, warnings } =
+      parseResult;
+
+    if (transactions.length === 0) {
+      return res.status(422).json({
+        error: "no transactions found in CAMT.053",
+        messageId,
+        warnings,
+      });
+    }
+
+    const stats = await ingestCamt053Transactions(tenantId, transactions);
+
+    console.info(
+      `[camt053] tenant=${tenantId} msgId=${messageId} total=${transactions.length} ingested=${stats.ingested} skipped=${stats.skipped} failed=${stats.failed}`,
+    );
+
+    res.status(201).json({
+      messageId,
+      accountIban,
+      accountName,
+      currency,
+      transactionsCount: transactions.length,
+      ingested: stats.ingested,
+      skipped: stats.skipped,
+      failed: stats.failed,
+      streamIds: stats.streamIds,
+      warnings,
+    });
+  },
+);
