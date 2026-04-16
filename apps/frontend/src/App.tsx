@@ -1,11 +1,12 @@
 import { lazy, Suspense } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { Home } from '@/routes/Home';
 import { Login } from '@/routes/Login';
 import { Register } from '@/routes/Register';
 import { Onboarding } from '@/routes/Onboarding';
 import { Workspace } from '@/routes/Workspace';
+import { NotFound } from '@/routes/NotFound';
 import { cantonGE } from '@/config/cantons/ge';
 import { cantonVD } from '@/config/cantons/vd';
 import { cantonVS } from '@/config/cantons/vs';
@@ -40,6 +41,19 @@ const Conseiller = lazy(() =>
     default: m.Conseiller,
   }))
 );
+
+// BUG-P2-06 : redirect /pp/:canton/:year → /taxpayer/:year (VS) ou /taxpayer/:canton/:year
+function RedirectToTaxpayer() {
+  const { canton, year } = useParams<{ canton: string; year: string }>();
+  const cantonUpper = canton?.toUpperCase();
+  if (cantonUpper === 'VS') {
+    return <Navigate to={`/taxpayer/${year ?? '2026'}`} replace />;
+  }
+  if (['GE', 'VD', 'FR'].includes(cantonUpper ?? '')) {
+    return <Navigate to={`/taxpayer/${cantonUpper!.toLowerCase()}/${year ?? '2026'}`} replace />;
+  }
+  return <Navigate to="/workspace" replace />;
+}
 
 function PageLoader() {
   return (
@@ -198,7 +212,17 @@ export default function App() {
             </RequireAuth>
           }
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* BUG-P2-06 : redirect /pp/:canton/:year → /taxpayer */}
+        <Route
+          path="/pp/:canton/:year"
+          element={
+            <RequireAuth>
+              <RedirectToTaxpayer />
+            </RequireAuth>
+          }
+        />
+        {/* BUG-T03 : page 404 custom */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
   );
