@@ -23,6 +23,12 @@ const DEMO_TENANT_ID = "00000000-0000-0000-0000-000000000099";
 const DEMO_EMAIL = "demo@lexa.test";
 const DEMO_PASSWORD = "LexaDemo2026!";
 
+// S32 — Fiduciaire multi-clients
+const FIDU_USER_ID = "00000000-0000-0000-0000-000000000100";
+const FIDU_EMAIL = "fiduciaire@lexa.test";
+const FIDU_PASSWORD = "LexaFidu2026!";
+const ACME_TENANT_ID = "00000000-0000-0000-0000-000000000101";
+
 // ─── Dataset transactions ─────────────────────────────────────────────────────
 // 20 transactions réalistes 2026 — mix CRDT/DBIT
 // Revenus visés ~300k CHF, Charges ~180k CHF, Bénéfice ~120k CHF
@@ -557,6 +563,132 @@ async function verify(): Promise<void> {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+// ─── Seed fiduciaire S32 ─────────────────────────────────────────────────────
+
+async function seedFiduciaire(): Promise<void> {
+  console.log("[seed] seedFiduciaire...");
+
+  // 1. Company Acme SA (tenant GE)
+  const existingAcme = await query(
+    "SELECT id FROM companies WHERE tenant_id = $1",
+    [ACME_TENANT_ID],
+  );
+  if (existingAcme.rows.length === 0) {
+    await query(
+      `INSERT INTO companies (
+         tenant_id, name, legal_form, legal_form_label, uid, city, canton,
+         country, is_vat_subject, vat_declaration_frequency, vat_method, source
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       ON CONFLICT (tenant_id) DO NOTHING`,
+      [
+        ACME_TENANT_ID,
+        "Acme SA",
+        "sa",
+        "SA",
+        "CHE-200.300.400",
+        "Genève",
+        "GE",
+        "CH",
+        true,
+        "quarterly",
+        "effective",
+        "manual",
+      ],
+    );
+    console.log("[seed]   → company Acme SA créée (tenant GE)");
+  } else {
+    console.log("[seed]   → company Acme SA déjà existante, skip");
+  }
+
+  // 2. Company draft Acme SA 2026 GE (basique pour avoir quelque chose à voir)
+  await query(
+    `INSERT INTO company_drafts (tenant_id, year, canton, state)
+     VALUES ($1, 2026, 'GE', $2::jsonb)
+     ON CONFLICT (tenant_id, year, canton) DO UPDATE SET state = EXCLUDED.state`,
+    [
+      ACME_TENANT_ID,
+      JSON.stringify({
+        step1: {
+          legalName: "Acme SA",
+          legalForm: "sa",
+          ideNumber: "CHE-200.300.400",
+          siegeCommune: "Genève",
+          fiscalYearStart: "2026-01-01",
+          fiscalYearEnd: "2026-12-31",
+        },
+        step2: {
+          benefitAccounting: 500000,
+          chiffreAffaires: 1500000,
+          chargesPersonnel: 200000,
+          chargesMaterielles: 50000,
+          amortissementsComptables: 20000,
+          autresCharges: 30000,
+        },
+        step4: {
+          capitalSocial: 100000,
+          reservesLegales: 20000,
+          reservesLibres: 80000,
+          reportBenefice: 50000,
+          capitalTotal: 250000,
+        },
+      }),
+    ],
+  );
+  console.log("[seed]   → company_draft Acme SA 2026 GE upserted");
+
+  // 3. User fiduciaire (sans tenant_id own — il n'a pas son propre tenant)
+  const fiduHash = await hashPassword(FIDU_PASSWORD);
+  const existingFidu = await query(
+    "SELECT id FROM users WHERE email = $1",
+    [FIDU_EMAIL],
+  );
+  if (existingFidu.rows.length === 0) {
+    await query(
+      `INSERT INTO users (id, email, password_hash, tenant_id, verified)
+       VALUES ($1, $2, $3, NULL, true)`,
+      [FIDU_USER_ID, FIDU_EMAIL, fiduHash],
+    );
+    console.log("[seed]   → user fiduciaire@lexa.test créé");
+  } else {
+    await query(
+      "UPDATE users SET password_hash = $1, verified = true WHERE email = $2",
+      [fiduHash, FIDU_EMAIL],
+    );
+    console.log("[seed]   → user fiduciaire déjà existant, password reset");
+  }
+
+  // 4. Memberships : fiduciaire → demo (fiduciary) + acme (fiduciary)
+  await query(
+    `INSERT INTO fiduciary_memberships (user_id, tenant_id, role)
+     VALUES ($1, $2, 'fiduciary'), ($1, $3, 'fiduciary')
+     ON CONFLICT (user_id, tenant_id) DO UPDATE SET role = EXCLUDED.role`,
+    [FIDU_USER_ID, DEMO_TENANT_ID, ACME_TENANT_ID],
+  );
+  console.log("[seed]   → memberships fiduciaire → demo + acme upserted");
+
+  // 5. Demo user : backfill membership owner (idempotent)
+  const demoUser = await query<{ id: string }>(
+    "SELECT id FROM users WHERE email = $1",
+    [DEMO_EMAIL],
+  );
+  if (demoUser.rows.length > 0) {
+    await query(
+      `INSERT INTO fiduciary_memberships (user_id, tenant_id, role)
+       VALUES ($1, $2, 'owner')
+       ON CONFLICT (user_id, tenant_id) DO NOTHING`,
+      [demoUser.rows[0]!.id, DEMO_TENANT_ID],
+    );
+    console.log("[seed]   → membership demo user owner upserted");
+  }
+
+  // Vérification
+  const memberCount = await query<{ count: string }>(
+    "SELECT COUNT(*) AS count FROM fiduciary_memberships WHERE user_id = $1",
+    [FIDU_USER_ID],
+  );
+  console.log(`[seed]   fiduciaire memberships: ${memberCount.rows[0]?.count}`);
+}
+
 async function main(): Promise<void> {
   console.log("[seed] ═══════════════════════════════════════");
   console.log("[seed] Seed fixture data — tenant demo Lexa");
@@ -568,11 +700,13 @@ async function main(): Promise<void> {
   await seedDocuments();
   await seedDrafts();
   await refreshMv();
+  await seedFiduciaire();
   await verify();
 
   console.log("[seed] ═══════════════════════════════════════");
   console.log("[seed] Done! Tenant: " + DEMO_TENANT_ID);
   console.log("[seed] Login: demo@lexa.test / LexaDemo2026!");
+  console.log("[seed] Login fiduciaire: fiduciaire@lexa.test / LexaFidu2026!");
   console.log("[seed] ═══════════════════════════════════════");
 }
 
