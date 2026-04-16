@@ -81,7 +81,7 @@ const ACME_TENANT_QA = "00000000-0000-0000-0000-000000000101";
 
 type TestResult = {
   id: string;
-  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm" | "cloture" | "ledger" | "audit" | "conseiller" | "simulate" | "fiduciary" | "swissdec" | "queue" | "ocr-healthcheck" | "cache-headers";
+  kind: "classify" | "tva" | "fiscal-pp-vs" | "fiscal-pp-ge" | "fiscal-pp-vd" | "fiscal-pp-fr" | "fiscal-pp-ne" | "fiscal-pp-ju" | "fiscal-pp-bj" | "fiscal-pm" | "taxpayer" | "documents" | "company-pm" | "cloture" | "ledger" | "audit" | "conseiller" | "simulate" | "fiduciary" | "swissdec" | "queue" | "ocr-healthcheck" | "cache-headers" | "camt053";
   pass: boolean;
   latencyMs: number;
   reason?: string;
@@ -1964,6 +1964,139 @@ async function runOcrUploadHealthcheck(): Promise<TestResult> {
   }
 }
 
+// ── S39 : CAMT.053 parse unitaire ──────────────────────────────────────────────
+// Vérifie que parseCamt053() extrait 5 transactions correctes depuis la fixture.
+// Test local (pas de requête réseau) — guard contre régression parser.
+async function runCamt053Parse(): Promise<TestResult> {
+  const TEST_ID = "camt053-1-parse";
+  const started = Date.now();
+
+  try {
+    const { parseCamt053 } = await import("../services/Camt053Parser.js");
+    const fixtureXml = await readFile(
+      join(__qadirname, "fixtures", "sample-camt053.xml"),
+      "utf-8",
+    );
+
+    const result = parseCamt053(fixtureXml);
+
+    // Assertions
+    const has5Tx = result.transactions.length === 5;
+    const correctIban = result.accountIban === "CH9300762011623852957";
+    const correctMsgId = result.messageId === "LEXA-DEMO-2026-04-001";
+    const hasCrdt = result.transactions.some((t) => t.creditDebit === "CRDT" && t.amount === 15000);
+    const hasDbit = result.transactions.some((t) => t.creditDebit === "DBIT" && t.amount === 5200);
+    const noWarnings = result.warnings.length === 0;
+
+    const ok = has5Tx && correctIban && correctMsgId && hasCrdt && hasDbit && noWarnings;
+
+    return {
+      id: TEST_ID,
+      kind: "camt053",
+      pass: ok,
+      latencyMs: Date.now() - started,
+      reason: ok
+        ? undefined
+        : `has5Tx=${has5Tx} correctIban=${correctIban} correctMsgId=${correctMsgId} hasCrdt=${hasCrdt} hasDbit=${hasDbit} noWarnings=${noWarnings}`,
+    };
+  } catch (err) {
+    return {
+      id: TEST_ID,
+      kind: "camt053",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
+// ── S39 : CAMT.053 upload E2E ──────────────────────────────────────────────────
+// Vérifie que POST /connectors/camt053/upload retourne HTTP 201 avec
+// transactionsCount=5 et ingested+skipped=5 (idempotence incluse).
+async function runCamt053UploadE2e(): Promise<TestResult> {
+  const TEST_ID = "camt053-2-upload-e2e";
+  const started = Date.now();
+
+  let xmlBytes: Buffer;
+  try {
+    xmlBytes = Buffer.from(
+      await readFile(join(__qadirname, "fixtures", "sample-camt053.xml")),
+    );
+  } catch {
+    return {
+      id: TEST_ID,
+      kind: "camt053",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: "fixture sample-camt053.xml not found",
+    };
+  }
+
+  try {
+    // Utilise globalThis.FormData (disponible Node ≥ 18) — évite import("node:buffer")
+    // qui ne contient pas FormData sur certaines versions.
+    const FormDataCtor = globalThis.FormData;
+    const BlobCtor = globalThis.Blob;
+    const form = new FormDataCtor();
+    form.append(
+      "file",
+      new BlobCtor([xmlBytes], { type: "application/xml" }),
+      "sample-camt053.xml",
+    );
+
+    const resp = await http.post<{
+      messageId?: string;
+      transactionsCount?: number;
+      ingested?: number;
+      skipped?: number;
+      failed?: number;
+    }>("/connectors/camt053/upload", form, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+      validateStatus: (s) => s < 600,
+    });
+
+    if (resp.status !== 201) {
+      return {
+        id: TEST_ID,
+        kind: "camt053",
+        pass: false,
+        latencyMs: Date.now() - started,
+        reason: `HTTP ${resp.status} (expected 201)`,
+      };
+    }
+
+    const { transactionsCount, ingested, skipped, failed, messageId } = resp.data;
+
+    // 5 transactions total, ingested+skipped=5 (idempotent), 0 failed
+    const ok =
+      transactionsCount === 5 &&
+      (ingested ?? 0) + (skipped ?? 0) === 5 &&
+      (failed ?? 0) === 0 &&
+      messageId === "LEXA-DEMO-2026-04-001";
+
+    return {
+      id: TEST_ID,
+      kind: "camt053",
+      pass: ok,
+      latencyMs: Date.now() - started,
+      reason: ok
+        ? undefined
+        : `transactionsCount=${transactionsCount} ingested=${ingested} skipped=${skipped} failed=${failed} msgId=${messageId}`,
+    };
+  } catch (err) {
+    const status = (err as { response?: { status: number } }).response?.status;
+    return {
+      id: TEST_ID,
+      kind: "camt053",
+      pass: false,
+      latencyMs: Date.now() - started,
+      reason: `HTTP ${status ?? "ERR"}: ${(err as Error).message}`,
+    };
+  }
+}
+
 // ── fix-p1-01 : Cache-Control no-store sur routes user-sensitive ───────────────
 // Vérifie que GET /fiduciary/clients renvoie Cache-Control: no-store.
 // Régression guard pour BUG-P1-01 (fuite session via 304 Not Modified).
@@ -2114,7 +2247,7 @@ async function main(): Promise<void> {
 
   console.log(`[qa-lexa] BASE_URL=${BASE_URL} user=${QA_EMAIL}`);
   console.log(
-    `[qa-lexa] fixtures: ${classifyFixtures.length} classify + ${tvaQuestions.length} tva + ${fiscalPpQuestions.length} fiscal-pp-vs + ${fiscalPpGeQuestions.length} fiscal-pp-ge + ${fiscalPpVdQuestions.length} fiscal-pp-vd + ${fiscalPpFrQuestions.length} fiscal-pp-fr + ${fiscalPpNeQuestions.length} fiscal-pp-ne + ${fiscalPpJuQuestions.length} fiscal-pp-ju + ${fiscalPpBjQuestions.length} fiscal-pp-bj + ${fiscalPmQuestions.length} fiscal-pm + 1 pm-form-vs + 2 documents (s25-ocr-e2e+s24-apply) + 4 company-pm (s27-pm-vs+s28-pm-ge/vd/fr)`,
+    `[qa-lexa] fixtures: ${classifyFixtures.length} classify + ${tvaQuestions.length} tva + ${fiscalPpQuestions.length} fiscal-pp-vs + ${fiscalPpGeQuestions.length} fiscal-pp-ge + ${fiscalPpVdQuestions.length} fiscal-pp-vd + ${fiscalPpFrQuestions.length} fiscal-pp-fr + ${fiscalPpNeQuestions.length} fiscal-pp-ne + ${fiscalPpJuQuestions.length} fiscal-pp-ju + ${fiscalPpBjQuestions.length} fiscal-pp-bj + ${fiscalPmQuestions.length} fiscal-pm + 1 pm-form-vs + 2 documents (s25-ocr-e2e+s24-apply) + 4 company-pm (s27-pm-vs+s28-pm-ge/vd/fr) + 2 camt053 (s39-parse+upload)`,
   );
 
   // Health gate (public)
@@ -2406,6 +2539,20 @@ async function main(): Promise<void> {
     `  ${rOcrMapping.pass ? "✓" : "✗"} ${rOcrMapping.id}  ${rOcrMapping.latencyMs}ms  ${rOcrMapping.reason ?? ""}`,
   );
 
+  // S39 — CAMT.053 ingestion bancaire ISO 20022
+  console.log("\n[qa-lexa] CAMT.053 (S39)");
+  const rCamt053Parse = await runCamt053Parse();
+  results.push(rCamt053Parse);
+  console.log(
+    `  ${rCamt053Parse.pass ? "✓" : "✗"} ${rCamt053Parse.id}  ${rCamt053Parse.latencyMs}ms  ${rCamt053Parse.reason ?? ""}`,
+  );
+
+  const rCamt053Upload = await runCamt053UploadE2e();
+  results.push(rCamt053Upload);
+  console.log(
+    `  ${rCamt053Upload.pass ? "✓" : "✗"} ${rCamt053Upload.id}  ${rCamt053Upload.latencyMs}ms  ${rCamt053Upload.reason ?? ""}`,
+  );
+
   const totalMs = Date.now() - started;
   const pass = results.filter((r) => r.pass).length;
   const fail = results.length - pass;
@@ -2445,6 +2592,7 @@ async function main(): Promise<void> {
       queue: { total: byKind("queue").length, passed: byKind("queue").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("queue")) },
       "ocr-healthcheck": { total: byKind("ocr-healthcheck").length, passed: byKind("ocr-healthcheck").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("ocr-healthcheck")) },
       "cache-headers": { total: byKind("cache-headers").length, passed: byKind("cache-headers").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("cache-headers")) },
+      "camt053": { total: byKind("camt053").length, passed: byKind("camt053").filter((r) => r.pass).length, avgLatencyMs: avg(byKind("camt053")) },
     },
     failures: results.filter((r) => !r.pass).map((r) => ({ id: r.id, kind: r.kind, reason: r.reason })),
     generatedAt: new Date().toISOString(),
