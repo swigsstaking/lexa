@@ -1,5 +1,10 @@
 import { Router } from "express";
 import { query } from "../db/postgres.js";
+import {
+  projectBalanceSheet,
+  projectIncomeStatement,
+  computeLedgerHealth,
+} from "../services/ContinuousClosingService.js";
 
 export const ledgerRouter = Router();
 
@@ -168,4 +173,51 @@ ledgerRouter.post("/refresh", async (req, res) => {
     refreshedIn: Date.now() - started,
     entriesCount: Number(countResult.rows[0]?.count ?? 0),
   });
+});
+
+// ─── Continuous Closing endpoints (session 29) ────────────────────────────────
+
+/** GET /ledger/balance-sheet/:year — projected balance sheet from event store */
+ledgerRouter.get("/balance-sheet/:year", async (req, res) => {
+  const year = parseInt(req.params.year ?? "", 10);
+  if (isNaN(year) || year < 2000 || year > 2100) {
+    return res.status(400).json({ error: "invalid year — expected YYYY between 2000 and 2100" });
+  }
+  try {
+    const result = await projectBalanceSheet(req.tenantId, year);
+    res.json(result);
+  } catch (err) {
+    console.error("balance-sheet projection error:", err);
+    res.status(500).json({ error: "projection failed", message: (err as Error).message });
+  }
+});
+
+/** GET /ledger/income-statement/:year — projected income statement from event store */
+ledgerRouter.get("/income-statement/:year", async (req, res) => {
+  const year = parseInt(req.params.year ?? "", 10);
+  if (isNaN(year) || year < 2000 || year > 2100) {
+    return res.status(400).json({ error: "invalid year — expected YYYY between 2000 and 2100" });
+  }
+  try {
+    const result = await projectIncomeStatement(req.tenantId, year);
+    res.json(result);
+  } catch (err) {
+    console.error("income-statement projection error:", err);
+    res.status(500).json({ error: "projection failed", message: (err as Error).message });
+  }
+});
+
+/** GET /ledger/health/:year — ledger health indicators (CO 958c) */
+ledgerRouter.get("/health/:year", async (req, res) => {
+  const year = parseInt(req.params.year ?? "", 10);
+  if (isNaN(year) || year < 2000 || year > 2100) {
+    return res.status(400).json({ error: "invalid year — expected YYYY between 2000 and 2100" });
+  }
+  try {
+    const result = await computeLedgerHealth(req.tenantId, year);
+    res.json(result);
+  } catch (err) {
+    console.error("ledger-health error:", err);
+    res.status(500).json({ error: "health check failed", message: (err as Error).message });
+  }
 });
