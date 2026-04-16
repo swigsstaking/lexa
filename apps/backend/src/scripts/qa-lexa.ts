@@ -1276,6 +1276,94 @@ async function runPmVsDraftSubmit(): Promise<TestResult> {
   }
 }
 
+// ── Fixtures PM GE / VD / FR — Session 28 ─────────────────────────────────────
+
+/**
+ * Factory générique pour les fixtures pm-{canton}-1-draft-submit.
+ * Pattern identique à pm-vs-1-draft-submit.
+ */
+async function runPmCantonDraftSubmit(
+  canton: "GE" | "VD" | "FR",
+  minTotal: number,
+): Promise<TestResult> {
+  const started = Date.now();
+  const cantonLower = canton.toLowerCase();
+  const TEST_ID = `pm-${cantonLower}-1-draft-submit`;
+
+  try {
+    // 1. Créer le draft
+    const createResp = await http.post<{ id: string; state: unknown }>("/companies/draft", {
+      year: 2026,
+      canton,
+      legalName: `qa ${canton} Sarl`,
+    });
+    const draftId = createResp.data?.id ?? null;
+    if (!draftId) {
+      return {
+        id: TEST_ID, kind: "company-pm", pass: false,
+        latencyMs: Date.now() - started,
+        reason: `create draft: id absent: ${JSON.stringify(createResp.data)}`,
+      };
+    }
+
+    // 2. Patch step2
+    await http.patch("/companies/draft/2026", {
+      canton, path: "step2.benefitAccounting", value: 265000,
+    });
+
+    // 3. Patch step3
+    await http.patch("/companies/draft/2026", {
+      canton, path: "step3.chargesNonAdmises", value: 15000,
+    });
+
+    // 4. Patch step4
+    await http.patch("/companies/draft/2026", {
+      canton, path: "step4.capitalTotal", value: 100000,
+    });
+
+    // 5. Submit
+    const submitResp = await http.post<{
+      formId?: string;
+      pdfBase64?: string;
+      taxEstimate?: { total?: number };
+    }>(`/companies/draft/2026/submit-${cantonLower}`);
+
+    const { formId, pdfBase64, taxEstimate } = submitResp.data;
+
+    // 6. Asserts
+    const expectedFormId = `${canton}-declaration-pm`;
+    if (formId !== expectedFormId) {
+      return {
+        id: TEST_ID, kind: "company-pm", pass: false,
+        latencyMs: Date.now() - started,
+        reason: `formId expected "${expectedFormId}", got "${formId}"`,
+      };
+    }
+    if (!pdfBase64 || pdfBase64.length < 1000) {
+      return {
+        id: TEST_ID, kind: "company-pm", pass: false,
+        latencyMs: Date.now() - started,
+        reason: `pdfBase64.length=${pdfBase64?.length ?? 0} < 1000`,
+      };
+    }
+    if (!taxEstimate || (taxEstimate.total ?? 0) < minTotal) {
+      return {
+        id: TEST_ID, kind: "company-pm", pass: false,
+        latencyMs: Date.now() - started,
+        reason: `taxEstimate.total=${taxEstimate?.total ?? 0} < ${minTotal}`,
+      };
+    }
+
+    return { id: TEST_ID, kind: "company-pm", pass: true, latencyMs: Date.now() - started };
+  } catch (err) {
+    return {
+      id: TEST_ID, kind: "company-pm", pass: false,
+      latencyMs: Date.now() - started,
+      reason: err instanceof Error ? err.message : "unknown error",
+    };
+  }
+}
+
 // ── Main ───────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -1284,7 +1372,7 @@ async function main(): Promise<void> {
 
   console.log(`[qa-lexa] BASE_URL=${BASE_URL} user=${QA_EMAIL}`);
   console.log(
-    `[qa-lexa] fixtures: ${classifyFixtures.length} classify + ${tvaQuestions.length} tva + ${fiscalPpQuestions.length} fiscal-pp-vs + ${fiscalPpGeQuestions.length} fiscal-pp-ge + ${fiscalPpVdQuestions.length} fiscal-pp-vd + ${fiscalPpFrQuestions.length} fiscal-pp-fr + ${fiscalPpNeQuestions.length} fiscal-pp-ne + ${fiscalPpJuQuestions.length} fiscal-pp-ju + ${fiscalPpBjQuestions.length} fiscal-pp-bj + ${fiscalPmQuestions.length} fiscal-pm + 1 pm-form-vs + 2 documents (s25-ocr-e2e+s24-apply) + 1 company-pm (s27-pm-vs-wizard)`,
+    `[qa-lexa] fixtures: ${classifyFixtures.length} classify + ${tvaQuestions.length} tva + ${fiscalPpQuestions.length} fiscal-pp-vs + ${fiscalPpGeQuestions.length} fiscal-pp-ge + ${fiscalPpVdQuestions.length} fiscal-pp-vd + ${fiscalPpFrQuestions.length} fiscal-pp-fr + ${fiscalPpNeQuestions.length} fiscal-pp-ne + ${fiscalPpJuQuestions.length} fiscal-pp-ju + ${fiscalPpBjQuestions.length} fiscal-pp-bj + ${fiscalPmQuestions.length} fiscal-pm + 1 pm-form-vs + 2 documents (s25-ocr-e2e+s24-apply) + 4 company-pm (s27-pm-vs+s28-pm-ge/vd/fr)`,
   );
 
   // Health gate (public)
@@ -1449,6 +1537,27 @@ async function main(): Promise<void> {
   results.push(rPmVs);
   console.log(
     `  ${rPmVs.pass ? "✓" : "✗"} ${rPmVs.id}  ${rPmVs.latencyMs}ms  ${rPmVs.reason ?? ""}`,
+  );
+
+  // PM wizard GE draft submit (session 28)
+  const rPmGe = await runPmCantonDraftSubmit("GE", 50000);
+  results.push(rPmGe);
+  console.log(
+    `  ${rPmGe.pass ? "✓" : "✗"} ${rPmGe.id}  ${rPmGe.latencyMs}ms  ${rPmGe.reason ?? ""}`,
+  );
+
+  // PM wizard VD draft submit (session 28)
+  const rPmVd = await runPmCantonDraftSubmit("VD", 45000);
+  results.push(rPmVd);
+  console.log(
+    `  ${rPmVd.pass ? "✓" : "✗"} ${rPmVd.id}  ${rPmVd.latencyMs}ms  ${rPmVd.reason ?? ""}`,
+  );
+
+  // PM wizard FR draft submit (session 28)
+  const rPmFr = await runPmCantonDraftSubmit("FR", 40000);
+  results.push(rPmFr);
+  console.log(
+    `  ${rPmFr.pass ? "✓" : "✗"} ${rPmFr.id}  ${rPmFr.latencyMs}ms  ${rPmFr.reason ?? ""}`,
   );
 
   const totalMs = Date.now() - started;
