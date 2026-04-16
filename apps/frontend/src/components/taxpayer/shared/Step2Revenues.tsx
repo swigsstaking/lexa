@@ -3,16 +3,22 @@ import type { CantonConfig } from '@/config/cantons/types';
 import { useTaxpayerDraftStore } from '@/stores/taxpayerDraftStore';
 import { CurrencyField } from '@/components/taxpayer/shared/CurrencyField';
 
+type FieldSource = { documentId: string; filename: string; appliedAt: string };
+
 interface Props {
   draft: TaxpayerDraft;
   year: number;
   canton: CantonConfig;
+  /** Sources de pré-remplissage OCR (session 24). { "step2.salaireBrut": {...} } */
+  fieldSources?: Record<string, FieldSource>;
 }
 
-export function Step2Revenues({ draft, year, canton: _canton }: Props) {
+export function Step2Revenues({ draft, year, canton: _canton, fieldSources }: Props) {
   const updateField = useTaxpayerDraftStore((s) => s.updateField);
   const update = (field: string, value: unknown) => updateField(field, value, 2, year);
   const s = draft.state.step2;
+
+  const salaireBrutSource = fieldSources?.['step2.salaireBrut'];
 
   return (
     <div className="space-y-6">
@@ -55,13 +61,21 @@ export function Step2Revenues({ draft, year, canton: _canton }: Props) {
       </div>
 
       <div className="space-y-4">
-        <CurrencyField
-          id="tp-salaire"
-          label="Salaire brut principal"
-          value={s.salaireBrut}
-          onChange={(v) => update('step2.salaireBrut', v)}
-          hint="Montant brut du certificat de salaire"
-        />
+        <div>
+          <CurrencyField
+            id="tp-salaire"
+            label="Salaire brut principal"
+            value={s.salaireBrut}
+            onChange={(v) => update('step2.salaireBrut', v)}
+            hint="Montant brut du certificat de salaire"
+          />
+          {/* Badge auto-fill — session 24 */}
+          {salaireBrutSource && (
+            <p className="text-xs text-emerald-400 flex items-center gap-1 mt-1">
+              📎 extrait de {salaireBrutSource.filename}
+            </p>
+          )}
+        </div>
         <CurrencyField
           id="tp-accessoires"
           label="Revenus accessoires (indépendant, second emploi…)"

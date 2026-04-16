@@ -6,17 +6,22 @@ import { CurrencyField } from '@/components/taxpayer/shared/CurrencyField';
 const PILIER_3A_SALARIE = 7260;
 const PILIER_3A_INDEPENDANT = 36288;
 
+type FieldSource = { documentId: string; filename: string; appliedAt: string };
+
 interface Props {
   draft: TaxpayerDraft;
   year: number;
   canton: CantonConfig;
+  /** Sources de pré-remplissage OCR (session 24). { "step4.pilier3a": {...} } */
+  fieldSources?: Record<string, FieldSource>;
 }
 
-export function Step4Deductions({ draft, year, canton }: Props) {
+export function Step4Deductions({ draft, year, canton, fieldSources }: Props) {
   const updateField = useTaxpayerDraftStore((s) => s.updateField);
   const update = (field: string, value: unknown) => updateField(field, value, 4, year);
   const s = draft.state.step4;
   const isSalarie = draft.state.step2.isSalarie ?? false;
+  const pilier3aSource = fieldSources?.['step4.pilier3a'];
   const pilier3aMax = isSalarie ? PILIER_3A_SALARIE : PILIER_3A_INDEPENDANT;
   const statusLabel = canton.code === 'VD'
     ? (isSalarie ? 'salarié (avec LPP)' : 'indépendant (sans LPP)')
@@ -38,13 +43,21 @@ export function Step4Deductions({ draft, year, canton }: Props) {
       </div>
 
       <div className="space-y-4">
-        <CurrencyField
-          id="tp-3a"
-          label={`Cotisation pilier 3a (max ${pilier3aMax.toLocaleString('fr-CH')} CHF)`}
-          value={s.pilier3a}
-          max={pilier3aMax}
-          onChange={(v) => update('step4.pilier3a', v)}
-        />
+        <div>
+          <CurrencyField
+            id="tp-3a"
+            label={`Cotisation pilier 3a (max ${pilier3aMax.toLocaleString('fr-CH')} CHF)`}
+            value={s.pilier3a}
+            max={pilier3aMax}
+            onChange={(v) => update('step4.pilier3a', v)}
+          />
+          {/* Badge auto-fill — session 24 */}
+          {pilier3aSource && (
+            <p className="text-xs text-emerald-400 flex items-center gap-1 mt-1">
+              📎 extrait de {pilier3aSource.filename}
+            </p>
+          )}
+        </div>
         <CurrencyField
           id="tp-lpp-rachat"
           label="Rachats LPP (2e pilier)"

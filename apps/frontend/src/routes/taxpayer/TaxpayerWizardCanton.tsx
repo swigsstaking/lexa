@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
   ArrowRight,
@@ -15,6 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import { useTaxpayerDraftStore } from '@/stores/taxpayerDraftStore';
+import { lexa } from '@/api/lexa';
 import type { CantonConfig } from '@/config/cantons/types';
 import { Step1Identity } from '@/components/taxpayer/shared/Step1Identity';
 import { Step2Revenues } from '@/components/taxpayer/shared/Step2Revenues';
@@ -47,6 +49,15 @@ export function TaxpayerWizardCanton({ canton }: Props) {
   useEffect(() => {
     void fetch(year);
   }, [fetch, year]);
+
+  // Session 24 — sources de pré-remplissage OCR (soft fail : pas bloquant)
+  const { data: fieldSources } = useQuery({
+    queryKey: ['draft-field-sources', year],
+    queryFn: () => lexa.getDraftFieldSources(year),
+    // On ne bloque pas le wizard si cette requête échoue
+    retry: false,
+    staleTime: 30_000,
+  });
 
   const handleNext = () => {
     if (currentStep < STEPS.length) setStep(currentStep + 1);
@@ -151,9 +162,23 @@ export function TaxpayerWizardCanton({ canton }: Props) {
             className="lg:col-span-2 space-y-6"
           >
             {currentStep === 1 && <Step1Identity draft={draft} year={year} canton={canton} />}
-            {currentStep === 2 && <Step2Revenues draft={draft} year={year} canton={canton} />}
+            {currentStep === 2 && (
+              <Step2Revenues
+                draft={draft}
+                year={year}
+                canton={canton}
+                fieldSources={fieldSources ?? undefined}
+              />
+            )}
             {currentStep === 3 && <Step3Wealth draft={draft} year={year} canton={canton} />}
-            {currentStep === 4 && <Step4Deductions draft={draft} year={year} canton={canton} />}
+            {currentStep === 4 && (
+              <Step4Deductions
+                draft={draft}
+                year={year}
+                canton={canton}
+                fieldSources={fieldSources ?? undefined}
+              />
+            )}
             {currentStep === 5 && <Step5Preview draft={draft} year={year} canton={canton} />}
             {currentStep === 6 && <Step6Generate draft={draft} year={year} canton={canton} />}
 

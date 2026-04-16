@@ -188,6 +188,22 @@ export const lexa = {
 
   getDocument: (documentId: string) =>
     api.get<DocumentMeta>(`/documents/${documentId}`).then((r) => r.data),
+
+  // Session 24 — auto-fill wizard depuis documents OCR
+  applyDocumentToDraft: (documentId: string, year: number) =>
+    api
+      .post<{ ok: boolean; fieldsApplied: string[]; message: string }>(
+        `/documents/${documentId}/apply-to-draft`,
+        { year },
+      )
+      .then((r) => r.data),
+
+  getDraftFieldSources: (year: number) =>
+    api
+      .get<Record<string, { documentId: string; filename: string; appliedAt: string }>>(
+        `/taxpayers/draft/${year}/field-sources`,
+      )
+      .then((r) => r.data),
 };
 
 export type TaxpayerDraft = {

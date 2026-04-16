@@ -1,8 +1,8 @@
 /**
  * Page /documents — Upload + liste des documents OCR
  *
- * Session 23 — V1 minimal : pas de drag-and-drop sophistiqué (session 24),
- * pas d'auto-fill wizard (session 24). Juste upload + liste + champs extraits.
+ * Session 23 — V1 minimal : upload + liste + champs extraits.
+ * Session 24 — bouton "Pré-remplir wizard" pour certificat_salaire + attestation_3a.
  */
 
 import { useRef, useState } from 'react';
@@ -17,8 +17,14 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle2,
+  Wand2,
 } from 'lucide-react';
 import { lexa, type DocumentMeta } from '@/api/lexa';
+
+const CURRENT_FISCAL_YEAR = new Date().getFullYear();
+
+/** Types de documents qui ont un mapping vers le wizard */
+const WIZARD_APPLICABLE_TYPES = new Set(['certificat_salaire', 'attestation_3a']);
 
 const DOC_TYPE_LABELS: Record<string, string> = {
   certificat_salaire: 'Certificat de salaire',
@@ -47,7 +53,14 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function DocumentCard({ doc }: { doc: DocumentMeta }) {
+type DocumentCardProps = {
+  doc: DocumentMeta;
+  onApply: (documentId: string, year: number) => void;
+  applyPending: boolean;
+  applySuccess: boolean;
+};
+
+function DocumentCard({ doc, onApply, applyPending, applySuccess }: DocumentCardProps) {
   const [expanded, setExpanded] = useState(false);
   const typeLabel = DOC_TYPE_LABELS[doc.ocrResult.type] ?? doc.ocrResult.type;
   const typeColor = DOC_TYPE_COLORS[doc.ocrResult.type] ?? DOC_TYPE_COLORS.autre;
@@ -56,6 +69,7 @@ function DocumentCard({ doc }: { doc: DocumentMeta }) {
 
   const fields = doc.ocrResult.extractedFields;
   const fieldEntries = Object.entries(fields);
+  const canApply = WIZARD_APPLICABLE_TYPES.has(doc.ocrResult.type);
 
   return (
     <div className="card p-4 flex flex-col gap-3">
@@ -102,6 +116,27 @@ function DocumentCard({ doc }: { doc: DocumentMeta }) {
         </span>
       </div>
 
+      {/* Bouton pré-remplir wizard — session 24 */}
+      {canApply && (
+        <div className="flex items-center gap-2 pt-1 border-t border-border">
+          <button
+            onClick={() => onApply(doc.documentId, CURRENT_FISCAL_YEAR)}
+            disabled={applyPending}
+            className="btn-primary !text-xs !py-1.5 !px-3 flex items-center gap-1.5"
+            title={`Pré-remplir votre déclaration ${CURRENT_FISCAL_YEAR} avec les données de ce document`}
+          >
+            {applyPending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : applySuccess ? (
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            ) : (
+              <Wand2 className="w-3.5 h-3.5" />
+            )}
+            <span>Pré-remplir wizard {CURRENT_FISCAL_YEAR}</span>
+          </button>
+        </div>
+      )}
+
       {/* Champs extraits */}
       {fieldEntries.length > 0 && (
         <div>
@@ -135,6 +170,9 @@ export function Documents() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [lastUploaded, setLastUploaded] = useState<string | null>(null);
+  const [applyFeedback, setApplyFeedback] = useState<{ docId: string; message: string; ok: boolean } | null>(null);
+  const [applyingDocId, setApplyingDocId] = useState<string | null>(null);
+  const [appliedDocIds, setAppliedDocIds] = useState<Set<string>>(new Set());
 
   const { data: documents, isLoading } = useQuery({
     queryKey: ['documents'],
@@ -152,6 +190,38 @@ export function Documents() {
       setUploadError(err.message || 'Erreur lors de l\'upload');
     },
   });
+
+  const applyMutation = useMutation({
+    mutationFn: ({ documentId, year }: { documentId: string; year: number }) =>
+      lexa.applyDocumentToDraft(documentId, year),
+    onSuccess: (data, variables) => {
+      setApplyingDocId(null);
+      setApplyFeedback({ docId: variables.documentId, message: data.message, ok: data.ok });
+      if (data.ok) {
+        setAppliedDocIds((prev) => new Set([...prev, variables.documentId]));
+        // Invalider le draft pour que le wizard récupère les nouvelles valeurs
+        queryClient.invalidateQueries({ queryKey: ['taxpayer-draft'] });
+        queryClient.invalidateQueries({ queryKey: ['draft-field-sources'] });
+      }
+    },
+    onError: (err: Error, variables) => {
+      setApplyingDocId(null);
+      const message = (err as { response?: { data?: { error?: string; hint?: string } } })
+        ?.response?.data?.error ?? err.message ?? 'Erreur';
+      const hint = (err as { response?: { data?: { hint?: string } } })?.response?.data?.hint;
+      setApplyFeedback({
+        docId: variables.documentId,
+        message: hint ? `${message} — ${hint}` : message,
+        ok: false,
+      });
+    },
+  });
+
+  const handleApply = (documentId: string, year: number) => {
+    setApplyFeedback(null);
+    setApplyingDocId(documentId);
+    applyMutation.mutate({ documentId, year });
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -254,10 +324,42 @@ export function Documents() {
             </div>
           )}
 
+          {/* Feedback apply — session 24 */}
+          {applyFeedback && (
+            <div
+              className={`flex items-start gap-2 text-xs rounded-md p-3 mb-2 ${
+                applyFeedback.ok
+                  ? 'bg-emerald-400/10 text-emerald-400'
+                  : 'bg-red-400/10 text-red-400'
+              }`}
+            >
+              {applyFeedback.ok ? (
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              ) : (
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              )}
+              <span>{applyFeedback.message}</span>
+              {applyFeedback.ok && (
+                <button
+                  onClick={() => navigate(`/workspace/taxpayer?year=${CURRENT_FISCAL_YEAR}`)}
+                  className="ml-auto text-2xs underline hover:no-underline flex-shrink-0"
+                >
+                  Ouvrir le wizard →
+                </button>
+              )}
+            </div>
+          )}
+
           {!isLoading && documents && documents.length > 0 && (
             <div className="flex flex-col gap-3">
               {documents.map((doc) => (
-                <DocumentCard key={doc.documentId} doc={doc} />
+                <DocumentCard
+                  key={doc.documentId}
+                  doc={doc}
+                  onApply={handleApply}
+                  applyPending={applyingDocId === doc.documentId}
+                  applySuccess={appliedDocIds.has(doc.documentId)}
+                />
               ))}
             </div>
           )}
