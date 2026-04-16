@@ -118,6 +118,7 @@ function CanvasInner() {
           <Controls
             className="!bg-stone-900 !border !border-stone-700 !rounded-lg [&>button]:!bg-stone-900 [&>button]:!text-stone-300 [&>button]:!border-stone-700 [&>button:hover]:!bg-stone-800"
             showInteractive={false}
+            style={{ bottom: 88 }}
           />
 
           <MiniMap
@@ -128,6 +129,7 @@ function CanvasInner() {
               return 'rgb(41 37 36)';
             }}
             maskColor="rgb(12 10 9 / 0.7)"
+            style={{ bottom: 88 }}
           />
 
           {/* Panel reset layout */}
