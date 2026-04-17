@@ -31,7 +31,6 @@ import { FiscalTimeline } from '@/components/timeline/FiscalTimeline';
 import { NavDropdown } from '@/components/Nav/NavDropdown';
 import { MobileMenu } from '@/components/Nav/MobileMenu';
 import { StartActionCards } from '@/components/onboarding/StartActionCards';
-import { WorkspaceRatios } from '@/components/workspace/WorkspaceRatios';
 
 export function Workspace() {
   const { t } = useTranslation();
@@ -402,9 +401,6 @@ export function Workspace() {
           <MobileMenu groups={mobileGroups} quickActions={mobileQuickActions} />
         </div>
       </header>
-
-      {/* Bandeau ratios métier */}
-      <WorkspaceRatios />
 
       {/* Canvas hero */}
       <main className="flex-1 relative min-h-0 overflow-hidden">
