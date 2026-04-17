@@ -2,23 +2,41 @@ import crypto from "node:crypto";
 import { queryAsTenant } from "../db/postgres.js";
 
 /**
+ * Normalise une description pour le fingerprint cross-source.
+ * - em-dash / en-dash → tiret simple (Pro utilise em-dash, CAMT n'en a pas)
+ * - ponctuation non-alphanumérique retirée
+ * - espaces normalisés, lowercase, tronqué à 80 chars
+ */
+function normalizeDescription(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/—|–|−/g, "-") // em-dash, en-dash → tiret simple
+    .replace(/[^\w\s-]/g, " ") // retirer la ponctuation résiduelle
+    .replace(/\s+/g, " ") // effondrer les espaces multiples
+    .trim()
+    .slice(0, 80); // tronquer pour cohérence du hash
+}
+
+/**
  * Empreinte courte d'une transaction bancaire pour dedup cross-source.
- * Collision acceptable : 2 paiements exactement identiques le même jour avec même description.
- * Dans ce cas, l'user peut dupliquer manuellement via "dupliquer cette écriture".
+ *
+ * IMPORTANT : IBAN et bankRef ne sont PAS inclus car côté Pro (invoice.paid,
+ * bank.transaction) ces données sont souvent absentes. Le fingerprint se base
+ * uniquement sur (amount, date, description normalisée) — ce trio est suffisant
+ * pour la déduplication CAMT ↔ Pro. La collision sur 2 vrais paiements identiques
+ * le même jour est acceptée (edge case rare, traité via audit).
  */
 export function computeFingerprint(params: {
   amount: number;
   date: string; // YYYY-MM-DD
   description?: string;
-  iban?: string;
-  bankRef?: string; // e.g. SCOR reference from CAMT
+  iban?: string; // ignoré — conservé pour compatibilité des appelants CAMT
+  bankRef?: string; // ignoré — conservé pour compatibilité des appelants CAMT
 }): string {
   const parts = [
     params.amount.toFixed(2),
     params.date,
-    (params.iban || "").toLowerCase().replace(/\s/g, ""),
-    (params.bankRef || "").toLowerCase().trim(),
-    (params.description || "").toLowerCase().trim().replace(/\s+/g, " ").slice(0, 100),
+    normalizeDescription(params.description || ""),
   ];
   return crypto
     .createHash("sha256")
