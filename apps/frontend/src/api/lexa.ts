@@ -217,6 +217,12 @@ export const lexa = {
   getDocument: (documentId: string) =>
     api.get<DocumentMeta>(`/documents/${documentId}`).then((r) => r.data),
 
+  // Drill-down pièce justificative — télécharge le binaire depuis GridFS avec auth JWT
+  downloadDocument: (documentId: string): Promise<Blob> =>
+    api
+      .get(`/documents/${documentId}/binary`, { responseType: 'blob' })
+      .then((r) => r.data as Blob),
+
   // Session 24 — auto-fill wizard depuis documents OCR
   applyDocumentToDraft: (documentId: string, year: number) =>
     api

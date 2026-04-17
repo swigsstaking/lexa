@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { X, ArrowRight } from 'lucide-react';
+import { X, ArrowRight, Paperclip } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { LedgerAccount, LedgerEntry } from '@/api/types';
 import { accountDisplayLabel } from './kaferLabels';
+import { lexa } from '@/api/lexa';
 
 const fmtChf = (n: number) =>
   new Intl.NumberFormat('fr-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
@@ -203,6 +204,18 @@ function Stat({ label, value, emphasize }: { label: string; value: string; empha
   );
 }
 
+async function openDocument(documentId: string) {
+  try {
+    const blob = await lexa.downloadDocument(documentId);
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    // Libérer l'URL après 60s (le browser garde une copie interne)
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } catch {
+    console.error('[LedgerDrawer] openDocument failed for', documentId);
+  }
+}
+
 function TxRow({ tx }: { tx: LedgerEntry }) {
   return (
     <li className="flex items-start justify-between gap-2 px-3 py-2 rounded border border-border bg-bg hover:border-border-strong transition-colors">
@@ -211,6 +224,16 @@ function TxRow({ tx }: { tx: LedgerEntry }) {
           <span>{fmtDate(tx.occurredAt)}</span>
           <span className="text-muted">·</span>
           <span>{tx.lineType === 'debit' ? 'D' : 'C'}</span>
+          {tx.documentId && (
+            <button
+              onClick={() => openDocument(tx.documentId!)}
+              className="text-subtle hover:text-accent transition-colors"
+              title="Voir la pièce justificative"
+              aria-label="Ouvrir le document source"
+            >
+              <Paperclip className="w-3 h-3" />
+            </button>
+          )}
         </div>
         <div className="text-xs text-ink truncate mt-0.5" title={tx.description || '—'}>
           {tx.description || '—'}

@@ -145,6 +145,7 @@ export interface LedgerEntry {
   tvaRate?: number;
   tvaCode?: string;
   confidence?: number;
+  documentId?: string | null; // Pièce justificative OCR — drill-down (migration 012)
 }
 
 export interface LedgerListResponse {

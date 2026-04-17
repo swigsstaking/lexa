@@ -17,6 +17,7 @@ const IngestSchema = z.object({
   counterpartyIban: z.string().optional(),
   source: z.enum(["camt053", "ocr", "manual", "swigs-pro"]).default("manual"),
   tenantId: z.string().uuid().optional(),
+  documentId: z.string().optional(), // Pièce justificative OCR — drill-down ledger
 });
 
 /**
@@ -33,7 +34,7 @@ transactionsRouter.post("/", async (req, res) => {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
   }
 
-  const { source, date, description, amount, currency, counterpartyIban } = parsed.data;
+  const { source, date, description, amount, currency, counterpartyIban, documentId } = parsed.data;
   const tenantId = parsed.data.tenantId ?? req.tenantId;
   const streamId = randomUUID();
 
@@ -53,7 +54,10 @@ transactionsRouter.post("/", async (req, res) => {
           counterpartyIban,
         },
       },
-      metadata: { requestId: req.header("x-request-id") ?? randomUUID() },
+      metadata: {
+        requestId: req.header("x-request-id") ?? randomUUID(),
+        ...(documentId ? { documentId } : {}),
+      },
     });
 
     // Step 2 — classify (via LlmQueue to serialize concurrent requests per tenant)
