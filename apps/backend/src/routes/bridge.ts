@@ -277,13 +277,29 @@ async function handleInvoiceCreated(
   tenantId: string,
   rawData: Record<string, unknown>,
   eventTimestamp: string,
-): Promise<void> {
+): Promise<{ duplicate: boolean }> {
   const parsed = InvoiceCreatedDataSchema.safeParse(rawData);
   if (!parsed.success) {
     console.warn("[bridge] invoice.created — invalid data:", parsed.error.flatten());
-    return;
+    return { duplicate: false };
   }
   const data = parsed.data;
+
+  // Idempotence : vérifier si invoice.created déjà ingéré pour ce proInvoiceId
+  const { rows: existing } = await queryAsTenant<{ id: string }>(
+    tenantId,
+    `SELECT id FROM events
+     WHERE tenant_id = $1
+       AND type = 'TransactionIngested'
+       AND metadata->>'proInvoiceId' = $2
+       AND metadata->>'proEvent' = 'invoice.created'
+     LIMIT 1`,
+    [tenantId, data.invoiceId],
+  );
+  if (existing.length > 0) {
+    console.info("[bridge] invoice.created already ingested, skip invoiceId=%s", data.invoiceId);
+    return { duplicate: true };
+  }
 
   const clientName = extractClientName(data);
   // total TTC : préférer amountTtc, sinon total, sinon 0
@@ -332,6 +348,7 @@ async function handleInvoiceCreated(
   // Classification auto : 1100 Débiteurs (D) / 3200 Prestations de services (C)
   classifyAsync(tenantId, streamId, description, amountTtc, today);
   scheduleLedgerRefresh(tenantId);
+  return { duplicate: false };
 }
 
 // ── Bloc A — Handler invoice.sent (idempotent via proInvoiceId) ───────────────
@@ -445,13 +462,29 @@ async function handleInvoicePaid(
   tenantId: string,
   rawData: Record<string, unknown>,
   eventTimestamp: string,
-): Promise<void> {
+): Promise<{ duplicate: boolean }> {
   const parsed = InvoicePaidDataSchema.safeParse(rawData);
   if (!parsed.success) {
     console.warn("[bridge] invoice.paid — invalid data:", parsed.error.flatten());
-    return;
+    return { duplicate: false };
   }
   const data = parsed.data;
+
+  // Idempotence : vérifier si invoice.paid déjà ingéré pour ce proInvoiceId
+  const { rows: existingPaid } = await queryAsTenant<{ id: string }>(
+    tenantId,
+    `SELECT id FROM events
+     WHERE tenant_id = $1
+       AND type = 'TransactionIngested'
+       AND metadata->>'proInvoiceId' = $2
+       AND metadata->>'proEvent' = 'invoice.paid'
+     LIMIT 1`,
+    [tenantId, data.invoiceId],
+  );
+  if (existingPaid.length > 0) {
+    console.info("[bridge] invoice.paid already ingested, skip invoiceId=%s", data.invoiceId);
+    return { duplicate: true };
+  }
 
   const clientName = extractClientName(data);
   const amountTtc = data.amountTtc ?? data.total ?? 0;
@@ -461,6 +494,7 @@ async function handleInvoicePaid(
   const description = `Paiement facture ${data.invoiceNumber} — ${clientName}`;
 
   // Bloc B — Chercher la facture originale pour reconciliation
+  // Exclure invoice.paid pour ne pas matcher le paiement lui-même
   let linkedInvoiceStreamId: string | null = null;
   try {
     const { rows: originals } = await queryAsTenant<{ stream_id: string }>(
@@ -469,6 +503,7 @@ async function handleInvoicePaid(
        WHERE tenant_id = $1
          AND type = 'TransactionIngested'
          AND metadata->>'proInvoiceId' = $2
+         AND metadata->>'proEvent' IN ('invoice.created', 'invoice.sent')
        ORDER BY occurred_at ASC
        LIMIT 1`,
       [tenantId, data.invoiceId],
@@ -531,19 +566,36 @@ async function handleInvoicePaid(
   // Classification auto : 1020 Banque (D) / 1100 Débiteurs (C) — réconciliation
   classifyAsync(tenantId, streamId, description, amountTtc, paidDate);
   scheduleLedgerRefresh(tenantId);
+  return { duplicate: false };
 }
 
 async function handleExpenseSubmitted(
   tenantId: string,
   rawData: Record<string, unknown>,
   eventTimestamp: string,
-): Promise<void> {
+): Promise<{ duplicate: boolean }> {
   const parsed = ExpenseSubmittedDataSchema.safeParse(rawData);
   if (!parsed.success) {
     console.warn("[bridge] expense.submitted — invalid data:", parsed.error.flatten());
-    return;
+    return { duplicate: false };
   }
   const data = parsed.data;
+
+  // Idempotence : vérifier si expense.submitted déjà ingéré pour ce proExpenseId
+  const { rows: existingExpense } = await queryAsTenant<{ id: string }>(
+    tenantId,
+    `SELECT id FROM events
+     WHERE tenant_id = $1
+       AND type = 'TransactionIngested'
+       AND metadata->>'proExpenseId' = $2
+       AND metadata->>'proEvent' = 'expense.submitted'
+     LIMIT 1`,
+    [tenantId, data.expenseId],
+  );
+  if (existingExpense.length > 0) {
+    console.info("[bridge] expense.submitted already ingested, skip expenseId=%s", data.expenseId);
+    return { duplicate: true };
+  }
 
   const today = data.date ?? new Date().toISOString().slice(0, 10);
   const descriptionParts = [
@@ -589,6 +641,7 @@ async function handleExpenseSubmitted(
   // Classification auto : 6500 Frais admin (D) / 1020 Banque (C)
   classifyAsync(tenantId, streamId, description, -data.amount, today, data.currency);
   scheduleLedgerRefresh(tenantId);
+  return { duplicate: false };
 }
 
 // ── Route principale ──────────────────────────────────────────────────────────
@@ -620,22 +673,35 @@ bridgeRouter.post("/pro-events", requireHmac, async (req, res) => {
 
   const eventTimestamp = timestamp ?? new Date().toISOString();
 
+  // Multi-tenant safety : rejeter en production si aucun mapping trouvé (DEFAULT_TENANT_ID)
+  if (tenantId === DEFAULT_TENANT_ID && process.env.NODE_ENV === "production") {
+    console.warn("[bridge] unmapped Pro event in production, rejecting", { event, rawId });
+    return res.status(202).json({
+      ok: false,
+      reason: "no_tenant_mapping",
+      message: "hubUserId not mapped to a Lexa tenant — use POST /bridge/admin/pro-lexa-mapping to link",
+    });
+  }
+
   try {
+    let result: { duplicate: boolean };
+
     switch (event) {
       case "invoice.created":
-        await handleInvoiceCreated(tenantId, eventData, eventTimestamp);
+        result = await handleInvoiceCreated(tenantId, eventData, eventTimestamp);
         break;
 
       case "invoice.sent":
         await handleInvoiceSent(tenantId, eventData, eventTimestamp);
+        result = { duplicate: false }; // handleInvoiceSent gère l'idempotence en interne
         break;
 
       case "invoice.paid":
-        await handleInvoicePaid(tenantId, eventData, eventTimestamp);
+        result = await handleInvoicePaid(tenantId, eventData, eventTimestamp);
         break;
 
       case "expense.submitted":
-        await handleExpenseSubmitted(tenantId, eventData, eventTimestamp);
+        result = await handleExpenseSubmitted(tenantId, eventData, eventTimestamp);
         break;
 
       default:
@@ -643,6 +709,9 @@ bridgeRouter.post("/pro-events", requireHmac, async (req, res) => {
         return res.status(200).json({ ok: true, ignored: true, event });
     }
 
+    if (result.duplicate) {
+      return res.status(200).json({ ok: true, duplicate: true, event, tenantId });
+    }
     return res.status(201).json({ ok: true, event, tenantId });
   } catch (err) {
     console.error("[bridge] pro-events handler error event=%s:", event, (err as Error).message);
