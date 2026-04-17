@@ -268,9 +268,12 @@ authRouter.get("/me", requireAuth, async (req: Request, res: Response) => {
     if (!user) {
       return res.status(404).json({ error: "user not found" });
     }
+    // Utiliser activeTenantId du JWT (set après switch-tenant) plutôt que le
+    // tenant original du user — permet au badge de se mettre à jour après switch.
+    const activeTenantId = jwtUser.activeTenantId ?? user.tenant_id;
     const companyResult = await query<CompanyRow>(
       "SELECT * FROM companies WHERE tenant_id = $1",
-      [user.tenant_id],
+      [activeTenantId],
     );
     const company = companyResult.rows[0];
     res.json({
