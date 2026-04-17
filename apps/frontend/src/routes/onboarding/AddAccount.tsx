@@ -98,7 +98,7 @@ export function AddAccount() {
           {/* Step 2 — infos base */}
           {step === 2 && (
             <>
-              <button onClick={() => setStep(1)} className="btn-ghost text-xs mb-4">
+              <button type="button" onClick={() => setStep(1)} className="btn-ghost text-xs mb-4">
                 <ArrowLeft className="w-3 h-3" />
                 Retour
               </button>
@@ -121,6 +121,16 @@ export function AddAccount() {
                     onChange={(e) => setName(e.target.value)}
                     required
                     autoFocus
+                    onKeyDown={(e) => {
+                      // Enter dans ce champ appelle directement le submit si tout est valide
+                      // et ne doit pas déclencher de navigation involontaire
+                      if (e.key === 'Enter' && name.trim()) {
+                        e.preventDefault();
+                        void handleSubmit();
+                      } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                      }
+                    }}
                   />
                 </div>
 
@@ -187,6 +197,7 @@ export function AddAccount() {
               )}
 
               <button
+                type="button"
                 onClick={handleSubmit}
                 disabled={!name || submitting}
                 className="btn-primary w-full mt-6"

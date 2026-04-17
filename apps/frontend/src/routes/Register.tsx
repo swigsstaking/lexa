@@ -44,6 +44,12 @@ export function Register() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    // Guard : vérifier que tous les champs requis sont remplis avant de soumettre
+    // (protège contre le submit déclenché par Enter sur un champ ou Tab+Enter)
+    if (!email.trim() || !password || !companyName.trim()) {
+      setError('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
     if (password.length < 8) {
       setError('Mot de passe : minimum 8 caractères');
       return;
@@ -167,6 +173,11 @@ export function Register() {
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 disabled={submitting}
+                onKeyDown={(e) => {
+                  // Empêcher Enter de soumettre le formulaire depuis ce champ
+                  // (Tab + champs suivants avant le bouton submit)
+                  if (e.key === 'Enter') e.preventDefault();
+                }}
               />
             </div>
 
