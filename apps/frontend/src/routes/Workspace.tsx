@@ -27,6 +27,8 @@ import { User } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useChatStore } from '@/stores/chatStore';
 import { LedgerCanvas } from '@/components/canvas/LedgerCanvas';
+import { PeriodModal } from '@/components/canvas/PeriodModal';
+import { usePeriodStore } from '@/stores/periodStore';
 import { ChatOverlay } from '@/components/chat/ChatOverlay';
 import { LedgerModal } from '@/components/ledger/LedgerModal';
 import { FiscalTimeline } from '@/components/timeline/FiscalTimeline';
@@ -537,6 +539,23 @@ export function Workspace() {
       {/* Overlays */}
       <ChatOverlay />
       <LedgerModal open={ledgerOpen} onClose={() => setLedgerOpen(false)} />
+      <WorkspacePeriodModal />
     </div>
+  );
+}
+
+function WorkspacePeriodModal() {
+  const period = usePeriodStore((s) => s.period);
+  const modalOpen = usePeriodStore((s) => s.modalOpen);
+  const closeModal = usePeriodStore((s) => s.closeModal);
+  const setPeriod = usePeriodStore((s) => s.setPeriod);
+  return (
+    <PeriodModal
+      open={modalOpen}
+      onClose={closeModal}
+      year={new Date().getFullYear()}
+      current={period}
+      onSelect={setPeriod}
+    />
   );
 }

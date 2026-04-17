@@ -19,7 +19,6 @@ import { TransactionEdge } from './TransactionEdge';
 import { buildCanvas, buildCollapsedCanvas, COLLAPSE_THRESHOLD } from './layout';
 import { CanvasSkeleton } from './CanvasSkeleton';
 import { LedgerDrawer, type LedgerSelection } from './LedgerDrawer';
-import { PeriodModal } from './PeriodModal';
 import { usePeriodStore } from '@/stores/periodStore';
 
 // nodeTypes stable en dehors du composant pour éviter les re-renders React Flow
@@ -73,10 +72,6 @@ export function LedgerCanvas() {
 
   // Période de filtre depuis store partagé (ouvert via click sur FiscalTimeline)
   const period = usePeriodStore((s) => s.period);
-  const modalOpen = usePeriodStore((s) => s.modalOpen);
-  const closeModal = usePeriodStore((s) => s.closeModal);
-  const setPeriod = usePeriodStore((s) => s.setPeriod);
-  const currentYear = new Date().getFullYear();
 
   // Mode collapse : 'auto' (défaut) ou 'fully-expanded' (forcé par l'user)
   const [collapseMode, setCollapseMode] = useState<CollapseMode>('auto');
@@ -218,13 +213,6 @@ export function LedgerCanvas() {
         accounts={accountsForPeriod}
         entries={filteredEntries}
         onClose={closeDrawer}
-      />
-      <PeriodModal
-        open={modalOpen}
-        onClose={closeModal}
-        year={currentYear}
-        current={period}
-        onSelect={setPeriod}
       />
     </div>
   );
