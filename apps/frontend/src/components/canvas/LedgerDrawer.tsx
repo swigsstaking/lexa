@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { X, ArrowRight, Paperclip } from 'lucide-react';
+import { X, ArrowRight, Paperclip, Briefcase } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { LedgerAccount, LedgerEntry } from '@/api/types';
 import { accountDisplayLabel } from './kaferLabels';
@@ -233,6 +233,15 @@ function TxRow({ tx }: { tx: LedgerEntry }) {
             >
               <Paperclip className="w-3 h-3" />
             </button>
+          )}
+          {tx.source?.startsWith('swigs-pro-') && (
+            <span
+              className="inline-flex items-center gap-0.5 text-accent"
+              title={`Source : ${tx.source}`}
+            >
+              <Briefcase className="w-3 h-3" />
+              <span className="text-2xs font-mono">Pro</span>
+            </span>
           )}
         </div>
         <div className="text-xs text-ink truncate mt-0.5" title={tx.description || '—'}>
