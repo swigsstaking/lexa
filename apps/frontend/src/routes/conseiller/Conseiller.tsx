@@ -9,7 +9,7 @@
 
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
   Lightbulb,
@@ -19,7 +19,9 @@ import {
   Send,
   ChevronRight,
   AlertCircle,
+  Sparkles,
 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { lexa } from '@/api/lexa';
 
 // ─── ConseillerChat overlay ───────────────────────────────────────────────────
@@ -539,6 +541,134 @@ function DividendVsSalaryCard() {
   );
 }
 
+// ─── BriefingSection ─────────────────────────────────────────────────────────
+
+function BriefingSection({ year }: { year: number }) {
+  const queryClient = useQueryClient();
+
+  const { data: briefingsData, isLoading } = useQuery({
+    queryKey: ['briefings', 7],
+    queryFn: () => lexa.listBriefings(7),
+    staleTime: 60_000,
+  });
+
+  const generateMutation = useMutation({
+    mutationFn: () => lexa.generateBriefingNow(year),
+    onSuccess: () => {
+      // Poll après 20s pour récupérer le briefing généré
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['briefings', 7] });
+      }, 20_000);
+    },
+  });
+
+  const today = new Date().toISOString().slice(0, 10);
+  const todayBriefing = briefingsData?.briefings?.find((b) => b.date_for === today);
+  const historyBriefings = briefingsData?.briefings?.filter((b) => b.date_for !== today) ?? [];
+
+  const handleMarkRead = (id: string) => {
+    lexa.markBriefingRead(id).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['briefings', 7] });
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="bg-background border border-border rounded-xl p-6 mb-6 animate-pulse">
+        <div className="h-4 bg-elevated rounded w-1/3 mb-3" />
+        <div className="h-3 bg-elevated rounded w-2/3" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* ── Briefing du jour ── */}
+      {todayBriefing ? (
+        <section className="bg-background border border-border rounded-xl p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="w-5 h-5 text-amber-400" />
+            <h2 className="text-base font-semibold">Briefing du jour</h2>
+            <span className="text-xs text-muted ml-auto font-mono">{todayBriefing.date_for}</span>
+            {todayBriefing.read_at && (
+              <span className="text-xs text-green-500">Lu</span>
+            )}
+          </div>
+          <div className="prose prose-sm prose-invert max-w-none text-sm leading-relaxed
+            prose-headings:text-ink prose-headings:font-semibold prose-headings:mb-2
+            prose-h1:text-base prose-h2:text-sm prose-h3:text-sm
+            prose-p:text-ink/80 prose-li:text-ink/80 prose-strong:text-ink
+            prose-hr:border-border">
+            <ReactMarkdown>{todayBriefing.markdown}</ReactMarkdown>
+          </div>
+          {!todayBriefing.read_at && (
+            <button
+              onClick={() => handleMarkRead(todayBriefing.id)}
+              className="mt-4 text-xs text-muted hover:text-ink transition-colors underline underline-offset-2"
+            >
+              Marquer comme lu
+            </button>
+          )}
+        </section>
+      ) : (
+        <section className="bg-background border border-border rounded-xl p-6 mb-6 text-center">
+          <Sparkles className="w-8 h-8 mx-auto mb-3 text-amber-400/50" />
+          <p className="text-sm text-muted mb-1">Pas encore de briefing pour aujourd'hui.</p>
+          <p className="text-xs text-muted/60 mb-4">
+            Il sera généré automatiquement à 6h du matin, ou vous pouvez le générer maintenant.
+          </p>
+          <button
+            onClick={() => generateMutation.mutate()}
+            disabled={generateMutation.isPending || generateMutation.isSuccess}
+            className="text-xs bg-amber-500 text-white rounded-lg px-4 py-2 hover:bg-amber-600 disabled:opacity-50 transition-colors"
+          >
+            {generateMutation.isPending
+              ? 'Envoi…'
+              : generateMutation.isSuccess
+                ? 'En cours de génération (~20s)…'
+                : 'Générer maintenant'}
+          </button>
+          {generateMutation.isSuccess && (
+            <p className="text-xs text-muted mt-3">
+              Le briefing arrive dans quelques secondes — rechargez si nécessaire.
+            </p>
+          )}
+          {generateMutation.isError && (
+            <p className="text-xs text-danger mt-2 flex items-center gap-1 justify-center">
+              <AlertCircle className="w-3 h-3" />
+              Erreur lors de la génération
+            </p>
+          )}
+        </section>
+      )}
+
+      {/* ── Historique 7 jours ── */}
+      {historyBriefings.length > 0 && (
+        <details className="bg-background border border-border rounded-xl p-4 mb-6">
+          <summary className="cursor-pointer text-sm text-muted hover:text-ink transition-colors select-none">
+            Historique ({historyBriefings.length} briefing{historyBriefings.length > 1 ? 's' : ''})
+          </summary>
+          <div className="mt-4 space-y-4">
+            {historyBriefings.map((b) => (
+              <div key={b.id} className="border-l-2 border-border pl-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-mono text-muted">{b.date_for}</span>
+                  {b.read_at && <span className="text-[10px] text-green-500">Lu</span>}
+                </div>
+                <div className="prose prose-xs prose-invert max-w-none text-xs leading-relaxed
+                  prose-headings:text-ink prose-headings:font-medium prose-headings:text-xs
+                  prose-p:text-ink/70 prose-li:text-ink/70">
+                  <ReactMarkdown>{b.markdown ?? '_Briefing non disponible_'}</ReactMarkdown>
+                </div>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+    </>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export function Conseiller() {
@@ -575,7 +705,7 @@ export function Conseiller() {
             className="flex items-center gap-1.5 text-xs bg-amber-500 text-white rounded-lg px-3 py-1.5 hover:bg-amber-600 transition-colors"
           >
             <Lightbulb className="w-3.5 h-3.5" />
-            Briefing quotidien
+            Briefing IA
           </button>
           <button
             onClick={() => {
@@ -591,6 +721,9 @@ export function Conseiller() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+        {/* ── Briefing quotidien (section principale) ── */}
+        <BriefingSection year={year} />
+
         {/* Intro */}
         <div className="bg-background border border-border rounded-xl p-4">
           <div className="flex items-start gap-3">

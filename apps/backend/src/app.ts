@@ -20,6 +20,8 @@ import { simulateRouter } from "./routes/simulate.js";
 import { fiduciaryRouter } from "./routes/fiduciary.js";
 import { jobsRouter } from "./routes/jobs.js";
 import { connectMongo } from "./db/mongo.js";
+import { conseillerRouter } from "./routes/conseiller.js";
+import { startBriefingScheduler } from "./services/BriefingScheduler.js";
 
 const app = express();
 
@@ -89,6 +91,7 @@ app.use("/audit", requireAuth, auditRouter);
 app.use("/simulate", requireAuth, simulateRouter);
 app.use("/fiduciary", fiduciaryRouter); // requireAuth géré dans le routeur
 app.use("/jobs", jobsRouter); // LLM queue job status (session 37)
+app.use("/conseiller", conseillerRouter); // Briefings quotidiens (session briefing)
 
 // 404
 app.use((_req, res) => {
@@ -112,6 +115,10 @@ const server = app.listen(config.PORT, () => {
   // MongoDB — non-bloquant, Lexa continue à démarrer même si Mongo est down
   connectMongo().catch((err) => {
     console.warn("[mongo] startup connection failed (non-fatal):", err.message);
+  });
+  // BriefingScheduler — cron 06:00 daily, fail graceful si Redis down
+  startBriefingScheduler().catch((err) => {
+    console.warn("[briefings] startup failed (non-fatal):", (err as Error).message);
   });
 });
 

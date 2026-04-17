@@ -131,6 +131,96 @@ REPONSE CONSEILLER:`;
   }
 
   /**
+   * generateDailyBriefing — Génère un briefing fiscal matinal via Ollama.
+   *
+   * Appelé par BriefingScheduler chaque matin à 6h pour chaque tenant actif.
+   * Timeout graceful: si le LLM prend >45s, on retourne un briefing minimal sans crash.
+   */
+  async generateDailyBriefing(input: {
+    tenantId: string;
+    year: number;
+    alerts: Array<{ kind: string; deadline: string; amount?: number; description: string }>;
+    pendingClassifications: number;
+    healthScore: { balance: number; revenueDelta: number; expenseDelta: number; ratio: number };
+  }): Promise<{ content: Record<string, unknown>; markdown: string }> {
+    const today = new Date().toLocaleDateString("fr-CH", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    const alertsText =
+      input.alerts.length > 0
+        ? input.alerts.map((a) => `- [${a.kind.toUpperCase()}] ${a.description} (échéance: ${a.deadline}${a.amount ? `, ~${a.amount.toLocaleString("fr-CH")} CHF` : ""})`).join("\n")
+        : "Aucune alerte urgente dans les 30 prochains jours.";
+
+    const prompt = `Tu es le Conseiller fiscal Lexa. Génère un briefing matinal en Markdown pour le tenant ${input.tenantId}, année ${input.year}.
+
+DATE: ${today}
+
+CONTEXTE:
+- Alertes fiscales prochaines (30 jours):
+${alertsText}
+- Transactions en attente de classification: ${input.pendingClassifications}
+- Score santé comptable: balance CHF ${input.healthScore.balance.toLocaleString("fr-CH")}, ratio revenus/charges ${input.healthScore.ratio}, delta revenus M-1: ${input.healthScore.revenueDelta > 0 ? "+" : ""}${Math.round(input.healthScore.revenueDelta)}%, delta charges M-1: ${input.healthScore.expenseDelta > 0 ? "+" : ""}${Math.round(input.healthScore.expenseDelta)}%
+
+Format Markdown, ton chaleureux mais concis, structure EXACTE:
+# Briefing du ${today}
+## À faire aujourd'hui (échéances < 7 jours)
+## Points de vigilance (alertes, anomalies)
+## Opportunités d'optimisation (rachat LPP, 3a, dividende/salaire si applicable)
+## Santé du dossier (score, tendance)
+
+Max 400 mots. En français. Cite les articles de loi pertinents (LTVA art. 71, LIFD art. 33/161, LHID) quand applicable.
+Si aucune alerte urgente, le dire positivement. Si des transactions sont en attente, encourager la classification.`;
+
+    try {
+      const result = await Promise.race([
+        ollama.generate({
+          model: this.model,
+          prompt,
+          temperature: 0.3,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("LLM timeout after 45s")), 45_000),
+        ),
+      ]) as { response: string };
+
+      return {
+        content: { ...input, generatedAt: new Date().toISOString() },
+        markdown: result.response.trim(),
+      };
+    } catch (err) {
+      console.warn(`[ConseillerAgent] generateDailyBriefing timeout/error:`, (err as Error).message);
+
+      // Fallback minimal — ne pas crasher le scheduler
+      const fallbackMd = `# Briefing du ${today}
+
+## À faire aujourd'hui
+${input.alerts.filter((a) => { const d = new Date(a.deadline); const in7 = new Date(Date.now() + 7 * 86400 * 1000); return d <= in7; }).map((a) => `- ${a.description} (${a.deadline})`).join("\n") || "Aucune échéance urgente."}
+
+## Points de vigilance
+${input.alerts.map((a) => `- ${a.description}`).join("\n") || "Aucune alerte dans les 30 jours."}
+${input.pendingClassifications > 0 ? `\n- ${input.pendingClassifications} transaction(s) en attente de classification.` : ""}
+
+## Opportunités d'optimisation
+- Vérifiez votre pilier 3a 2026 (plafond 7'260 CHF — LIFD art. 33 al. 1 e)
+- Rachat LPP possible selon votre certificat de prévoyance (LIFD art. 33 al. 1 d)
+
+## Santé du dossier
+Balance: CHF ${input.healthScore.balance.toLocaleString("fr-CH")} — ratio revenus/charges: ${input.healthScore.ratio}
+
+_Briefing généré en mode dégradé — conseil indicatif, vérifiez avec votre fiduciaire._`;
+
+      return {
+        content: { ...input, generatedAt: new Date().toISOString(), fallback: true },
+        markdown: fallbackMd,
+      };
+    }
+  }
+
+  /**
    * Re-rank hits pour sources conseiller:
    * - LIFD art.33 → +0.35 (LPP, 3a — déductions phares)
    * - LIFD art.58-68 → +0.3 (bénéfice PM, amortissements)

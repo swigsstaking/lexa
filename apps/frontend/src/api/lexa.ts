@@ -484,6 +484,30 @@ export const lexa = {
     api
       .post<{ token: string; activeTenantId: string }>('/auth/switch-tenant', { tenantId })
       .then((r) => r.data),
+
+  // ── Briefings quotidiens conseiller (session briefing-quotidien) ──────────
+
+  listBriefings: (limit = 7) =>
+    api
+      .get<{
+        briefings: Array<{
+          id: string;
+          date_for: string;
+          markdown: string;
+          content: unknown;
+          read_at: string | null;
+          generated_at: string;
+        }>;
+      }>(`/conseiller/briefings?limit=${limit}`)
+      .then((r) => r.data),
+
+  markBriefingRead: (id: string) =>
+    api.patch<{ ok: boolean }>(`/conseiller/briefings/${id}/read`).then((r) => r.data),
+
+  generateBriefingNow: (year?: number) =>
+    api
+      .post<{ ok: boolean; message: string }>('/conseiller/briefings/generate-now', { year })
+      .then((r) => r.data),
 };
 
 export type TaxpayerDraft = {
