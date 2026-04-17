@@ -81,9 +81,9 @@ export function Workspace() {
   const health = useQuery({ queryKey: ['health'], queryFn: lexa.health });
 
   const { data: ledgerData, isLoading: ledgerLoading } = useQuery({
-    queryKey: ['ledger-list-1'],
+    queryKey: ['ledger', 1],
     queryFn: () => lexa.ledgerList(1),
-    staleTime: 30 * 1000,
+    staleTime: 10 * 1000,
   });
   const hasEntries = ledgerLoading || (ledgerData?.entries?.length ?? 0) > 0;
 

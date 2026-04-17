@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
+  ArrowRight,
   Upload,
   FileText,
   Image,
@@ -433,12 +434,23 @@ export function Documents() {
             </div>
           )}
           {camt053Result && (
-            <div className="flex items-center gap-2 text-xs text-emerald-400">
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-              <span>
-                {camt053Result.imported} transaction{camt053Result.imported !== 1 ? 's' : ''} importée{camt053Result.imported !== 1 ? 's' : ''}
-                {camt053Result.skipped > 0 ? ` · ${camt053Result.skipped} ignorée${camt053Result.skipped !== 1 ? 's' : ''}` : ''}
-              </span>
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2 text-xs text-emerald-400">
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                <span>
+                  {camt053Result.imported} transaction{camt053Result.imported !== 1 ? 's' : ''} importée{camt053Result.imported !== 1 ? 's' : ''}
+                  {camt053Result.skipped > 0 ? ` · ${camt053Result.skipped} ignorée${camt053Result.skipped !== 1 ? 's' : ''}` : ''}
+                </span>
+              </div>
+              {camt053Result.imported > 0 && (
+                <button
+                  onClick={() => navigate('/workspace')}
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  <span>Voir dans le grand livre</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
           )}
         </section>
