@@ -22,6 +22,7 @@ import {
   X,
 } from 'lucide-react';
 import { lexa, type CompanyDraft } from '@/api/lexa';
+import { useActiveCompany } from '@/stores/companiesStore';
 import { Step1IdentityVs } from '@/components/company/vs/Step1IdentityVs';
 import { Step2FinancialsVs } from '@/components/company/vs/Step2FinancialsVs';
 import { Step3CorrectionsVs } from '@/components/company/vs/Step3CorrectionsVs';
@@ -46,6 +47,7 @@ export function PmWizardVs() {
   const params = useParams<{ year?: string }>();
   const year = Number(params.year) || new Date().getFullYear();
   const navigate = useNavigate();
+  const activeCompany = useActiveCompany();
 
   const [draft, setDraft] = useState<CompanyDraft | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,7 +73,8 @@ export function PmWizardVs() {
     } catch {
       // Draft absent → en créer un vide avec un legalName placeholder
       try {
-        const { id } = await lexa.createCompanyDraft(year, CANTON, '');
+        const legalName = activeCompany?.name ?? 'Société';
+        const { id } = await lexa.createCompanyDraft(year, CANTON, legalName);
         const d = await lexa.getCompanyDraft(year, CANTON);
         setDraft(d);
         void id; // utilisé ci-dessus
