@@ -143,7 +143,8 @@ export function PeriodModal({ open, onClose, year, current, onSelect }: Props) {
               </div>
               <button
                 onClick={onClose}
-                className="p-1 rounded hover:bg-elevated text-subtle hover:text-ink transition-colors"
+                className="p-2 rounded hover:bg-elevated text-subtle hover:text-ink transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Fermer"
               >
                 <X className="w-4 h-4" />
               </button>
