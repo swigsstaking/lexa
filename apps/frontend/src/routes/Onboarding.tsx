@@ -21,11 +21,16 @@ import type { CreateCompanyInput, LegalForm } from '@/api/types';
 
 const LEGAL_FORM_ORDER: LegalForm[] = [
   'raison_individuelle',
+  'societe_simple',
+  'snc',
+  'senc',
   'sarl',
   'sa',
-  'association',
+  'sca',
   'cooperative',
+  'association',
   'fondation',
+  'sa_etrangere',
   'autre',
 ];
 

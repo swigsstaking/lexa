@@ -114,11 +114,16 @@
   },
   "legal_forms": {
     "raison_individuelle": "Raison individuelle",
+    "societe_simple": "Société simple",
+    "snc": "Société en nom collectif (SNC)",
+    "senc": "Société en commandite (SenC)",
     "sa": "Société anonyme (SA)",
+    "sca": "Société en commandite par actions (SCA)",
     "sarl": "Société à responsabilité limitée (Sàrl)",
     "cooperative": "Coopérative",
     "association": "Association",
     "fondation": "Fondation",
+    "sa_etrangere": "Succursale de société étrangère",
     "autre": "Autre forme juridique"
   },
   "welcome": {

@@ -14,11 +14,16 @@ const CANTONS = [
 
 const LEGAL_FORMS = [
   'raison_individuelle',
+  'societe_simple',
+  'snc',
+  'senc',
   'sarl',
   'sa',
-  'association',
+  'sca',
   'cooperative',
+  'association',
   'fondation',
+  'sa_etrangere',
   'autre',
 ] as const;
 
