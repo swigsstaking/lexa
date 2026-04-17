@@ -5,6 +5,7 @@ import { eventStore } from "../events/EventStore.js";
 import type { ClassificationResult } from "../agents/classifier/ClassifierAgent.js";
 import { enqueueLlmCall } from "../services/LlmQueue.js";
 import { query, queryAsTenant } from "../db/postgres.js";
+import { scheduleLedgerRefresh } from "../services/LedgerRefresh.js";
 
 export const transactionsRouter = Router();
 
@@ -108,6 +109,9 @@ transactionsRouter.post("/", async (req, res) => {
         classification.durationMs,
       ],
     );
+
+    // Step 5 — trigger async ledger refresh (debounced, non-blocking)
+    scheduleLedgerRefresh(tenantId);
 
     res.status(201).json({
       streamId,

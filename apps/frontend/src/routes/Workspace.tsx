@@ -10,6 +10,7 @@ import {
   Command,
   FileSignature,
   FileText,
+  Loader2,
   LogOut,
   Network,
   Sparkles,
@@ -86,6 +87,19 @@ export function Workspace() {
     staleTime: 10 * 1000,
   });
   const hasEntries = ledgerLoading || (ledgerData?.entries?.length ?? 0) > 0;
+
+  // Bloc B — Processing status polling (stops when pending === 0)
+  const { data: processingStatus } = useQuery({
+    queryKey: ['ledger-processing-status'],
+    queryFn: lexa.ledgerProcessingStatus,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      return data && data.pending === 0 ? false : 3000;
+    },
+    staleTime: 2000,
+  });
+  const isProcessing = (processingStatus?.pending ?? 0) > 0;
+  const hasIngestedButNoEntries = !hasEntries && !ledgerLoading && (processingStatus?.ingested ?? 0) > 0;
 
   // Raccourci cmd+shift+L pour le mode expert
   useEffect(() => {
@@ -378,28 +392,51 @@ export function Workspace() {
 
       {/* Canvas hero */}
       <main className="flex-1 relative min-h-0 overflow-hidden">
-        {/* Fallback mobile — canvas inutilisable sur petit écran */}
-        <div className="md:hidden flex flex-col items-center justify-center h-full gap-4 p-6 text-center">
-          <Network className="w-10 h-10 text-muted" />
-          <div>
-            <p className="text-sm font-medium text-ink mb-1">Vue comptable</p>
-            <p className="text-xs text-muted leading-relaxed">Utilisez le menu ci-dessus pour accéder aux déclarations, à la comptabilité et aux outils IA.</p>
+        {/* Fallback mobile — canvas inutilisable sur petit écran (quand des entrées existent) */}
+        {hasEntries && (
+          <div className="md:hidden flex flex-col items-center justify-center h-full gap-4 p-6 text-center">
+            <Network className="w-10 h-10 text-muted" />
+            <div>
+              <p className="text-sm font-medium text-ink mb-1">Vue comptable</p>
+              <p className="text-xs text-muted leading-relaxed">Utilisez le menu ci-dessus pour accéder aux déclarations, à la comptabilité et aux outils IA.</p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* LedgerCanvas — desktop seulement */}
         <div className="hidden md:block absolute inset-0">
           <LedgerCanvas />
         </div>
 
-        {/* Empty state — desktop, 0 écritures */}
+        {/* Empty state / Processing state — visible sur mobile ET desktop */}
         {!hasEntries && !health.isLoading && (
-          <div className="hidden md:grid absolute inset-0 place-items-center pointer-events-none z-20">
-            <div className="card-elevated p-8 max-w-2xl pointer-events-auto text-center">
-              <Sparkles className="w-8 h-8 text-accent mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-ink mb-2">{t('workspace.empty.title')}</h2>
-              <p className="text-sm text-muted mb-6">{t('workspace.empty.subtitle')}</p>
-              <StartActionCards />
+          <div className="absolute inset-0 grid place-items-center pointer-events-none z-20">
+            <div className="card-elevated p-8 max-w-2xl pointer-events-auto text-center mx-4">
+              {hasIngestedButNoEntries ? (
+                /* Bloc B — état "processing" : transactions importées mais pas encore dans le ledger */
+                <>
+                  <Loader2 className="w-8 h-8 text-accent mx-auto mb-4 animate-spin" />
+                  <h2 className="text-xl font-semibold text-ink mb-2">
+                    L'IA classifie vos premières transactions
+                  </h2>
+                  <p className="text-sm text-muted mb-2">
+                    {processingStatus?.classified ?? 0}/{processingStatus?.ingested ?? 0} classifiées · Le grand livre va apparaître progressivement
+                  </p>
+                  {(processingStatus?.estimatedSecondsRemaining ?? 0) > 0 && (
+                    <p className="text-xs text-subtle">
+                      ~{Math.ceil((processingStatus?.estimatedSecondsRemaining ?? 0) / 60)} min restantes
+                    </p>
+                  )}
+                </>
+              ) : (
+                /* État "vide" normal : aucune transaction importée */
+                <>
+                  <Sparkles className="w-8 h-8 text-accent mx-auto mb-4" />
+                  <h2 className="text-xl font-semibold text-ink mb-2">{t('workspace.empty.title')}</h2>
+                  <p className="text-sm text-muted mb-6">{t('workspace.empty.subtitle')}</p>
+                  <StartActionCards />
+                </>
+              )}
             </div>
           </div>
         )}
@@ -420,6 +457,24 @@ export function Workspace() {
           <Command className="w-3.5 h-3.5 text-muted" />
           <span className="text-2xs text-muted">Cmd+K pour interroger l'IA</span>
         </div>
+
+        {/* Bloc B — Toast sticky "IA classifie…" — visible quand pending > 0 et des entrées existent déjà */}
+        {isProcessing && hasEntries && (
+          <div className="absolute bottom-20 right-6 card-elevated p-4 max-w-sm z-30">
+            <div className="flex items-center gap-3">
+              <Loader2 className="w-5 h-5 text-accent animate-spin flex-shrink-0" />
+              <div>
+                <div className="text-sm font-semibold text-ink">L'IA classifie vos transactions</div>
+                <div className="text-xs text-muted mt-1">
+                  {processingStatus?.classified}/{processingStatus?.ingested} classifiées
+                  {(processingStatus?.estimatedSecondsRemaining ?? 0) > 0 && (
+                    <> · ~{Math.ceil((processingStatus?.estimatedSecondsRemaining ?? 0) / 60)} min restantes</>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Timeline fiscal */}

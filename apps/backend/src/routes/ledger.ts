@@ -161,6 +161,29 @@ ledgerRouter.get("/balance", async (req, res) => {
   });
 });
 
+/**
+ * GET /ledger/processing-status — count ingested vs classified transactions
+ * Used by Workspace to show "IA classifie N transactions…" panel during
+ * background classification (polling every 3s while pending > 0).
+ */
+ledgerRouter.get("/processing-status", async (req, res) => {
+  const result = await query<{ ingested: string; classified: string }>(
+    `SELECT
+       (SELECT COUNT(*) FROM events WHERE tenant_id = $1 AND type = 'TransactionIngested') AS ingested,
+       (SELECT COUNT(*) FROM events WHERE tenant_id = $1 AND type = 'TransactionClassified') AS classified`,
+    [req.tenantId],
+  );
+
+  const ingested = Number(result.rows[0]?.ingested ?? 0);
+  const classified = Number(result.rows[0]?.classified ?? 0);
+  const pending = Math.max(0, ingested - classified);
+
+  // Heuristic: ~10s per transaction (observed cadence after classifier quick-wins)
+  const estimatedSecondsRemaining = pending * 10;
+
+  res.json({ ingested, classified, pending, estimatedSecondsRemaining });
+});
+
 /** POST /ledger/refresh — manually refresh the materialized view */
 ledgerRouter.post("/refresh", async (req, res) => {
   const started = Date.now();

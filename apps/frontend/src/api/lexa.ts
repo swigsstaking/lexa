@@ -84,6 +84,13 @@ export const lexa = {
   ledgerList: (limit = 20) =>
     api.get<LedgerListResponse>('/ledger', { params: { limit } }).then((r) => r.data),
 
+  ledgerProcessingStatus: () =>
+    api
+      .get<{ ingested: number; classified: number; pending: number; estimatedSecondsRemaining: number }>(
+        '/ledger/processing-status',
+      )
+      .then((r) => r.data),
+
   // Execution layer — formulaires officiels
   generateTvaDecompte: (input: {
     quarter: 1 | 2 | 3 | 4;
@@ -443,7 +450,16 @@ export const lexa = {
     const form = new FormData();
     form.append('file', file);
     return api
-      .post<{ imported: number; skipped: number; message: string }>(
+      .post<{
+        ingested: number;
+        skipped: number;
+        failed: number;
+        transactionsCount: number;
+        accountIban?: string;
+        accountName?: string;
+        currency?: string;
+        warnings?: string[];
+      }>(
         '/connectors/camt053/upload',
         form,
         { headers: { 'Content-Type': undefined } },

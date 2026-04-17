@@ -11,6 +11,7 @@ import { requireAuth } from "../middleware/requireAuth.js";
 import { config } from "../config/index.js";
 import { proWebhookClient } from "../services/ProWebhookClient.js";
 import { parseCamt053 } from "../services/Camt053Parser.js";
+import { scheduleLedgerRefresh } from "../services/LedgerRefresh.js";
 
 export const connectorsRouter = Router();
 
@@ -190,6 +191,9 @@ connectorsRouter.post("/bank/ingest", requireHmac, async (req, res) => {
           console.warn("[pro-webhook] fire-and-forget failed:", (err as Error).message);
         });
       }
+
+      // Trigger debounced ledger refresh (non-blocking, ~2.5s after last classified tx)
+      scheduleLedgerRefresh(tenantId);
 
       results.push({
         txId: tx.txId,
