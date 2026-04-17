@@ -33,7 +33,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { eventStore } from "../events/EventStore.js";
 import { enqueueLlmCall } from "../services/LlmQueue.js";
-import { scheduleLedgerRefresh } from "../services/LedgerRefresh.js";
+import { scheduleLedgerRefresh, flushLedgerRefresh } from "../services/LedgerRefresh.js";
 import { requireHmac } from "../middleware/requireHmac.js";
 import { query, queryAsTenant } from "../db/postgres.js";
 import type { ClassificationResult } from "../agents/classifier/ClassifierAgent.js";
@@ -185,6 +185,61 @@ const BridgeEventSchema = z.object({
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /**
+ * Classification déterministe pour les events Swigs Pro.
+ * Bypasse le LLM — les comptes sont fixes selon le type d'event.
+ */
+type ProClassificationHint = {
+  debitAccount: string;
+  creditAccount: string;
+  reasoning: string;
+};
+
+function deterministicProClassification(
+  proEvent: string,
+  amount: number,
+): ProClassificationHint {
+  switch (proEvent) {
+    case "invoice.created":
+    case "invoice.sent":
+      return {
+        debitAccount: "1100", // Créances clients / Débiteurs
+        creditAccount: "3200", // Prestations de services
+        reasoning: "Facture client émise (Pro event déterministe)",
+      };
+    case "invoice.paid":
+      return {
+        debitAccount: "1020", // Banque
+        creditAccount: "1100", // Débiteurs (encaissement)
+        reasoning: "Paiement facture client (Pro event déterministe)",
+      };
+    case "expense.submitted":
+      return {
+        debitAccount: "6500", // Frais administratifs
+        creditAccount: "1020", // Banque
+        reasoning: "Note de frais employé (Pro event déterministe)",
+      };
+    case "bank.transaction":
+      return amount >= 0
+        ? {
+            debitAccount: "1020",
+            creditAccount: "3200",
+            reasoning: "Encaissement bancaire (Pro bank.transaction déterministe)",
+          }
+        : {
+            debitAccount: "6500",
+            creditAccount: "1020",
+            reasoning: "Décaissement bancaire (Pro bank.transaction déterministe)",
+          };
+    default:
+      return {
+        debitAccount: "UNKNOWN",
+        creditAccount: "UNKNOWN",
+        reasoning: `Unknown Pro event: ${proEvent}`,
+      };
+  }
+}
+
+/**
  * Extraire le nom du client depuis le champ polymorphe `client` de Swigs Pro.
  * client peut être une string ou un objet { name, email, ... }
  */
@@ -207,6 +262,10 @@ function extractClientName(data: {
 /**
  * Enqueue classification et persiste TransactionClassified + ai_decisions.
  * Fire-and-forget — ne bloque pas la réponse HTTP.
+ *
+ * Si `deterministicHint` est fourni, bypasse le LLM et persiste directement
+ * la classification déterministe (confidence=1.0, agent=pro-bridge-deterministic).
+ * Utilisé pour tous les events Swigs Pro dont les comptes sont connus d'avance.
  */
 function classifyAsync(
   tenantId: string,
@@ -215,7 +274,70 @@ function classifyAsync(
   amount: number,
   date: string,
   currency = "CHF",
+  deterministicHint?: ProClassificationHint,
 ): void {
+  // ── Branche déterministe : bypass LLM ────────────────────────────────────
+  if (deterministicHint) {
+    void (async () => {
+      try {
+        const amountHt = Math.round((amount / 1.081) * 100) / 100; // TVA 8.1%
+        const classifiedEvent = await eventStore.append({
+          tenantId,
+          streamId,
+          event: {
+            type: "TransactionClassified",
+            payload: {
+              transactionStreamId: streamId,
+              agent: "pro-bridge-deterministic",
+              model: "deterministic",
+              confidence: 1.0,
+              debitAccount: deterministicHint.debitAccount,
+              creditAccount: deterministicHint.creditAccount,
+              amountHt,
+              amountTtc: amount,
+              tvaRate: 8.1,
+              tvaCode: "N8",
+              costCenter: undefined,
+              reasoning: deterministicHint.reasoning,
+              citations: [],
+              alternatives: [],
+            },
+          },
+          metadata: { durationMs: 0, deterministic: true },
+        });
+
+        await queryAsTenant(
+          tenantId,
+          `INSERT INTO ai_decisions
+           (event_id, tenant_id, agent, model, confidence, reasoning, citations, alternatives, duration_ms)
+           VALUES ($1, $2, $3, $4, $5, $6, '[]'::jsonb, '[]'::jsonb, $7)`,
+          [
+            classifiedEvent.id,
+            tenantId,
+            "pro-bridge-deterministic",
+            "deterministic",
+            1.0,
+            deterministicHint.reasoning,
+            0,
+          ],
+        );
+
+        // Flush immédiat : la vue matérialisée doit refléter l'écriture sans délai
+        setTimeout(() => {
+          flushLedgerRefresh(tenantId);
+        }, 500); // 500ms laisse le temps au TransactionClassified d'être inséré
+      } catch (err) {
+        console.warn(
+          "[bridge] deterministic classify persist failed streamId=%s: %s",
+          streamId,
+          (err as Error).message,
+        );
+      }
+    })();
+    return;
+  }
+
+  // ── Branche LLM : comportement existant ─────────────────────────────────
   enqueueLlmCall(tenantId, "classifier", {
     date,
     description: descriptionForClassifier,
@@ -356,8 +478,9 @@ async function handleInvoiceCreated(
     amountTtc,
   );
 
-  // Classification auto : 1100 Débiteurs (D) / 3200 Prestations de services (C)
-  classifyAsync(tenantId, streamId, description, amountTtc, today);
+  // Classification déterministe : 1100 Débiteurs (D) / 3200 Prestations de services (C)
+  classifyAsync(tenantId, streamId, description, amountTtc, today, "CHF",
+    deterministicProClassification("invoice.created", amountTtc));
   scheduleLedgerRefresh(tenantId);
   return { duplicate: false };
 }
@@ -462,8 +585,9 @@ async function handleInvoiceSent(
     amountTtc,
   );
 
-  // Classification auto : 1100 Débiteurs (D) / 3200 Prestations (C)
-  classifyAsync(tenantId, streamId, description, amountTtc, today);
+  // Classification déterministe : 1100 Débiteurs (D) / 3200 Prestations (C)
+  classifyAsync(tenantId, streamId, description, amountTtc, today, "CHF",
+    deterministicProClassification("invoice.sent", amountTtc));
   scheduleLedgerRefresh(tenantId);
 }
 
@@ -599,8 +723,9 @@ async function handleInvoicePaid(
     linkedInvoiceStreamId ?? "none",
   );
 
-  // Classification auto : 1020 Banque (D) / 1100 Débiteurs (C) — réconciliation
-  classifyAsync(tenantId, streamId, description, amountTtc, paidDate);
+  // Classification déterministe : 1020 Banque (D) / 1100 Débiteurs (C) — réconciliation
+  classifyAsync(tenantId, streamId, description, amountTtc, paidDate, "CHF",
+    deterministicProClassification("invoice.paid", amountTtc));
   scheduleLedgerRefresh(tenantId);
   return { duplicate: false };
 }
@@ -674,8 +799,9 @@ async function handleExpenseSubmitted(
     data.amount,
   );
 
-  // Classification auto : 6500 Frais admin (D) / 1020 Banque (C)
-  classifyAsync(tenantId, streamId, description, -data.amount, today, data.currency);
+  // Classification déterministe : 6500 Frais admin (D) / 1020 Banque (C)
+  classifyAsync(tenantId, streamId, description, -data.amount, today, data.currency,
+    deterministicProClassification("expense.submitted", data.amount));
   scheduleLedgerRefresh(tenantId);
   return { duplicate: false };
 }
@@ -758,8 +884,9 @@ async function handleBankTransaction(
     bankDate,
   );
 
-  // Classification auto fire-and-forget
-  classifyAsync(tenantId, streamId, description, data.amount, bankDate, data.currency);
+  // Classification déterministe fire-and-forget
+  classifyAsync(tenantId, streamId, description, data.amount, bankDate, data.currency,
+    deterministicProClassification("bank.transaction", data.amount));
   scheduleLedgerRefresh(tenantId);
   return { duplicate: false };
 }
