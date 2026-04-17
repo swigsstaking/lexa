@@ -22,10 +22,10 @@ export async function startBriefingScheduler(): Promise<void> {
   try {
     const queue = new Queue("briefings-daily", { connection: redisConnection });
 
-    // Schedule: every day at 6:00 (heure serveur)
+    // Schedule: every day at 6:00 heure suisse (Europe/Zurich = UTC+1/+2)
     await queue.upsertJobScheduler(
       "generate-all-tenants",
-      { pattern: "0 6 * * *" },
+      { pattern: "0 6 * * *", tz: "Europe/Zurich" },
       { name: "generate-all-tenants", data: {} },
     );
 

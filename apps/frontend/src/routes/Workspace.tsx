@@ -101,6 +101,18 @@ export function Workspace() {
   const isProcessing = (processingStatus?.pending ?? 0) > 0;
   const hasIngestedButNoEntries = !hasEntries && !ledgerLoading && (processingStatus?.ingested ?? 0) > 0;
 
+  // BUG3 fix: quand le processing passe à pending=0, invalider le ledger
+  // pour forcer un refetch et afficher les entries nouvellement classifiées.
+  const prevPendingRef = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    const pending = processingStatus?.pending;
+    if (prevPendingRef.current !== undefined && prevPendingRef.current > 0 && pending === 0) {
+      // Transition pending>0 → 0 : les classifications sont terminées, refetch le ledger
+      queryClient.invalidateQueries({ queryKey: ['ledger'] });
+    }
+    prevPendingRef.current = pending;
+  }, [processingStatus?.pending, queryClient]);
+
   // Raccourci cmd+shift+L pour le mode expert
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

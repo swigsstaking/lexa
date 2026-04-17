@@ -555,16 +555,23 @@ function BriefingSection({ year }: { year: number }) {
   const generateMutation = useMutation({
     mutationFn: () => lexa.generateBriefingNow(year),
     onSuccess: () => {
-      // Poll après 20s pour récupérer le briefing généré
+      // Poll à 20s et 35s pour récupérer le briefing généré (~25s côté Ollama)
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['briefings', 7] });
       }, 20_000);
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['briefings', 7] });
+      }, 35_000);
     },
   });
 
   const today = new Date().toISOString().slice(0, 10);
-  const todayBriefing = briefingsData?.briefings?.find((b) => b.date_for === today);
-  const historyBriefings = briefingsData?.briefings?.filter((b) => b.date_for !== today) ?? [];
+  // BUG4 fix: b.date_for peut être "2026-04-17" (DATE PG) ou "2026-04-17T00:00:00.000Z"
+  // selon le driver Postgres. On normalise les deux formats en slicant les 10 premiers chars.
+  const normDate = (d: string | null | undefined): string =>
+    d ? (typeof d === 'string' ? d.slice(0, 10) : new Date(d).toISOString().slice(0, 10)) : '';
+  const todayBriefing = briefingsData?.briefings?.find((b) => normDate(b.date_for) === today);
+  const historyBriefings = briefingsData?.briefings?.filter((b) => normDate(b.date_for) !== today) ?? [];
 
   const handleMarkRead = (id: string) => {
     lexa.markBriefingRead(id).then(() => {

@@ -11,7 +11,7 @@ import { requireAuth } from "../middleware/requireAuth.js";
 import { config } from "../config/index.js";
 import { proWebhookClient } from "../services/ProWebhookClient.js";
 import { parseCamt053 } from "../services/Camt053Parser.js";
-import { scheduleLedgerRefresh } from "../services/LedgerRefresh.js";
+import { scheduleLedgerRefresh, flushLedgerRefresh } from "../services/LedgerRefresh.js";
 
 export const connectorsRouter = Router();
 
@@ -392,6 +392,9 @@ async function ingestCamt053Transactions(
               cl.durationMs,
             ],
           );
+
+          // Trigger debounced ledger refresh after each classification
+          scheduleLedgerRefresh(tenantId);
         } catch (classErr) {
           console.warn(
             `[camt053] classifier bg failed for ${streamId}:`,
@@ -489,6 +492,13 @@ connectorsRouter.post(
     console.info(
       `[camt053] tenant=${tenantId} msgId=${messageId} total=${transactions.length} ingested=${stats.ingested} skipped=${stats.skipped} failed=${stats.failed}`,
     );
+
+    // Flush ledger refresh immediately after ingestion (classifications run in background;
+    // each classify also calls scheduleLedgerRefresh, but flushing now ensures the view
+    // reflects at least the ingested transactions and any already-classified ones)
+    if (stats.ingested > 0) {
+      flushLedgerRefresh(tenantId);
+    }
 
     res.status(201).json({
       messageId,

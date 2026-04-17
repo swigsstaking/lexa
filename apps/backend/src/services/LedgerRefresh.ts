@@ -14,16 +14,19 @@
 
 import { query } from "../db/postgres.js";
 
-const DEBOUNCE_MS = 2500; // 2.5s debounce per tenant
+const DEBOUNCE_MS = 2500; // 2.5s trailing debounce per tenant
 
 const pendingTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 /**
  * Schedule a debounced ledger refresh for the given tenant.
  * Fire-and-forget: never throws.
+ *
+ * Trailing debounce: fires 2.5s after the LAST call for this tenant.
+ * For large CAMT batches (50+ tx), use refreshNow() at end of batch instead.
  */
 export function scheduleLedgerRefresh(tenantId: string): void {
-  // Clear any pending timer for this tenant
+  // Clear any pending timer for this tenant (trailing debounce)
   const existing = pendingTimers.get(tenantId);
   if (existing) clearTimeout(existing);
 
@@ -33,6 +36,18 @@ export function scheduleLedgerRefresh(tenantId: string): void {
   }, DEBOUNCE_MS);
 
   pendingTimers.set(tenantId, timer);
+}
+
+/**
+ * Flush any pending debounce and refresh immediately.
+ * Use at end of batch operations (e.g., CAMT import) to ensure the
+ * materialized view is refreshed even if classify calls kept resetting the timer.
+ */
+export function flushLedgerRefresh(tenantId: string): void {
+  const existing = pendingTimers.get(tenantId);
+  if (existing) clearTimeout(existing);
+  pendingTimers.delete(tenantId);
+  doRefresh(tenantId);
 }
 
 async function doRefresh(tenantId: string): Promise<void> {

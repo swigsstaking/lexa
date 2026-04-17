@@ -227,7 +227,12 @@ export function Documents() {
 
   // CAMT.053 state
   const camt053InputRef = useRef<HTMLInputElement>(null);
-  const [camt053Result, setCamt053Result] = useState<{ imported: number; skipped: number; message: string } | null>(null);
+  const [camt053Result, setCamt053Result] = useState<{
+    ingested: number;
+    skipped: number;
+    failed: number;
+    transactionsCount: number;
+  } | null>(null);
   const [camt053Error, setCamt053Error] = useState<string | null>(null);
 
   const { data: documents, isLoading } = useQuery({
@@ -438,11 +443,11 @@ export function Documents() {
               <div className="flex items-center gap-2 text-xs text-emerald-400">
                 <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
                 <span>
-                  {camt053Result.imported} transaction{camt053Result.imported !== 1 ? 's' : ''} importée{camt053Result.imported !== 1 ? 's' : ''}
+                  {camt053Result.ingested} transaction{camt053Result.ingested !== 1 ? 's' : ''} importée{camt053Result.ingested !== 1 ? 's' : ''}
                   {camt053Result.skipped > 0 ? ` · ${camt053Result.skipped} ignorée${camt053Result.skipped !== 1 ? 's' : ''}` : ''}
                 </span>
               </div>
-              {camt053Result.imported > 0 && (
+              {camt053Result.ingested > 0 && (
                 <button
                   onClick={() => navigate('/workspace')}
                   className="btn-secondary flex items-center gap-2"

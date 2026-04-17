@@ -51,24 +51,34 @@ export function Register() {
         password,
         company: { name: companyName, legalForm, canton, isVatSubject },
       });
-      // Bloc D — fix race condition : setAuth triggers Zustand state update which
-      // may cause App to re-render and RedirectIfAuthed to redirect to /workspace
-      // before navigate('/welcome') fires (1/3 chance observed in QA).
-      // Fix: navigate FIRST to a protected route (RequireAuth will see token=null
-      // momentarily and redirect to /login — but we immediately set auth state
-      // in the next microtask, so by the time /login renders, token is set and
-      // RedirectIfAuthed on /login sends user back to /workspace... not ideal.
+      // Fix BUG2: race condition entre setAuth (Zustand) et navigate('/welcome').
+      // RedirectIfAuthed sur /register voit le token dès que setAuth() est appelé
+      // et redirige vers /workspace avant que navigate('/welcome') puisse s'exécuter.
       //
-      // Correct fix: set auth state synchronously via Zustand external store
-      // access THEN navigate. Since Zustand persist is synchronous (localStorage),
-      // and React 18 batches state updates inside async handlers, navigate should
-      // fire within the same batch as setAuth, preventing the RedirectIfAuthed
-      // from seeing the token before navigate captures the /welcome destination.
-      setAuth(result.token, result.user);
+      // Solution : pré-écrire le token dans localStorage (key 'lexa.auth') AVANT
+      // d'appeler setAuth(), puis naviguer. Zustand persist hydrate depuis localStorage
+      // au montage du composant suivant, donc RequireAuth sur /welcome verra le token.
+      // setAuth() est ensuite appelé pour sync le state mémoire sans provoquer de
+      // re-render de RedirectIfAuthed (on est déjà sur /welcome à ce moment).
       if (result.company) {
         addCompany(result.company);
       }
+      // Pré-persister dans localStorage pour que RequireAuth sur /welcome ait le token
+      const authState = {
+        state: {
+          token: result.token,
+          user: result.user,
+          activeTenantId: result.user.tenantId,
+        },
+        version: 0,
+      };
+      localStorage.setItem('lexa.auth', JSON.stringify(authState));
+      // Naviguer vers /welcome AVANT de mettre à jour le store Zustand en mémoire.
+      // Ceci évite que RedirectIfAuthed (sur /register) ne voit le nouveau token
+      // et redirige vers /workspace.
       navigate('/welcome', { replace: true, state: { firstLogin: true } });
+      // Sync le store Zustand en mémoire (après navigation, on n'est plus sur /register)
+      setAuth(result.token, result.user);
     } catch (err) {
       if (err instanceof AxiosError) {
         if (err.response?.status === 409) {
