@@ -9,8 +9,8 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ 5. INTERFACE      Canvas + conversationnel + timeline       │
-│                   React 18 + Vite + react-flow + Zustand   │
+│ 5. INTERFACE      Grand livre visuel + conversationnel + timeline │
+│                   React 18 + Vite + react-flow + Zustand        │
 ├─────────────────────────────────────────────────────────────┤
 │ 4. EXECUTION      Générateurs de formulaires déclaratifs    │
 │                   Templates YAML versionnés                 │
@@ -199,7 +199,7 @@ submission:
 
 - **React 18 + Vite 5**
 - **TailwindCSS 3**
-- **react-flow** ou **tldraw** (à benchmarker) pour le canvas infini
+- **react-flow** pour le grand livre visuel (graphe de flux comptables)
 - **Zustand** pour l'état global
 - **TanStack Query v5** pour les mutations / sync serveur
 - **framer-motion** pour animations subtiles
@@ -208,16 +208,18 @@ submission:
 
 ### Principes d'interface (les "2 ans d'avance")
 
-1. **Canvas spatial** remplace le plan comptable tabulaire
-2. **Chat conversationnel first** (pas un gadget latéral)
-3. **Timeline vivante** en bas (scroll dans l'année fiscale)
-4. **Agents visibles** comme entités sur le canvas
+1. **Grand livre visuel** remplace le plan comptable tabulaire — graphe de flux comptables (react-flow, spécialisé plan Käfer)
+2. **Chat conversationnel first** (Cmd+K, pas un gadget latéral)
+3. **Timeline fiscale interactive** (scroll dans l'année fiscale, filtrable)
+4. **Wizards guidés** pour déclarations (TVA, fiscale PP/PM, Swissdec)
 5. **Briefing quotidien proactif** (inspiré de Swigs Pro)
 6. **Multi-modal total** (photo/voix/drag/email/QR)
 
+Note V2 (décision 2026-04-16) : les agents visibles comme entités sur un canvas infini sont reportés après feedback beta fiduciaire.
+
 ### Modes de vue (togglable)
 
-- **Canvas** (défaut, spatial)
+- **Grand livre visuel** (défaut, graphe react-flow)
 - **Timeline** (chronologique pure)
 - **Documents** (bibliothèque OCR)
 - **Conversations** (historique IA)
@@ -267,7 +269,7 @@ submission:
 ## Décisions architecturales ouvertes
 
 1. **Event store maison ou librairie ?** (pgboss / EventStoreDB / custom sur Postgres) → reco : **custom sur Postgres** pour v1, simple et suffisant
-2. **Canvas : react-flow ou tldraw ?** → benchmark prévu en session 2 ou 3 sur un prototype
+2. **Canvas library** → tranché : **react-flow** (déjà utilisé pour le LedgerCanvas dans `/workspace`) — tldraw hors scope V1
 3. **Agent orchestrator : LangGraph, CrewAI, ou custom ?** → reco : **custom léger** (contrôle total, pas de dépendance lourde)
 4. **Multi-tenant : schema-per-tenant ou shared schema + tenant_id ?** → reco : **shared schema + tenant_id** (RLS Postgres pour l'isolation)
 

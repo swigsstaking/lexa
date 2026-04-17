@@ -13,7 +13,7 @@
 **Ce qui la distingue radicalement de Bexio, Abacus, Accounto, Banana et Run my Accounts** :
 
 1. **Zéro saisie manuelle** — ingestion CAMT.053 bancaire + OCR + email forward + QR-facture. L'IA classifie, l'humain valide.
-2. **Interface spatiale, pas tabulaire** — canvas infini avec timeline vivante et agents visibles, au lieu de tableaux Excel-like.
+2. **Interface dense et exploratoire, pas tabulaire** — grand livre visuel graphique (graphe de flux comptables), timeline fiscale interactive, navigation par clic direct sur les flux comptables, au lieu de tableaux Excel-like.
 3. **Clôture continue** — les livres sont toujours à jour, toujours réconciliés. Pas de stress de bouclement annuel.
 4. **Optimisation proactive** — l'IA détecte les économies fiscales *pendant* l'année, pas après.
 5. **IA 100% locale** — aucune donnée ne quitte le serveur DGX Spark du client/hébergeur.
@@ -153,17 +153,19 @@ L'IA remplit le template, l'utilisateur voit le PDF/XML officiel généré, sign
 
 ### Couche 5 — Interface
 
-Voir [`04-interface/canvas-paradigm.md`](../04-interface/canvas-paradigm.md) (à créer).
+Voir [`04-interface/interface-paradigm.md`](../04-interface/interface-paradigm.md) (à créer).
 
 Principes directeurs :
-1. **Spatial, pas tabulaire** (react-flow / tldraw)
-2. **Conversationnel first** (chat primaire, pas gadget)
-3. **Timeline vivante** (passé consolidé, présent en cours, futur prédit)
-4. **Agents visibles** (entités sur le canvas, raisonnement en temps réel)
+1. **Grand livre visuel (graphe de flux comptables)** remplace le plan comptable tabulaire — react-flow utilisé pour le graphe métier spécialisé, pas un canvas infini générique
+2. **Chat conversationnel first** (Cmd+K primaire, pas gadget)
+3. **Timeline fiscale interactive** filtrable (passé consolidé, présent en cours, futur prédit)
+4. **Wizards guidés** pour déclarations (TVA, fiscales, Swissdec)
 5. **Briefing quotidien proactif** (comme Swigs Pro, mais poussé)
 6. **Multi-modal total** (photo, voix, drag-drop, email forward, QR)
 
-Stack : React 18 + Vite 5 + TailwindCSS + **react-flow** ou **tldraw** pour le canvas, **Zustand** pour l'état, **TanStack Query** pour les mutations, **framer-motion** pour les animations subtiles.
+Note V2 : les agents visibles comme entités sur un canvas infini (raisonnement en temps réel visible) sont reportés en V2 après feedback beta fiduciaire — décision 2026-04-16.
+
+Stack : React 18 + Vite 5 + TailwindCSS + **react-flow** (grand livre visuel), **Zustand** pour l'état, **TanStack Query** pour les mutations, **framer-motion** pour les animations subtiles.
 
 Esthétique : dense mais calme, typographie sérieuse (données financières = gravité visuelle), dark mode par défaut, inspiration Linear / Arc / Things 3.
 
@@ -204,7 +206,7 @@ Modèles exclusivement ceux **déjà présents sur le Spark** :
 
 - **React 18 + Vite 5**
 - **TailwindCSS 3**
-- **react-flow** ou **tldraw** pour le canvas infini
+- **react-flow** pour le grand livre visuel (graphe de flux comptables)
 - **Zustand** pour l'état global
 - **TanStack Query v5** pour les mutations/sync serveur
 - **framer-motion** pour les animations
@@ -285,7 +287,7 @@ Voir [`05-roadmap/milestones.md`](../05-roadmap/milestones.md) pour le détail.
 | Trimestre | Livrable clé |
 |---|---|
 | **T1 2026** | Whitepaper, archi validée, knowledge base fédérale complétée (prototype → v1), OCR pipeline intégré |
-| **T2 2026** | Backend event-sourced, agents classifier + TVA, ingestion CAMT.053, UI canvas v0 |
+| **T2 2026** | Backend event-sourced, agents classifier + TVA, ingestion CAMT.053, UI grand livre visuel v0 |
 | **T3 2026** | MVP comptable : ingestion + classification + TVA pour indépendants (alpha interne) |
 | **T4 2026** | Beta privée — 5 fiduciaires partenaires ; ajout lois cantonales GE + VD + FR |
 | **T1 2027** | Clôture annuelle continue, agents fiscal-PP (GE + VD), simulateur fiscal |
@@ -322,6 +324,27 @@ Voir [`05-roadmap/milestones.md`](../05-roadmap/milestones.md) pour le détail.
 4. **Degré d'autonomie de l'IA** : peut-elle valider seule les écritures < seuil (ex : 50 CHF), ou toujours humain ?
 5. **Langue v1** : FR uniquement, ou FR+DE dès le départ ?
 6. **Intégration e-banking** : API bancaires directes (peu disponibles en CH) ou import CAMT.053 manuel ?
+
+### Décision tranchée — 2026-04-16
+
+**Canvas spatial ambitieux (agents visibles comme nodes sur un canvas infini)** → reporté en V2 après feedback beta fiduciaire.
+
+**Raison** : après les itérations du workspace (session 38), le paradigme "canvas infini avec tous les agents visibles" n'a pas encore été validé par des utilisateurs réels. Imposer un paradigme UX radical sans validation beta serait risqué. La V1 garde le **grand livre visuel** (graphe de flux comptables avec react-flow, déjà implémenté dans `/workspace`) comme différenciateur fort vs Bexio/Abacus, couplé à une interface classique Linear-like dense et exploratoire.
+
+**Ce qui reste V1 (différenciateurs forts préservés)** :
+- Grand livre visuel graphique (graphe react-flow spécialisé plan comptable)
+- Chat conversationnel Cmd+K
+- Timeline fiscale interactive
+- Wizards guidés pour déclarations
+- OCR + CAMT.053 + QR-facture (zéro saisie)
+- 14 agents IA spécialisés locaux
+- Citations légales systématiques
+- Clôture continue
+
+**Ce qui passe en V2** :
+- Canvas infini générique avec agents visibles comme entités
+- Raisonnement en temps réel des agents visible sur le canvas
+- Vue "orchestrateur" en direct
 
 ---
 

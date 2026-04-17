@@ -23,10 +23,10 @@ Une plateforme qui :
 
 ## Le "2 ans d'avance" — principes d'interface
 
-1. **Spatial, pas tabulaire** — un canvas infini remplace le plan comptable. Les comptes sont des nœuds vivants, les flux sont des arêtes animées, les déclarations sont des clusters. Zéro tableau Excel-like par défaut.
-2. **Conversationnel first** — le chat est l'interface primaire, pas un gadget. "Montre-moi où part mon argent ce trimestre" → visualisation générée à la volée.
-3. **Timeline vivante** — une frise temporelle permet de scroll dans l'année fiscale. Passé consolidé, présent en cours, futur prédit par l'IA.
-4. **Agents visibles** — les agents IA sont des entités visibles sur le canvas, tu vois leur raisonnement en temps réel, tu peux les interrompre, corriger, féliciter.
+1. **Grand livre visuel, pas tabulaire** — un graphe de flux comptables remplace le plan comptable statique. Les comptes sont des nœuds, les flux sont des arêtes, les déclarations sont des vues filtrées. Zéro tableau Excel-like comme interface principale. *(V1 : graphe spécialisé plan comptable via react-flow — canvas infini générique reporté en V2, décision 2026-04-16)*
+2. **Conversationnel first** — le chat est l'interface primaire, pas un gadget. "Montre-moi où part mon argent ce trimestre" → visualisation générée à la volée. Cmd+K accessible partout.
+3. **Timeline fiscale interactive** — une frise temporelle permet de naviguer dans l'année fiscale. Passé consolidé, présent en cours, futur prédit par l'IA. Filtrable par compte, période, type.
+4. **Wizards guidés** — les déclarations (TVA, fiscale PP/PM, Swissdec) sont accompagnées de wizards pas à pas, pas de formulaires bruts. *(Les agents visibles comme entités sur un canvas infini sont reportés en V2)*
 5. **Briefing quotidien proactif** — chaque matin, un briefing vocal/textuel sur l'état financier + les décisions qui t'attendent.
 6. **Multi-modal total** — photo, voix, drag-drop, email forward, scan QR, upload PDF — tout se transforme en écriture comptable citée.
 
