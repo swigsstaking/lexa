@@ -43,6 +43,7 @@ export function Workspace() {
   const queryClient = useQueryClient();
   const company = useActiveCompany();
   const addCompany = useCompaniesStore((s) => s.addCompany);
+  const setActive = useCompaniesStore((s) => s.setActive);
   const clear = useCompaniesStore((s) => s.clear);
   const authLogout = useAuthStore((s) => s.logout);
   const setToken = useAuthStore((s) => s.setToken);
@@ -72,12 +73,24 @@ export function Workspace() {
     if (tenantId === activeTenantId || switchingTenant) return;
     setSwitchingTenant(true);
     try {
-      const { token, activeTenantId: newTenantId } = await lexa.switchTenant(tenantId);
-      setToken(token, newTenantId);
-      // Invalider toutes les queries pour re-fetch avec le nouveau tenant
+      const { token: newToken, activeTenantId: newTenantId } = await lexa.switchTenant(tenantId);
+      // 1. Mettre à jour le JWT et l'activeTenantId dans authStore
+      setToken(newToken, newTenantId);
+      // 2. Hydrater le companiesStore avec la company du nouveau tenant
+      try {
+        const me = await lexa.me();
+        if (me.company) {
+          addCompany(me.company);
+          setActive(me.company.tenantId);
+        }
+      } catch {
+        // Si lexa.me() échoue, au moins pointer l'activeCompanyId vers le bon tenant
+        setActive(newTenantId);
+      }
+      // 3. Invalider toutes les queries pour re-fetch avec le nouveau tenant
       await queryClient.invalidateQueries();
-      // Reload page pour vider tout le state React qui dépend du tenant
-      window.location.reload();
+      // 4. Fermer le dropdown (appelé par l'item onClick, mais sécurité ici aussi)
+      setClientMenuOpen(false);
     } catch (err) {
       console.error('[Workspace] switch-tenant failed:', err);
     } finally {
@@ -132,14 +145,19 @@ export function Workspace() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  // Hydrater le companiesStore au mount si vide (reload + user déjà loggé → le store Zustand
-  // persisté peut avoir été clear, ou bien login n'a pas hydraté)
+  // Hydrater le companiesStore au mount et à chaque changement de tenant.
+  // On utilise activeTenantId comme dépendance pour re-fetch après un switch-tenant.
+  // On ne bail plus sur `company` car le badge doit se mettre à jour après switch.
   useEffect(() => {
-    if (!token || company) return;
+    if (!token || !activeTenantId) return;
     lexa.me().then((me) => {
-      if (me?.company) addCompany(me.company);
+      if (me?.company) {
+        addCompany(me.company);
+        setActive(me.company.tenantId);
+      }
     }).catch(() => { /* silent */ });
-  }, [token, company, addCompany]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, activeTenantId]);
 
   // Fermer le menu company/switcher si click dehors
   useEffect(() => {
