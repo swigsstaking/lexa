@@ -12,7 +12,6 @@ import {
   FileText,
   Loader2,
   LogOut,
-  Network,
   Sparkles,
   Briefcase,
   Shield,
@@ -31,6 +30,7 @@ import { FiscalTimeline } from '@/components/timeline/FiscalTimeline';
 import { NavDropdown } from '@/components/Nav/NavDropdown';
 import { MobileMenu } from '@/components/Nav/MobileMenu';
 import { StartActionCards } from '@/components/onboarding/StartActionCards';
+import { MobileLedgerList } from '@/components/workspace/MobileLedgerList';
 
 export function Workspace() {
   const { t } = useTranslation();
@@ -404,14 +404,10 @@ export function Workspace() {
 
       {/* Canvas hero */}
       <main className="flex-1 relative min-h-0 overflow-hidden">
-        {/* Fallback mobile — canvas inutilisable sur petit écran (quand des entrées existent) */}
+        {/* Mobile : vraie vue grand livre liste groupée par classe Kafer */}
         {hasEntries && (
-          <div className="md:hidden flex flex-col items-center justify-center h-full gap-4 p-6 text-center">
-            <Network className="w-10 h-10 text-muted" />
-            <div>
-              <p className="text-sm font-medium text-ink mb-1">Vue comptable</p>
-              <p className="text-xs text-muted leading-relaxed">Utilisez le menu ci-dessus pour accéder aux déclarations, à la comptabilité et aux outils IA.</p>
-            </div>
+          <div className="md:hidden absolute inset-0 flex flex-col overflow-hidden">
+            <MobileLedgerList hasEntries={hasEntries} />
           </div>
         )}
 
