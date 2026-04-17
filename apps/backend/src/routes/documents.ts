@@ -6,9 +6,11 @@
  * GET  /documents/:id              → métadonnées d'un doc
  * GET  /documents/:id/binary       → stream binaire depuis GridFS
  * POST /documents/:id/apply-to-draft → applique les champs OCR sur le draft wizard
+ * POST /documents/:id/create-entry   → crée écriture comptable depuis champs OCR
  *
  * Session 23 — pipeline OCR initial.
  * Session 24 — auto-fill wizard depuis documents OCR.
+ * Session Lane M — create-entry depuis document OCR.
  */
 
 import { Router } from "express";
@@ -21,6 +23,10 @@ import { eventStore } from "../events/EventStore.js";
 import { extractDocument } from "../services/OcrExtractor.js";
 import { mapDocumentToFields } from "../services/DocumentMapper.js";
 import { query, queryAsTenant } from "../db/postgres.js";
+import type { ClassificationResult } from "../agents/classifier/ClassifierAgent.js";
+import { enqueueLlmCall } from "../services/LlmQueue.js";
+import { scheduleLedgerRefresh } from "../services/LedgerRefresh.js";
+import { config } from "../config/index.js";
 
 export const documentsRouter = Router();
 
@@ -119,18 +125,45 @@ documentsRouter.post("/upload", upload.single("file"), async (req, res) => {
 
 /**
  * GET /documents — liste les documents du tenant connecté (100 derniers)
+ * Enrichit chaque doc avec hasLinkedEntry (cross-check events metadata).
  */
 documentsRouter.get("/", async (req, res) => {
   try {
+    const tenantId = req.tenantId!;
     const db = getDb();
     const docs = await db
       .collection("documents_meta")
-      .find({ tenantId: req.tenantId })
+      .find({ tenantId })
       .sort({ uploadedAt: -1 })
       .limit(100)
       .project({ _id: 0, gridfsId: 0 })
       .toArray();
-    return res.json({ documents: docs });
+
+    // Cross-check events: quels documentIds ont une TransactionIngested liée ?
+    let linkedDocIds = new Set<string>();
+    try {
+      const eventsResult = await queryAsTenant<{ metadata: Record<string, unknown> }>(
+        tenantId,
+        `SELECT metadata FROM events
+         WHERE tenant_id=$1 AND payload->>'type'='TransactionIngested'
+           AND metadata->>'documentId' IS NOT NULL`,
+        [tenantId],
+      );
+      for (const row of eventsResult.rows) {
+        const docId = row.metadata?.documentId as string | undefined;
+        if (docId) linkedDocIds.add(docId);
+      }
+    } catch (evtErr) {
+      // Ne pas planter si la query échoue (feature gracefully dégradée)
+      console.warn("[documents.list] hasLinkedEntry check failed:", (evtErr as Error).message);
+    }
+
+    const enriched = docs.map((doc) => ({
+      ...doc,
+      hasLinkedEntry: linkedDocIds.has(doc.documentId as string),
+    }));
+
+    return res.json({ documents: enriched });
   } catch (err) {
     console.error("[documents.list]", err);
     return res.status(500).json({ error: "list failed", message: (err as Error).message });
@@ -270,15 +303,8 @@ documentsRouter.post("/:id/apply-to-draft", async (req, res) => {
     await db.collection("documents_meta").updateOne(
       { documentId },
       {
-        $push: {
-          // @ts-expect-error — MongoDB $push typings are loose
-          appliedToDrafts: {
-            draftId: draft.id,
-            fiscalYear,
-            fieldsApplied: mappings.map((m) => m.fieldPath),
-            appliedAt: new Date(),
-          },
-        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        $push: { appliedToDrafts: { draftId: draft.id, fiscalYear, fieldsApplied: mappings.map((m) => m.fieldPath), appliedAt: new Date() } as any },
         $set: { updatedAt: new Date() },
       },
     );
@@ -308,6 +334,136 @@ documentsRouter.post("/:id/apply-to-draft", async (req, res) => {
   } catch (err) {
     console.error("[documents.apply-to-draft]", err);
     return res.status(500).json({ error: "apply failed", message: (err as Error).message });
+  }
+});
+
+/**
+ * POST /documents/:id/create-entry — Lane M
+ *
+ * Crée une écriture comptable (TransactionIngested + TransactionClassified)
+ * depuis les champs OCR d'un document. Lie le documentId dans les metadata.
+ *
+ * Body: { account?: string }  // optionnel — forcer un compte
+ * Response: { streamId, classification?, message }
+ */
+documentsRouter.post("/:id/create-entry", async (req, res) => {
+  const tenantId = req.tenantId!;
+  const documentId = req.params.id;
+
+  try {
+    const db = getDb();
+    const doc = await db.collection("documents_meta").findOne({ documentId, tenantId });
+    if (!doc) return res.status(404).json({ error: "document not found" });
+
+    const ocrResult = doc.ocrResult as { extractedFields?: Record<string, unknown> } | null;
+    if (!ocrResult?.extractedFields || Object.keys(ocrResult.extractedFields).length === 0) {
+      return res.status(400).json({ error: "no OCR data — extractedFields is empty" });
+    }
+
+    const fields = ocrResult.extractedFields as Record<string, unknown>;
+    const description =
+      (fields.description as string | undefined) ??
+      (fields.fournisseur as string | undefined) ??
+      (doc.filename as string);
+    const rawAmount =
+      (fields.amountTtc as number | undefined) ??
+      (fields.amount as number | undefined) ??
+      0;
+    const amount = -Math.abs(rawAmount); // paiement sortant (négatif)
+    const date =
+      (fields.date as string | undefined) ??
+      new Date().toISOString().slice(0, 10);
+    const counterpartyName =
+      (fields.fournisseur as string | undefined) ??
+      (fields.counterparty as string | undefined) ??
+      "";
+
+    // 1. Persister TransactionIngested avec documentId dans metadata
+    const streamId = randomUUID();
+    await eventStore.append({
+      tenantId,
+      streamId,
+      event: {
+        type: "TransactionIngested",
+        payload: {
+          description,
+          amount,
+          currency: "CHF",
+          date,
+          source: "ocr",
+        },
+      },
+      // counterpartyName et documentId dans metadata (pas dans le payload typé)
+      metadata: { documentId, counterpartyName },
+    });
+
+    // 2. Classify via LLM (fire-and-forget pattern de connectors.ts)
+    enqueueLlmCall(tenantId, "classifier", {
+      date,
+      description,
+      amount,
+      currency: "CHF",
+      counterpartyIban: undefined,
+    }).then(async (classification) => {
+      const cl = classification as ClassificationResult;
+      try {
+        const classifiedEvent = await eventStore.append({
+          tenantId,
+          streamId,
+          event: {
+            type: "TransactionClassified",
+            payload: {
+              transactionStreamId: streamId,
+              agent: "classifier",
+              model: config.MODEL_CLASSIFIER ?? "lexa-classifier",
+              confidence: cl.confidence,
+              debitAccount: cl.debitAccount,
+              creditAccount: cl.creditAccount,
+              amountHt: cl.amountHt,
+              amountTtc: cl.amountTtc,
+              tvaRate: cl.tvaRate,
+              tvaCode: cl.tvaCode,
+              costCenter: cl.costCenter,
+              reasoning: cl.reasoning,
+              citations: cl.citations,
+              alternatives: cl.alternatives,
+            },
+          },
+          metadata: { durationMs: cl.durationMs },
+        });
+
+        await queryAsTenant(
+          tenantId,
+          `INSERT INTO ai_decisions
+           (event_id, tenant_id, agent, model, confidence, reasoning, citations, alternatives, duration_ms)
+           VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9)`,
+          [
+            classifiedEvent.id,
+            tenantId,
+            "classifier",
+            config.MODEL_CLASSIFIER ?? "lexa-classifier",
+            cl.confidence,
+            cl.reasoning,
+            JSON.stringify(cl.citations),
+            JSON.stringify(cl.alternatives),
+            cl.durationMs,
+          ],
+        );
+
+        scheduleLedgerRefresh(tenantId);
+      } catch (classErr) {
+        console.warn(`[documents/create-entry] classify save failed for ${streamId}:`, (classErr as Error).message);
+      }
+    }).catch((err) => {
+      console.warn(`[documents/create-entry] enqueue classifier failed:`, (err as Error).message);
+    });
+
+    scheduleLedgerRefresh(tenantId);
+
+    return res.status(202).json({ streamId, message: "Écriture créée — classification en cours" });
+  } catch (err) {
+    console.error("[documents.create-entry]", err);
+    return res.status(500).json({ error: "create-entry failed", message: (err as Error).message });
   }
 });
 

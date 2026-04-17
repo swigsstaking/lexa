@@ -21,6 +21,8 @@ import {
   Wand2,
   QrCode,
   Landmark,
+  Zap,
+  Check,
 } from 'lucide-react';
 import { lexa, type DocumentMeta } from '@/api/lexa';
 import { useActiveCompany } from '@/stores/companiesStore';
@@ -94,9 +96,11 @@ type DocumentCardProps = {
   onApply: (documentId: string, year: number) => void;
   applyPending: boolean;
   applySuccess: boolean;
+  onCreateEntry: (documentId: string) => void;
+  createEntryPending: boolean;
 };
 
-function DocumentCard({ doc, onApply, applyPending, applySuccess }: DocumentCardProps) {
+function DocumentCard({ doc, onApply, applyPending, applySuccess, onCreateEntry, createEntryPending }: DocumentCardProps) {
   const [expanded, setExpanded] = useState(false);
   const typeLabel = DOC_TYPE_LABELS[doc.ocrResult.type] ?? doc.ocrResult.type;
   const typeColor = DOC_TYPE_COLORS[doc.ocrResult.type] ?? DOC_TYPE_COLORS.autre;
@@ -176,6 +180,30 @@ function DocumentCard({ doc, onApply, applyPending, applySuccess }: DocumentCard
         </div>
       )}
 
+      {/* Bouton créer écriture comptable — Lane M */}
+      {doc.ocrResult?.extractedFields && Object.keys(doc.ocrResult.extractedFields).length > 0 && (
+        <div className="flex items-center gap-2 pt-1 border-t border-border">
+          {doc.hasLinkedEntry ? (
+            <span className="text-xs text-emerald-400 flex items-center gap-1">
+              <Check className="w-3.5 h-3.5" /> Écriture créée
+            </span>
+          ) : (
+            <button
+              onClick={() => onCreateEntry(doc.documentId)}
+              disabled={createEntryPending}
+              className="btn-ghost !text-xs !py-1.5 !px-3 flex items-center gap-1.5"
+              title="Créer une écriture comptable depuis ce document OCR"
+            >
+              {createEntryPending ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />Classification…</>
+              ) : (
+                <><Zap className="w-3.5 h-3.5 mr-1" />Créer l'écriture</>
+              )}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Champs extraits */}
       {fieldEntries.length > 0 && (
         <div>
@@ -221,6 +249,8 @@ export function Documents() {
           : `/taxpayer/${CURRENT_FISCAL_YEAR}`;
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [lastUploaded, setLastUploaded] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [creatingEntryDocId, setCreatingEntryDocId] = useState<string | null>(null);
   const [applyFeedback, setApplyFeedback] = useState<{ docId: string; message: string; ok: boolean } | null>(null);
   const [applyingDocId, setApplyingDocId] = useState<string | null>(null);
   const [appliedDocIds, setAppliedDocIds] = useState<Set<string>>(new Set());
@@ -301,6 +331,53 @@ export function Documents() {
     },
   });
 
+  const createEntryMutation = useMutation({
+    mutationFn: (documentId: string) => lexa.createEntryFromDocument(documentId),
+    onSuccess: (_data, documentId) => {
+      setCreatingEntryDocId(null);
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['ledger'] });
+      // Feedback minimal : on invalide le doc pour que hasLinkedEntry se mette à jour
+      console.info(`[Documents] écriture créée pour doc ${documentId}`);
+    },
+    onError: (err: Error, documentId) => {
+      setCreatingEntryDocId(null);
+      const apiMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setUploadError(apiMsg || err.message || `Erreur création écriture (doc ${documentId})`);
+    },
+  });
+
+  const handleCreateEntry = (documentId: string) => {
+    setCreatingEntryDocId(documentId);
+    setUploadError(null);
+    createEntryMutation.mutate(documentId);
+  };
+
+  // Drag & drop — route vers uploadDocument (PDF/image) ou uploadCamt053 (XML)
+  const routeAndUpload = (file: File) => {
+    const ext = file.name.toLowerCase().split('.').pop();
+    if (ext === 'xml' || file.type === 'application/xml' || file.type === 'text/xml') {
+      setCamt053Result(null);
+      setCamt053Error(null);
+      camt053Mutation.mutate(file);
+    } else if (file.type.match(/^(application\/pdf|image\/)/)) {
+      setLastUploaded(null);
+      setUploadError(null);
+      uploadMutation.mutate(file);
+    } else {
+      setUploadError(`Format "${file.type || ext}" non supporté — PDF, JPEG, PNG ou XML CAMT.053 uniquement`);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    for (const file of files) {
+      routeAndUpload(file);
+    }
+  };
+
   const handleCamt053Change = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -342,6 +419,18 @@ export function Documents() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-8 flex flex-col gap-6">
+        {/* Dropzone drag & drop — Feature 1 */}
+        <div
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+          className={`border-2 border-dashed rounded-xl p-10 text-center transition-colors ${isDragging ? 'border-accent bg-accent/5' : 'border-border hover:border-border/80'}`}
+        >
+          <Upload className="w-10 h-10 mx-auto mb-3 text-muted" />
+          <p className="text-sm font-medium text-ink">Glissez-déposez un document ici</p>
+          <p className="text-xs text-muted mt-1">PDF, JPEG, PNG ou XML CAMT.053 — ou utilisez les boutons ci-dessous</p>
+        </div>
+
         {/* Upload zone */}
         <section className="card p-6 flex flex-col items-center gap-4">
           <div className="text-center">
@@ -516,6 +605,8 @@ export function Documents() {
                   onApply={handleApply}
                   applyPending={applyingDocId === doc.documentId}
                   applySuccess={appliedDocIds.has(doc.documentId)}
+                  onCreateEntry={handleCreateEntry}
+                  createEntryPending={creatingEntryDocId === doc.documentId}
                 />
               ))}
             </div>

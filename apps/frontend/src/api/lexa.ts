@@ -223,6 +223,14 @@ export const lexa = {
       .get(`/documents/${documentId}/binary`, { responseType: 'blob' })
       .then((r) => r.data as Blob),
 
+  // Lane M — créer écriture comptable depuis document OCR
+  createEntryFromDocument: (documentId: string) =>
+    api
+      .post<{ streamId: string; classification?: unknown; message: string }>(
+        `/documents/${documentId}/create-entry`,
+      )
+      .then((r) => r.data),
+
   // Session 24 — auto-fill wizard depuis documents OCR
   applyDocumentToDraft: (documentId: string, year: number) =>
     api
@@ -671,6 +679,8 @@ export type DocumentMeta = {
   size: number;
   uploadedAt: string;
   ocrResult: OcrResult;
+  /** Vrai si une écriture comptable a déjà été créée depuis ce document (cross-check events). */
+  hasLinkedEntry?: boolean;
 };
 
 export type UploadDocumentResponse = {
