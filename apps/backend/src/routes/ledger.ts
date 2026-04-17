@@ -28,6 +28,7 @@ type LedgerEntryRow = {
   account: string;
   amount: string;
   document_id: string | null; // Pièce justificative OCR — drill-down (migration 012)
+  reconciles: string | null;  // stream_id de la facture originale liée — reconciliation (migration 015)
 };
 
 type AccountBalanceRow = {
@@ -72,6 +73,7 @@ ledgerRouter.get("/", async (req, res) => {
       tvaCode: r.tva_code,
       confidence: Number(r.confidence),
       documentId: r.document_id ?? null,
+      reconciles: r.reconciles ?? null,
     })),
   });
 });
@@ -127,6 +129,7 @@ ledgerRouter.get("/account/:account", async (req, res) => {
       tvaRate: Number(r.tva_rate),
       confidence: Number(r.confidence),
       documentId: r.document_id ?? null,
+      reconciles: r.reconciles ?? null,
     })),
   });
 });

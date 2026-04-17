@@ -1,7 +1,7 @@
 /**
  * bridge.ts — Route POST /bridge/pro-events
  *
- * Intégration bidirectionnelle Swigs Pro → Lexa (Phase 3 V1.2).
+ * Intégration bidirectionnelle Swigs Pro → Lexa (Phase 3 V1.3).
  * Reçoit les events du Hub EventBus publiés par Swigs Pro
  * et les ingère dans le store Lexa.
  *
@@ -12,15 +12,20 @@
  * Events supportés :
  *   invoice.created  → TransactionIngested source=swigs-pro-invoice
  *                      + TransactionClassified auto (1100 / 3200)
+ *   invoice.sent     → Idempotent : update statut si invoice.created déjà vu,
+ *                      sinon crée TransactionIngested source=swigs-pro-invoice-sent
  *   invoice.paid     → TransactionIngested source=swigs-pro-payment
+ *                      + metadata.reconciles = stream_id de invoice.created
  *                      + TransactionClassified auto (1020 / 1100)
  *   expense.submitted → TransactionIngested source=swigs-pro-expense
  *                       + TransactionClassified auto (6500 / 1020)
  *
- * Tenant mapping :
- *   V1 — tenantId du payload utilisé tel quel (UUID identique Lexa/Pro via Swigs Hub SSO).
- *   Si absent : fallback sur DEFAULT_TENANT_ID (00000000-0000-0000-0000-000000000001).
- *   V2 : table pro_lexa_tenant_map à implémenter si tenants divergent.
+ * Tenant mapping (V1.3) :
+ *   Fallback chain via resolveTenantId() :
+ *   1. UUID direct (comportement V1)
+ *   2. Table pro_lexa_tenant_map (mapping manuel ou auto)
+ *   3. users.external_sso_id ou email match → auto-populate mapping
+ *   4. DEFAULT_TENANT_ID (demo)
  */
 
 import { Router } from "express";
@@ -30,12 +35,74 @@ import { eventStore } from "../events/EventStore.js";
 import { enqueueLlmCall } from "../services/LlmQueue.js";
 import { scheduleLedgerRefresh } from "../services/LedgerRefresh.js";
 import { requireHmac } from "../middleware/requireHmac.js";
-import { queryAsTenant } from "../db/postgres.js";
+import { query, queryAsTenant } from "../db/postgres.js";
 import type { ClassificationResult } from "../agents/classifier/ClassifierAgent.js";
 
 export const bridgeRouter = Router();
 
 const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
+
+// ── Bloc C — Mapping tenant Pro ↔ Lexa robuste ───────────────────────────────
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUUID(s: string): boolean {
+  return UUID_REGEX.test(s);
+}
+
+/**
+ * Résoudre le tenantId Lexa depuis un identifiant Pro (UUID ou hubUserId string).
+ *
+ * Fallback chain :
+ *   1. UUID direct → utiliser tel quel (comportement V1)
+ *   2. Table pro_lexa_tenant_map → mapping explicite
+ *   3. users.external_sso_id ou email → auto-populate mapping
+ *   4. DEFAULT_TENANT_ID (demo)
+ */
+async function resolveTenantId(proPayloadTenantId: string): Promise<string> {
+  // 1. UUID direct
+  if (isValidUUID(proPayloadTenantId)) {
+    return proPayloadTenantId;
+  }
+
+  // 2. Chercher dans le mapping
+  const mapResult = await query<{ lexa_tenant_id: string }>(
+    `SELECT lexa_tenant_id FROM pro_lexa_tenant_map WHERE pro_hub_user_id = $1 LIMIT 1`,
+    [proPayloadTenantId],
+  );
+  if (mapResult.rows.length > 0) {
+    // Update last_seen_at async (fire-and-forget)
+    query(
+      `UPDATE pro_lexa_tenant_map SET last_seen_at = now() WHERE pro_hub_user_id = $1`,
+      [proPayloadTenantId],
+    ).catch(() => {});
+    return mapResult.rows[0].lexa_tenant_id;
+  }
+
+  // 3. Fallback via users.external_sso_id ou email
+  const userResult = await query<{ tenant_id: string }>(
+    `SELECT tenant_id FROM users WHERE external_sso_id = $1 OR email = $1 LIMIT 1`,
+    [proPayloadTenantId],
+  );
+  if (userResult.rows.length > 0) {
+    const lexaTenantId = userResult.rows[0].tenant_id;
+    // Auto-populate le mapping pour les prochains events
+    query(
+      `INSERT INTO pro_lexa_tenant_map (pro_hub_user_id, lexa_tenant_id) VALUES ($1, $2)
+       ON CONFLICT DO NOTHING`,
+      [proPayloadTenantId, lexaTenantId],
+    ).catch(() => {});
+    console.info("[bridge] resolveTenantId: auto-mapped %s → %s", proPayloadTenantId, lexaTenantId);
+    return lexaTenantId;
+  }
+
+  // 4. Dernier fallback : demo
+  console.warn(
+    "[bridge] resolveTenantId: no mapping found for '%s', using DEFAULT_TENANT_ID",
+    proPayloadTenantId,
+  );
+  return DEFAULT_TENANT_ID;
+}
 
 // ── Schemas zod pour chaque type d'event ─────────────────────────────────────
 
@@ -79,10 +146,26 @@ const ExpenseSubmittedDataSchema = z.object({
   supplierName: z.string().optional(),
 });
 
+const InvoiceSentDataSchema = z.object({
+  invoiceId: z.string(),
+  invoiceNumber: z.string(),
+  projectId: z.string().optional(),
+  projectName: z.string().optional(),
+  clientName: z.string().optional(),
+  total: z.number().nonnegative().optional(),
+  amountHt: z.number().nonnegative().optional(),
+  amountTva: z.number().nonnegative().optional(),
+  amountTtc: z.number().nonnegative().optional(),
+  tvaRate: z.number().nonnegative().default(8.1),
+  dueDate: z.string().optional(),
+  sentAt: z.string().optional(),
+  client: z.union([z.string(), z.record(z.unknown())]).optional(),
+});
+
 const BridgeEventSchema = z.object({
   event: z.string(),
   timestamp: z.string().optional(),
-  tenantId: z.string().uuid().optional(),
+  tenantId: z.string().optional(), // Peut être UUID ou hubUserId — résolu via resolveTenantId()
   hubUserId: z.string().optional(),
   data: z.record(z.unknown()).optional(),
   payload: z.record(z.unknown()).optional(), // alias alternatif
@@ -251,6 +334,113 @@ async function handleInvoiceCreated(
   scheduleLedgerRefresh(tenantId);
 }
 
+// ── Bloc A — Handler invoice.sent (idempotent via proInvoiceId) ───────────────
+
+async function handleInvoiceSent(
+  tenantId: string,
+  rawData: Record<string, unknown>,
+  eventTimestamp: string,
+): Promise<void> {
+  const parsed = InvoiceSentDataSchema.safeParse(rawData);
+  if (!parsed.success) {
+    console.warn("[bridge] invoice.sent — invalid data:", parsed.error.flatten());
+    return;
+  }
+  const data = parsed.data;
+
+  // Idempotence : vérifier si invoice.created déjà vu pour ce proInvoiceId
+  const { rows: existing } = await queryAsTenant<{ id: string; stream_id: string }>(
+    tenantId,
+    `SELECT id, stream_id FROM events
+     WHERE tenant_id = $1
+       AND type = 'TransactionIngested'
+       AND metadata->>'proInvoiceId' = $2
+     ORDER BY occurred_at ASC
+     LIMIT 1`,
+    [tenantId, data.invoiceId],
+  );
+
+  if (existing.length > 0) {
+    // Déjà ingéré via invoice.created → appendre un event InvoiceStatusChanged plutôt que dupliquer
+    const existingStreamId = existing[0].stream_id;
+    await eventStore.append({
+      tenantId,
+      streamId: existingStreamId,
+      event: {
+        type: "InvoiceStatusChanged",
+        payload: {
+          status: "sent",
+          sentAt: data.sentAt ?? eventTimestamp,
+        },
+      },
+      metadata: {
+        source: "swigs-pro",
+        proEvent: "invoice.sent",
+        proInvoiceId: data.invoiceId,
+        proInvoiceNumber: data.invoiceNumber,
+        proEventTimestamp: eventTimestamp,
+      },
+    });
+    console.info(
+      "[bridge] invoice.sent — status updated (idempotent) streamId=%s invoice=%s",
+      existingStreamId,
+      data.invoiceNumber,
+    );
+    return;
+  }
+
+  // Pas encore vu : créer comme invoice.created mais avec source=swigs-pro-invoice-sent
+  const clientName = extractClientName(data);
+  const amountTtc = data.amountTtc ?? data.total ?? 0;
+  const amountHt = data.amountHt ?? amountTtc / (1 + data.tvaRate / 100);
+  const today = new Date().toISOString().slice(0, 10);
+  const description = `Facture ${data.invoiceNumber} — ${clientName} (envoyée)`;
+
+  const streamId = randomUUID();
+
+  await eventStore.append({
+    tenantId,
+    streamId,
+    event: {
+      type: "TransactionIngested",
+      payload: {
+        source: "swigs-pro-invoice-sent" as "swigs-pro",
+        date: today,
+        description,
+        amount: amountTtc,
+        currency: "CHF",
+      },
+    },
+    metadata: {
+      source: "swigs-pro",
+      proEvent: "invoice.sent",
+      proInvoiceId: data.invoiceId,
+      proInvoiceNumber: data.invoiceNumber,
+      proClientName: clientName,
+      proAmountHt: amountHt,
+      proAmountTtc: amountTtc,
+      proTvaRate: data.tvaRate,
+      proDueDate: data.dueDate ?? null,
+      proSentAt: data.sentAt ?? null,
+      proEventTimestamp: eventTimestamp,
+    },
+  });
+
+  console.info(
+    "[bridge] invoice.sent ingested (new) streamId=%s invoice=%s client=%s amountTtc=%s",
+    streamId,
+    data.invoiceNumber,
+    clientName,
+    amountTtc,
+  );
+
+  // Classification auto : 1100 Débiteurs (D) / 3200 Prestations (C)
+  classifyAsync(tenantId, streamId, description, amountTtc, today);
+  scheduleLedgerRefresh(tenantId);
+}
+
+// ── Bloc B — Handler invoice.paid avec reconciliation automatique ─────────────
+
 async function handleInvoicePaid(
   tenantId: string,
   rawData: Record<string, unknown>,
@@ -269,6 +459,36 @@ async function handleInvoicePaid(
     ? new Date(data.paidAt).toISOString().slice(0, 10)
     : new Date().toISOString().slice(0, 10);
   const description = `Paiement facture ${data.invoiceNumber} — ${clientName}`;
+
+  // Bloc B — Chercher la facture originale pour reconciliation
+  let linkedInvoiceStreamId: string | null = null;
+  try {
+    const { rows: originals } = await queryAsTenant<{ stream_id: string }>(
+      tenantId,
+      `SELECT stream_id FROM events
+       WHERE tenant_id = $1
+         AND type = 'TransactionIngested'
+         AND metadata->>'proInvoiceId' = $2
+       ORDER BY occurred_at ASC
+       LIMIT 1`,
+      [tenantId, data.invoiceId],
+    );
+    linkedInvoiceStreamId = originals[0]?.stream_id ?? null;
+    if (linkedInvoiceStreamId) {
+      console.info(
+        "[bridge] invoice.paid — found linked invoice streamId=%s for invoiceId=%s",
+        linkedInvoiceStreamId,
+        data.invoiceId,
+      );
+    } else {
+      console.warn(
+        "[bridge] invoice.paid — no linked invoice found for invoiceId=%s (reconciliation skipped)",
+        data.invoiceId,
+      );
+    }
+  } catch (err) {
+    console.warn("[bridge] invoice.paid — reconciliation lookup failed:", (err as Error).message);
+  }
 
   const streamId = randomUUID();
 
@@ -294,15 +514,18 @@ async function handleInvoicePaid(
       proAmountTtc: amountTtc,
       proPaidAt: data.paidAt ?? null,
       proEventTimestamp: eventTimestamp,
+      // Reconciliation : lien vers le stream_id de la facture originale
+      ...(linkedInvoiceStreamId ? { reconciles: linkedInvoiceStreamId } : {}),
     },
   });
 
   console.info(
-    "[bridge] invoice.paid ingested streamId=%s invoice=%s client=%s amount=%s",
+    "[bridge] invoice.paid ingested streamId=%s invoice=%s client=%s amount=%s reconciles=%s",
     streamId,
     data.invoiceNumber,
     clientName,
     amountTtc,
+    linkedInvoiceStreamId ?? "none",
   );
 
   // Classification auto : 1020 Banque (D) / 1100 Débiteurs (C) — réconciliation
@@ -388,15 +611,23 @@ bridgeRouter.post("/pro-events", requireHmac, async (req, res) => {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
   }
 
-  const { event, timestamp, tenantId: rawTenantId } = parsed.data;
+  const { event, timestamp, tenantId: rawTenantId, hubUserId } = parsed.data;
   const eventData = (parsed.data.data ?? parsed.data.payload ?? {}) as Record<string, unknown>;
-  const tenantId = rawTenantId ?? DEFAULT_TENANT_ID;
+
+  // Résoudre le tenantId via la fallback chain (Bloc C)
+  const rawId = rawTenantId ?? hubUserId ?? DEFAULT_TENANT_ID;
+  const tenantId = await resolveTenantId(rawId);
+
   const eventTimestamp = timestamp ?? new Date().toISOString();
 
   try {
     switch (event) {
       case "invoice.created":
         await handleInvoiceCreated(tenantId, eventData, eventTimestamp);
+        break;
+
+      case "invoice.sent":
+        await handleInvoiceSent(tenantId, eventData, eventTimestamp);
         break;
 
       case "invoice.paid":
@@ -416,5 +647,77 @@ bridgeRouter.post("/pro-events", requireHmac, async (req, res) => {
   } catch (err) {
     console.error("[bridge] pro-events handler error event=%s:", event, (err as Error).message);
     return res.status(500).json({ error: "event processing failed", message: (err as Error).message });
+  }
+});
+
+// ── Admin endpoint — Gestion manuelle du mapping Pro ↔ Lexa ──────────────────
+
+/**
+ * POST /bridge/admin/pro-lexa-mapping
+ *
+ * Créer ou mettre à jour un mapping hubUserId → lexaTenantId manuellement.
+ * Auth : X-Admin-Secret header (même secret que /auth/admin/*)
+ *
+ * Body : { proHubUserId: string, lexaTenantId: string (UUID) }
+ */
+bridgeRouter.post("/admin/pro-lexa-mapping", async (req, res) => {
+  // Import dynamique config pour éviter une dépendance circulaire
+  const { config } = await import("../config/index.js");
+  const headerSecret = req.header("X-Admin-Secret") ?? "";
+  if (headerSecret !== config.ADMIN_SECRET) {
+    return res.status(403).json({ error: "forbidden" });
+  }
+
+  const bodySchema = z.object({
+    proHubUserId: z.string().min(1),
+    lexaTenantId: z.string().uuid(),
+  });
+  const parsed = bodySchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
+  }
+
+  const { proHubUserId, lexaTenantId } = parsed.data;
+
+  try {
+    await query(
+      `INSERT INTO pro_lexa_tenant_map (pro_hub_user_id, lexa_tenant_id)
+       VALUES ($1, $2)
+       ON CONFLICT (pro_hub_user_id) DO UPDATE
+         SET lexa_tenant_id = EXCLUDED.lexa_tenant_id,
+             last_seen_at   = now()`,
+      [proHubUserId, lexaTenantId],
+    );
+    console.info("[bridge] admin mapping upserted: %s → %s", proHubUserId, lexaTenantId);
+    return res.status(200).json({ ok: true, proHubUserId, lexaTenantId });
+  } catch (err) {
+    console.error("[bridge] admin mapping error:", (err as Error).message);
+    return res.status(500).json({ error: "mapping failed", message: (err as Error).message });
+  }
+});
+
+/**
+ * GET /bridge/admin/pro-lexa-mapping
+ *
+ * Lister tous les mappings existants.
+ * Auth : X-Admin-Secret header
+ */
+bridgeRouter.get("/admin/pro-lexa-mapping", async (req, res) => {
+  const { config } = await import("../config/index.js");
+  const headerSecret = req.header("X-Admin-Secret") ?? "";
+  if (headerSecret !== config.ADMIN_SECRET) {
+    return res.status(403).json({ error: "forbidden" });
+  }
+
+  try {
+    const result = await query<{
+      pro_hub_user_id: string;
+      lexa_tenant_id: string;
+      created_at: Date;
+      last_seen_at: Date;
+    }>(`SELECT * FROM pro_lexa_tenant_map ORDER BY last_seen_at DESC`);
+    return res.json({ count: result.rows.length, mappings: result.rows });
+  } catch (err) {
+    return res.status(500).json({ error: "query failed", message: (err as Error).message });
   }
 });

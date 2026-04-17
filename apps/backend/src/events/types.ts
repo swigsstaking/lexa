@@ -12,7 +12,7 @@ export type LexaEvent =
   | {
       type: "TransactionIngested";
       payload: {
-        source: "camt053" | "ocr" | "manual" | "swigs-pro" | "swigs-pro-invoice" | "swigs-pro-payment" | "swigs-pro-expense";
+        source: "camt053" | "ocr" | "manual" | "swigs-pro" | "swigs-pro-invoice" | "swigs-pro-invoice-sent" | "swigs-pro-payment" | "swigs-pro-expense";
         date: string; // ISO date
         description: string;
         amount: number; // positive = credit, negative = debit (bank view)
@@ -117,6 +117,14 @@ export type LexaEvent =
         draftId: string;
         fiscalYear: number;
         fieldsApplied: string[];
+      };
+    }
+  | {
+      type: "InvoiceStatusChanged";
+      payload: {
+        status: "sent" | "paid" | "overdue" | "cancelled";
+        sentAt?: string;
+        paidAt?: string;
       };
     };
 

@@ -146,6 +146,7 @@ export interface LedgerEntry {
   tvaCode?: string;
   confidence?: number;
   documentId?: string | null; // Pièce justificative OCR — drill-down (migration 012)
+  reconciles?: string | null; // stream_id de la facture originale liée — reconciliation (migration 015)
 }
 
 export interface LedgerListResponse {

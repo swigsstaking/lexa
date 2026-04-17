@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { X, ArrowRight, Paperclip, Briefcase } from 'lucide-react';
+import { X, ArrowRight, Paperclip, Briefcase, Link2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { LedgerAccount, LedgerEntry } from '@/api/types';
 import { accountDisplayLabel } from './kaferLabels';
@@ -241,6 +241,15 @@ function TxRow({ tx }: { tx: LedgerEntry }) {
             >
               <Briefcase className="w-3 h-3" />
               <span className="text-2xs font-mono">Pro</span>
+            </span>
+          )}
+          {tx.reconciles && (
+            <span
+              className="inline-flex items-center gap-0.5 text-emerald-500"
+              title={`Réconciliée — liée à la facture ${tx.reconciles.slice(0, 8)}…`}
+            >
+              <Link2 className="w-3 h-3" />
+              <span className="text-2xs font-mono">Réconciliée</span>
             </span>
           )}
         </div>
