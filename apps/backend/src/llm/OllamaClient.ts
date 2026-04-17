@@ -20,6 +20,8 @@ export type OllamaGenerateOptions = {
    * answers, so we default to no-think.
    */
   think?: boolean;
+  /** Duration to keep model in VRAM after last use. Default: Ollama default (5m). Example: "30m". */
+  keepAlive?: string;
 };
 
 export class OllamaClient {
@@ -48,6 +50,7 @@ export class OllamaClient {
       },
     };
     if (opts.format) body.format = opts.format;
+    if (opts.keepAlive) body.keep_alive = opts.keepAlive;
 
     const { data } = await this.http.post<{
       response: string;

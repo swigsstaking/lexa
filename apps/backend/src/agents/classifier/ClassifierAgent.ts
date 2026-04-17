@@ -93,9 +93,13 @@ REPONSE JSON:`;
     const { response } = await ollama.generate({
       model: this.model,
       prompt,
+      stream: false,
+      think: false,        // désactive le chain-of-thought Qwen 3.x (économise ~400 tokens)
+      format: "json",      // force un output JSON strict valide
       temperature: 0.1,
       numCtx: 8192,
-      numPredict: 500,
+      numPredict: 100,     // cap tokens de sortie — le JSON Käfer tient en 60-80 tokens
+      keepAlive: "30m",    // garde lexa-classifier en VRAM entre les appels CAMT batch
     });
 
     // 5. Parse the JSON output robustly

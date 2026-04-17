@@ -63,7 +63,9 @@ function getResourcesForTenant(tenantId: string): TenantResources {
     },
   });
 
-  // concurrency: 1 = serialize all LLM calls for this tenant
+  // concurrency: 4 — parallélise jusqu'à 4 jobs LLM par tenant.
+  // Requis pour le batch CAMT classifier (N tx simultanées).
+  // OLLAMA_NUM_PARALLEL=4 sur Spark absorbe la charge côté GPU.
   const worker = new Worker(
     queueName,
     async (job: Job) => {
@@ -79,7 +81,7 @@ function getResourcesForTenant(tenantId: string): TenantResources {
     },
     {
       connection: redisConnection,
-      concurrency: 1,
+      concurrency: 4,
     },
   );
 
