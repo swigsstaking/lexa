@@ -3,6 +3,7 @@ import type { CompanyDraftState } from '@/api/lexa';
 interface Props {
   state: CompanyDraftState;
   year: number;
+  canton?: string;
 }
 
 function chf(n: number | undefined | null): string {
@@ -37,7 +38,7 @@ function computeEstimate(state: CompanyDraftState) {
   return { benefitAccounting, corrections, benefitImposable, capital, ifd, icc, capitalTax, total, effectiveRate };
 }
 
-export function Step5PreviewVs({ state, year }: Props) {
+export function Step5PreviewVs({ state, year, canton = 'VS' }: Props) {
   const est = computeEstimate(state);
   const s1 = state.step1 ?? {};
 
@@ -45,7 +46,7 @@ export function Step5PreviewVs({ state, year }: Props) {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-semibold tracking-tight mb-1">
-          Aperçu — Estimation fiscale VS {year}
+          Aperçu — Estimation fiscale {canton} {year}
         </h2>
         <p className="text-sm text-muted">
           Calcul indicatif basé sur vos saisies. Vérifiez avec votre fiduciaire.
@@ -97,7 +98,7 @@ export function Step5PreviewVs({ state, year }: Props) {
       {/* Estimation impôts */}
       <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-4">
         <div className="text-[10px] uppercase tracking-wide text-amber-400 mb-1">
-          Estimation impôt PM VS {year}
+          Estimation impôt PM {canton} {year}
         </div>
         <div className="text-xl font-bold text-amber-300 mb-3">
           {chf(est.total)} CHF
@@ -108,7 +109,7 @@ export function Step5PreviewVs({ state, year }: Props) {
             <span className="mono-num">{chf(est.ifd)} CHF</span>
           </div>
           <div className="flex justify-between text-xs text-amber-200/80">
-            <span>ICC VS ~8.5% (LF VS PM)</span>
+            <span>ICC {canton} ~8.5% (LF {canton} PM)</span>
             <span className="mono-num">{chf(est.icc)} CHF</span>
           </div>
           <div className="flex justify-between text-xs text-amber-200/80">
@@ -121,7 +122,7 @@ export function Step5PreviewVs({ state, year }: Props) {
           </div>
         </div>
         <p className="text-[9px] text-amber-200/50 mt-2 leading-tight">
-          Estimation indicative basée sur barèmes 2026 simplifiés (V1). Barèmes officiels ICC VS à vérifier avec le SCC VS.
+          Estimation indicative basée sur barèmes 2026 simplifiés (V1). Barèmes officiels ICC {canton} à vérifier avec les autorités fiscales cantonales.
         </p>
       </div>
     </div>

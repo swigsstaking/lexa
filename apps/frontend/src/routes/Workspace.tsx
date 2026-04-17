@@ -41,6 +41,7 @@ export function Workspace() {
   const authLogout = useAuthStore((s) => s.logout);
   const setToken = useAuthStore((s) => s.setToken);
   const activeTenantId = useAuthStore((s) => s.activeTenantId);
+  const token = useAuthStore((s) => s.token);
   const setChatOpen = useChatStore((s) => s.setOpen);
 
   const [ledgerOpen, setLedgerOpen] = useState(false);
@@ -50,11 +51,13 @@ export function Workspace() {
   const clientMenuRef = useRef<HTMLDivElement>(null);
 
   // S32 : Charger les clients fiduciaires (si membership multiple)
+  // enabled: !!token évite un 401 transitoire si Zustand n'a pas encore hydraté
   const { data: fiduClients } = useQuery({
     queryKey: ['fiduciary-clients'],
     queryFn: lexa.listFiduciaryClients,
     staleTime: 5 * 60 * 1000,
-    retry: false,
+    retry: 2,
+    enabled: !!token,
   });
 
   const hasMultipleClients = fiduClients && fiduClients.length > 1;
@@ -192,12 +195,6 @@ export function Workspace() {
       title: 'Clôture continue CO 957-963',
     },
     {
-      label: 'Documents',
-      onClick: () => navigate('/documents'),
-      icon: FileText,
-      title: 'Documents OCR',
-    },
-    {
       label: 'Audit',
       onClick: () => navigate(`/audit/${year}`),
       icon: Shield,
@@ -244,6 +241,12 @@ export function Workspace() {
       onClick: () => setLedgerOpen(true),
       icon: Calculator,
       title: 'Grand livre expert (⌘⇧L)',
+    },
+    {
+      label: 'Documents',
+      onClick: () => navigate('/documents'),
+      icon: FileText,
+      title: 'Documents OCR',
     },
     {
       label: 'Déconnexion',
@@ -369,6 +372,16 @@ export function Workspace() {
               icon={BookOpen}
               items={comptaItems}
             />
+            {/* Documents — bouton direct (Feature 2) */}
+            <button
+              type="button"
+              onClick={() => navigate('/documents')}
+              title="Documents OCR"
+              className="btn-ghost !px-3 !py-1.5"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span className="text-xs hidden md:inline">Documents</span>
+            </button>
             <NavDropdown
               label="IA"
               icon={Sparkles}

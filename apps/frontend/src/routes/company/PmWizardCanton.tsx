@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useActiveCompany } from '@/stores/companiesStore';
 import {
   ArrowLeft,
   ArrowRight,
@@ -61,6 +62,7 @@ export function PmWizardCanton({ canton }: Props) {
   const params = useParams<{ year?: string }>();
   const year = Number(params.year) || new Date().getFullYear();
   const navigate = useNavigate();
+  const activeCompany = useActiveCompany();
 
   const [draft, setDraft] = useState<CompanyDraft | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,7 +85,8 @@ export function PmWizardCanton({ canton }: Props) {
       setDraft(d);
     } catch {
       try {
-        await lexa.createCompanyDraft(year, canton, '');
+        const legalName = activeCompany?.name ?? 'Société';
+        await lexa.createCompanyDraft(year, canton, legalName);
         const d = await lexa.getCompanyDraft(year, canton);
         setDraft(d);
       } catch (err2) {
@@ -231,7 +234,7 @@ export function PmWizardCanton({ canton }: Props) {
               <Step4CapitalVs state={draft.state} onPatch={handlePatch} />
             )}
             {currentStep === 5 && (
-              <Step5PreviewVs state={draft.state} year={year} />
+              <Step5PreviewVs state={draft.state} year={year} canton={canton} />
             )}
             {currentStep === 6 && (
               <Step6GenerateCanton state={draft.state} year={year} canton={canton} />
