@@ -1,6 +1,7 @@
 import { embedder } from "../../rag/EmbedderClient.js";
 import { qdrant } from "../../rag/QdrantClient.js";
 import { ollama } from "../../llm/OllamaClient.js";
+import { vllm } from "../../llm/VllmClient.js";
 import { config } from "../../config/index.js";
 import type { Citation } from "../../events/types.js";
 
@@ -28,11 +29,37 @@ export type ClassificationResult = {
   durationMs: number;
 };
 
+/** System prompt Käfer extrait en constante pour réutilisation chat-style (vLLM) */
+const SYSTEM_PROMPT_CLASSIFIER = `Tu es un agent de classification comptable suisse. Tu classifies une transaction bancaire selon le plan comptable PME suisse (Kafer).
+Reponds UNIQUEMENT en JSON valide (sans markdown, sans commentaires), avec cette structure exacte:
+{
+  "debit_account": "XXXX - Nom du compte",
+  "credit_account": "YYYY - Nom du compte",
+  "tva_rate": 8.1,
+  "tva_code": "TVA-standard",
+  "cost_center": "general",
+  "confidence": 0.85,
+  "reasoning": "Explication courte de la classification",
+  "citations": [
+    {"law": "LTVA", "article": "Art. 25", "rs": "641.20"}
+  ],
+  "alternatives": [
+    {"account": "ZZZZ - Autre compte possible", "confidence": 0.3}
+  ]
+}
+Utilise le plan Kafer (1000 Caisse, 1020 Banque, 1100 Debiteurs, 2000 Creanciers, 3000 Ventes, 4000 Achats, 5000 Salaires, 6000 Loyers, etc.).`;
+
 export class ClassifierAgent {
   private model: string;
+  private useVllm: boolean;
 
-  constructor(model: string = config.MODEL_CLASSIFIER) {
-    this.model = model;
+  constructor(model?: string) {
+    this.useVllm = process.env.USE_VLLM_CLASSIFIER === "true";
+    if (this.useVllm) {
+      this.model = process.env.VLLM_CLASSIFIER_MODEL ?? "apolo13x/Qwen3.5-35B-A3B-NVFP4";
+    } else {
+      this.model = model ?? config.MODEL_CLASSIFIER;
+    }
   }
 
   async classify(transaction: BankTransaction): Promise<ClassificationResult> {
@@ -52,13 +79,11 @@ export class ClassifierAgent {
     });
     const context = contextLines.join("\n\n");
 
-    // 4. Craft the classification prompt
     const isDebit = transaction.amount < 0;
     const absAmount = Math.abs(transaction.amount);
 
-    const prompt = `Tu es un agent de classification comptable suisse. Tu classifies une transaction bancaire selon le plan comptable PME suisse (Kafer).
-
-TRANSACTION:
+    // 4a. User prompt (transaction data + contexte RAG) — commun aux 2 chemins
+    const userPrompt = `TRANSACTION:
 - Date: ${transaction.date}
 - Description: ${transaction.description}
 - Montant: ${absAmount} ${transaction.currency} (${isDebit ? "sortie" : "entree"})
@@ -67,45 +92,73 @@ ${transaction.counterpartyIban ? `- Contrepartie IBAN: ${transaction.counterpart
 CONTEXTE JURIDIQUE (pertinent):
 ${context}
 
-INSTRUCTIONS:
-Reponds UNIQUEMENT en JSON valide (sans markdown, sans commentaires), avec cette structure exacte:
-{
-  "debit_account": "XXXX - Nom du compte",
-  "credit_account": "YYYY - Nom du compte",
-  "tva_rate": 8.1,
-  "tva_code": "TVA-standard",
-  "cost_center": "general",
-  "confidence": 0.85,
-  "reasoning": "Explication courte de la classification",
-  "citations": [
-    {"law": "LTVA", "article": "Art. 25", "rs": "641.20"}
-  ],
-  "alternatives": [
-    {"account": "ZZZZ - Autre compte possible", "confidence": 0.3}
-  ]
-}
-
-Utilise le plan Kafer (1000 Caisse, 1020 Banque, 1100 Debiteurs, 2000 Creanciers, 3000 Ventes, 4000 Achats, 5000 Salaires, 6000 Loyers, etc.).
 Pour une ${isDebit ? "sortie" : "entree"} bancaire, le compte 1020 Banque est en ${isDebit ? "credit" : "debit"}.
 
 REPONSE JSON:`;
 
-    const { response } = await ollama.generate({
-      model: this.model,
-      prompt,
-      stream: false,
-      think: false,        // désactive le chain-of-thought Qwen 3.x (économise ~400 tokens)
-      format: "json",      // force un output JSON strict valide
-      temperature: 0.1,
-      numCtx: 8192,
-      numPredict: 100,     // cap tokens de sortie — le JSON Käfer tient en 60-80 tokens
-      keepAlive: "30m",    // garde lexa-classifier en VRAM entre les appels CAMT batch
-    });
+    // 4b. Prompt complet pour Ollama (concat system + user — compatible generate())
+    const fullPromptWithSystem = `${SYSTEM_PROMPT_CLASSIFIER}
 
-    // 5. Parse the JSON output robustly
-    const parsed = this.parseClassificationJson(response);
+${userPrompt}`;
 
-    // 6. Compute amounts with TVA
+    let parsed: ReturnType<typeof this.parseClassificationJson>;
+    let rawResponse = "";
+
+    if (this.useVllm) {
+      // Chemin vLLM (OpenAI-compat chat completions)
+      try {
+        const result = await vllm.generate({
+          model: this.model,
+          systemPrompt: SYSTEM_PROMPT_CLASSIFIER,
+          prompt: userPrompt,
+          temperature: 0.1,
+          numPredict: 100,
+          format: "json",
+          think: false,
+        });
+        rawResponse = result.response;
+        console.log(
+          `[classifier] vLLM ${this.model} — ${result.totalDurationMs}ms, ${result.evalCount} tokens`,
+        );
+        parsed = this.parseClassificationJson(rawResponse);
+      } catch (err) {
+        console.warn(
+          "[classifier] vLLM failed, falling back to Ollama:",
+          (err as Error).message,
+        );
+        // Fallback Ollama automatique
+        const { response } = await ollama.generate({
+          model: config.MODEL_CLASSIFIER,
+          prompt: fullPromptWithSystem,
+          stream: false,
+          think: false,
+          format: "json",
+          temperature: 0.1,
+          numCtx: 8192,
+          numPredict: 100,
+          keepAlive: "30m",
+        });
+        rawResponse = response;
+        parsed = this.parseClassificationJson(rawResponse);
+      }
+    } else {
+      // Chemin Ollama (prod actuelle / fallback)
+      const { response } = await ollama.generate({
+        model: this.model,
+        prompt: fullPromptWithSystem,
+        stream: false,
+        think: false,        // désactive le chain-of-thought Qwen 3.x (économise ~400 tokens)
+        format: "json",      // force un output JSON strict valide
+        temperature: 0.1,
+        numCtx: 8192,
+        numPredict: 100,     // cap tokens de sortie — le JSON Käfer tient en 60-80 tokens
+        keepAlive: "30m",    // garde lexa-classifier en VRAM entre les appels CAMT batch
+      });
+      rawResponse = response;
+      parsed = this.parseClassificationJson(rawResponse);
+    }
+
+    // 5. Compute amounts with TVA
     const tvaRate = parsed.tva_rate ?? 8.1;
     const amountTtc = absAmount;
     const amountHt = tvaRate > 0 ? amountTtc / (1 + tvaRate / 100) : amountTtc;
@@ -122,7 +175,7 @@ REPONSE JSON:`;
       reasoning: parsed.reasoning ?? "",
       citations: Array.isArray(parsed.citations) ? parsed.citations : [],
       alternatives: Array.isArray(parsed.alternatives) ? parsed.alternatives : [],
-      rawOllamaResponse: response,
+      rawOllamaResponse: rawResponse,
       durationMs: Date.now() - started,
     };
   }
@@ -153,7 +206,19 @@ REPONSE JSON:`;
 
     const jsonSlice = cleaned.slice(jsonStart, jsonEnd + 1);
     try {
-      return JSON.parse(jsonSlice);
+      const result = JSON.parse(jsonSlice) as Record<string, unknown>;
+      // Normalise les comptes : tolère "6000 - Loyers" ou "6000" ou "6000-Loyers"
+      // Assure que debit_account et credit_account commencent par 4 chiffres (plan Käfer)
+      for (const key of ["debit_account", "credit_account"] as const) {
+        const val = result[key];
+        if (typeof val === "string" && /^[0-9]{4}/.test(val)) {
+          // Déjà correct — normalise le format "XXXX" en "XXXX - Nom" si pas de tiret
+          if (!/^[0-9]{4}\s*-/.test(val)) {
+            result[key] = val; // on garde tel quel, le code aval accepte les 2 formats
+          }
+        }
+      }
+      return result;
     } catch (err) {
       return {
         confidence: 0,
