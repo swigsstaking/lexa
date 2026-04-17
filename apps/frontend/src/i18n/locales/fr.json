@@ -121,6 +121,29 @@
     "fondation": "Fondation",
     "autre": "Autre forme juridique"
   },
+  "welcome": {
+    "title": "Bienvenue ! Par où commencer ?",
+    "subtitle": "Lexa peut automatiser votre comptabilité à partir de 3 points de départ",
+    "greeting": "Bonjour {{company}} ! Par où commencer ?",
+    "explore_first": "Explorer d'abord le grand livre →",
+    "cta": {
+      "camt053": {
+        "title": "Importer un relevé bancaire",
+        "desc": "Lexa classifie automatiquement vos transactions depuis un XML CAMT.053",
+        "badge": "~2 min"
+      },
+      "ocr": {
+        "title": "Uploader des factures",
+        "desc": "OCR + IA extraient montants, TVA, contreparties en quelques secondes",
+        "badge": "~30 sec / doc"
+      },
+      "tax": {
+        "title": "Préparer ma déclaration",
+        "desc": "Wizard guidé pour compléter votre déclaration fiscale",
+        "badge": "10–20 min"
+      }
+    }
+  },
   "workspace": {
     "title": "Workspace",
     "empty_canvas": "Le canvas se chargera ici — comptes, transactions, agents.",
@@ -128,7 +151,11 @@
     "shortcut_chat": "Chat IA",
     "services_up": "Services OK",
     "services_down": "Services KO",
-    "services_checking": "Vérification…"
+    "services_checking": "Vérification…",
+    "empty": {
+      "title": "Votre grand livre est vide",
+      "subtitle": "Commencez par importer vos premières données"
+    }
   },
   "ledger": {
     "title": "Grand livre",

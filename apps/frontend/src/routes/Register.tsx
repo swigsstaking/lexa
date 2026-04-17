@@ -55,7 +55,7 @@ export function Register() {
       if (result.company) {
         addCompany(result.company);
       }
-      navigate('/workspace', { replace: true });
+      navigate('/welcome', { replace: true });
     } catch (err) {
       if (err instanceof AxiosError) {
         if (err.response?.status === 409) {

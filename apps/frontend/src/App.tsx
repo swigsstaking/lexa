@@ -5,6 +5,7 @@ import { Home } from '@/routes/Home';
 import { Login } from '@/routes/Login';
 import { Register } from '@/routes/Register';
 import { Onboarding } from '@/routes/Onboarding';
+import { Welcome } from '@/routes/Welcome';
 import { Workspace } from '@/routes/Workspace';
 import { NotFound } from '@/routes/NotFound';
 import { cantonGE } from '@/config/cantons/ge';
@@ -100,6 +101,14 @@ export default function App() {
           element={
             <RequireAuth>
               <Onboarding />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/welcome"
+          element={
+            <RequireAuth>
+              <Welcome />
             </RequireAuth>
           }
         />

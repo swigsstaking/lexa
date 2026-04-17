@@ -29,6 +29,7 @@ import { LedgerModal } from '@/components/ledger/LedgerModal';
 import { FiscalTimeline } from '@/components/timeline/FiscalTimeline';
 import { NavDropdown } from '@/components/Nav/NavDropdown';
 import { MobileMenu } from '@/components/Nav/MobileMenu';
+import { StartActionCards } from '@/components/onboarding/StartActionCards';
 
 export function Workspace() {
   const { t } = useTranslation();
@@ -78,6 +79,13 @@ export function Workspace() {
   };
 
   const health = useQuery({ queryKey: ['health'], queryFn: lexa.health });
+
+  const { data: ledgerData, isLoading: ledgerLoading } = useQuery({
+    queryKey: ['ledger-list-1'],
+    queryFn: () => lexa.ledgerList(1),
+    staleTime: 30 * 1000,
+  });
+  const hasEntries = ledgerLoading || (ledgerData?.entries?.length ?? 0) > 0;
 
   // Raccourci cmd+shift+L pour le mode expert
   useEffect(() => {
@@ -383,6 +391,18 @@ export function Workspace() {
         <div className="hidden md:block absolute inset-0">
           <LedgerCanvas />
         </div>
+
+        {/* Empty state — desktop, 0 écritures */}
+        {!hasEntries && !health.isLoading && (
+          <div className="hidden md:grid absolute inset-0 place-items-center pointer-events-none z-20">
+            <div className="card-elevated p-8 max-w-2xl pointer-events-auto text-center">
+              <Sparkles className="w-8 h-8 text-accent mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-ink mb-2">{t('workspace.empty.title')}</h2>
+              <p className="text-sm text-muted mb-6">{t('workspace.empty.subtitle')}</p>
+              <StartActionCards />
+            </div>
+          </div>
+        )}
 
         {/* Floating agents indicator — desktop seulement */}
         <div className="hidden md:flex absolute top-3 left-4 card-elevated px-3 py-2 items-center gap-2 pointer-events-none z-10">
