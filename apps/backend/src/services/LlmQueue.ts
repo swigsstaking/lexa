@@ -63,9 +63,11 @@ function getResourcesForTenant(tenantId: string): TenantResources {
     },
   });
 
-  // concurrency: 4 — parallélise jusqu'à 4 jobs LLM par tenant.
-  // Requis pour le batch CAMT classifier (N tx simultanées).
-  // OLLAMA_NUM_PARALLEL=4 sur Spark absorbe la charge côté GPU.
+  // concurrency: 8 — parallélise jusqu'à 8 jobs LLM par tenant.
+  // Bench vLLM Qwen3.5-35B-A3B-NVFP4: sweet spot N=8 (1.43 req/s, p95=5.6s).
+  // N=16 dégrade (p95=12.6s, throughput retombe à 1.27 req/s — saturation GPU).
+  // MAX_NUM_SEQS=8 côté vLLM systemd (correspondance 1:1 avec BullMQ).
+  // Fallback Ollama: OLLAMA_NUM_PARALLEL=4 — si vLLM tombe, réduire BullMQ manuellement.
   const worker = new Worker(
     queueName,
     async (job: Job) => {
@@ -81,7 +83,7 @@ function getResourcesForTenant(tenantId: string): TenantResources {
     },
     {
       connection: redisConnection,
-      concurrency: 4,
+      concurrency: 8,
     },
   );
 
