@@ -14,14 +14,16 @@ import { useQuery } from '@tanstack/react-query';
 import { lexa } from '@/api/lexa';
 import type { LedgerAccount, LedgerEntry } from '@/api/types';
 import { AccountNode } from './AccountNode';
+import { ClassNode } from './ClassNode';
 import { TransactionEdge } from './TransactionEdge';
-import { buildCanvas } from './layout';
+import { buildCanvas, buildCollapsedCanvas, COLLAPSE_THRESHOLD } from './layout';
 import { CanvasSkeleton } from './CanvasSkeleton';
 import { LedgerDrawer, type LedgerSelection } from './LedgerDrawer';
 import { PeriodModal } from './PeriodModal';
 import { usePeriodStore } from '@/stores/periodStore';
 
-const nodeTypes: NodeTypes = { account: AccountNode };
+// nodeTypes stable en dehors du composant pour éviter les re-renders React Flow
+const nodeTypes: NodeTypes = { account: AccountNode, classAgg: ClassNode };
 const edgeTypes: EdgeTypes = { transaction: TransactionEdge };
 
 /**
@@ -57,6 +59,13 @@ function recomputeBalances(
   });
 }
 
+/**
+ * Mode d'affichage du grand livre :
+ * - 'auto'           : collapse si >COLLAPSE_THRESHOLD comptes
+ * - 'fully-expanded' : tous les comptes individuels affichés
+ */
+type CollapseMode = 'auto' | 'fully-expanded';
+
 export function LedgerCanvas() {
   const balance = useQuery({ queryKey: ['balance'], queryFn: lexa.ledgerBalance });
   const entries = useQuery({ queryKey: ['ledger', 200], queryFn: () => lexa.ledgerList(200) });
@@ -68,6 +77,12 @@ export function LedgerCanvas() {
   const closeModal = usePeriodStore((s) => s.closeModal);
   const setPeriod = usePeriodStore((s) => s.setPeriod);
   const currentYear = new Date().getFullYear();
+
+  // Mode collapse : 'auto' (défaut) ou 'fully-expanded' (forcé par l'user)
+  const [collapseMode, setCollapseMode] = useState<CollapseMode>('auto');
+
+  // Ensemble des classes Käfer actuellement développées (click sur ClassNode)
+  const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set());
 
   const filteredEntries = useMemo(() => {
     const all = entries.data?.entries ?? [];
@@ -86,27 +101,95 @@ export function LedgerCanvas() {
     return recomputeBalances(balance.data.accounts, filteredEntries);
   }, [balance.data, filteredEntries, period.key]);
 
+  // Détermine si on doit activer le collapse (mode auto + seuil dépassé)
+  const shouldCollapse = useMemo(
+    () => collapseMode === 'auto' && accountsForPeriod.length > COLLAPSE_THRESHOLD,
+    [collapseMode, accountsForPeriod.length],
+  );
+
+  // Graph React Flow (nodes + edges)
   const graph = useMemo(() => {
     if (accountsForPeriod.length === 0) return { nodes: [], edges: [] };
-    return buildCanvas(accountsForPeriod, filteredEntries);
-  }, [accountsForPeriod, filteredEntries]);
+    if (!shouldCollapse) {
+      return buildCanvas(accountsForPeriod, filteredEntries);
+    }
+    return buildCollapsedCanvas(accountsForPeriod, filteredEntries, expandedClasses);
+  }, [accountsForPeriod, filteredEntries, shouldCollapse, expandedClasses]);
 
-  const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
-    setSelection({ kind: 'account', accountId: node.id });
-  }, []);
+  const onNodeClick = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      if (node.type === 'classAgg') {
+        // Toggle expand/collapse de la classe cliquée
+        const cls = (node.data as { kafClass: string }).kafClass;
+        setExpandedClasses((prev) => {
+          const next = new Set(prev);
+          if (next.has(cls)) {
+            next.delete(cls);
+          } else {
+            next.add(cls);
+          }
+          return next;
+        });
+        return;
+      }
+      setSelection({ kind: 'account', accountId: node.id });
+    },
+    [],
+  );
 
   const onEdgeClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
+    // Ignorer les edges de classes agrégées
+    if (edge.id.startsWith('class-edge-')) return;
     setSelection({ kind: 'edge', source: edge.source, target: edge.target });
   }, []);
 
   const closeDrawer = useCallback(() => setSelection(null), []);
 
+  // Fermer une classe avec Echap (écouté sur le canvas)
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape' && expandedClasses.size > 0) {
+        setExpandedClasses(new Set());
+      }
+    },
+    [expandedClasses],
+  );
+
   if (balance.isLoading || entries.isLoading) {
     return <CanvasSkeleton />;
   }
 
+  const isCollapsed = shouldCollapse;
+  const accountCount = accountsForPeriod.length;
+
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full" onKeyDown={onKeyDown} tabIndex={-1}>
+      {/* Bouton toggle collapse (visible seulement si >THRESHOLD comptes) */}
+      {accountCount > COLLAPSE_THRESHOLD && (
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+          {isCollapsed && expandedClasses.size > 0 && (
+            <button
+              onClick={() => setExpandedClasses(new Set())}
+              className="card-elevated px-3 py-1.5 text-2xs text-subtle hover:text-ink transition-colors"
+            >
+              Tout grouper
+            </button>
+          )}
+          <button
+            onClick={() =>
+              setCollapseMode((prev) => (prev === 'auto' ? 'fully-expanded' : 'auto'))
+            }
+            className="card-elevated px-3 py-1.5 text-2xs font-medium text-ink hover:border-accent/60 transition-colors flex items-center gap-1.5"
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${isCollapsed ? 'bg-warning' : 'bg-success'}`}
+            />
+            {collapseMode === 'auto' ? 'Tout développer' : 'Vue par classes'}
+            <span className="text-subtle">({accountCount} cptes)</span>
+          </button>
+        </div>
+      )}
+
       <ReactFlow
         nodes={graph.nodes}
         edges={graph.edges}

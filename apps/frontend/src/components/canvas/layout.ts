@@ -1,5 +1,6 @@
 import type { LedgerAccount, LedgerEntry } from '@/api/types';
 import type { AccountNodeData } from './AccountNode';
+import type { ClassNodeData } from './ClassNode';
 import type { TransactionEdgeData } from './TransactionEdge';
 
 export type LedgerNode = {
@@ -7,6 +8,13 @@ export type LedgerNode = {
   type: 'account';
   position: { x: number; y: number };
   data: AccountNodeData;
+};
+
+export type ClassLedgerNode = {
+  id: string;
+  type: 'classAgg';
+  position: { x: number; y: number };
+  data: ClassNodeData;
 };
 
 export type LedgerEdge = {
@@ -218,4 +226,178 @@ export function buildCanvas(
   });
 
   return { nodes, edges };
+}
+
+// ─── Libellés classes Käfer ───────────────────────────────────────────────────
+
+export const KAFER_CLASS_LABELS: Record<string, string> = {
+  '1': 'Actifs',
+  '2': 'Passifs',
+  '3': 'Produits',
+  '4': 'Achats / Charges matières',
+  '5': 'Personnel',
+  '6': 'Charges d\'exploitation',
+  '7': 'Produits & charges hors exploit.',
+  '8': 'Résultat extraordinaire',
+  '9': 'Clôture',
+};
+
+/** Seuil au-dessus duquel le collapse automatique est activé */
+export const COLLAPSE_THRESHOLD = 50;
+
+/**
+ * Construit un canvas "collapsed" par classe Käfer.
+ * Les classes dont les comptes ont au moins 1 entrée dans `expandedClasses` sont
+ * remplacées par leurs nœuds individuels. Les autres sont représentées par 1 ClassNode.
+ */
+export function buildCollapsedCanvas(
+  accounts: LedgerAccount[],
+  entries: LedgerEntry[],
+  expandedClasses: Set<string>,
+): { nodes: (LedgerNode | ClassLedgerNode)[]; edges: LedgerEdge[] } {
+  // Grouper les comptes par classe (premier digit)
+  const byClass = new Map<string, LedgerAccount[]>();
+  for (const a of accounts) {
+    const cls = extractCode(a.account)[0] ?? '9';
+    const arr = byClass.get(cls) ?? [];
+    arr.push(a);
+    byClass.set(cls, arr);
+  }
+
+  // Séparer les classes collapsed vs expanded
+  const collapsedClasses = new Set<string>();
+  const expandedAccountsAll: LedgerAccount[] = [];
+
+  for (const [cls, accs] of byClass) {
+    if (expandedClasses.has(cls)) {
+      expandedAccountsAll.push(...accs);
+    } else {
+      collapsedClasses.add(cls);
+    }
+  }
+
+  // Construire le canvas normal pour les comptes expanded
+  const expandedResult =
+    expandedAccountsAll.length > 0
+      ? buildCanvas(expandedAccountsAll, entries)
+      : { nodes: [], edges: [] };
+
+  // ── Nœuds classes (collapsed) ─────────────────────────────────────────────
+
+  // Layout des classes en grille 3 colonnes (même logique que buildCanvas)
+  const CLASS_COL: Record<string, number> = {
+    '3': 0, // produits → gauche
+    '1': 1, // actifs   → centre
+    '2': 2, // passifs  → droite
+    '4': 2,
+    '5': 2,
+    '6': 2,
+    '7': 2,
+    '8': 2,
+    '9': 2,
+  };
+  const COL_W = 420;
+  const ROW_H = 180;
+
+  const classNodesByCol: Record<number, Array<{ cls: string; accs: LedgerAccount[] }>> = {
+    0: [],
+    1: [],
+    2: [],
+  };
+  for (const cls of [...collapsedClasses].sort()) {
+    const col = CLASS_COL[cls] ?? 2;
+    classNodesByCol[col].push({ cls, accs: byClass.get(cls) ?? [] });
+  }
+
+  // Offset Y pour ne pas chevaucher les nœuds expanded (qui commencent à y=0)
+  const expandedHeight =
+    expandedAccountsAll.length > 0
+      ? Math.max(...expandedResult.nodes.map((n) => n.position.y)) + ROW_H + 60
+      : 0;
+
+  const classNodes: ClassLedgerNode[] = [];
+  for (const col of [0, 1, 2]) {
+    classNodesByCol[col].forEach(({ cls, accs }, i) => {
+      const aggregatedBalance = accs.reduce((sum, a) => sum + a.balance, 0);
+      classNodes.push({
+        id: `class-${cls}`,
+        type: 'classAgg',
+        position: { x: col * COL_W, y: expandedHeight + i * ROW_H },
+        data: {
+          kafClass: cls,
+          label: KAFER_CLASS_LABELS[cls] ?? `Classe ${cls}`,
+          aggregatedBalance,
+          accountCount: accs.length,
+          expanded: false,
+        },
+      });
+    });
+  }
+
+  // ── Edges entre classes (collapsed) ──────────────────────────────────────
+
+  // Set des comptes expanded pour filtrer les edges
+  const expandedAccountSet = new Set(expandedAccountsAll.map((a) => a.account));
+
+  // Edges entre paires de classes collapsed
+  type ClassEdgeAgg = { count: number; total: number; currency: string };
+  const classEdgeMap = new Map<string, ClassEdgeAgg>();
+
+  for (const e of entries) {
+    if (e.lineType !== 'debit') continue;
+    if (!e.counterpartAccount) continue;
+
+    const srcCls = extractCode(e.counterpartAccount)[0] ?? '9';
+    const tgtCls = extractCode(e.account)[0] ?? '9';
+
+    const srcCollapsed = !expandedAccountSet.has(e.counterpartAccount);
+    const tgtCollapsed = !expandedAccountSet.has(e.account);
+
+    // Edge classe→classe uniquement si les 2 côtés sont collapsed
+    if (srcCollapsed && tgtCollapsed && srcCls !== tgtCls) {
+      const key = `class-${srcCls}->class-${tgtCls}`;
+      const existing = classEdgeMap.get(key) ?? { count: 0, total: 0, currency: e.currency };
+      existing.count++;
+      existing.total += e.amount;
+      classEdgeMap.set(key, existing);
+    }
+  }
+
+  const fmtTotal = (n: number) =>
+    new Intl.NumberFormat('fr-CH', { maximumFractionDigits: 0 }).format(n);
+
+  const classEdges: LedgerEdge[] = Array.from(classEdgeMap.entries()).map(([key, agg], i) => {
+    const [src, tgt] = key.split('->');
+    return {
+      id: `class-edge-${i}`,
+      source: src,
+      target: tgt,
+      sourceHandle: 'r',
+      targetHandle: 'l',
+      type: 'transaction',
+      animated: true,
+      data: {
+        amount: agg.total,
+        currency: agg.currency,
+        count: agg.count,
+        direction: 'neutral' as const,
+        label: `${agg.count} tx · ${fmtTotal(agg.total)} CHF`,
+      },
+    };
+  });
+
+  // Edges entre comptes expanded et classes collapsed (cross-boundary)
+  // On les omet pour ne pas complexifier le rendu (ces edges feraient référence
+  // à des IDs qui n'existent pas dans React Flow si une classe est collapsed).
+
+  const allNodes: (LedgerNode | ClassLedgerNode)[] = [
+    ...expandedResult.nodes,
+    ...classNodes,
+  ];
+  const allEdges: LedgerEdge[] = [
+    ...expandedResult.edges,
+    ...classEdges,
+  ];
+
+  return { nodes: allNodes, edges: allEdges };
 }
