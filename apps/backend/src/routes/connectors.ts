@@ -12,6 +12,7 @@ import { config } from "../config/index.js";
 import { proWebhookClient } from "../services/ProWebhookClient.js";
 import { parseCamt053 } from "../services/Camt053Parser.js";
 import { scheduleLedgerRefresh, flushLedgerRefresh } from "../services/LedgerRefresh.js";
+import { computeFingerprint, lookupByFingerprint } from "../services/TransactionFingerprint.js";
 
 export const connectorsRouter = Router();
 
@@ -278,9 +279,44 @@ async function ingestCamt053Transactions(
   let failed = 0;
   const streamIds: string[] = [];
 
+  let dedupFingerprintCount = 0;
+
   for (const tx of transactions) {
     try {
-      // ── Déduplication ─────────────────────────────────────────────────────
+      // CRDT = entrée banque (amount positif), DBIT = sortie (amount négatif)
+      const signedAmount = tx.creditDebit === "DBIT" ? -tx.amount : tx.amount;
+
+      // Description enrichie pour le classifier (RAG match optimal)
+      const descParts = [
+        tx.counterpartyName,
+        tx.reference,
+        tx.structuredRef,
+      ].filter(Boolean);
+      const description = descParts.join(" | ") || `${tx.creditDebit} ${tx.currency} ${tx.amount}`;
+
+      // ── Fingerprint cross-source ───────────────────────────────────────────
+      const fingerprint = computeFingerprint({
+        amount: Math.abs(signedAmount),
+        date: tx.bookingDate,
+        description,
+        iban: tx.accountIban,
+        bankRef: tx.structuredRef,
+      });
+
+      // ── Déduplication 1 : fingerprint cross-source (CAMT + Pro) ──────────
+      const fingerprintMatch = await lookupByFingerprint(tenantId, fingerprint);
+      if (fingerprintMatch) {
+        dedupFingerprintCount++;
+        console.info(
+          "[camt053] dedup fingerprint match, skip txId=%s streamId=%s",
+          tx.txId,
+          fingerprintMatch.streamId,
+        );
+        skipped++;
+        continue;
+      }
+
+      // ── Déduplication 2 : même txId CAMT déjà ingéré ────────────────────
       const dupCheck = await queryAsTenant<{ id: string }>(
         tenantId,
         `SELECT id FROM events
@@ -297,17 +333,6 @@ async function ingestCamt053Transactions(
       }
 
       const streamId = randomUUID();
-
-      // CRDT = entrée banque (amount positif), DBIT = sortie (amount négatif)
-      const signedAmount = tx.creditDebit === "DBIT" ? -tx.amount : tx.amount;
-
-      // Description enrichie pour le classifier (RAG match optimal)
-      const descParts = [
-        tx.counterpartyName,
-        tx.reference,
-        tx.structuredRef,
-      ].filter(Boolean);
-      const description = descParts.join(" | ") || `${tx.creditDebit} ${tx.currency} ${tx.amount}`;
 
       // ── Append event TransactionIngested ──────────────────────────────────
       await eventStore.append({
@@ -334,6 +359,7 @@ async function ingestCamt053Transactions(
           counterpartyName: tx.counterpartyName,
           valueDate: tx.valueDate,
           structuredRef: tx.structuredRef,
+          fingerprint, // dedup cross-source
         },
       });
 
@@ -413,6 +439,10 @@ async function ingestCamt053Transactions(
       console.error(`[camt053] ingest failed for ${tx.txId}:`, (err as Error).message);
       failed++;
     }
+  }
+
+  if (dedupFingerprintCount > 0) {
+    console.info(`[camt053] dedup: ${dedupFingerprintCount} transaction(s) skipped via fingerprint (cross-source match)`);
   }
 
   return { ingested, skipped, failed, streamIds };

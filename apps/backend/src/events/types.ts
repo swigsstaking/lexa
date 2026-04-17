@@ -12,7 +12,7 @@ export type LexaEvent =
   | {
       type: "TransactionIngested";
       payload: {
-        source: "camt053" | "ocr" | "manual" | "swigs-pro" | "swigs-pro-invoice" | "swigs-pro-invoice-sent" | "swigs-pro-payment" | "swigs-pro-expense";
+        source: "camt053" | "ocr" | "manual" | "swigs-pro" | "swigs-pro-invoice" | "swigs-pro-invoice-sent" | "swigs-pro-payment" | "swigs-pro-expense" | "swigs-pro-bank";
         date: string; // ISO date
         description: string;
         amount: number; // positive = credit, negative = debit (bank view)

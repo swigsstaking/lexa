@@ -37,6 +37,7 @@ import { scheduleLedgerRefresh } from "../services/LedgerRefresh.js";
 import { requireHmac } from "../middleware/requireHmac.js";
 import { query, queryAsTenant } from "../db/postgres.js";
 import type { ClassificationResult } from "../agents/classifier/ClassifierAgent.js";
+import { computeFingerprint, lookupByFingerprint, enrichEventMetadata } from "../services/TransactionFingerprint.js";
 
 export const bridgeRouter = Router();
 
@@ -160,6 +161,16 @@ const InvoiceSentDataSchema = z.object({
   dueDate: z.string().optional(),
   sentAt: z.string().optional(),
   client: z.union([z.string(), z.record(z.unknown())]).optional(),
+});
+
+const BankTransactionDataSchema = z.object({
+  bankRef: z.string().optional(), // référence SCOR ou IBAN
+  iban: z.string().optional(),
+  date: z.string(), // ISO date
+  amount: z.number(),
+  currency: z.string().default("CHF"),
+  description: z.string(),
+  counterpartyName: z.string().optional(),
 });
 
 const BridgeEventSchema = z.object({
@@ -493,8 +504,14 @@ async function handleInvoicePaid(
     : new Date().toISOString().slice(0, 10);
   const description = `Paiement facture ${data.invoiceNumber} — ${clientName}`;
 
-  // Bloc B — Chercher la facture originale pour reconciliation
-  // Exclure invoice.paid pour ne pas matcher le paiement lui-même
+  // Dedup fingerprint : chercher une écriture bancaire déjà ingérée (ex: CAMT manuel)
+  const fingerprint = computeFingerprint({
+    amount: amountTtc,
+    date: paidDate,
+    description,
+  });
+
+  // Chercher la facture originale pour reconciliation (utile même en cas de dedup)
   let linkedInvoiceStreamId: string | null = null;
   try {
     const { rows: originals } = await queryAsTenant<{ stream_id: string }>(
@@ -509,20 +526,38 @@ async function handleInvoicePaid(
       [tenantId, data.invoiceId],
     );
     linkedInvoiceStreamId = originals[0]?.stream_id ?? null;
-    if (linkedInvoiceStreamId) {
-      console.info(
-        "[bridge] invoice.paid — found linked invoice streamId=%s for invoiceId=%s",
-        linkedInvoiceStreamId,
-        data.invoiceId,
-      );
-    } else {
-      console.warn(
-        "[bridge] invoice.paid — no linked invoice found for invoiceId=%s (reconciliation skipped)",
-        data.invoiceId,
-      );
-    }
   } catch (err) {
     console.warn("[bridge] invoice.paid — reconciliation lookup failed:", (err as Error).message);
+  }
+
+  const existingEntry = await lookupByFingerprint(tenantId, fingerprint);
+  if (existingEntry) {
+    console.info(
+      "[bridge] invoice.paid — bank entry already exists (fingerprint match), enriching only streamId=%s",
+      existingEntry.streamId,
+    );
+    await enrichEventMetadata(tenantId, existingEntry.eventId, {
+      reconciles: linkedInvoiceStreamId ?? null,
+      proInvoiceId: data.invoiceId,
+      proInvoiceNumber: data.invoiceNumber,
+      proPaidAt: data.paidAt ?? null,
+    });
+    scheduleLedgerRefresh(tenantId);
+    return { duplicate: true };
+  }
+
+  // Log reconciliation result
+  if (linkedInvoiceStreamId) {
+    console.info(
+      "[bridge] invoice.paid — found linked invoice streamId=%s for invoiceId=%s",
+      linkedInvoiceStreamId,
+      data.invoiceId,
+    );
+  } else {
+    console.warn(
+      "[bridge] invoice.paid — no linked invoice found for invoiceId=%s (reconciliation skipped)",
+      data.invoiceId,
+    );
   }
 
   const streamId = randomUUID();
@@ -549,6 +584,7 @@ async function handleInvoicePaid(
       proAmountTtc: amountTtc,
       proPaidAt: data.paidAt ?? null,
       proEventTimestamp: eventTimestamp,
+      fingerprint, // dedup cross-source
       // Reconciliation : lien vers le stream_id de la facture originale
       ...(linkedInvoiceStreamId ? { reconciles: linkedInvoiceStreamId } : {}),
     },
@@ -644,6 +680,90 @@ async function handleExpenseSubmitted(
   return { duplicate: false };
 }
 
+// ── Handler bank.transaction (Swigs Pro bankImapFetcher) ─────────────────────
+
+async function handleBankTransaction(
+  tenantId: string,
+  rawData: Record<string, unknown>,
+  eventTimestamp: string,
+): Promise<{ duplicate: boolean }> {
+  const parsed = BankTransactionDataSchema.safeParse(rawData);
+  if (!parsed.success) {
+    console.warn("[bridge] bank.transaction — invalid data:", parsed.error.flatten());
+    return { duplicate: false };
+  }
+  const data = parsed.data;
+
+  const bankDate = data.date.slice(0, 10);
+
+  // Calcul fingerprint avec tous les discriminants disponibles
+  const fingerprint = computeFingerprint({
+    amount: Math.abs(data.amount),
+    date: bankDate,
+    description: data.description,
+    iban: data.iban,
+    bankRef: data.bankRef,
+  });
+
+  // Dedup : chercher une écriture existante avec ce fingerprint
+  const existing = await lookupByFingerprint(tenantId, fingerprint);
+  if (existing) {
+    console.info(
+      "[bridge] bank.transaction — fingerprint match, skip insert streamId=%s",
+      existing.streamId,
+    );
+    await enrichEventMetadata(tenantId, existing.eventId, {
+      proSource: "swigs-pro-bank",
+      proBankRef: data.bankRef ?? null,
+      proEventTimestamp: eventTimestamp,
+    });
+    return { duplicate: true };
+  }
+
+  const streamId = randomUUID();
+
+  const description = [
+    data.description,
+    data.counterpartyName,
+  ].filter(Boolean).join(" | ") || "(bank transaction)";
+
+  await eventStore.append({
+    tenantId,
+    streamId,
+    event: {
+      type: "TransactionIngested",
+      payload: {
+        source: "swigs-pro-bank",
+        date: bankDate,
+        description,
+        amount: data.amount, // signe déjà porté par Pro
+        currency: data.currency,
+        counterpartyIban: data.iban,
+      },
+    },
+    metadata: {
+      source: "swigs-pro-bank",
+      proEvent: "bank.transaction",
+      proEventTimestamp: eventTimestamp,
+      fingerprint,
+      bankRef: data.bankRef ?? null,
+      counterpartyName: data.counterpartyName ?? null,
+    },
+  });
+
+  console.info(
+    "[bridge] bank.transaction ingested streamId=%s amount=%s date=%s",
+    streamId,
+    data.amount,
+    bankDate,
+  );
+
+  // Classification auto fire-and-forget
+  classifyAsync(tenantId, streamId, description, data.amount, bankDate, data.currency);
+  scheduleLedgerRefresh(tenantId);
+  return { duplicate: false };
+}
+
 // ── Route principale ──────────────────────────────────────────────────────────
 
 /**
@@ -702,6 +822,10 @@ bridgeRouter.post("/pro-events", requireHmac, async (req, res) => {
 
       case "expense.submitted":
         result = await handleExpenseSubmitted(tenantId, eventData, eventTimestamp);
+        break;
+
+      case "bank.transaction":
+        result = await handleBankTransaction(tenantId, eventData, eventTimestamp);
         break;
 
       default:
