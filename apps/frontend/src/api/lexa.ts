@@ -516,6 +516,32 @@ export const lexa = {
     api
       .post<{ ok: boolean; message: string }>('/conseiller/briefings/generate-now', { year })
       .then((r) => r.data),
+
+  // ── Export XML eCH-0119 (PP) / eCH-0229 (PM) ─────────────────────────────
+
+  /**
+   * Télécharge la déclaration PP au format XML eCH-0119 v4.0.0.
+   * Standard suisse officiel : https://www.ech.ch/fr/ech/ech-0119/4.0.0
+   */
+  exportTaxpayerXml: (year: number, canton: string): Promise<Blob> =>
+    api
+      .get(`/taxpayers/draft/${year}/export-xml`, {
+        params: { canton },
+        responseType: 'blob',
+      })
+      .then((r) => r.data as Blob),
+
+  /**
+   * Télécharge la déclaration PM au format XML eCH-0229 (best-effort).
+   * À valider contre XSD officiel lorsque eCH-0229 sera publié.
+   */
+  exportCompanyXml: (year: number, canton: string): Promise<Blob> =>
+    api
+      .get(`/companies/draft/${year}/export-xml`, {
+        params: { canton },
+        responseType: 'blob',
+      })
+      .then((r) => r.data as Blob),
 };
 
 export type TaxpayerDraft = {

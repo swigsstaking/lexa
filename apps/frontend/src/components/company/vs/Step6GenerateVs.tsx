@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, FileText, Loader2, AlertTriangle } from 'lucide-react';
+import { Download, FileText, Loader2, AlertTriangle, FileCode } from 'lucide-react';
 import type { CompanyDraftState } from '@/api/lexa';
 import { lexa } from '@/api/lexa';
 
@@ -25,8 +25,30 @@ export function Step6GenerateVs({ state, year }: Props) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [taxTotal, setTaxTotal] = useState<number | null>(null);
+  const [exportingXml, setExportingXml] = useState(false);
 
   const s1 = state.step1 ?? {};
+
+  const handleExportXml = async () => {
+    setExportingXml(true);
+    try {
+      const blob = await lexa.exportCompanyXml(year, 'VS');
+      const legalName = (s1.legalName ?? 'societe').replace(/\s+/g, '-').toLowerCase();
+      const filename = `declaration-pm-vs-${year}-${legalName}.xml`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Export XML échoué : ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setExportingXml(false);
+    }
+  };
 
   const handleGenerate = async () => {
     setStatus('loading');
@@ -100,8 +122,25 @@ export function Step6GenerateVs({ state, year }: Props) {
             )}
           </div>
           <button
-            onClick={() => { setStatus('idle'); setTaxTotal(null); }}
+            onClick={() => void handleExportXml()}
+            disabled={exportingXml}
             className="btn-secondary w-full"
+          >
+            {exportingXml ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Export XML en cours…
+              </>
+            ) : (
+              <>
+                <FileCode className="w-4 h-4" />
+                Export XML eCH-0229 (dépôt électronique)
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => { setStatus('idle'); setTaxTotal(null); }}
+            className="btn-ghost w-full text-xs"
           >
             Regénérer le PDF
           </button>

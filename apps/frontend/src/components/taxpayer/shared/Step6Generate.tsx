@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, Loader2, Sparkles, FileCheck } from 'lucide-react';
+import { Download, Loader2, Sparkles, FileCheck, FileCode } from 'lucide-react';
 import type { TaxpayerDraft } from '@/api/lexa';
 import { lexa } from '@/api/lexa';
 import type { CantonConfig } from '@/config/cantons/types';
@@ -42,6 +42,28 @@ export function Step6Generate({ draft, year, canton }: Props) {
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<GenerateResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [exportingXml, setExportingXml] = useState(false);
+
+  const handleExportXml = async () => {
+    setExportingXml(true);
+    try {
+      const blob = await lexa.exportTaxpayerXml(year, canton.code);
+      const fullName = `${draft.state.step1.lastName ?? 'contribuable'}-${draft.state.step1.firstName ?? ''}`.replace(/\s+/g, '_').replace(/^-/, '');
+      const filename = `declaration-pp-${canton.code.toLowerCase()}-${year}-${fullName}.xml`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Export XML échoué : ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setExportingXml(false);
+    }
+  };
 
   const fullName =
     `${draft.state.step1.firstName ?? ''} ${draft.state.step1.lastName ?? ''}`.trim() ||
@@ -178,17 +200,36 @@ export function Step6Generate({ draft, year, canton }: Props) {
             </div>
           </div>
 
-          {/* Bouton download PDF — fallback si auto-download bloqué */}
-          <button
-            onClick={() => {
-              const blob = base64ToBlob(result.pdfBase64, 'application/pdf');
-              downloadBlob(blob, result.filename);
-            }}
-            className="btn-primary w-full mb-4"
-          >
-            <Download className="w-4 h-4" />
-            Télécharger ma déclaration PDF
-          </button>
+          {/* Boutons de téléchargement */}
+          <div className="flex flex-col gap-2 mb-4">
+            <button
+              onClick={() => {
+                const blob = base64ToBlob(result.pdfBase64, 'application/pdf');
+                downloadBlob(blob, result.filename);
+              }}
+              className="btn-primary w-full"
+            >
+              <Download className="w-4 h-4" />
+              Télécharger ma déclaration PDF
+            </button>
+            <button
+              onClick={() => void handleExportXml()}
+              disabled={exportingXml}
+              className="btn-secondary w-full"
+            >
+              {exportingXml ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Export XML en cours…
+                </>
+              ) : (
+                <>
+                  <FileCode className="w-4 h-4" />
+                  Export XML eCH-0119 (dépôt électronique)
+                </>
+              )}
+            </button>
+          </div>
 
           <div className="p-3 rounded-lg bg-warning/10 border border-warning/30 text-xs text-warning">
             Rappel : Lexa prépare cette déclaration à titre indicatif. Faites-la

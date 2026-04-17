@@ -10,6 +10,7 @@ import {
   resetDraft,
   updateField,
 } from "../taxpayers/service.js";
+import { generateEch0119PpXml } from "../services/Ech0119Generator.js";
 import { query, queryAsTenant } from "../db/postgres.js";
 import { getDb } from "../db/mongo.js";
 import { buildVsPpDeclaration } from "../execution/VsPpFormBuilder.js";
@@ -521,5 +522,93 @@ taxpayersRouter.get("/draft/:year/field-sources", async (req, res) => {
   } catch (err) {
     console.error("[taxpayers.field-sources]", err);
     return res.status(500).json({ error: "field-sources failed", message: (err as Error).message });
+  }
+});
+
+// ─── Export XML eCH-0119 PP ───────────────────────────────────────────────────
+
+const SUPPORTED_CANTONS_XML = ["VS", "GE", "VD", "FR"] as const;
+
+/**
+ * GET /taxpayers/draft/:year/export-xml?canton=VS
+ *
+ * Génère un fichier XML eCH-0119 v4.0.0 (E-Tax Filing PP) à partir du draft
+ * du contribuable. Utilisé pour la dépose électronique auprès de l'AFC.
+ *
+ * Le fichier XML est conforme au standard suisse eCH-0119 v4.0.0 :
+ * https://www.ech.ch/fr/ech/ech-0119/4.0.0
+ */
+taxpayersRouter.get("/draft/:year/export-xml", async (req, res) => {
+  const yearParse = z.coerce.number().int().min(2020).max(2100).safeParse(req.params.year);
+  if (!yearParse.success) {
+    return res.status(400).json({ error: "invalid year param" });
+  }
+  const year = yearParse.data;
+  const canton = ((req.query.canton as string) ?? "VS").toUpperCase();
+
+  if (!SUPPORTED_CANTONS_XML.includes(canton as typeof SUPPORTED_CANTONS_XML[number])) {
+    return res.status(400).json({ error: `canton '${canton}' non supporté — cantons valides: ${SUPPORTED_CANTONS_XML.join(", ")}` });
+  }
+
+  try {
+    const draft = await getOrCreateDraft(req.tenantId, year);
+    const s1 = draft.state.step1 ?? {} as typeof draft.state.step1;
+    const s2 = draft.state.step2 ?? {} as typeof draft.state.step2;
+    const s3 = draft.state.step3 ?? {} as typeof draft.state.step3;
+    const s4 = draft.state.step4 ?? {} as typeof draft.state.step4;
+
+    const xml = generateEch0119PpXml({
+      year,
+      canton,
+      identity: {
+        firstName: s1.firstName,
+        lastName: s1.lastName,
+        dateOfBirth: s1.dateOfBirth,
+        civilStatus: s1.civilStatus,
+        commune: s1.commune,
+        childrenCount: s1.childrenCount,
+      },
+      revenues: {
+        salaireBrut: s2.salaireBrut,
+        revenusAccessoires: s2.revenusAccessoires,
+        rentesAvs: s2.rentesAvs,
+        rentesLpp: s2.rentesLpp,
+        rentes3ePilier: s2.rentes3ePilier,
+        allocations: s2.allocations,
+        revenusTitres: s2.revenusTitres,
+        revenusImmobiliers: s2.revenusImmobiliers,
+      },
+      assets: {
+        comptesBancaires: s3.comptesBancaires,
+        titresCotes: s3.titresCotes,
+        titresNonCotes: s3.titresNonCotes,
+        immeublesValeurFiscale: s3.immeublesValeurFiscale,
+        immeublesEmprunt: s3.immeublesEmprunt,
+        vehicules: s3.vehicules,
+        autresBiens: s3.autresBiens,
+        dettes: s3.dettes,
+      },
+      deductions: {
+        pilier3a: s4.pilier3a,
+        primesAssurance: s4.primesAssurance,
+        fraisProFormat: s4.fraisProFormat,
+        fraisProReels: s4.fraisProReels,
+        interetsPassifs: s4.interetsPassifs,
+        rachatsLpp: s4.rachatsLpp,
+        fraisMedicaux: s4.fraisMedicaux,
+        dons: s4.dons,
+      },
+    });
+
+    const fullName = `${s1.lastName ?? "contribuable"}-${s1.firstName ?? ""}`.replace(/\s+/g, "_").replace(/^-/, "");
+    const filename = `declaration-pp-${canton.toLowerCase()}-${year}-${fullName}.xml`;
+
+    res.setHeader("Content-Type", "application/xml; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    return res.send(xml);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "unknown error";
+    console.error("[taxpayers.export-xml]", err);
+    return res.status(500).json({ error: "export-xml failed", message });
   }
 });

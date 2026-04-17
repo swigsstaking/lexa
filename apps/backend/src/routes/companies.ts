@@ -11,8 +11,9 @@
 import { Router } from "express";
 import { z } from "zod";
 import { query, queryAsTenant } from "../db/postgres.js";
-import { buildPmDeclarationVs, buildPmDeclaration, type PmDraft, type Canton } from "../execution/PmFormBuilder.js";
+import { buildPmDeclarationVs, buildPmDeclaration, type PmDraft, type Canton as PmFormCanton } from "../execution/PmFormBuilder.js";
 import { renderPmPdf } from "../execution/PmPdfRenderer.js";
+import { generateEch0119PmXml } from "../services/Ech0119Generator.js";
 
 export const companiesRouter = Router();
 
@@ -302,8 +303,8 @@ function makeSubmitRoute(canton: Canton) {
       }
 
       const state = result.rows[0].state as Parameters<typeof mapStateToPmDraft>[0];
-      const pmDraft: PmDraft = mapStateToPmDraft(state, year, canton);
-      const formResult = buildPmDeclaration(canton, { tenantId, year, draft: pmDraft });
+      const pmDraft: PmDraft = mapStateToPmDraft(state, year, canton as PmFormCanton);
+      const formResult = buildPmDeclaration(canton as PmFormCanton, { tenantId, year, draft: pmDraft });
       const pdfBuffer = await renderPmPdf(formResult);
 
       return res.json({
@@ -325,6 +326,114 @@ function makeSubmitRoute(canton: Canton) {
 companiesRouter.post("/draft/:year/submit-ge", makeSubmitRoute("GE"));
 companiesRouter.post("/draft/:year/submit-vd", makeSubmitRoute("VD"));
 companiesRouter.post("/draft/:year/submit-fr", makeSubmitRoute("FR"));
+
+// ── GET /companies/draft/:year/export-xml?canton=VS — export XML eCH-0229 PM ──
+
+const VALID_CANTONS_XML = ["VS", "GE", "VD", "FR"] as const;
+
+/**
+ * GET /companies/draft/:year/export-xml?canton=VS
+ *
+ * Génère un fichier XML eCH-0229 (Données déclarations PM) à partir du draft PM.
+ * Structure best-effort en attendant la publication officielle du XSD eCH-0229.
+ */
+companiesRouter.get("/draft/:year/export-xml", async (req, res) => {
+  const yearParse = z.coerce.number().int().min(2020).max(2100).safeParse(req.params.year);
+  if (!yearParse.success) {
+    return res.status(400).json({ error: "invalid year param" });
+  }
+  const year = yearParse.data;
+  const canton = ((req.query.canton as string) ?? "VS").toUpperCase();
+
+  if (!VALID_CANTONS_XML.includes(canton as typeof VALID_CANTONS_XML[number])) {
+    return res.status(400).json({ error: `canton '${canton}' non supporté — cantons valides: ${VALID_CANTONS_XML.join(", ")}` });
+  }
+
+  const tenantId = req.tenantId;
+
+  try {
+    const result = await queryAsTenant<{ id: string; state: Record<string, unknown> }>(
+      tenantId,
+      `SELECT id, state FROM company_drafts WHERE tenant_id=$1 AND year=$2 AND canton=$3 LIMIT 1`,
+      [tenantId, year, canton],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: `draft ${canton} not found — créez un brouillon d'abord` });
+    }
+
+    const state = result.rows[0].state as {
+      step1?: { legalName?: string; legalForm?: string; ideNumber?: string; siegeCommune?: string };
+      step2?: {
+        chiffreAffaires?: number;
+        benefitAccounting?: number;
+        chargesPersonnel?: number;
+        chargesMaterielles?: number;
+        amortissementsComptables?: number;
+        autresCharges?: number;
+      };
+      step3?: {
+        chargesNonAdmises?: number;
+        provisionsExcessives?: number;
+        amortissementsExcessifs?: number;
+        autresCorrections?: number;
+      };
+      step4?: {
+        capitalSocial?: number;
+        reservesLegales?: number;
+        reservesLibres?: number;
+        reportBenefice?: number;
+      };
+    };
+
+    const s1 = state.step1 ?? {};
+    const s2 = state.step2 ?? {};
+    const s3 = state.step3 ?? {};
+    const s4 = state.step4 ?? {};
+
+    const xml = generateEch0119PmXml({
+      year,
+      canton,
+      identity: {
+        legalName: s1.legalName,
+        legalForm: s1.legalForm,
+        ideNumber: s1.ideNumber,
+        siegeCommune: s1.siegeCommune,
+      },
+      financials: {
+        chiffreAffaires: s2.chiffreAffaires,
+        benefitAccounting: s2.benefitAccounting,
+        chargesPersonnel: s2.chargesPersonnel,
+        chargesMaterielles: s2.chargesMaterielles,
+        amortissementsComptables: s2.amortissementsComptables,
+        autresCharges: s2.autresCharges,
+      },
+      corrections: {
+        chargesNonAdmises: s3.chargesNonAdmises,
+        provisionsExcessives: s3.provisionsExcessives,
+        amortissementsExcessifs: s3.amortissementsExcessifs,
+        autresCorrections: s3.autresCorrections,
+      },
+      capital: {
+        capitalSocial: s4.capitalSocial,
+        reservesLegales: s4.reservesLegales,
+        reservesLibres: s4.reservesLibres,
+        reportBenefice: s4.reportBenefice,
+      },
+    });
+
+    const legalName = (s1.legalName ?? "societe").replace(/\s+/g, "-").toLowerCase();
+    const filename = `declaration-pm-${canton.toLowerCase()}-${year}-${legalName}.xml`;
+
+    res.setHeader("Content-Type", "application/xml; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    return res.send(xml);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "unknown error";
+    console.error("[companies.export-xml]", err);
+    return res.status(500).json({ error: "export-xml failed", message });
+  }
+});
 
 // ── Mapping state JSONB → PmDraft ────────────────────────────────────────────
 
@@ -362,7 +471,7 @@ function mapStateToPmDraft(state: {
     reportBenefice?: number;
     capitalTotal?: number;
   };
-}, year: number, canton: Canton = "VS"): PmDraft {
+}, year: number, canton: PmFormCanton = "VS"): PmDraft {
   const s1 = state.step1 ?? {};
   const s2 = state.step2 ?? {};
   const s3 = state.step3 ?? {};
