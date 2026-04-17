@@ -59,40 +59,30 @@ export function FiscalTimeline({ year, selected }: Props) {
         className="flex-1 relative h-8 cursor-pointer group hover:opacity-95 transition-opacity text-left"
         aria-label="Changer la période"
       >
-        {/* Track */}
-        <div className="absolute inset-y-3 left-0 right-0 bg-elevated rounded-full border border-border" />
-        {/* Range de la période sélectionnée (par dessus le track) */}
+        {/* Track — gris foncé */}
+        <div className="absolute inset-y-3 left-0 right-0 bg-stone-800 rounded-full" />
+        {/* Range de la période sélectionnée — vert */}
         <div
-          className="absolute inset-y-3 bg-accent/25 border-y border-accent/60 rounded"
+          className="absolute inset-y-3 bg-emerald-500/30 border-y border-emerald-500/60 rounded"
           style={{
             left: `${periodRange.start * 100}%`,
             width: `${(periodRange.end - periodRange.start) * 100}%`,
           }}
         />
-        {/* Passé consolidé */}
+        {/* Curseur aujourd'hui — trait fin gris clair */}
         <div
-          className="absolute inset-y-3 left-0 bg-success/25 rounded-l-full border-y border-l border-success/40"
-          style={{ width: `${progress.now * 100}%` }}
-        />
-        {/* Présent (point maintenant) */}
-        <div
-          className="absolute top-2 bottom-2 w-0.5 bg-warning"
+          className="absolute top-2 bottom-2 w-px bg-stone-400"
           style={{ left: `${progress.now * 100}%` }}
-        />
-        {/* Futur prédit */}
-        <div
-          className="absolute inset-y-3 right-0 bg-transparent rounded-r-full border-y border-r border-dashed border-subtle"
-          style={{ width: `${(1 - progress.now) * 100}%`, left: `${progress.now * 100}%` }}
         />
         {/* Curseur sélectionné */}
         <div
           className="absolute top-1 bottom-1 w-1 bg-accent rounded-full shadow-glow-accent transition-all"
           style={{ left: `calc(${progress.cursor * 100}% - 2px)` }}
         />
-        {/* Micro-label "aujourd'hui" quand le curseur = date du jour */}
+        {/* Micro-label "aujourd'hui" — seulement si curseur = aujourd'hui */}
         {cursor.toDateString() === now.toDateString() && (
           <div
-            className="absolute -top-4 text-2xs text-accent font-medium pointer-events-none whitespace-nowrap"
+            className="absolute -top-4 text-2xs text-stone-400 font-medium pointer-events-none whitespace-nowrap"
             style={{ left: `calc(${progress.cursor * 100}% - 18px)` }}
           >
             aujourd'hui
