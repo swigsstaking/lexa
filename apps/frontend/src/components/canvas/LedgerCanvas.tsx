@@ -12,6 +12,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { useQuery } from '@tanstack/react-query';
 import { lexa } from '@/api/lexa';
+import type { LedgerAccount, LedgerEntry } from '@/api/types';
 import { AccountNode } from './AccountNode';
 import { TransactionEdge } from './TransactionEdge';
 import { buildCanvas } from './layout';
@@ -22,6 +23,39 @@ import { usePeriodStore } from '@/stores/periodStore';
 
 const nodeTypes: NodeTypes = { account: AccountNode };
 const edgeTypes: EdgeTypes = { transaction: TransactionEdge };
+
+/**
+ * Recalcule les soldes de comptes depuis les écritures filtrées par période.
+ * Utilisé quand la période n'est pas "toute l'année" pour cohérence avec
+ * filteredEntries (l'API /ledger/balance retourne toujours l'année entière).
+ */
+function recomputeBalances(
+  accounts: LedgerAccount[],
+  entries: LedgerEntry[],
+): LedgerAccount[] {
+  const sums = new Map<string, { debit: number; credit: number }>();
+  for (const e of entries) {
+    const cur = sums.get(e.account) ?? { debit: 0, credit: 0 };
+    if (e.lineType === 'debit') cur.debit += e.amount;
+    else cur.credit += e.amount;
+    sums.set(e.account, cur);
+  }
+  return accounts.map((a) => {
+    const s = sums.get(a.account);
+    if (!s) return { ...a, balance: 0, totalDebit: 0, totalCredit: 0 };
+    // Convention comptable : comptes actif/charges (1xx, 4xx-9xx) = solde débiteur normal
+    const code = a.account.match(/^\d+/)?.[0] ?? '';
+    const first = code[0] ?? '0';
+    const isDebitNormal =
+      first === '1' || (first >= '4' && first <= '9');
+    return {
+      ...a,
+      balance: isDebitNormal ? s.debit - s.credit : s.credit - s.debit,
+      totalDebit: s.debit,
+      totalCredit: s.credit,
+    };
+  });
+}
 
 export function LedgerCanvas() {
   const balance = useQuery({ queryKey: ['balance'], queryFn: lexa.ledgerBalance });
@@ -44,10 +78,18 @@ export function LedgerCanvas() {
     });
   }, [entries.data, period]);
 
+  // Recalcule les soldes depuis filteredEntries pour que balance et écritures
+  // soient cohérentes. Bypass si période = "all" (données API déjà correctes).
+  const accountsForPeriod = useMemo(() => {
+    if (!balance.data?.accounts) return [];
+    if (period.key === 'all') return balance.data.accounts;
+    return recomputeBalances(balance.data.accounts, filteredEntries);
+  }, [balance.data, filteredEntries, period.key]);
+
   const graph = useMemo(() => {
-    if (!balance.data) return { nodes: [], edges: [] };
-    return buildCanvas(balance.data.accounts, filteredEntries);
-  }, [balance.data, filteredEntries]);
+    if (accountsForPeriod.length === 0) return { nodes: [], edges: [] };
+    return buildCanvas(accountsForPeriod, filteredEntries);
+  }, [accountsForPeriod, filteredEntries]);
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelection({ kind: 'account', accountId: node.id });
@@ -90,7 +132,7 @@ export function LedgerCanvas() {
       </ReactFlow>
       <LedgerDrawer
         selection={selection}
-        accounts={balance.data?.accounts ?? []}
+        accounts={accountsForPeriod}
         entries={filteredEntries}
         onClose={closeDrawer}
       />
