@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   Wand2,
   QrCode,
+  Landmark,
 } from 'lucide-react';
 import { lexa, type DocumentMeta } from '@/api/lexa';
 import { useActiveCompany } from '@/stores/companiesStore';
@@ -223,6 +224,11 @@ export function Documents() {
   const [applyingDocId, setApplyingDocId] = useState<string | null>(null);
   const [appliedDocIds, setAppliedDocIds] = useState<Set<string>>(new Set());
 
+  // CAMT.053 state
+  const camt053InputRef = useRef<HTMLInputElement>(null);
+  const [camt053Result, setCamt053Result] = useState<{ imported: number; skipped: number; message: string } | null>(null);
+  const [camt053Error, setCamt053Error] = useState<string | null>(null);
+
   const { data: documents, isLoading } = useQuery({
     queryKey: ['documents'],
     queryFn: lexa.listDocuments,
@@ -272,6 +278,31 @@ export function Documents() {
       });
     },
   });
+
+  const camt053Mutation = useMutation({
+    mutationFn: (file: File) => lexa.uploadCamt053(file),
+    onSuccess: (data) => {
+      setCamt053Result(data);
+      setCamt053Error(null);
+      // Invalider le grand livre pour refléter les nouvelles transactions
+      queryClient.invalidateQueries({ queryKey: ['ledger'] });
+      queryClient.invalidateQueries({ queryKey: ['balance'] });
+    },
+    onError: (err: Error) => {
+      const apiMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setCamt053Error(apiMsg || err.message || 'Erreur lors de l\'import CAMT.053');
+      setCamt053Result(null);
+    },
+  });
+
+  const handleCamt053Change = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCamt053Result(null);
+    setCamt053Error(null);
+    camt053Mutation.mutate(file);
+    e.target.value = '';
+  };
 
   const handleApply = (documentId: string, year: number) => {
     setApplyFeedback(null);
@@ -355,6 +386,59 @@ export function Documents() {
             <div className="flex items-center gap-2 text-xs text-emerald-400">
               <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
               <span>"{lastUploaded}" importé avec succès</span>
+            </div>
+          )}
+        </section>
+
+        {/* Import bancaire CAMT.053 */}
+        <section className="card p-6 flex flex-col items-center gap-4">
+          <div className="text-center">
+            <Landmark className="w-8 h-8 text-accent mx-auto mb-2" />
+            <h2 className="text-sm font-semibold">Import bancaire CAMT.053</h2>
+            <p className="text-2xs text-subtle mt-1">
+              Relevé XML ISO 20022 — transactions importées directement dans le grand livre
+            </p>
+          </div>
+
+          <input
+            ref={camt053InputRef}
+            type="file"
+            accept=".xml"
+            onChange={handleCamt053Change}
+            className="hidden"
+          />
+
+          <button
+            onClick={() => camt053InputRef.current?.click()}
+            disabled={camt053Mutation.isPending}
+            className="btn-primary flex items-center gap-2"
+          >
+            {camt053Mutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Import en cours...</span>
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                <span>Importer le relevé</span>
+              </>
+            )}
+          </button>
+
+          {camt053Error && (
+            <div className="flex items-center gap-2 text-xs text-red-400">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{camt053Error}</span>
+            </div>
+          )}
+          {camt053Result && (
+            <div className="flex items-center gap-2 text-xs text-emerald-400">
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+              <span>
+                {camt053Result.imported} transaction{camt053Result.imported !== 1 ? 's' : ''} importée{camt053Result.imported !== 1 ? 's' : ''}
+                {camt053Result.skipped > 0 ? ` · ${camt053Result.skipped} ignorée${camt053Result.skipped !== 1 ? 's' : ''}` : ''}
+              </span>
             </div>
           )}
         </section>

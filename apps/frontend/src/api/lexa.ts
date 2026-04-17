@@ -438,6 +438,19 @@ export const lexa = {
       }>('/simulate/dividend-vs-salary', input)
       .then((r) => r.data),
 
+  // ── CAMT.053 — Import relevé bancaire XML (Lane O) ───────────────────────
+  uploadCamt053: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api
+      .post<{ imported: number; skipped: number; message: string }>(
+        '/connectors/camt053/upload',
+        form,
+        { headers: { 'Content-Type': undefined } },
+      )
+      .then((r) => r.data);
+  },
+
   // ── Fiduciary — mode multi-clients (S32) ──────────────────────────────────
 
   listFiduciaryClients: () =>
