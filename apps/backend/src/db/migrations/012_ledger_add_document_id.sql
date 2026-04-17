@@ -110,5 +110,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- CRITIQUE : recréer account_balance VIEW (droppée par le CASCADE ci-dessus, car dépendante de ledger_entries)
+CREATE OR REPLACE VIEW account_balance AS
+SELECT
+  tenant_id,
+  account,
+  COUNT(*) FILTER (WHERE line_type = 'debit')  AS debit_count,
+  COUNT(*) FILTER (WHERE line_type = 'credit') AS credit_count,
+  COALESCE(SUM(amount) FILTER (WHERE line_type = 'debit'), 0)  AS total_debit,
+  COALESCE(SUM(amount) FILTER (WHERE line_type = 'credit'), 0) AS total_credit,
+  COALESCE(SUM(amount) FILTER (WHERE line_type = 'debit'), 0)
+    - COALESCE(SUM(amount) FILTER (WHERE line_type = 'credit'), 0) AS balance
+FROM ledger_entries
+GROUP BY tenant_id, account;
+
 INSERT INTO schema_migrations (version) VALUES ('012_ledger_add_document_id')
   ON CONFLICT (version) DO NOTHING;
