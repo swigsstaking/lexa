@@ -5,11 +5,13 @@ import { Loader2, LogIn, Sparkles } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { lexa } from '@/api/lexa';
 import { useAuthStore } from '@/stores/authStore';
+import { useCompaniesStore } from '@/stores/companiesStore';
 
 export function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
+  const addCompany = useCompaniesStore((s) => s.addCompany);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,6 +25,13 @@ export function Login() {
     try {
       const { user, token } = await lexa.login({ email, password });
       setAuth(token, user);
+      // Hydrater le companiesStore avec la company de l'user (sinon le badge affiche "—" au reload)
+      try {
+        const me = await lexa.me();
+        if (me.company) addCompany(me.company);
+      } catch {
+        // silent — l'hydration peut être ré-essayée dans Workspace au mount
+      }
       navigate('/workspace', { replace: true });
     } catch (err) {
       if (err instanceof AxiosError) {

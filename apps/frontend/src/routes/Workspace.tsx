@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { lexa } from '@/api/lexa';
 import { useActiveCompany, useCompaniesStore } from '@/stores/companiesStore';
+import { User } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useChatStore } from '@/stores/chatStore';
 import { LedgerCanvas } from '@/components/canvas/LedgerCanvas';
@@ -39,6 +40,7 @@ export function Workspace() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const company = useActiveCompany();
+  const addCompany = useCompaniesStore((s) => s.addCompany);
   const clear = useCompaniesStore((s) => s.clear);
   const authLogout = useAuthStore((s) => s.logout);
   const setToken = useAuthStore((s) => s.setToken);
@@ -127,6 +129,15 @@ export function Workspace() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
+
+  // Hydrater le companiesStore au mount si vide (reload + user déjà loggé → le store Zustand
+  // persisté peut avoir été clear, ou bien login n'a pas hydraté)
+  useEffect(() => {
+    if (!token || company) return;
+    lexa.me().then((me) => {
+      if (me?.company) addCompany(me.company);
+    }).catch(() => { /* silent */ });
+  }, [token, company, addCompany]);
 
   // Fermer le menu company/switcher si click dehors
   useEffect(() => {
@@ -285,7 +296,12 @@ export function Workspace() {
               className="flex items-center gap-2 min-w-0 hover:bg-elevated transition-colors rounded-md px-2 py-1"
               title={hasMultipleClients ? 'Changer de compte' : 'Gérer le compte'}
             >
-              <Building2 className="w-3.5 h-3.5 text-muted flex-shrink-0" />
+              {(() => {
+                // Icône différente selon type d'entité : PM (Sàrl/SA/Coopérative) = Building2, PP (RI/assoc/fondation/autre) = User
+                const isPm = company?.legalForm === 'sarl' || company?.legalForm === 'sa' || company?.legalForm === 'cooperative';
+                const Icon = isPm ? Building2 : User;
+                return <Icon className="w-3.5 h-3.5 text-muted flex-shrink-0" />;
+              })()}
               <span className="text-sm text-ink truncate">{company?.name ?? t('common.empty')}</span>
               {company?.canton && <span className="chip">{company.canton}</span>}
               <ChevronDown
