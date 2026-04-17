@@ -79,15 +79,6 @@ export function FiscalTimeline({ year, selected }: Props) {
           className="absolute top-1 bottom-1 w-1 bg-accent rounded-full shadow-glow-accent transition-all"
           style={{ left: `calc(${progress.cursor * 100}% - 2px)` }}
         />
-        {/* Micro-label "aujourd'hui" — seulement si curseur = aujourd'hui */}
-        {cursor.toDateString() === now.toDateString() && (
-          <div
-            className="absolute -top-4 text-2xs text-stone-400 font-medium pointer-events-none whitespace-nowrap"
-            style={{ left: `calc(${progress.cursor * 100}% - 18px)` }}
-          >
-            aujourd'hui
-          </div>
-        )}
         {/* Labels mois */}
         <div className="absolute inset-x-0 top-0 h-3 flex">
           {months.map((m) => (
