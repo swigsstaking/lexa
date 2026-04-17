@@ -92,7 +92,13 @@ export async function updateField(params: {
     }
     cursor = cursor[key] as Record<string, unknown>;
   }
-  cursor[parts[parts.length - 1]!] = value;
+  // Empty string → delete field (let optional enums / fields fall back to undefined)
+  // Fix bug E2E PP : select "État civil" avec option "—" envoyait '' qui failait Zod enum
+  if (value === "" || value === null) {
+    delete cursor[parts[parts.length - 1]!];
+  } else {
+    cursor[parts[parts.length - 1]!] = value;
+  }
 
   // Re-parse to validate (will throw on invalid types)
   const validated = TaxpayerDraftStateSchema.parse(nextState);
