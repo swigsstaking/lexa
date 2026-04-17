@@ -18,7 +18,8 @@ import {
   Lightbulb,
   Users,
   ChevronDown,
-  Mail,
+  Settings,
+  Plus,
 } from 'lucide-react';
 import { lexa } from '@/api/lexa';
 import { useActiveCompany, useCompaniesStore } from '@/stores/companiesStore';
@@ -62,9 +63,6 @@ export function Workspace() {
   });
 
   const hasMultipleClients = fiduClients && fiduClients.length > 1;
-  const activeTenantName = hasMultipleClients
-    ? (fiduClients?.find((c) => c.tenantId === activeTenantId)?.tenantName ?? null)
-    : null;
 
   const handleSwitchTenant = async (tenantId: string) => {
     if (tenantId === activeTenantId || switchingTenant) return;
@@ -130,14 +128,15 @@ export function Workspace() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  // Fermer le menu client si click dehors
+  // Fermer le menu company/switcher si click dehors
   useEffect(() => {
+    if (!clientMenuOpen) return;
     const handler = (e: MouseEvent) => {
       if (clientMenuRef.current && !clientMenuRef.current.contains(e.target as Node)) {
         setClientMenuOpen(false);
       }
     };
-    if (clientMenuOpen) document.addEventListener('mousedown', handler);
+    document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [clientMenuOpen]);
 
@@ -278,38 +277,32 @@ export function Workspace() {
 
           <span className="w-px h-5 bg-border" />
 
-          <div className="flex items-center gap-2 min-w-0">
-            <Building2 className="w-3.5 h-3.5 text-muted flex-shrink-0" />
-            <span className="text-sm text-ink truncate">{company?.name ?? t('common.empty')}</span>
-            {company?.uid && (
-              <span className="text-2xs text-subtle mono-num">{company.uid}</span>
-            )}
-            {company?.canton && <span className="chip">{company.canton}</span>}
+          {/* Badge company — toujours cliquable : switch compte (si >1) + ajouter un compte */}
+          <div className="relative min-w-0" ref={clientMenuRef}>
+            <button
+              type="button"
+              onClick={() => setClientMenuOpen((o) => !o)}
+              className="flex items-center gap-2 min-w-0 hover:bg-elevated transition-colors rounded-md px-2 py-1"
+              title={hasMultipleClients ? 'Changer de compte' : 'Gérer le compte'}
+            >
+              <Building2 className="w-3.5 h-3.5 text-muted flex-shrink-0" />
+              <span className="text-sm text-ink truncate">{company?.name ?? t('common.empty')}</span>
+              {company?.canton && <span className="chip">{company.canton}</span>}
+              <ChevronDown
+                className={`w-3 h-3 text-muted transition-transform duration-150 ${clientMenuOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
 
-            {/* Badge "Client : Nom" — cliquable si multi-clients pour switcher */}
-            {hasMultipleClients && activeTenantName && (
-              <div className="relative hidden sm:block" ref={clientMenuRef}>
-                <button
-                  type="button"
-                  onClick={() => setClientMenuOpen((o) => !o)}
-                  className="flex items-center gap-1 text-xs text-stone-400 ml-1 hover:text-stone-200 transition-colors cursor-pointer"
-                  title="Changer de client"
-                >
-                  <span>
-                    Client :{' '}
-                    <span className="font-medium text-stone-100">{activeTenantName}</span>
-                  </span>
-                  <ChevronDown
-                    className={`w-3 h-3 transition-transform duration-150 ${clientMenuOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-
-                {/* Dropdown switcher */}
-                {clientMenuOpen && (
-                  <div
-                    role="menu"
-                    className="absolute left-0 top-full mt-1 min-w-[200px] rounded-lg border border-border bg-surface shadow-lg z-50 py-1"
-                  >
+            {clientMenuOpen && (
+              <div
+                role="menu"
+                className="absolute left-0 top-full mt-1 min-w-[240px] rounded-lg border border-border bg-surface shadow-lg z-50 py-1"
+              >
+                {hasMultipleClients && fiduItems.length > 0 && (
+                  <>
+                    <div className="px-3 pt-2 pb-1 text-2xs text-muted uppercase tracking-wider">
+                      Mes comptes
+                    </div>
                     {fiduItems.map((item, i) => {
                       const ItemIcon = item.icon;
                       return (
@@ -327,8 +320,20 @@ export function Workspace() {
                         </button>
                       );
                     })}
-                  </div>
+                    <div className="border-t border-border my-1" />
+                  </>
                 )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setClientMenuOpen(false);
+                    navigate('/settings/email-forward');
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 hover:bg-elevated transition-colors text-muted hover:text-ink"
+                >
+                  <Plus className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span>Ajouter un compte</span>
+                </button>
               </div>
             )}
           </div>
@@ -400,15 +405,15 @@ export function Workspace() {
             </button>
           </nav>
 
-          {/* Lien email forward */}
+          {/* Bouton Paramètres (roue crantée) */}
           <button
             type="button"
             onClick={() => navigate('/settings/email-forward')}
-            title="Import email automatique"
-            aria-label="Import email automatique"
+            title="Paramètres"
+            aria-label="Paramètres"
             className="hidden md:flex btn-ghost !px-2 !py-1.5 text-muted hover:text-ink transition-colors"
           >
-            <Mail className="w-4 h-4" />
+            <Settings className="w-4 h-4" />
           </button>
 
           {/* Bouton logout — icône tout à droite */}

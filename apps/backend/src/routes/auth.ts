@@ -171,9 +171,19 @@ authRouter.post("/register", async (req: Request, res: Response) => {
     );
     const user = userResult.rows[0]!;
 
+    // Créer le membership 'owner' pour le user sur son propre tenant
+    await query(
+      `INSERT INTO fiduciary_memberships (user_id, tenant_id, role)
+       VALUES ($1, $2, 'owner')
+       ON CONFLICT DO NOTHING`,
+      [user.id, tenantId],
+    );
+
     const token = signToken({
       sub: user.id,
       tenantId: user.tenant_id,
+      activeTenantId: user.tenant_id,
+      memberships: [user.tenant_id],
       email: user.email,
     });
 
