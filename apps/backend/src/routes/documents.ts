@@ -145,7 +145,7 @@ documentsRouter.get("/", async (req, res) => {
       const eventsResult = await queryAsTenant<{ metadata: Record<string, unknown> }>(
         tenantId,
         `SELECT metadata FROM events
-         WHERE tenant_id=$1 AND payload->>'type'='TransactionIngested'
+         WHERE tenant_id=$1 AND type='TransactionIngested'
            AND metadata->>'documentId' IS NOT NULL`,
         [tenantId],
       );
