@@ -277,7 +277,7 @@ export function Workspace() {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity min-h-[44px]"
             title={t('app.name')}
           >
             <div className="w-6 h-6 rounded-md bg-accent text-accent-fg grid place-items-center font-semibold text-xs">
@@ -293,7 +293,7 @@ export function Workspace() {
             <button
               type="button"
               onClick={() => setClientMenuOpen((o) => !o)}
-              className="flex items-center gap-2 min-w-0 hover:bg-elevated transition-colors rounded-md px-2 py-1"
+              className="flex items-center gap-2 min-w-0 hover:bg-elevated transition-colors rounded-md px-2 py-1 min-h-[44px]"
               title={hasMultipleClients ? 'Changer de compte' : 'Gérer le compte'}
             >
               {(() => {

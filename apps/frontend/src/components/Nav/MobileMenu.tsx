@@ -29,7 +29,7 @@ export function MobileMenu({ groups, quickActions }: MobileMenuProps) {
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
         aria-expanded={open}
-        className="btn-ghost !px-2 !py-1.5"
+        className="btn-ghost !px-2 !py-1.5 min-h-[44px] min-w-[44px]"
       >
         {open ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
       </button>
@@ -42,7 +42,7 @@ export function MobileMenu({ groups, quickActions }: MobileMenuProps) {
               <div key={group.label} className="border-b border-border last:border-0">
                 <button
                   onClick={() => setExpandedGroup(isExpanded ? null : group.label)}
-                  className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-ink hover:bg-elevated transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-ink hover:bg-elevated transition-colors min-h-[44px]"
                 >
                   <span>{group.label}</span>
                   <ChevronDown
@@ -57,7 +57,7 @@ export function MobileMenu({ groups, quickActions }: MobileMenuProps) {
                         <button
                           key={i}
                           onClick={() => handleItem(item.onClick)}
-                          className={`w-full text-left px-6 py-2.5 text-sm flex items-center gap-2.5 hover:bg-surface transition-colors ${
+                          className={`w-full text-left px-6 py-2.5 text-sm flex items-center gap-2.5 hover:bg-surface transition-colors min-h-[44px] ${
                             item.active ? 'text-accent font-medium' : 'text-ink'
                           }`}
                         >
@@ -81,7 +81,7 @@ export function MobileMenu({ groups, quickActions }: MobileMenuProps) {
                     key={i}
                     onClick={() => handleItem(action.onClick)}
                     title={action.title}
-                    className="btn-ghost !px-3 !py-1.5 text-sm"
+                    className="btn-ghost !px-3 !py-2 text-sm min-h-[44px]"
                   >
                     {Icon && <Icon className="w-3.5 h-3.5" />}
                     <span>{action.label}</span>
