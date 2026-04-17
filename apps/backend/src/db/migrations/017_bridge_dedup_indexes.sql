@@ -9,3 +9,6 @@ CREATE INDEX IF NOT EXISTS idx_events_pro_invoice_id
 CREATE INDEX IF NOT EXISTS idx_events_pro_expense_id
   ON events ((metadata->>'proExpenseId'))
   WHERE metadata->>'proExpenseId' IS NOT NULL;
+
+INSERT INTO schema_migrations (version) VALUES ('017_bridge_dedup_indexes')
+  ON CONFLICT (version) DO NOTHING;
