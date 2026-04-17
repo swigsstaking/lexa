@@ -47,6 +47,9 @@ const EmailForwardSettings = lazy(() =>
     default: m.EmailForwardSettings,
   }))
 );
+const AddAccount = lazy(() =>
+  import('@/routes/onboarding/AddAccount').then((m) => ({ default: m.AddAccount }))
+);
 // BUG-P2-06 : redirect /pp/:canton/:year → /taxpayer/:year (VS) ou /taxpayer/:canton/:year
 function RedirectToTaxpayer() {
   const { canton, year } = useParams<{ canton: string; year: string }>();
@@ -240,6 +243,15 @@ export default function App() {
           element={
             <RequireAuth>
               <EmailForwardSettings />
+            </RequireAuth>
+          }
+        />
+        {/* Onboarding — ajouter un compte additionnel */}
+        <Route
+          path="/onboarding/add-account"
+          element={
+            <RequireAuth>
+              <AddAccount />
             </RequireAuth>
           }
         />

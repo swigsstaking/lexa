@@ -3,6 +3,9 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { searchCompany } from "../services/companyLookup.js";
 import { query } from "../db/postgres.js";
+import { requireAuth } from "../middleware/requireAuth.js";
+import { signToken, type JwtPayload } from "../auth/jwt.js";
+import { listUserMemberships } from "../services/MembershipService.js";
 
 export const onboardingRouter = Router();
 
@@ -158,6 +161,80 @@ onboardingRouter.get("/company/:tenantId", async (req, res) => {
   }
 
   res.json(result.rows[0]);
+});
+
+// ── POST /onboarding/add-account ─────────────────────────────────────────────
+// Crée un NOUVEAU tenant + company + membership owner pour un user existant.
+// Retourne un nouveau JWT avec activeTenantId = nouveau tenant.
+
+const AddAccountSchema = z.object({
+  name: z.string().min(1).max(200),
+  legalForm: LEGAL_FORM_ENUM,
+  canton: CANTON_ENUM.optional(),
+  isVatSubject: z.boolean().default(false),
+  vatNumber: z.string().optional(),
+});
+
+onboardingRouter.post("/add-account", requireAuth, async (req, res) => {
+  const parse = AddAccountSchema.safeParse(req.body);
+  if (!parse.success) {
+    return res.status(400).json({ error: "invalid body", details: parse.error.flatten() });
+  }
+
+  const { name, legalForm, canton, isVatSubject, vatNumber } = parse.data;
+  const jwtUser = req.user as JwtPayload;
+  const userId = jwtUser.sub;
+
+  try {
+    const newTenantId = randomUUID();
+
+    // 1. Créer la company (inclut tenant_id — pas de table tenants séparée dans ce schéma)
+    const companyResult = await query(
+      `INSERT INTO companies (
+         tenant_id, name, legal_form, canton, country,
+         is_vat_subject, vat_number, source
+       ) VALUES ($1, $2, $3, $4, 'CH', $5, $6, 'manual')
+       RETURNING *`,
+      [
+        newTenantId,
+        name,
+        legalForm,
+        canton ?? null,
+        isVatSubject,
+        vatNumber ?? null,
+      ],
+    );
+    const company = companyResult.rows[0];
+
+    // 2. Membership owner pour le user actuel sur le nouveau tenant
+    await query(
+      `INSERT INTO fiduciary_memberships (user_id, tenant_id, role)
+       VALUES ($1, $2, 'owner')
+       ON CONFLICT DO NOTHING`,
+      [userId, newTenantId],
+    );
+
+    // 3. Nouveau JWT avec activeTenantId = nouveau tenant (memberships mis à jour)
+    const memberships = await listUserMemberships(userId);
+    const membershipIds = memberships.map((m) => m.tenantId);
+
+    const token = signToken({
+      sub: userId,
+      tenantId: newTenantId,
+      activeTenantId: newTenantId,
+      memberships: membershipIds,
+      email: jwtUser.email,
+    });
+
+    return res.status(201).json({
+      tenantId: newTenantId,
+      company,
+      token,
+    });
+  } catch (err) {
+    console.error("[onboarding.add-account]", err);
+    return res.status(500).json({ error: "failed to add account" });
+  }
 });
 
 /** PATCH /onboarding/company/:tenantId — partial update */

@@ -1,8 +1,34 @@
 # Lexa — Whitepaper
 
-**Version** : 0.1
-**Date** : 2026-04-13
-**Statut** : Document maître vivant — évolue à chaque session
+**Version** : 0.2
+**Date** : 2026-04-17
+**Statut** : V1 beta livré à ~98% — document maître vivant
+
+---
+
+## État d'avancement V1 (17 avril 2026)
+
+| # | Différenciateur | État | Détails |
+|---|---|---|---|
+| 1 | **Zéro saisie manuelle** | ✅ **100%** | CAMT.053 + OCR (qwen3-vl-ocr 85-95% conf) + QR-facture + **Email IMAP forward** (commit `d4f3531`, Infomaniak) |
+| 2 | Interface dense & exploratoire | ✅ 100% | React Flow grand livre + Collapse classes Käfer + Mobile liste groupée + FiscalTimeline |
+| 3 | Clôture continue | ✅ 95% | `/close/:year` + auto-refresh matview ledger_entries. Manque détection auto provisions/amortissements (P3) |
+| 4 | Optimisation proactive | ✅ 100% | Briefing Conseiller quotidien cron 06:00 CH (tz Europe/Zurich) + simulateur LPP/3a/dividende-salaire |
+| 5 | IA 100% locale | ✅ 100% | Ollama (14 agents) + **vLLM NVFP4 Qwen3.5-35B-A3B** sur DGX Spark (classifier 100% match Käfer) |
+| 6 | Citations légales systématiques | ✅ 100% | RAG Qdrant 9887 pts swiss_law, citations LTVA/LIFD/LHID/CO/cantonal |
+
+### Livrables V1.2 (en cours)
+- ✅ **Export XML eCH-0119** (PP) + **eCH-0229** (PM) pour dépose électronique AFC (commit `112ad07`)
+- ✅ **Integration Swigs Pro** consumer (commit `c894d6a`) — `POST /api/bridge/pro-events` avec HMAC
+- 🟡 Producteur Swigs Pro (en cours — hook invoice.created/paid côté swigs-workflow)
+- 🟡 Wizard dual compte privé+entreprise (en cours — route `/onboarding/add-account`)
+
+### Dettes connues V1.3+
+- Validation XSD formelle eCH-0119 (requiert Java/libxml2)
+- eCH-0229 XSD officiel (quand eCH publie version stable)
+- API dépose directe ePortal AFC (non documentée publiquement)
+- Dashboard fiduciaire multi-clients consolidé (V2)
+- Fine-tuning Qwen3.5-9B sur dataset Lexa pour classifier 10x plus rapide (V1.3)
 
 ---
 
@@ -87,7 +113,7 @@ Un produit dense mais calme, spatial, conversationnel, où l'IA fait le travail 
 - **Notices AFC** (Notice A amortissements, Notice 1, etc.)
 - **Plan comptable PME Käfer** structuré
 - **Swiss GAAP RPC** (référentiel comptable)
-- **Standards techniques** : eCH-0217 (échange fiscal), Swissdec (salaires), CAMT.053/.054, QR-facture
+- **Standards techniques** : eCH-0119 (déclaration fiscale PP), eCH-0229 (déclaration PM), Swissdec (salaires), CAMT.053/.054, QR-facture, eCH-0217 (décomptes TVA)
 
 **Format de stockage** :
 ```yaml
@@ -191,14 +217,16 @@ Modèles exclusivement ceux **déjà présents sur le Spark** :
 
 | Modèle | Usage | Taille |
 |---|---|---|
-| `comptable-suisse` (Qwen3.5 27B Q8, fine-tuné) | Raisonnement fiscal complexe, batch, précision max | 29 GB |
-| `comptable-suisse-fast` (Q4) | Classification interactive, chat utilisateur | 17 GB |
+| **`Qwen3.5-35B-A3B-NVFP4` (vLLM)** | **Classifier production (MoE 3B actifs, 100% match Käfer)** | **22 GB** |
+| `lexa-reasoning` (Qwen3.5 9B Q8, fine-tuné) | Raisonnement fiscal complexe | 10 GB |
+| `lexa-tva` (fine-tuné) | Décomptes TVA | 10 GB |
+| `lexa-fiscal-pp-{vs,ge,vd,fr,ne,ju,bj}` (fine-tuné) | Déclarations PP 7 cantons | 10 GB × 7 |
+| `lexa-fiscal-pm` (fine-tuné) | Déclarations PM Sàrl/SA | 10 GB |
+| `lexa-cloture` (fine-tuné) | Clôture continue CO 957-963 | 10 GB |
+| `lexa-audit` (fine-tuné) | Audit intégrité + citations | 10 GB |
+| `lexa-conseiller` (fine-tuné) | Conseiller fiscal proactif + briefing | 10 GB |
 | `qwen3-vl-ocr` | OCR visuel (photos, PDFs scannés) | 6.1 GB |
-| `deepseek-ocr` | OCR alternatif / fallback | 6.7 GB |
-| `qwen3-vl:8b` | Vision générale | 6.1 GB |
-| `qwen3.5:27b-q8_0` | Fallback généraliste sans system prompt | 29 GB |
-| `qwen3.5:9b-optimized` | Tâches légères | 10 GB |
-| **BGE-M3** (embeddings) | RAG multilingue, 1024 dim | ~2 GB |
+| **BGE-M3** (embeddings llama.cpp) | RAG multilingue, 1024 dim | ~2 GB |
 
 **Inférence** : Ollama (déjà en place, `OLLAMA_FLASH_ATTENTION=1`, `KEEP_ALIVE=-1`). SGLang et Triton sont installés si besoin d'optimisation avancée.
 
@@ -286,16 +314,18 @@ Voir [`05-roadmap/milestones.md`](../05-roadmap/milestones.md) pour le détail.
 
 | Trimestre | Livrable clé |
 |---|---|
-| **T1 2026** | Whitepaper, archi validée, knowledge base fédérale complétée (prototype → v1), OCR pipeline intégré |
-| **T2 2026** | Backend event-sourced, agents classifier + TVA, ingestion CAMT.053, UI grand livre visuel v0 |
-| **T3 2026** | MVP comptable : ingestion + classification + TVA pour indépendants (alpha interne) |
-| **T4 2026** | Beta privée — 5 fiduciaires partenaires ; ajout lois cantonales GE + VD + FR |
-| **T1 2027** | Clôture annuelle continue, agents fiscal-PP (GE + VD), simulateur fiscal |
-| **T2 2027** | Agents fiscal-PM (Sàrl/SA), annexes CO, bilan fiscal |
-| **T3 2027** | Cantons NE + JU + VS + BE-Jura, mode fiduciaire multi-clients, Swissdec salaires |
-| **T4 2027** | Optimisation continue, intégrations ePortal/portails cantonaux, lancement public |
+| **T1 2026** | Whitepaper, archi validée, KB fédérale, OCR | ✅ livré |
+| **T2 2026** | Backend event-sourced, classifier + TVA, CAMT.053, grand livre visuel v0 | ✅ livré (avance) |
+| **T3 2026** | MVP comptable alpha interne | ✅ livré (avance) |
+| **T4 2026** | Beta privée + cantons GE + VD + FR | ✅ **livré** (avance de 6+ mois) |
+| **T1 2027** | Clôture continue, fiscal-PP GE/VD, simulateur | ✅ **livré** (avance ~9 mois) |
+| **T2 2027** | Fiscal-PM (Sàrl/SA), annexes CO, bilan fiscal | ✅ **livré** (avance ~9 mois) |
+| **T3 2027** | Cantons NE + JU + VS + BE-Jura, fiduciaire, Swissdec | 🟡 VS fait, NE/JU/BJ modèles existent, fiduciaire partiel, Swissdec Form 11 OK |
+| **T4 2027** | Optimisation continue, ePortal, lancement public | 🟡 Briefing livré, ePortal API non disponible publiquement, eCH-0119/0229 XML livré |
 
-**Gain estimé grâce au prototype existant** : 4-5 mois sur la roadmap initiale (fondations Qdrant + BGE-M3 + modèle `comptable-suisse` + dataset + OCR déjà opérationnels).
+**Avance réelle constatée (17 avril 2026)** : **~9-12 mois** sur la roadmap initiale. Le V1 beta peut être ouvert dès maintenant. Les items T3-T4 2027 restants sont des extensions non bloquantes.
+
+**Gain estimé grâce au prototype existant** : 4-5 mois sur la roadmap initiale (fondations Qdrant + BGE-M3 + modèles Lexa fine-tunés + OCR déjà opérationnels).
 
 ---
 

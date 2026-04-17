@@ -343,7 +343,7 @@ export function Workspace() {
                   type="button"
                   onClick={() => {
                     setClientMenuOpen(false);
-                    navigate('/settings/email-forward');
+                    navigate('/onboarding/add-account');
                   }}
                   className="w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 hover:bg-elevated transition-colors text-muted hover:text-ink"
                 >

@@ -12,6 +12,7 @@ import type {
   LedgerBalance,
   LedgerHealth,
   LedgerListResponse,
+  LegalForm,
   TransactionStats,
 } from './types';
 
@@ -480,6 +481,19 @@ export const lexa = {
       )
       .then((r) => r.data);
   },
+
+  // ── Onboarding — ajouter un compte additionnel ───────────────────────────
+
+  addAccount: (input: {
+    name: string;
+    legalForm: LegalForm;
+    canton?: string;
+    isVatSubject?: boolean;
+    vatNumber?: string;
+  }) =>
+    api
+      .post<{ tenantId: string; company: Company; token: string }>('/onboarding/add-account', input)
+      .then((r) => r.data),
 
   // ── Fiduciary — mode multi-clients (S32) ──────────────────────────────────
 
