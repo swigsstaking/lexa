@@ -22,6 +22,9 @@ import { jobsRouter } from "./routes/jobs.js";
 import { connectMongo } from "./db/mongo.js";
 import { conseillerRouter } from "./routes/conseiller.js";
 import { startBriefingScheduler } from "./services/BriefingScheduler.js";
+import { startImapListener } from "./services/ImapListener.js";
+import { settingsRouter } from "./routes/settings.js";
+import { bridgeRouter } from "./routes/bridge.js";
 
 const app = express();
 
@@ -73,6 +76,7 @@ app.use(healthRouter);
 app.use("/auth", authRouter);
 app.use("/onboarding", onboardingRouter);
 app.use("/connectors", connectorsRouter); // HMAC validé côté routeur
+app.use("/bridge", bridgeRouter);        // Pont bidirectionnel Swigs Pro → Lexa (Phase 3 V1.2)
 
 // ── Routes protégées par requireAuth ────────────────────
 // Session 14 : v1 single-user. Tenant extrait du JWT, pas du header.
@@ -92,6 +96,7 @@ app.use("/simulate", requireAuth, simulateRouter);
 app.use("/fiduciary", fiduciaryRouter); // requireAuth géré dans le routeur
 app.use("/jobs", jobsRouter); // LLM queue job status (session 37)
 app.use("/conseiller", conseillerRouter); // Briefings quotidiens (session briefing)
+app.use("/settings", requireAuth, settingsRouter); // Paramètres tenant (email forward...)
 
 // 404
 app.use((_req, res) => {
@@ -120,6 +125,8 @@ const server = app.listen(config.PORT, () => {
   startBriefingScheduler().catch((err) => {
     console.warn("[briefings] startup failed (non-fatal):", (err as Error).message);
   });
+  // ImapListener — poll mail@swigs.online toutes les 5min (désactivé si IMAP_HOST absent)
+  startImapListener();
 });
 
 // Graceful shutdown

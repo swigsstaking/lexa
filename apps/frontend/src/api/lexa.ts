@@ -542,6 +542,42 @@ export const lexa = {
         responseType: 'blob',
       })
       .then((r) => r.data as Blob),
+
+  // ── Email forward settings (Phase 1 V1.2) ────────────────────────────────
+
+  getEmailForwardSettings: () =>
+    api
+      .get<{
+        token: string;
+        enabled: boolean;
+        forwardAddress: string;
+        lastEmailAt: string | null;
+      }>('/settings/email-forward')
+      .then((r) => r.data),
+
+  regenerateEmailForwardToken: () =>
+    api
+      .post<{ token: string; forwardAddress: string }>('/settings/email-forward/regenerate')
+      .then((r) => r.data),
+
+  toggleEmailForward: (enabled: boolean) =>
+    api
+      .patch<{ ok: boolean; enabled: boolean }>('/settings/email-forward/toggle', { enabled })
+      .then((r) => r.data),
+
+  listEmailForwardHistory: (limit = 20) =>
+    api
+      .get<{
+        emails: Array<{
+          id: string;
+          from_address: string;
+          subject: string;
+          attachments_count: number;
+          received_at: string;
+          status: 'processed' | 'ignored' | 'error';
+        }>;
+      }>(`/settings/email-forward/history?limit=${limit}`)
+      .then((r) => r.data),
 };
 
 export type TaxpayerDraft = {

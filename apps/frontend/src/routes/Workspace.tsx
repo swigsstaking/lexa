@@ -18,6 +18,7 @@ import {
   Lightbulb,
   Users,
   ChevronDown,
+  Mail,
 } from 'lucide-react';
 import { lexa } from '@/api/lexa';
 import { useActiveCompany, useCompaniesStore } from '@/stores/companiesStore';
@@ -398,6 +399,17 @@ export function Workspace() {
               <span className="text-xs hidden md:inline">Grand livre</span>
             </button>
           </nav>
+
+          {/* Lien email forward */}
+          <button
+            type="button"
+            onClick={() => navigate('/settings/email-forward')}
+            title="Import email automatique"
+            aria-label="Import email automatique"
+            className="hidden md:flex btn-ghost !px-2 !py-1.5 text-muted hover:text-ink transition-colors"
+          >
+            <Mail className="w-4 h-4" />
+          </button>
 
           {/* Bouton logout — icône tout à droite */}
           <button

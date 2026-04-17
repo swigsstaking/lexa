@@ -42,6 +42,11 @@ const Conseiller = lazy(() =>
     default: m.Conseiller,
   }))
 );
+const EmailForwardSettings = lazy(() =>
+  import('@/routes/settings/EmailForwardSettings').then((m) => ({
+    default: m.EmailForwardSettings,
+  }))
+);
 // BUG-P2-06 : redirect /pp/:canton/:year → /taxpayer/:year (VS) ou /taxpayer/:canton/:year
 function RedirectToTaxpayer() {
   const { canton, year } = useParams<{ canton: string; year: string }>();
@@ -226,6 +231,15 @@ export default function App() {
           element={
             <RequireAuth>
               <RedirectToTaxpayer />
+            </RequireAuth>
+          }
+        />
+        {/* Settings — email forward (Phase 1 V1.2) */}
+        <Route
+          path="/settings/email-forward"
+          element={
+            <RequireAuth>
+              <EmailForwardSettings />
             </RequireAuth>
           }
         />
