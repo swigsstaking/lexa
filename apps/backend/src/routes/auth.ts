@@ -129,6 +129,7 @@ authRouter.post("/register", async (req: Request, res: Response) => {
       .json({ error: "invalid body", details: parsed.error.flatten() });
   }
   const { email, password, company } = parsed.data;
+  const HUB_URL = process.env.HUB_URL;
 
   try {
     const existing = await query<{ id: string }>(
@@ -139,8 +140,38 @@ authRouter.post("/register", async (req: Request, res: Response) => {
       return res.status(409).json({ error: "email already registered" });
     }
 
+    let hubUserId: string | undefined;
+    if (HUB_URL) {
+      // Proxy register vers le Hub (pattern ai-builder)
+      // Si l'user existe déjà sur le Hub avec ces credentials, on le récupère via login
+      const hubName = company.name || email.split("@")[0] || "User";
+      const hubReg = await fetch(`${HUB_URL}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name: hubName, password }),
+      });
+      const hubRegData = (await hubReg.json()) as { user?: { id: string }; error?: string };
+      if (hubReg.ok && hubRegData.user?.id) {
+        hubUserId = hubRegData.user.id;
+      } else if (hubReg.status === 400 && hubRegData.error?.includes("already exists")) {
+        // L'user existe déjà sur le Hub → le login pour récupérer son id
+        const hubLogin = await fetch(`${HUB_URL}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const hubLoginData = (await hubLogin.json()) as { user?: { id: string }; error?: string };
+        if (!hubLogin.ok || !hubLoginData.user?.id) {
+          return res.status(409).json({ error: "email exists on Hub but password incorrect" });
+        }
+        hubUserId = hubLoginData.user.id;
+      } else {
+        return res.status(hubReg.status).json({ error: hubRegData.error ?? "hub register failed" });
+      }
+    }
+
     const tenantId = randomUUID();
-    const passwordHash = await hashPassword(password);
+    const passwordHash = HUB_URL ? "" : await hashPassword(password);
 
     // Transaction : créer company + user dans la même transaction
     const companyResult = await query<CompanyRow>(
@@ -164,10 +195,10 @@ authRouter.post("/register", async (req: Request, res: Response) => {
     );
 
     const userResult = await query<UserRow>(
-      `INSERT INTO users (email, password_hash, tenant_id)
-       VALUES ($1, $2, $3)
+      `INSERT INTO users (email, password_hash, tenant_id, external_sso_id, verified)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [email.toLowerCase(), passwordHash, tenantId],
+      [email.toLowerCase(), passwordHash, tenantId, hubUserId ?? null, !!hubUserId],
     );
     const user = userResult.rows[0]!;
 
@@ -185,12 +216,14 @@ authRouter.post("/register", async (req: Request, res: Response) => {
       activeTenantId: user.tenant_id,
       memberships: [user.tenant_id],
       email: user.email,
+      hubUserId,
     });
 
     res.status(201).json({
       user: userPublic(user),
       company: companyPublic(companyResult.rows[0]!),
       token,
+      hubUserId: hubUserId ?? null,
     });
   } catch (err) {
     console.error("[auth.register]", err);
@@ -208,47 +241,98 @@ const LoginSchema = z.object({
   password: z.string().min(1).max(200),
 });
 
+// V1.1 SSO : login proxy via Swigs Hub (pattern ai-builder)
+// Lexa n'a plus son propre store de password — l'auth est centralisée sur le Hub.
+// Compat fallback : si HUB_URL absent, fallback à l'ancien login local password.
 authRouter.post("/login", loginLimiter, async (req: Request, res: Response) => {
   const parsed = LoginSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "invalid body" });
   }
   const { email, password } = parsed.data;
+  const HUB_URL = process.env.HUB_URL;
 
   try {
-    const result = await query<UserRow>(
-      "SELECT * FROM users WHERE email = $1",
-      [email.toLowerCase()],
-    );
-    const user = result.rows[0];
-    if (!user) {
-      return res.status(401).json({ error: "invalid credentials" });
-    }
-    const ok = await comparePassword(password, user.password_hash);
-    if (!ok) {
-      return res.status(401).json({ error: "invalid credentials" });
+    let hubUser: { id: string; email: string; name?: string; avatar?: string } | null = null;
+
+    if (HUB_URL) {
+      // Proxy auth vers le Hub
+      const hubRes = await fetch(`${HUB_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      type HubUser = { id: string; email: string; name?: string; avatar?: string };
+      const hubData = (await hubRes.json()) as { user?: HubUser; error?: string };
+      if (!hubRes.ok) {
+        return res.status(hubRes.status).json({ error: hubData.error ?? "invalid credentials" });
+      }
+      hubUser = hubData.user ?? null;
+      if (!hubUser?.id) {
+        return res.status(502).json({ error: "hub returned invalid user" });
+      }
     }
 
-    await query(
-      "UPDATE users SET last_login_at = NOW() WHERE id = $1",
-      [user.id],
-    );
+    // Find or create local user (lié via external_sso_id si Hub utilisé)
+    let user: UserRow | undefined;
+    if (hubUser) {
+      const byHub = await query<UserRow>(
+        "SELECT * FROM users WHERE external_sso_id = $1 OR email = $2 LIMIT 1",
+        [hubUser.id, email.toLowerCase()],
+      );
+      user = byHub.rows[0];
+      if (user) {
+        // Mettre à jour external_sso_id si manquant + last_login
+        await query(
+          "UPDATE users SET external_sso_id = $1, last_login_at = NOW() WHERE id = $2",
+          [hubUser.id, user.id],
+        );
+      } else {
+        // Premier login Hub → créer user + tenant + membership
+        const tenantId = randomUUID();
+        await query(
+          `INSERT INTO companies (tenant_id, name, legal_form, country, source)
+           VALUES ($1, $2, 'raison_individuelle', 'CH', 'hub-sso')`,
+          [tenantId, hubUser.name || email.split("@")[0] || "Mon entreprise"],
+        );
+        const inserted = await query<UserRow>(
+          `INSERT INTO users (email, password_hash, tenant_id, external_sso_id, verified)
+           VALUES ($1, '', $2, $3, true)
+           RETURNING *`,
+          [hubUser.email.toLowerCase(), tenantId, hubUser.id],
+        );
+        user = inserted.rows[0]!;
+        await query(
+          `INSERT INTO fiduciary_memberships (user_id, tenant_id, role) VALUES ($1, $2, 'owner') ON CONFLICT DO NOTHING`,
+          [user.id, tenantId],
+        );
+      }
+    } else {
+      // Fallback legacy : auth locale par password (si HUB_URL absent)
+      const result = await query<UserRow>("SELECT * FROM users WHERE email = $1", [email.toLowerCase()]);
+      user = result.rows[0];
+      if (!user) return res.status(401).json({ error: "invalid credentials" });
+      const ok = await comparePassword(password, user.password_hash);
+      if (!ok) return res.status(401).json({ error: "invalid credentials" });
+      await query("UPDATE users SET last_login_at = NOW() WHERE id = $1", [user.id]);
+    }
 
-    // S32 : charger les memberships pour le JWT étendu
+    if (!user) return res.status(500).json({ error: "user resolution failed" });
+
     const memberships = await listUserMemberships(user.id);
     const membershipIds = memberships.map((m) => m.tenantId);
-    // Priorité : tenant_id legacy (owner) ; fiduciaires sans tenant_id prennent le 1er membership
     const activeTenantId = user.tenant_id ?? membershipIds[0] ?? "";
 
     const token = signToken({
       sub: user.id,
-      tenantId: activeTenantId, // legacy compat
+      tenantId: activeTenantId,
       activeTenantId,
       memberships: membershipIds,
       email: user.email,
+      hubUserId: hubUser?.id,
     });
 
-    res.json({ user: userPublic(user), token });
+    res.json({ user: userPublic(user), token, hubUserId: hubUser?.id ?? null });
   } catch (err) {
     console.error("[auth.login]", err);
     res.status(500).json({ error: "login failed" });
