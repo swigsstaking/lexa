@@ -557,6 +557,25 @@ export const lexa = {
       })
       .then((r) => r.data as Blob),
 
+  // ── Intégrations Pro (Phase 3 V1.1) ─────────────────────────────────────
+
+  getProSyncSettings: () =>
+    api
+      .get<{
+        enabled: boolean;
+        disabledAt: string | null;
+        disabledReason: string | null;
+      }>('/settings/integrations/pro')
+      .then((r) => r.data),
+
+  setProSyncSettings: (enabled: boolean, reason?: string) =>
+    api
+      .put<{ ok: boolean; enabled: boolean; disabledAt: string | null; disabledReason: string | null }>(
+        '/settings/integrations/pro',
+        { enabled, reason },
+      )
+      .then((r) => r.data),
+
   // ── Email forward settings (Phase 1 V1.2) ────────────────────────────────
 
   getEmailForwardSettings: () =>
@@ -757,6 +776,18 @@ export type DocumentMeta = {
   ocrResult: OcrResult;
   /** Vrai si une écriture comptable a déjà été créée depuis ce document (cross-check events). */
   hasLinkedEntry?: boolean;
+  /** Source du document — "swigs-pro" pour les events Pro virtuels (Phase 3 V1.1) */
+  source?: 'swigs-pro' | 'ocr' | 'camt053' | 'imap';
+  /** Référence facture Pro (si source === "swigs-pro") */
+  proInvoiceNumber?: string;
+  /** ID facture Pro */
+  proInvoiceId?: string;
+  /** ID dépense Pro */
+  proExpenseId?: string;
+  /** Event Pro source ("invoice.created", "invoice.paid", etc.) */
+  sourceEvent?: string;
+  /** Stream ID lié dans l'event store */
+  linkedStreamId?: string;
 };
 
 export type UploadDocumentResponse = {

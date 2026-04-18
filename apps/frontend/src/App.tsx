@@ -47,6 +47,11 @@ const EmailForwardSettings = lazy(() =>
     default: m.EmailForwardSettings,
   }))
 );
+const ProSyncSettings = lazy(() =>
+  import('@/routes/settings/ProSyncSettings').then((m) => ({
+    default: m.ProSyncSettings,
+  }))
+);
 const AddAccount = lazy(() =>
   import('@/routes/onboarding/AddAccount').then((m) => ({ default: m.AddAccount }))
 );
@@ -243,6 +248,15 @@ export default function App() {
           element={
             <RequireAuth>
               <EmailForwardSettings />
+            </RequireAuth>
+          }
+        />
+        {/* Settings — Intégrations Swigs Pro (Phase 3 V1.1) */}
+        <Route
+          path="/settings/integrations/pro"
+          element={
+            <RequireAuth>
+              <ProSyncSettings />
             </RequireAuth>
           }
         />
