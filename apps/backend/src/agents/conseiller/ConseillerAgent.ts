@@ -14,6 +14,31 @@ import { embedder } from "../../rag/EmbedderClient.js";
 import { qdrant, type QdrantHit } from "../../rag/QdrantClient.js";
 import { ollama } from "../../llm/OllamaClient.js";
 
+/**
+ * REGLES STRICTES — Plafonds 3a OPP3 (à respecter absolument)
+ * Source : OPP3 art. 7 al. 1 + Notice AFC mise à jour annuellement.
+ *
+ * Ces règles sont injectées dans TOUS les prompts du ConseillerAgent
+ * pour éviter toute hallucination sur les plafonds 3a.
+ */
+const RULES_3A = `
+RÈGLES STRICTES — Plafonds 3a OPP3 (à respecter absolument) :
+
+| Statut                          | Plafond 2025/2026              |
+|---------------------------------|--------------------------------|
+| Salarié affilié à une LPP       | 7'258 CHF                      |
+| Indépendant SANS LPP            | 20% du revenu net, plafonné à 36'288 CHF |
+
+AVANT de citer un plafond 3a, TU DOIS demander à l'utilisateur :
+- "Êtes-vous salarié ou indépendant ?"
+- "Si salarié, êtes-vous affilié à une caisse de pension LPP ?"
+
+NE JAMAIS inventer un plafond unique.
+NE JAMAIS citer 35'000 CHF ou tout autre chiffre intermédiaire non officiel.
+
+Source : OPP3 art. 7 al. 1 + Notice AFC mise à jour annuellement.
+`;
+
 export type ConseillerQuery = {
   question: string;
   year?: number;
@@ -74,12 +99,13 @@ export class ConseillerAgent {
 
     const prompt = `SOURCES LEGALES OPTIMISATION FISCALE (LIFD art.33+58+62+63+68, LHID art.24-31, CO art.960):
 ${context}
-
+${RULES_3A}
 QUESTION CONSEILLER: ${enriched}
 
 Reponds avec le format : Constat -> Opportunite -> Chiffres -> Hypotheses -> Disclaimer.
 Cite les articles pertinents (LIFD art.33 pour LPP/3a, LIFD art.62 pour amortissements, CO art.960 pour evaluation actifs).
 Toujours quantifier l'economie estimee en CHF avec hypotheses explicites.
+Respecte ABSOLUMENT les plafonds 3a ci-dessus — ne jamais inventer ni interpoler un chiffre.
 Disclaimer final obligatoire : "Conseil indicatif, verifiez avec votre fiduciaire avant decision."
 
 REPONSE CONSEILLER:`;
@@ -156,7 +182,7 @@ REPONSE CONSEILLER:`;
         : "Aucune alerte urgente dans les 30 prochains jours.";
 
     const prompt = `Tu es le Conseiller fiscal Lexa. Génère un briefing matinal en Markdown pour le tenant ${input.tenantId}, année ${input.year}.
-
+${RULES_3A}
 DATE: ${today}
 
 CONTEXTE:
