@@ -140,7 +140,6 @@ export function Login() {
                 shape="rectangular"
                 size="large"
                 text="continue_with"
-                locale="fr"
               />
             </div>
 
