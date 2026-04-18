@@ -166,6 +166,7 @@ const InvoiceSentDataSchema = z.object({
 });
 
 const BankTransactionDataSchema = z.object({
+  bankTxId: z.string().optional(), // ID Mongo Pro unique (ex: tx._id.toString())
   bankRef: z.string().optional(), // référence SCOR ou IBAN
   iban: z.string().optional(),
   date: z.string(), // ISO date
@@ -199,7 +200,7 @@ type ProClassificationHint = {
 function deterministicProClassification(
   proEvent: string,
   amount: number,
-): ProClassificationHint {
+): ProClassificationHint | null {
   switch (proEvent) {
     case "invoice.created":
     case "invoice.sent":
@@ -221,17 +222,7 @@ function deterministicProClassification(
         reasoning: "Note de frais employé (Pro event déterministe)",
       };
     case "bank.transaction":
-      return amount >= 0
-        ? {
-            debitAccount: "1020",
-            creditAccount: "3200",
-            reasoning: "Encaissement bancaire (Pro bank.transaction déterministe)",
-          }
-        : {
-            debitAccount: "6500",
-            creditAccount: "1020",
-            reasoning: "Décaissement bancaire (Pro bank.transaction déterministe)",
-          };
+      return null; // laisser le classifier IA décider (loyer/salaires/achats/etc.)
     default:
       return {
         debitAccount: "UNKNOWN",
@@ -499,7 +490,7 @@ export async function handleInvoiceCreated(
 
   // Classification déterministe : 1100 Débiteurs (D) / 3200 Prestations de services (C)
   classifyAsync(tenantId, streamId, description, amountTtc, today, "CHF",
-    deterministicProClassification("invoice.created", amountTtc));
+    deterministicProClassification("invoice.created", amountTtc) ?? undefined);
   scheduleLedgerRefresh(tenantId);
   return { duplicate: false };
 }
@@ -623,7 +614,7 @@ export async function handleInvoiceSent(
 
   // Classification déterministe : 1100 Débiteurs (D) / 3200 Prestations (C)
   classifyAsync(tenantId, streamId, description, amountTtc, today, "CHF",
-    deterministicProClassification("invoice.sent", amountTtc));
+    deterministicProClassification("invoice.sent", amountTtc) ?? undefined);
   scheduleLedgerRefresh(tenantId);
 }
 
@@ -778,7 +769,7 @@ export async function handleInvoicePaid(
 
   // Classification déterministe : 1020 Banque (D) / 1100 Débiteurs (C) — réconciliation
   classifyAsync(tenantId, streamId, description, amountTtc, paidDate, "CHF",
-    deterministicProClassification("invoice.paid", amountTtc));
+    deterministicProClassification("invoice.paid", amountTtc) ?? undefined);
   scheduleLedgerRefresh(tenantId);
   return { duplicate: false };
 }
@@ -870,7 +861,7 @@ export async function handleExpenseSubmitted(
 
   // Classification déterministe : 6500 Frais admin (D) / 1020 Banque (C)
   classifyAsync(tenantId, streamId, description, -data.amount, today, data.currency,
-    deterministicProClassification("expense.submitted", data.amount));
+    deterministicProClassification("expense.submitted", data.amount) ?? undefined);
   scheduleLedgerRefresh(tenantId);
   return { duplicate: false };
 }
@@ -891,7 +882,27 @@ export async function handleBankTransaction(
 
   const bankDate = data.date.slice(0, 10);
 
-  // Calcul fingerprint avec tous les discriminants disponibles
+  // ── 1. PRIORITÉ : dedup intra-Pro par proBankTxId (strict, évite collisions Revolut) ──
+  if (data.bankTxId) {
+    const { rows: existingById } = await queryAsTenant(
+      tenantId,
+      `SELECT id, stream_id FROM events
+       WHERE tenant_id = $1
+         AND type = 'TransactionIngested'
+         AND metadata->>'proBankTxId' = $2
+       LIMIT 1`,
+      [tenantId, data.bankTxId],
+    );
+    if (existingById.length > 0) {
+      console.info(
+        "[bridge] bank.transaction already ingested (proBankTxId=%s), skip",
+        data.bankTxId,
+      );
+      return { duplicate: true };
+    }
+  }
+
+  // ── 2. SECONDAIRE : fingerprint cross-source (CAMT.053 vs Pro paiement) ──
   const fingerprint = computeFingerprint({
     amount: Math.abs(data.amount),
     date: bankDate,
@@ -900,21 +911,23 @@ export async function handleBankTransaction(
     bankRef: data.bankRef,
   });
 
-  // Dedup : chercher une écriture existante avec ce fingerprint
-  const existing = await lookupByFingerprint(tenantId, fingerprint);
-  if (existing) {
+  const existingByFp = await lookupByFingerprint(tenantId, fingerprint);
+  if (existingByFp) {
+    // Cross-source match : enrichir l'entrée CAMT existante avec le proBankTxId
     console.info(
-      "[bridge] bank.transaction — fingerprint match, skip insert streamId=%s",
-      existing.streamId,
+      "[bridge] bank.transaction — fingerprint cross-source match, enriching streamId=%s",
+      existingByFp.streamId,
     );
-    await enrichEventMetadata(tenantId, existing.eventId, {
-      proSource: "swigs-pro-bank",
+    await enrichEventMetadata(tenantId, existingByFp.eventId, {
+      proBankTxId: data.bankTxId ?? null,
+      proSource: "bank.transaction",
       proBankRef: data.bankRef ?? null,
       proEventTimestamp: eventTimestamp,
     });
     return { duplicate: true };
   }
 
+  // ── 3. INSERT nouveau event ──────────────────────────────────────────────────
   const streamId = randomUUID();
 
   const description = [
@@ -939,6 +952,7 @@ export async function handleBankTransaction(
     metadata: {
       source: "swigs-pro-bank",
       proEvent: "bank.transaction",
+      proBankTxId: data.bankTxId ?? null,
       proEventTimestamp: eventTimestamp,
       fingerprint,
       bankRef: data.bankRef ?? null,
@@ -947,15 +961,16 @@ export async function handleBankTransaction(
   });
 
   console.info(
-    "[bridge] bank.transaction ingested streamId=%s amount=%s date=%s",
+    "[bridge] bank.transaction ingested streamId=%s bankTxId=%s amount=%s date=%s",
     streamId,
+    data.bankTxId ?? "n/a",
     data.amount,
     bankDate,
   );
 
-  // Classification déterministe fire-and-forget
+  // Pas de hint déterministe : fallback LLM classifier (loyer/salaires/achats/etc.)
   classifyAsync(tenantId, streamId, description, data.amount, bankDate, data.currency,
-    deterministicProClassification("bank.transaction", data.amount));
+    deterministicProClassification("bank.transaction", data.amount) ?? undefined);
   scheduleLedgerRefresh(tenantId);
   return { duplicate: false };
 }
