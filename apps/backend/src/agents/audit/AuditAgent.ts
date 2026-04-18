@@ -13,6 +13,7 @@
 import { embedder } from "../../rag/EmbedderClient.js";
 import { qdrant, type QdrantHit } from "../../rag/QdrantClient.js";
 import { ollama } from "../../llm/OllamaClient.js";
+import { vllm } from "../../llm/VllmClient.js";
 
 export type AuditQuery = {
   question: string;
@@ -47,8 +48,21 @@ export type AuditAnswer = {
  * Tier 1: LTVA (TVA), LIFD (fiscal)
  * Tier 2: cantonales
  */
+/** System prompt Audit extrait en constante pour réutilisation chat-style (vLLM) */
+const SYSTEM_PROMPT_AUDIT = `Tu es un agent d'audit comptable et juridique suisse. Tu analyses les décisions IA, vérifies les citations légales et détectes les contradictions.
+Reponds de maniere conservatrice en citant les articles pertinents (CO 958f pour conservation 10 ans, LTVA 70, nLPD si donnees personnelles).
+Si tu ne peux pas verifier une citation, flags-la UNVERIFIED. Toujours disclaimer final.`;
+
 export class AuditAgent {
   private readonly model = "lexa-audit";
+  private readonly vllmModel: string;
+  private readonly useVllm: boolean;
+
+  constructor() {
+    this.useVllm = process.env.USE_VLLM_AUDIT === "true";
+    this.vllmModel =
+      process.env.VLLM_AUDIT_MODEL ?? "apolo13x/Qwen3.5-35B-A3B-NVFP4";
+  }
 
   async ask(query: AuditQuery): Promise<AuditAnswer> {
     const started = Date.now();
@@ -71,20 +85,55 @@ export class AuditAgent {
     });
     const context = contextLines.join("\n\n---\n\n");
 
-    const prompt = `SOURCES LEGALES AUDIT (CO 957-963b, LTVA 70, nLPD):
+    const userPrompt = `SOURCES LEGALES AUDIT (CO 957-963b, LTVA 70, nLPD):
 ${context}
 
 QUESTION AUDIT: ${enriched}
 
-Reponds de maniere conservatrice en citant les articles pertinents (CO 958f pour conservation 10 ans, LTVA 70, nLPD si donnees personnelles). Si tu ne peux pas verifier une citation, flags-la UNVERIFIED. Toujours disclaimer final.
-
 REPONSE AUDIT:`;
 
-    const { response } = await ollama.generate({
-      model: this.model,
-      prompt,
-      options: { temperature: 0.05 },
-    });
+    const fullPromptWithSystem = `${SYSTEM_PROMPT_AUDIT}
+
+${userPrompt}`;
+
+    let response = "";
+
+    if (this.useVllm) {
+      // Chemin vLLM (OpenAI-compat chat completions) — ~4-5× plus rapide que Ollama natif
+      try {
+        const result = await vllm.generate({
+          model: this.vllmModel,
+          systemPrompt: SYSTEM_PROMPT_AUDIT,
+          prompt: userPrompt,
+          temperature: 0.05,
+          numPredict: 2048,
+        });
+        response = result.response;
+        console.log(
+          `[audit] vLLM ${this.vllmModel} — ${result.totalDurationMs}ms, ${result.evalCount} tokens`,
+        );
+      } catch (err) {
+        console.warn(
+          "[audit] vLLM failed, falling back to Ollama:",
+          (err as Error).message,
+        );
+        // Fallback Ollama automatique
+        const { response: ollamaResponse } = await ollama.generate({
+          model: this.model,
+          prompt: fullPromptWithSystem,
+          temperature: 0.05,
+        });
+        response = ollamaResponse;
+      }
+    } else {
+      // Chemin Ollama (prod actuelle / fallback)
+      const { response: ollamaResponse } = await ollama.generate({
+        model: this.model,
+        prompt: fullPromptWithSystem,
+        temperature: 0.05,
+      });
+      response = ollamaResponse;
+    }
 
     // 5. Extract citations
     const citations = rankedHits.map((h) => ({
