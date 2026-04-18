@@ -166,14 +166,14 @@ const InvoiceSentDataSchema = z.object({
 });
 
 const BankTransactionDataSchema = z.object({
-  bankTxId: z.string().optional(), // ID Mongo Pro unique (ex: tx._id.toString())
-  bankRef: z.string().optional(), // référence SCOR ou IBAN
-  iban: z.string().optional(),
+  bankTxId: z.string().nullish(), // ID Mongo Pro unique (ex: tx._id.toString())
+  bankRef: z.string().nullish(), // référence SCOR ou IBAN
+  iban: z.string().nullish(),
   date: z.string(), // ISO date
   amount: z.number(),
   currency: z.string().default("CHF"),
   description: z.string(),
-  counterpartyName: z.string().optional(),
+  counterpartyName: z.string().nullish(),
 });
 
 const BridgeEventSchema = z.object({
