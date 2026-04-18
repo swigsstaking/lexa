@@ -4,7 +4,7 @@
  * Phase 3 V1.1 — permet au tenant Lexa de refuser les events Pro même si Pro publie.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -38,12 +38,13 @@ export function ProSyncSettings() {
   const { data: settings, isLoading } = useQuery({
     queryKey: ['settings-pro-sync'],
     queryFn: lexa.getProSyncSettings,
-    onSuccess: (data) => {
-      if (enabled === null) {
-        setEnabled(data.enabled);
-      }
-    },
   });
+
+  useEffect(() => {
+    if (settings && enabled === null) {
+      setEnabled(settings.enabled);
+    }
+  }, [settings, enabled]);
 
   const saveMutation = useMutation({
     mutationFn: () =>
