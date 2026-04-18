@@ -576,6 +576,33 @@ export const lexa = {
       )
       .then((r) => r.data),
 
+  syncProData: (hubUserId?: string) =>
+    api
+      .post<{
+        ok: boolean;
+        hubUserId: string;
+        invoicesProcessed: number;
+        expensesProcessed: number;
+        ingested: { created: number; sent: number; paid: number; expenses: number };
+      }>(
+        '/settings/integrations/pro/sync',
+        hubUserId ? { hubUserId } : {},
+      )
+      .then((r) => r.data),
+
+  getProStats: () =>
+    api
+      .get<{
+        invoicesCreated: number;
+        invoicesPaid: number;
+        invoicesUnpaid: number;
+        caTotal: number;
+        expensesCount: number;
+        expensesTotal: number;
+        lastEventAt: string | null;
+      }>('/settings/integrations/pro/stats')
+      .then((r) => r.data),
+
   // ── Email forward settings (Phase 1 V1.2) ────────────────────────────────
 
   getEmailForwardSettings: () =>

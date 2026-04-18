@@ -1,6 +1,7 @@
 /**
  * Page /settings/integrations/pro — Toggle sync Swigs Pro par tenant.
  *
+ * V1.1 Feature — import bulk historique + dashboard statistiques.
  * Phase 3 V1.1 — permet au tenant Lexa de refuser les events Pro même si Pro publie.
  */
 
@@ -14,6 +15,13 @@ import {
   Loader2,
   CheckCircle2,
   Save,
+  Download,
+  BarChart3,
+  FileText,
+  CreditCard,
+  TrendingUp,
+  Clock,
+  ExternalLink,
 } from 'lucide-react';
 import { lexa } from '@/api/lexa';
 
@@ -27,6 +35,14 @@ function formatDate(iso: string): string {
   });
 }
 
+function formatCHF(amount: number): string {
+  return new Intl.NumberFormat('fr-CH', {
+    style: 'currency',
+    currency: 'CHF',
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
 export function ProSyncSettings() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -35,9 +51,25 @@ export function ProSyncSettings() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // Import bulk state
+  const [hubUserIdInput, setHubUserIdInput] = useState('');
+  const [syncResult, setSyncResult] = useState<{
+    ok: boolean;
+    invoicesProcessed: number;
+    expensesProcessed: number;
+    ingested: { created: number; sent: number; paid: number; expenses: number };
+  } | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+
   const { data: settings, isLoading } = useQuery({
     queryKey: ['settings-pro-sync'],
     queryFn: lexa.getProSyncSettings,
+  });
+
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ['settings-pro-stats'],
+    queryFn: lexa.getProStats,
+    refetchInterval: syncResult ? 5000 : false,
   });
 
   useEffect(() => {
@@ -64,7 +96,26 @@ export function ProSyncSettings() {
     },
   });
 
+  const syncMutation = useMutation({
+    mutationFn: () => lexa.syncProData(hubUserIdInput.trim() || undefined),
+    onSuccess: (data) => {
+      setSyncResult(data);
+      setSyncError(null);
+      queryClient.invalidateQueries({ queryKey: ['settings-pro-stats'] });
+    },
+    onError: (err: Error) => {
+      const msg =
+        (err as { response?: { data?: { error?: string; message?: string } } })?.response?.data?.message ??
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+        err.message ??
+        'Erreur lors de la synchronisation';
+      setSyncError(msg);
+      setSyncResult(null);
+    },
+  });
+
   const currentEnabled = enabled ?? settings?.enabled ?? true;
+  const hasMapping = Boolean(stats && (stats.invoicesCreated > 0 || stats.expensesCount > 0));
 
   return (
     <div className="min-h-screen bg-bg text-ink">
@@ -80,7 +131,183 @@ export function ProSyncSettings() {
 
       <main className="max-w-2xl mx-auto px-4 py-8 flex flex-col gap-6">
 
-        {/* Section Swigs Pro */}
+        {/* Section Statistiques */}
+        <section className="card p-6 flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-violet-400" />
+            <h2 className="text-sm font-semibold text-ink">Statistiques Swigs Pro</h2>
+            {statsLoading && <Loader2 className="w-3 h-3 animate-spin text-subtle ml-auto" />}
+          </div>
+
+          {stats ? (
+            <>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {/* Factures émises */}
+                <div className="rounded-lg bg-stone-800/60 px-4 py-3 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 text-2xs text-subtle">
+                    <FileText className="w-3 h-3" />
+                    <span>Factures émises</span>
+                  </div>
+                  <span className="text-lg font-semibold text-ink">{stats.invoicesCreated}</span>
+                </div>
+
+                {/* Factures payées */}
+                <div className="rounded-lg bg-stone-800/60 px-4 py-3 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 text-2xs text-subtle">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    <span>Factures payées</span>
+                  </div>
+                  <span className="text-lg font-semibold text-emerald-400">{stats.invoicesPaid}</span>
+                </div>
+
+                {/* Factures en attente */}
+                <div className="rounded-lg bg-stone-800/60 px-4 py-3 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 text-2xs text-subtle">
+                    <Clock className="w-3 h-3 text-amber-400" />
+                    <span>En attente</span>
+                  </div>
+                  <span className="text-lg font-semibold text-amber-400">
+                    {Math.max(0, stats.invoicesUnpaid)}
+                  </span>
+                </div>
+
+                {/* CA YTD */}
+                <div className="rounded-lg bg-stone-800/60 px-4 py-3 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 text-2xs text-subtle">
+                    <TrendingUp className="w-3 h-3 text-violet-400" />
+                    <span>CA total</span>
+                  </div>
+                  <span className="text-base font-semibold text-ink">{formatCHF(stats.caTotal)}</span>
+                </div>
+
+                {/* Notes de frais */}
+                <div className="rounded-lg bg-stone-800/60 px-4 py-3 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 text-2xs text-subtle">
+                    <CreditCard className="w-3 h-3" />
+                    <span>Notes de frais</span>
+                  </div>
+                  <span className="text-lg font-semibold text-ink">{stats.expensesCount}</span>
+                </div>
+
+                {/* Total frais */}
+                <div className="rounded-lg bg-stone-800/60 px-4 py-3 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 text-2xs text-subtle">
+                    <CreditCard className="w-3 h-3 text-rose-400" />
+                    <span>Total frais</span>
+                  </div>
+                  <span className="text-base font-semibold text-rose-400">{formatCHF(stats.expensesTotal)}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 pt-1">
+                <p className="text-2xs text-subtle">
+                  Dernier event reçu :{' '}
+                  <span className="text-ink">
+                    {stats.lastEventAt ? formatDate(stats.lastEventAt) : '—'}
+                  </span>
+                </p>
+                {hasMapping && (
+                  <button
+                    onClick={() => navigate('/documents?source=swigs-pro')}
+                    className="flex items-center gap-1.5 text-2xs text-violet-400 hover:text-violet-300 transition-colors"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    <span>Voir dans /documents</span>
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="text-2xs text-subtle italic">
+              {statsLoading ? 'Chargement des statistiques...' : 'Aucune donnée Pro importée.'}
+            </div>
+          )}
+        </section>
+
+        {/* Section Import bulk */}
+        <section className="card p-6 flex flex-col gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+              <Download className="w-5 h-5 text-violet-400" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-ink">Importer mes données Swigs Pro</h2>
+              <p className="text-2xs text-subtle mt-0.5">
+                Importe en une fois tout l'historique de factures et notes de frais depuis votre compte Pro.
+              </p>
+            </div>
+          </div>
+
+          {/* Input hubUserId si pas encore de mapping */}
+          {!hasMapping && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-2xs text-subtle font-medium">
+                ID compte Swigs Pro (hubUserId)
+              </label>
+              <input
+                type="text"
+                value={hubUserIdInput}
+                onChange={(e) => setHubUserIdInput(e.target.value)}
+                placeholder="Ex : 507f1f77bcf86cd799439011"
+                className="input text-sm font-mono"
+              />
+              <p className="text-2xs text-stone-500">
+                Retrouvez cet ID dans votre profil Swigs Pro · Settings · Mon compte.
+              </p>
+            </div>
+          )}
+
+          {/* Bouton import */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => {
+                setSyncResult(null);
+                setSyncError(null);
+                syncMutation.mutate();
+              }}
+              disabled={syncMutation.isPending || (!hasMapping && !hubUserIdInput.trim())}
+              className="btn-primary flex items-center gap-2"
+            >
+              {syncMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              <span>{syncMutation.isPending ? 'Import en cours...' : 'Importer maintenant'}</span>
+            </button>
+
+            {syncResult && (
+              <div className="flex items-center gap-1.5 text-xs text-emerald-400">
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                <span>
+                  {syncResult.invoicesProcessed} facture{syncResult.invoicesProcessed !== 1 ? 's' : ''} +{' '}
+                  {syncResult.expensesProcessed} frais importés
+                </span>
+              </div>
+            )}
+            {syncError && (
+              <div className="flex items-center gap-1.5 text-xs text-red-400">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{syncError}</span>
+              </div>
+            )}
+          </div>
+
+          {syncResult && (
+            <div className="rounded-lg bg-emerald-900/20 border border-emerald-700/30 px-4 py-3 text-2xs text-emerald-300 flex flex-col gap-1">
+              <p className="font-medium">Import terminé</p>
+              <p>
+                Créées : {syncResult.ingested.created} · Envoyées : {syncResult.ingested.sent} · Payées : {syncResult.ingested.paid} · Frais : {syncResult.ingested.expenses}
+              </p>
+            </div>
+          )}
+
+          <p className="text-2xs text-stone-500 italic">
+            Re-cliquer ne créera pas de doublons — la déduplication est automatique par identifiant Pro.
+          </p>
+        </section>
+
+        {/* Section Swigs Pro toggle */}
         <section className="card p-6 flex flex-col gap-5">
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
@@ -198,11 +425,15 @@ export function ProSyncSettings() {
 
         {/* Explication */}
         <section className="card p-5 flex flex-col gap-2 bg-stone-900/50">
-          <h3 className="text-xs font-semibold text-ink">Comment ça fonctionne ?</h3>
+          <h3 className="text-xs font-semibold text-ink">Comment ca fonctionne ?</h3>
           <ul className="flex flex-col gap-1.5 text-2xs text-subtle">
             <li className="flex gap-2">
               <span className="text-violet-400 flex-shrink-0">·</span>
               <span>Quand activé, les factures et notes de frais créées dans Swigs Pro apparaissent automatiquement dans votre grand livre et dans /documents.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-violet-400 flex-shrink-0">·</span>
+              <span>Le bouton "Importer maintenant" récupère tout l'historique passé en une seule opération. Re-cliquer est sans danger grâce à la déduplication automatique.</span>
             </li>
             <li className="flex gap-2">
               <span className="text-violet-400 flex-shrink-0">·</span>
