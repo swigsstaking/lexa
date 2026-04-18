@@ -172,26 +172,49 @@ settingsRouter.get("/email-forward/history", async (req, res) => {
 settingsRouter.post("/integrations/pro/sync", async (req, res) => {
   const tenantId = req.tenantId!;
 
-  // Récupérer le mapping existant
+  // V1.1 SSO — PRIORITÉ : hubUserId vérifié depuis le JWT (cryptographiquement sûr)
+  // FALLBACK beta : hubUserId fourni dans le body (mode legacy, warn + log)
+  const jwtHubUserId = (req.user as { hubUserId?: string } | undefined)?.hubUserId;
+  const bodyHubUserId = (req.body?.hubUserId as string | undefined)?.trim();
+
+  let hubUserIdSource: "jwt" | "body" | "mapping" | null = null;
+  let resolvedHubUserId: string | undefined;
+
+  if (jwtHubUserId) {
+    resolvedHubUserId = jwtHubUserId;
+    hubUserIdSource = "jwt";
+  } else if (bodyHubUserId) {
+    resolvedHubUserId = bodyHubUserId;
+    hubUserIdSource = "body";
+    console.warn(
+      `[pro-sync] unsafe mode: user=${(req.user as { sub?: string } | undefined)?.sub} provided hubUserId=${bodyHubUserId} without SSO link. Beta-only, remove before GA.`,
+    );
+  }
+
+  // Récupérer le mapping existant en base
   const { rows } = await query<{ pro_hub_user_id: string }>(
     `SELECT pro_hub_user_id FROM pro_lexa_tenant_map WHERE lexa_tenant_id = $1 LIMIT 1`,
     [tenantId],
   );
-
-  // Si pas de mapping et hubUserId fourni dans le body, créer le mapping
-  const bodyHubUserId = (req.body?.hubUserId as string | undefined)?.trim();
   let hubUserId = rows[0]?.pro_hub_user_id;
-  if (!hubUserId && bodyHubUserId) {
+
+  // Si pas de mapping persisté et qu'on a un hubUserId résolu, créer le mapping
+  if (!hubUserId && resolvedHubUserId) {
     await query(
       `INSERT INTO pro_lexa_tenant_map (pro_hub_user_id, lexa_tenant_id) VALUES ($1, $2)
        ON CONFLICT (pro_hub_user_id) DO UPDATE SET lexa_tenant_id = EXCLUDED.lexa_tenant_id`,
-      [bodyHubUserId, tenantId],
+      [resolvedHubUserId, tenantId],
     );
-    hubUserId = bodyHubUserId;
+    hubUserId = resolvedHubUserId;
+  } else if (hubUserId) {
+    hubUserIdSource = "mapping";
   }
+
   if (!hubUserId) {
     return res.status(400).json({
-      error: "no hubUserId mapping — provide hubUserId in body to create",
+      error: "no_hub_user_id",
+      message:
+        "Lier votre compte au Swigs Hub via /login (connexion SSO), ou fournir hubUserId en body — mode beta uniquement.",
     });
   }
 

@@ -40,7 +40,13 @@ export const lexa = {
 
   me: () =>
     api
-      .get<{ user: AuthUser; company: Company | null }>('/auth/me')
+      .get<{ user: AuthUser; company: Company | null; hubUserId: string | null }>('/auth/me')
+      .then((r) => r.data),
+
+  // V1.1 SSO — vérifie un ssoToken auprès du backend Lexa (qui le valide auprès du Hub)
+  ssoVerify: (ssoToken: string) =>
+    api
+      .post<{ token: string; user: AuthUser; hubUserId: string }>('/auth/sso-verify', { ssoToken })
       .then((r) => r.data),
 
   // Onboarding
