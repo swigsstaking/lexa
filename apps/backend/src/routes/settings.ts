@@ -328,10 +328,25 @@ settingsRouter.get("/integrations/pro/stats", async (req, res) => {
     [tenantId],
   );
 
+  // Bank transactions ont source = 'swigs-pro-bank' — requête séparée
+  const { rows: bankCounts } = await queryAsTenant<{ n: string; sum_in: string; sum_out: string }>(
+    tenantId,
+    `SELECT
+       COUNT(*)::text AS n,
+       COALESCE(SUM(CASE WHEN (payload->>'amount')::numeric > 0 THEN (payload->>'amount')::numeric ELSE 0 END), 0)::text AS sum_in,
+       COALESCE(SUM(CASE WHEN (payload->>'amount')::numeric < 0 THEN ABS((payload->>'amount')::numeric) ELSE 0 END), 0)::text AS sum_out
+     FROM events
+     WHERE tenant_id = $1
+       AND type = 'TransactionIngested'
+       AND metadata->>'source' = 'swigs-pro-bank'`,
+    [tenantId],
+  );
+
   const { rows: lastEvent } = await queryAsTenant<{ last_at: string | null }>(
     tenantId,
     `SELECT MAX(occurred_at) AS last_at FROM events
-     WHERE tenant_id = $1 AND metadata->>'source' = 'swigs-pro'`,
+     WHERE tenant_id = $1
+       AND (metadata->>'source' = 'swigs-pro' OR metadata->>'source' = 'swigs-pro-bank')`,
     [tenantId],
   );
 
@@ -339,6 +354,8 @@ settingsRouter.get("/integrations/pro/stats", async (req, res) => {
   for (const c of counts) {
     byEvent[c.event ?? "unknown"] = { count: Number(c.n), sum: Number(c.sum) };
   }
+
+  const bankTxRow = bankCounts[0];
 
   return res.json({
     invoicesCreated: byEvent["invoice.created"]?.count ?? 0,
@@ -348,6 +365,9 @@ settingsRouter.get("/integrations/pro/stats", async (req, res) => {
     caTotal: byEvent["invoice.created"]?.sum ?? 0,
     expensesCount: byEvent["expense.submitted"]?.count ?? 0,
     expensesTotal: byEvent["expense.submitted"]?.sum ?? 0,
+    bankTransactionsCount: Number(bankTxRow?.n ?? 0),
+    bankTransactionsIn: Number(bankTxRow?.sum_in ?? 0),
+    bankTransactionsOut: Number(bankTxRow?.sum_out ?? 0),
     lastEventAt: lastEvent[0]?.last_at ?? null,
   });
 });
