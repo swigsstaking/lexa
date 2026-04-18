@@ -8,6 +8,7 @@ export type JwtPayload = {
   activeTenantId?: string; // S32 : tenant actif (peut être changé via switch-tenant)
   memberships?: string[]; // S32 : liste des tenant_ids accessibles au user
   email: string;
+  hubUserId?: string; // V1.1 SSO : lien cryptographique au Swigs Hub (apps.swigs.online)
 };
 
 const BCRYPT_COST = 12;

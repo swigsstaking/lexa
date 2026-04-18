@@ -53,6 +53,13 @@ const ConfigSchema = z.object({
   MONGO_URL: z.string().default("mongodb://192.168.110.59:27017"),
   MONGO_DB: z.string().default("lexa-documents"),
 
+  // SSO Swigs Hub (V1.1)
+  HUB_URL: z.string().url().default("https://apps.swigs.online"),
+  LEXA_HUB_APP_ID: z.string().default("lexa"),
+  // APP_SECRET partagé avec le Hub (même var que Pro pour faciliter la config)
+  // À définir en prod : openssl rand -hex 32
+  APP_SECRET: z.string().optional(),
+
   // Rate-limit auth login (configurable pour dev/qa, default conservateur en prod)
   AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(30),
   AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(15 * 60 * 1000),

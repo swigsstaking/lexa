@@ -276,9 +276,11 @@ authRouter.get("/me", requireAuth, async (req: Request, res: Response) => {
       [activeTenantId],
     );
     const company = companyResult.rows[0];
+    // V1.1 SSO : exposer hubUserId depuis le JWT si présent
     res.json({
       user: userPublic(user),
       company: company ? companyPublic(company) : null,
+      hubUserId: jwtUser.hubUserId ?? null,
     });
   } catch (err) {
     console.error("[auth.me]", err);
@@ -333,6 +335,150 @@ authRouter.post("/switch-tenant", requireAuth, async (req: Request, res: Respons
   } catch (err) {
     console.error("[auth.switch-tenant]", err);
     res.status(500).json({ error: "switch-tenant failed" });
+  }
+});
+
+// ── POST /auth/sso-verify (V1.1 SSO Swigs Hub) ────────────────────────────────
+// Accepte un ssoToken émis par apps.swigs.online, le vérifie auprès du Hub,
+// puis crée ou retrouve le user Lexa correspondant et émet un JWT avec hubUserId.
+// Compatible dual-mode : l'auth email/password existante reste disponible.
+
+const ssoVerifyLimiter = rateLimit({
+  windowMs: config.AUTH_RATE_LIMIT_WINDOW_MS,
+  limit: config.AUTH_RATE_LIMIT_MAX,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "too many SSO attempts, retry later" },
+});
+
+const SsoVerifySchema = z.object({
+  ssoToken: z.string().min(1),
+});
+
+authRouter.post("/sso-verify", ssoVerifyLimiter, async (req: Request, res: Response) => {
+  const parsed = SsoVerifySchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "ssoToken required" });
+  }
+  const { ssoToken } = parsed.data;
+
+  if (!config.APP_SECRET) {
+    console.error("[auth.sso-verify] APP_SECRET not configured");
+    return res.status(500).json({ error: "SSO not configured on this server" });
+  }
+
+  // 1. Vérifier le token auprès du Swigs Hub
+  let hubUser: { hubId?: string; id?: string; email: string; name?: string };
+  try {
+    const verifyRes = await fetch(`${config.HUB_URL}/api/auth/sso-verify`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-App-Secret": config.APP_SECRET,
+      },
+      body: JSON.stringify({
+        ssoToken,
+        appId: config.LEXA_HUB_APP_ID,
+      }),
+    });
+
+    if (!verifyRes.ok) {
+      const errBody = await verifyRes.json().catch(() => ({})) as { error?: string };
+      console.warn("[auth.sso-verify] Hub rejected token:", errBody);
+      return res.status(401).json({
+        error: errBody.error ?? "invalid_sso_token",
+        code: "SSO_VERIFY_FAILED",
+      });
+    }
+
+    const body = await verifyRes.json() as { user: typeof hubUser };
+    hubUser = body.user;
+  } catch (err) {
+    console.error("[auth.sso-verify] Hub unreachable:", err);
+    return res.status(502).json({ error: "hub_unreachable" });
+  }
+
+  // 2. Résoudre le hubId (le Hub retourne hubId ou id selon la version)
+  const hubId = hubUser.hubId ?? hubUser.id;
+  if (!hubId) {
+    return res.status(502).json({ error: "hub_returned_no_user_id" });
+  }
+
+  try {
+    // 3. Trouver user existant par external_sso_id ou email
+    const existing = await query<UserRow>(
+      `SELECT * FROM users
+       WHERE external_sso_id = $1 OR email = $2
+       LIMIT 1`,
+      [hubId, hubUser.email.toLowerCase()],
+    );
+    let user: UserRow;
+
+    if (existing.rows.length > 0) {
+      // 4a. Mettre à jour le lien SSO si le user existait déjà (email match)
+      const updated = await query<UserRow>(
+        `UPDATE users
+         SET external_sso_id = $1, last_login_at = NOW()
+         WHERE id = $2
+         RETURNING *`,
+        [hubId, existing.rows[0]!.id],
+      );
+      user = updated.rows[0]!;
+    } else {
+      // 4b. Créer un nouveau user + tenant + company (onboarding auto)
+      const tenantId = randomUUID();
+      const companyName = hubUser.name
+        ? `${hubUser.name} (Hub)`
+        : `${hubUser.email.split("@")[0]!} (Hub)`;
+
+      await query(
+        `INSERT INTO companies (
+           tenant_id, name, legal_form, country, is_vat_subject, source
+         ) VALUES ($1, $2, 'raison_individuelle', 'CH', false, 'sso')`,
+        [tenantId, companyName],
+      );
+
+      const userResult = await query<UserRow>(
+        `INSERT INTO users (email, password_hash, tenant_id, external_sso_id, verified)
+         VALUES ($1, '', $2, $3, true)
+         RETURNING *`,
+        [hubUser.email.toLowerCase(), tenantId, hubId],
+      );
+      user = userResult.rows[0]!;
+
+      // Membership owner sur son propre tenant
+      await query(
+        `INSERT INTO fiduciary_memberships (user_id, tenant_id, role)
+         VALUES ($1, $2, 'owner')
+         ON CONFLICT DO NOTHING`,
+        [user.id, tenantId],
+      );
+    }
+
+    // 5. Charger les memberships pour le JWT étendu
+    const memberships = await listUserMemberships(user.id);
+    const membershipIds = memberships.map((m) => m.tenantId);
+    const activeTenantId = user.tenant_id ?? membershipIds[0] ?? "";
+
+    // 6. Émettre le JWT avec claim hubUserId
+    const token = signToken({
+      sub: user.id,
+      tenantId: activeTenantId,
+      activeTenantId,
+      memberships: membershipIds,
+      email: user.email,
+      hubUserId: hubId,
+    });
+
+    // 7. Retourner token + user + hubUserId
+    return res.json({
+      token,
+      hubUserId: hubId,
+      user: userPublic(user),
+    });
+  } catch (err) {
+    console.error("[auth.sso-verify]", err);
+    return res.status(500).json({ error: "sso_verify_failed" });
   }
 });
 
