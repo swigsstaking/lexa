@@ -408,7 +408,7 @@ function classifyAsync(
 
 // ── Handlers ──────────────────────────────────────────────────────────────────
 
-async function handleInvoiceCreated(
+export async function handleInvoiceCreated(
   tenantId: string,
   rawData: Record<string, unknown>,
   eventTimestamp: string,
@@ -506,7 +506,7 @@ async function handleInvoiceCreated(
 
 // ── Bloc A — Handler invoice.sent (idempotent via proInvoiceId) ───────────────
 
-async function handleInvoiceSent(
+export async function handleInvoiceSent(
   tenantId: string,
   rawData: Record<string, unknown>,
   eventTimestamp: string,
@@ -629,7 +629,7 @@ async function handleInvoiceSent(
 
 // ── Bloc B — Handler invoice.paid avec reconciliation automatique ─────────────
 
-async function handleInvoicePaid(
+export async function handleInvoicePaid(
   tenantId: string,
   rawData: Record<string, unknown>,
   eventTimestamp: string,
@@ -783,7 +783,7 @@ async function handleInvoicePaid(
   return { duplicate: false };
 }
 
-async function handleExpenseSubmitted(
+export async function handleExpenseSubmitted(
   tenantId: string,
   rawData: Record<string, unknown>,
   eventTimestamp: string,
