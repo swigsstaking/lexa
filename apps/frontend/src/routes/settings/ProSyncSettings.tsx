@@ -23,6 +23,7 @@ import {
   Clock,
   ExternalLink,
   ShieldCheck,
+  Wallet,
 } from 'lucide-react';
 import { lexa } from '@/api/lexa';
 import { useAuthStore } from '@/stores/authStore';
@@ -60,7 +61,8 @@ export function ProSyncSettings() {
     ok: boolean;
     invoicesProcessed: number;
     expensesProcessed: number;
-    ingested: { created: number; sent: number; paid: number; expenses: number };
+    bankTxProcessed: number;
+    ingested: { created: number; sent: number; paid: number; expenses: number; bankTransactions: number };
   } | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
 
@@ -136,10 +138,16 @@ export function ProSyncSettings() {
 
         {/* Section Statistiques */}
         <section className="card p-6 flex flex-col gap-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <BarChart3 className="w-4 h-4 text-violet-400" />
             <h2 className="text-sm font-semibold text-ink">Statistiques Swigs Pro</h2>
-            {statsLoading && <Loader2 className="w-3 h-3 animate-spin text-subtle ml-auto" />}
+            {statsLoading && <Loader2 className="w-3 h-3 animate-spin text-subtle" />}
+            {stats?.lastEventAt && (
+              <div className="ml-auto flex items-center gap-1.5 rounded-md bg-stone-700/50 border border-stone-600/40 px-2.5 py-1 text-2xs text-stone-300">
+                <Clock className="w-3 h-3 text-violet-400 flex-shrink-0" />
+                <span>Dernier sync : <span className="font-medium text-ink">{formatDate(stats.lastEventAt)}</span></span>
+              </div>
+            )}
           </div>
 
           {stats ? (
@@ -200,16 +208,37 @@ export function ProSyncSettings() {
                   </div>
                   <span className="text-base font-semibold text-rose-400">{formatCHF(stats.expensesTotal)}</span>
                 </div>
+
+                {/* Transactions bancaires — count */}
+                <div className="rounded-lg bg-stone-800/60 px-4 py-3 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 text-2xs text-subtle">
+                    <Wallet className="w-3 h-3 text-sky-400" />
+                    <span>TX bancaires</span>
+                  </div>
+                  <span className="text-lg font-semibold text-sky-400">{stats.bankTransactionsCount}</span>
+                </div>
+
+                {/* Encaissements bancaires */}
+                <div className="rounded-lg bg-stone-800/60 px-4 py-3 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 text-2xs text-subtle">
+                    <Wallet className="w-3 h-3 text-emerald-400" />
+                    <span>Encaissements</span>
+                  </div>
+                  <span className="text-base font-semibold text-emerald-400">{formatCHF(stats.bankTransactionsIn)}</span>
+                </div>
+
+                {/* Décaissements bancaires */}
+                <div className="rounded-lg bg-stone-800/60 px-4 py-3 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 text-2xs text-subtle">
+                    <Wallet className="w-3 h-3 text-rose-400" />
+                    <span>Décaissements</span>
+                  </div>
+                  <span className="text-base font-semibold text-rose-400">{formatCHF(stats.bankTransactionsOut)}</span>
+                </div>
               </div>
 
-              <div className="flex items-center justify-between gap-3 pt-1">
-                <p className="text-2xs text-subtle">
-                  Dernier event reçu :{' '}
-                  <span className="text-ink">
-                    {stats.lastEventAt ? formatDate(stats.lastEventAt) : '—'}
-                  </span>
-                </p>
-                {hasMapping && (
+              {hasMapping && (
+                <div className="flex justify-end pt-1">
                   <button
                     onClick={() => navigate('/documents?source=swigs-pro')}
                     className="flex items-center gap-1.5 text-2xs text-violet-400 hover:text-violet-300 transition-colors"
@@ -217,8 +246,8 @@ export function ProSyncSettings() {
                     <ExternalLink className="w-3 h-3" />
                     <span>Voir dans /documents</span>
                   </button>
-                )}
-              </div>
+                </div>
+              )}
             </>
           ) : (
             <div className="text-2xs text-subtle italic">
@@ -327,7 +356,10 @@ export function ProSyncSettings() {
             <div className="rounded-lg bg-emerald-900/20 border border-emerald-700/30 px-4 py-3 text-2xs text-emerald-300 flex flex-col gap-1">
               <p className="font-medium">Import terminé</p>
               <p>
-                Créées : {syncResult.ingested.created} · Envoyées : {syncResult.ingested.sent} · Payées : {syncResult.ingested.paid} · Frais : {syncResult.ingested.expenses}
+                Factures créées : {syncResult.ingested.created} · Envoyées : {syncResult.ingested.sent} · Payées : {syncResult.ingested.paid}
+              </p>
+              <p>
+                Frais : {syncResult.ingested.expenses} · TX bancaires : {syncResult.ingested.bankTransactions ?? syncResult.bankTxProcessed}
               </p>
             </div>
           )}

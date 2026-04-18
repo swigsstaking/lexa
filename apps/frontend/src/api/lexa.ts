@@ -601,7 +601,8 @@ export const lexa = {
         hubUserId: string;
         invoicesProcessed: number;
         expensesProcessed: number;
-        ingested: { created: number; sent: number; paid: number; expenses: number };
+        bankTxProcessed: number;
+        ingested: { created: number; sent: number; paid: number; expenses: number; bankTransactions: number };
       }>(
         '/settings/integrations/pro/sync',
         hubUserId ? { hubUserId } : {},
@@ -617,6 +618,9 @@ export const lexa = {
         caTotal: number;
         expensesCount: number;
         expensesTotal: number;
+        bankTransactionsCount: number;
+        bankTransactionsIn: number;
+        bankTransactionsOut: number;
         lastEventAt: string | null;
       }>('/settings/integrations/pro/stats')
       .then((r) => r.data),
