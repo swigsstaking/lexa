@@ -444,7 +444,7 @@ export function Workspace() {
           {/* Bouton Paramètres (roue crantée) */}
           <button
             type="button"
-            onClick={() => navigate('/settings/email-forward')}
+            onClick={() => navigate('/settings')}
             title="Paramètres"
             aria-label="Paramètres"
             className="hidden md:flex btn-ghost !px-2 !py-1.5 text-muted hover:text-ink transition-colors"

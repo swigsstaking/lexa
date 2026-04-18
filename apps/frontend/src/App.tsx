@@ -52,6 +52,11 @@ const ProSyncSettings = lazy(() =>
     default: m.ProSyncSettings,
   }))
 );
+const SettingsIndex = lazy(() =>
+  import('@/routes/settings/SettingsIndex').then((m) => ({
+    default: m.SettingsIndex,
+  }))
+);
 const AddAccount = lazy(() =>
   import('@/routes/onboarding/AddAccount').then((m) => ({ default: m.AddAccount }))
 );
@@ -239,6 +244,15 @@ export default function App() {
           element={
             <RequireAuth>
               <RedirectToTaxpayer />
+            </RequireAuth>
+          }
+        />
+        {/* Settings — index hub */}
+        <Route
+          path="/settings"
+          element={
+            <RequireAuth>
+              <SettingsIndex />
             </RequireAuth>
           }
         />
