@@ -23,6 +23,8 @@ import {
   Landmark,
   Zap,
   Check,
+  Briefcase,
+  X,
 } from 'lucide-react';
 import { lexa, type DocumentMeta } from '@/api/lexa';
 import { useActiveCompany } from '@/stores/companiesStore';
@@ -47,6 +49,101 @@ const DOC_TYPE_COLORS: Record<string, string> = {
   releve_bancaire: 'text-amber-400 bg-amber-400/10',
   autre: 'text-zinc-400 bg-zinc-400/10',
 };
+
+/** Filtres source disponibles dans /documents (Phase 3 V1.1) */
+type SourceFilter = 'all' | 'manual' | 'swigs-pro' | 'imap' | 'ocr';
+
+const SOURCE_FILTER_LABELS: Record<SourceFilter, string> = {
+  all: 'Tous',
+  manual: 'Upload manuel',
+  'swigs-pro': 'Swigs Pro',
+  imap: 'IMAP',
+  ocr: 'OCR',
+};
+
+/** Badge violet/cyan affiché sur les documents Swigs Pro */
+function ProBadge({ doc }: { doc: DocumentMeta }) {
+  const [modalOpen, setModalOpen] = useState(false);
+  if (doc.source !== 'swigs-pro') return null;
+
+  const proLabel = doc.proInvoiceNumber
+    ? `Facture ${doc.proInvoiceNumber}`
+    : doc.proExpenseId
+      ? `Note de frais ${doc.proExpenseId}`
+      : 'Document Pro';
+
+  const eventLabel: Record<string, string> = {
+    'invoice.created': 'Facture créée',
+    'invoice.sent': 'Facture envoyée',
+    'invoice.paid': 'Facture payée',
+    'expense.submitted': 'Note de frais soumise',
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setModalOpen(true); }}
+        className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:bg-violet-500/30 transition-colors text-2xs font-medium"
+        title="Document issu de Swigs Pro"
+      >
+        <Briefcase className="w-3 h-3" />
+        <span>Pro</span>
+      </button>
+
+      {modalOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+          onClick={() => setModalOpen(false)}
+        >
+          <div
+            className="card p-5 max-w-sm w-full flex flex-col gap-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-violet-400" />
+                <span className="text-sm font-semibold text-ink">Swigs Pro</span>
+              </div>
+              <button onClick={() => setModalOpen(false)} className="btn-ghost !p-1.5">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex flex-col gap-2 text-xs text-subtle">
+              <p>
+                <span className="text-ink font-medium">Cette pièce vient de Swigs Pro</span>
+              </p>
+              <p>
+                <span className="text-muted">Référence : </span>
+                <span className="text-ink">{proLabel}</span>
+              </p>
+              {doc.sourceEvent && (
+                <p>
+                  <span className="text-muted">Event : </span>
+                  <span className="text-ink">{eventLabel[doc.sourceEvent] ?? doc.sourceEvent}</span>
+                </p>
+              )}
+              {doc.linkedStreamId && (
+                <p className="text-2xs text-muted font-mono truncate">
+                  Stream : {doc.linkedStreamId}
+                </p>
+              )}
+            </div>
+            <a
+              href="https://app.swigs.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-ghost !text-xs flex items-center gap-1.5 justify-center"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Voir dans Swigs Pro</span>
+            </a>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 /** Badge QR-facture suisse — affiché si extractedFields.qrBill présent (Lane J) */
 type QrBillData = {
@@ -112,7 +209,10 @@ function DocumentCard({ doc, onApply, applyPending, applySuccess, onCreateEntry,
   const canApply = WIZARD_APPLICABLE_TYPES.has(doc.ocrResult.type);
 
   return (
-    <div className="card p-4 flex flex-col gap-3">
+    <div className="card p-4 flex flex-col gap-3 relative">
+      {/* Badge Swigs Pro (Phase 3 V1.1) */}
+      <ProBadge doc={doc} />
+
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
@@ -254,6 +354,7 @@ export function Documents() {
   const [applyFeedback, setApplyFeedback] = useState<{ docId: string; message: string; ok: boolean } | null>(null);
   const [applyingDocId, setApplyingDocId] = useState<string | null>(null);
   const [appliedDocIds, setAppliedDocIds] = useState<Set<string>>(new Set());
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
 
   // CAMT.053 state
   const camt053InputRef = useRef<HTMLInputElement>(null);
@@ -551,7 +652,26 @@ export function Documents() {
 
         {/* Liste des documents */}
         <section>
-          <h2 className="text-sm font-semibold mb-3 text-ink">Documents importés</h2>
+          <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
+            <h2 className="text-sm font-semibold text-ink">Documents importés</h2>
+
+            {/* Filtre source (Phase 3 V1.1) */}
+            <div className="flex items-center gap-1 flex-wrap">
+              {(Object.keys(SOURCE_FILTER_LABELS) as SourceFilter[]).map((key) => (
+                <button
+                  key={key}
+                  onClick={() => setSourceFilter(key)}
+                  className={`text-2xs px-2.5 py-1 rounded-full border transition-colors ${
+                    sourceFilter === key
+                      ? 'bg-accent/20 border-accent/40 text-accent'
+                      : 'border-border text-subtle hover:border-border/60 hover:text-ink'
+                  }`}
+                >
+                  {SOURCE_FILTER_LABELS[key]}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {isLoading && (
             <div className="flex items-center justify-center py-12 text-subtle">
@@ -598,17 +718,30 @@ export function Documents() {
 
           {!isLoading && documents && documents.length > 0 && (
             <div className="flex flex-col gap-3">
-              {documents.map((doc) => (
-                <DocumentCard
-                  key={doc.documentId}
-                  doc={doc}
-                  onApply={handleApply}
-                  applyPending={applyingDocId === doc.documentId}
-                  applySuccess={appliedDocIds.has(doc.documentId)}
-                  onCreateEntry={handleCreateEntry}
-                  createEntryPending={creatingEntryDocId === doc.documentId}
-                />
-              ))}
+              {documents
+                // Tri date desc
+                .slice()
+                .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())
+                // Filtre source (Phase 3 V1.1)
+                .filter((doc) => {
+                  if (sourceFilter === 'all') return true;
+                  if (sourceFilter === 'swigs-pro') return doc.source === 'swigs-pro';
+                  if (sourceFilter === 'imap') return doc.source === 'imap';
+                  if (sourceFilter === 'ocr') return doc.source === 'ocr';
+                  // "manual" = ni pro, ni imap, ni ocr explicite (uploads classiques)
+                  return !doc.source || doc.source === 'ocr';
+                })
+                .map((doc) => (
+                  <DocumentCard
+                    key={doc.documentId}
+                    doc={doc}
+                    onApply={handleApply}
+                    applyPending={applyingDocId === doc.documentId}
+                    applySuccess={appliedDocIds.has(doc.documentId)}
+                    onCreateEntry={handleCreateEntry}
+                    createEntryPending={creatingEntryDocId === doc.documentId}
+                  />
+                ))}
             </div>
           )}
         </section>
