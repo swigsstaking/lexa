@@ -1,4 +1,4 @@
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Shield, Zap, BookOpen } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +6,16 @@ import { useAuthStore } from '@/stores/authStore';
 
 export function Home() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const token = useAuthStore((s) => s.token);
+
+  // Hub redirige vers / avec ?sso_token=... après magic-link ou SSO exchange.
+  // On relaie vers /sso-callback qui consomme le token.
+  const ssoToken = searchParams.get('sso_token');
+  if (ssoToken) {
+    return <Navigate to={`/sso-callback?sso_token=${encodeURIComponent(ssoToken)}`} replace />;
+  }
+
   if (token) return <Navigate to="/workspace" replace />;
 
   return (
