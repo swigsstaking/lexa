@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Loader2, LogIn, Sparkles } from 'lucide-react';
+import { Loader2, LogIn, Sparkles, Mail } from 'lucide-react';
 import { AxiosError } from 'axios';
+import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import { lexa } from '@/api/lexa';
 import { useAuthStore } from '@/stores/authStore';
 import { useCompaniesStore } from '@/stores/companiesStore';
@@ -17,6 +18,59 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Magic-link state
+  const [magicEmail, setMagicEmail] = useState('');
+  const [magicSubmitting, setMagicSubmitting] = useState(false);
+  const [magicSent, setMagicSent] = useState(false);
+  const [magicError, setMagicError] = useState<string | null>(null);
+
+  // Google Sign-In handler
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    const idToken = credentialResponse.credential;
+    if (!idToken) {
+      setError('Réponse Google invalide — credential manquant');
+      return;
+    }
+    setError(null);
+    try {
+      const { user, token } = await lexa.googleAuth(idToken);
+      setAuth(token, user);
+      try {
+        const me = await lexa.me();
+        if (me.company) addCompany(me.company);
+      } catch {
+        // silent
+      }
+      navigate('/workspace', { replace: true });
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        setError(err.response?.data?.error ?? t('common.error'));
+      } else {
+        setError(t('common.error'));
+      }
+    }
+  };
+
+  // Magic-link handler
+  const handleMagicLink = async (e: FormEvent) => {
+    e.preventDefault();
+    setMagicSubmitting(true);
+    setMagicError(null);
+    setMagicSent(false);
+    try {
+      await lexa.magicLink(magicEmail);
+      setMagicSent(true);
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        setMagicError(err.response?.data?.error ?? t('common.error'));
+      } else {
+        setMagicError(t('common.error'));
+      }
+    } finally {
+      setMagicSubmitting(false);
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -70,6 +124,73 @@ export function Login() {
           <p className="text-sm text-muted mb-6">
             {t('auth.login_sub')} · Connexion centralisée via Swigs Hub
           </p>
+
+          {/* ── Section connexion rapide ────────────────────────────── */}
+          <div className="space-y-3 mb-5">
+            <p className="text-xs font-medium text-muted uppercase tracking-wider">
+              Connexion rapide
+            </p>
+
+            {/* Google Sign-In */}
+            <div className="flex justify-start">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError('Connexion Google échouée — réessayez')}
+                theme="filled_black"
+                shape="rectangular"
+                size="large"
+                text="continue_with"
+                locale="fr"
+              />
+            </div>
+
+            {/* Magic-link */}
+            <form onSubmit={handleMagicLink} className="space-y-2">
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder="Votre email…"
+                  className="input flex-1 text-sm"
+                  value={magicEmail}
+                  onChange={(e) => setMagicEmail(e.target.value)}
+                  disabled={magicSubmitting || magicSent}
+                  autoComplete="email"
+                />
+                <button
+                  type="submit"
+                  disabled={magicSubmitting || magicSent || !magicEmail}
+                  className="btn-secondary flex items-center gap-1.5 text-sm px-3 whitespace-nowrap"
+                >
+                  {magicSubmitting ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Mail className="w-3.5 h-3.5" />
+                  )}
+                  Lien par email
+                </button>
+              </div>
+              {magicSent && (
+                <p className="text-xs text-emerald-400">
+                  Si un compte existe, un email vous a été envoyé.
+                </p>
+              )}
+              {magicError && (
+                <p className="text-xs text-danger">{magicError}</p>
+              )}
+            </form>
+          </div>
+
+          {/* ── Diviseur ───────────────────────────────────────────── */}
+          <div className="relative mb-5">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs text-muted">
+              <span className="bg-[var(--color-card,#1c1c1e)] px-3">
+                ou avec mot de passe
+              </span>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

@@ -43,6 +43,18 @@ export const lexa = {
       .get<{ user: AuthUser; company: Company | null; hubUserId: string | null }>('/auth/me')
       .then((r) => r.data),
 
+  // V1.2 Google Sign-In — envoie l'idToken Google au backend → Hub → JWT Lexa
+  googleAuth: (idToken: string) =>
+    api
+      .post<{ user: AuthUser; token: string; hubUserId: string }>('/auth/google', { idToken })
+      .then((r) => r.data),
+
+  // V1.2 Magic-link — demande un lien de connexion par email (silent anti-énumération)
+  magicLink: (email: string) =>
+    api
+      .post<{ message: string }>('/auth/magic-link', { email })
+      .then((r) => r.data),
+
   // V1.1 SSO — vérifie un ssoToken auprès du backend Lexa (qui le valide auprès du Hub)
   ssoVerify: (ssoToken: string) =>
     api

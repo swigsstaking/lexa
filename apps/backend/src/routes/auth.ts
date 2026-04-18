@@ -39,6 +39,51 @@ type UserRow = {
   last_login_at: Date | null;
 };
 
+type HubUserData = {
+  id: string;
+  email: string;
+  name?: string;
+  avatar?: string;
+};
+
+/**
+ * Trouve ou crée un user Lexa local à partir d'un user retourné par le Hub.
+ * Mutualisé entre /auth/login, /auth/google et /auth/sso-verify.
+ */
+async function findOrCreateLocalUserFromHub(hubUser: HubUserData): Promise<UserRow> {
+  const byHub = await query<UserRow>(
+    "SELECT * FROM users WHERE external_sso_id = $1 OR email = $2 LIMIT 1",
+    [hubUser.id, hubUser.email.toLowerCase()],
+  );
+  let user = byHub.rows[0];
+  if (user) {
+    await query(
+      "UPDATE users SET external_sso_id = $1, last_login_at = NOW() WHERE id = $2",
+      [hubUser.id, user.id],
+    );
+  } else {
+    const tenantId = randomUUID();
+    const companyName = hubUser.name || hubUser.email.split("@")[0] || "Mon entreprise";
+    await query(
+      `INSERT INTO companies (tenant_id, name, legal_form, country, source)
+       VALUES ($1, $2, 'raison_individuelle', 'CH', 'hub-sso')`,
+      [tenantId, companyName],
+    );
+    const inserted = await query<UserRow>(
+      `INSERT INTO users (email, password_hash, tenant_id, external_sso_id, verified)
+       VALUES ($1, '', $2, $3, true)
+       RETURNING *`,
+      [hubUser.email.toLowerCase(), tenantId, hubUser.id],
+    );
+    user = inserted.rows[0]!;
+    await query(
+      `INSERT INTO fiduciary_memberships (user_id, tenant_id, role) VALUES ($1, $2, 'owner') ON CONFLICT DO NOTHING`,
+      [user.id, tenantId],
+    );
+  }
+  return user!;
+}
+
 type CompanyRow = {
   id: string;
   tenant_id: string;
@@ -276,37 +321,7 @@ authRouter.post("/login", loginLimiter, async (req: Request, res: Response) => {
     // Find or create local user (lié via external_sso_id si Hub utilisé)
     let user: UserRow | undefined;
     if (hubUser) {
-      const byHub = await query<UserRow>(
-        "SELECT * FROM users WHERE external_sso_id = $1 OR email = $2 LIMIT 1",
-        [hubUser.id, email.toLowerCase()],
-      );
-      user = byHub.rows[0];
-      if (user) {
-        // Mettre à jour external_sso_id si manquant + last_login
-        await query(
-          "UPDATE users SET external_sso_id = $1, last_login_at = NOW() WHERE id = $2",
-          [hubUser.id, user.id],
-        );
-      } else {
-        // Premier login Hub → créer user + tenant + membership
-        const tenantId = randomUUID();
-        await query(
-          `INSERT INTO companies (tenant_id, name, legal_form, country, source)
-           VALUES ($1, $2, 'raison_individuelle', 'CH', 'hub-sso')`,
-          [tenantId, hubUser.name || email.split("@")[0] || "Mon entreprise"],
-        );
-        const inserted = await query<UserRow>(
-          `INSERT INTO users (email, password_hash, tenant_id, external_sso_id, verified)
-           VALUES ($1, '', $2, $3, true)
-           RETURNING *`,
-          [hubUser.email.toLowerCase(), tenantId, hubUser.id],
-        );
-        user = inserted.rows[0]!;
-        await query(
-          `INSERT INTO fiduciary_memberships (user_id, tenant_id, role) VALUES ($1, $2, 'owner') ON CONFLICT DO NOTHING`,
-          [user.id, tenantId],
-        );
-      }
+      user = await findOrCreateLocalUserFromHub(hubUser);
     } else {
       // Fallback legacy : auth locale par password (si HUB_URL absent)
       const result = await query<UserRow>("SELECT * FROM users WHERE email = $1", [email.toLowerCase()]);
@@ -336,6 +351,74 @@ authRouter.post("/login", loginLimiter, async (req: Request, res: Response) => {
   } catch (err) {
     console.error("[auth.login]", err);
     res.status(500).json({ error: "login failed" });
+  }
+});
+
+// ── POST /auth/google ────────────────────────────────────────────────────────
+// Authentification via Google (idToken Google → Hub → findOrCreateLocalUser → JWT)
+
+authRouter.post("/google", async (req: Request, res: Response) => {
+  const { idToken } = (req.body ?? {}) as { idToken?: string };
+  if (!idToken) return res.status(400).json({ error: "idToken required" });
+  const HUB_URL = process.env.HUB_URL;
+  if (!HUB_URL) return res.status(500).json({ error: "HUB_URL not configured" });
+
+  try {
+    const hubRes = await fetch(`${HUB_URL}/api/auth/google`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+    const hubData = await hubRes.json() as { user?: HubUserData; error?: string };
+    if (!hubRes.ok) return res.status(hubRes.status).json({ error: hubData.error ?? "google auth failed" });
+    if (!hubData.user?.id) return res.status(502).json({ error: "hub returned invalid user" });
+
+    const user = await findOrCreateLocalUserFromHub(hubData.user);
+
+    const memberships = await listUserMemberships(user.id);
+    const membershipIds = memberships.map((m) => m.tenantId);
+    const activeTenantId = user.tenant_id ?? membershipIds[0] ?? "";
+
+    const token = signToken({
+      sub: user.id,
+      tenantId: activeTenantId,
+      activeTenantId,
+      memberships: membershipIds,
+      email: user.email,
+      hubUserId: hubData.user.id,
+    });
+
+    return res.json({ user: userPublic(user), token, hubUserId: hubData.user.id });
+  } catch (err) {
+    console.error("[auth.google]", err);
+    return res.status(500).json({ error: "google auth failed" });
+  }
+});
+
+// ── POST /auth/magic-link ─────────────────────────────────────────────────────
+// Demande d'un magic-link email via le Hub (anti-énumération : réponse silencieuse)
+
+authRouter.post("/magic-link", async (req: Request, res: Response) => {
+  const { email } = (req.body ?? {}) as { email?: string };
+  if (!email) return res.status(400).json({ error: "email required" });
+  const HUB_URL = process.env.HUB_URL;
+  const APP_ID = process.env.LEXA_HUB_APP_ID ?? "lexa";
+  const ORIGIN = process.env.LEXA_PUBLIC_URL ?? "https://lexa.swigs.online";
+  if (!HUB_URL) return res.status(500).json({ error: "HUB_URL not configured" });
+
+  try {
+    const hubRes = await fetch(`${HUB_URL}/api/auth/magic-link`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, app: APP_ID, redirect: `${ORIGIN}/sso-callback` }),
+    });
+    const hubData = await hubRes.json() as { error?: string };
+    if (!hubRes.ok) return res.status(hubRes.status).json({ error: hubData.error ?? "magic link failed" });
+    // Silent success même si compte inexistant (anti-énumération email)
+    return res.json({ message: "Si un compte existe, un email vous a été envoyé." });
+  } catch (err) {
+    console.error("[auth.magic-link]", err);
+    return res.status(500).json({ error: "magic link failed" });
   }
 });
 
@@ -489,55 +572,12 @@ authRouter.post("/sso-verify", ssoVerifyLimiter, async (req: Request, res: Respo
   }
 
   try {
-    // 3. Trouver user existant par external_sso_id ou email
-    const existing = await query<UserRow>(
-      `SELECT * FROM users
-       WHERE external_sso_id = $1 OR email = $2
-       LIMIT 1`,
-      [hubId, hubUser.email.toLowerCase()],
-    );
-    let user: UserRow;
-
-    if (existing.rows.length > 0) {
-      // 4a. Mettre à jour le lien SSO si le user existait déjà (email match)
-      const updated = await query<UserRow>(
-        `UPDATE users
-         SET external_sso_id = $1, last_login_at = NOW()
-         WHERE id = $2
-         RETURNING *`,
-        [hubId, existing.rows[0]!.id],
-      );
-      user = updated.rows[0]!;
-    } else {
-      // 4b. Créer un nouveau user + tenant + company (onboarding auto)
-      const tenantId = randomUUID();
-      const companyName = hubUser.name
-        ? `${hubUser.name} (Hub)`
-        : `${hubUser.email.split("@")[0]!} (Hub)`;
-
-      await query(
-        `INSERT INTO companies (
-           tenant_id, name, legal_form, country, is_vat_subject, source
-         ) VALUES ($1, $2, 'raison_individuelle', 'CH', false, 'sso')`,
-        [tenantId, companyName],
-      );
-
-      const userResult = await query<UserRow>(
-        `INSERT INTO users (email, password_hash, tenant_id, external_sso_id, verified)
-         VALUES ($1, '', $2, $3, true)
-         RETURNING *`,
-        [hubUser.email.toLowerCase(), tenantId, hubId],
-      );
-      user = userResult.rows[0]!;
-
-      // Membership owner sur son propre tenant
-      await query(
-        `INSERT INTO fiduciary_memberships (user_id, tenant_id, role)
-         VALUES ($1, $2, 'owner')
-         ON CONFLICT DO NOTHING`,
-        [user.id, tenantId],
-      );
-    }
+    // 3. Trouver ou créer le user local via le helper mutualisé
+    const user = await findOrCreateLocalUserFromHub({
+      id: hubId,
+      email: hubUser.email,
+      name: hubUser.name,
+    });
 
     // 5. Charger les memberships pour le JWT étendu
     const memberships = await listUserMemberships(user.id);
