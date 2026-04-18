@@ -877,7 +877,7 @@ export async function handleExpenseSubmitted(
 
 // ── Handler bank.transaction (Swigs Pro bankImapFetcher) ─────────────────────
 
-async function handleBankTransaction(
+export async function handleBankTransaction(
   tenantId: string,
   rawData: Record<string, unknown>,
   eventTimestamp: string,

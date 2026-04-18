@@ -27,6 +27,7 @@ import {
   handleInvoiceSent,
   handleInvoicePaid,
   handleExpenseSubmitted,
+  handleBankTransaction,
 } from "./bridge.js";
 
 export const settingsRouter = Router();
@@ -245,7 +246,7 @@ settingsRouter.post("/integrations/pro/sync", async (req, res) => {
   }
 
   // Ingérer via les handlers existants (idempotent grâce à la dedup proInvoiceId)
-  let invIngested = 0, invSentIngested = 0, paidIngested = 0, expIngested = 0;
+  let invIngested = 0, invSentIngested = 0, paidIngested = 0, expIngested = 0, bankIngested = 0;
   const now = new Date().toISOString();
 
   for (const inv of proData.invoices ?? []) {
@@ -282,6 +283,15 @@ settingsRouter.post("/integrations/pro/sync", async (req, res) => {
     }
   }
 
+  for (const tx of (proData as { bankTransactions?: Record<string, unknown>[] }).bankTransactions ?? []) {
+    try {
+      await handleBankTransaction(tenantId, tx, (tx.date as string) ?? now);
+      bankIngested++;
+    } catch (e) {
+      console.warn(`[pro-sync] bankTx ${tx.bankTxId} failed:`, (e as Error).message);
+    }
+  }
+
   scheduleLedgerRefresh(tenantId);
 
   return res.json({
@@ -289,11 +299,13 @@ settingsRouter.post("/integrations/pro/sync", async (req, res) => {
     hubUserId,
     invoicesProcessed: proData.invoices?.length ?? 0,
     expensesProcessed: proData.expenses?.length ?? 0,
+    bankTxProcessed: (proData as { bankTransactions?: unknown[] }).bankTransactions?.length ?? 0,
     ingested: {
       created: invIngested,
       sent: invSentIngested,
       paid: paidIngested,
       expenses: expIngested,
+      bankTransactions: bankIngested,
     },
   });
 });
