@@ -23,8 +23,10 @@ type AuthState = {
   token: string | null;
   user: AuthUser | null;
   activeTenantId: string | null; // S32 : peut différer de user.tenantId après switch
+  hubUserId: string | null; // V1.1 SSO : lien Hub vérifié cryptographiquement
   setAuth: (token: string, user: AuthUser) => void;
   setToken: (token: string, activeTenantId: string) => void; // S32 : après switch-tenant
+  setHubUserId: (hubUserId: string | null) => void; // V1.1 SSO
   logout: () => void;
 };
 
@@ -34,6 +36,7 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       user: null,
       activeTenantId: null,
+      hubUserId: null,
       setAuth: (token, user) => {
         // Invalider le cache TanStack Query au login (évite fuites inter-sessions)
         queryClient.removeQueries();
@@ -44,15 +47,23 @@ export const useAuthStore = create<AuthState>()(
         queryClient.removeQueries();
         set({ token, activeTenantId });
       },
+      setHubUserId: (hubUserId) => {
+        set({ hubUserId });
+      },
       logout: () => {
         // Nuke complet du cache au logout — évite affichage données ex-session
         queryClient.removeQueries();
-        set({ token: null, user: null, activeTenantId: null });
+        set({ token: null, user: null, activeTenantId: null, hubUserId: null });
       },
     }),
     {
       name: 'lexa.auth',
-      partialize: (s) => ({ token: s.token, user: s.user, activeTenantId: s.activeTenantId }),
+      partialize: (s) => ({
+        token: s.token,
+        user: s.user,
+        activeTenantId: s.activeTenantId,
+        hubUserId: s.hubUserId,
+      }),
     },
   ),
 );

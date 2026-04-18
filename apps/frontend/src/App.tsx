@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { Home } from '@/routes/Home';
 import { Login } from '@/routes/Login';
 import { Register } from '@/routes/Register';
+import { SsoCallback } from '@/routes/SsoCallback';
 import { Onboarding } from '@/routes/Onboarding';
 import { Welcome } from '@/routes/Welcome';
 import { Workspace } from '@/routes/Workspace';
@@ -98,6 +99,8 @@ export default function App() {
     <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/" element={<Home />} />
+        {/* V1.1 SSO — callback depuis apps.swigs.online */}
+        <Route path="/sso-callback" element={<SsoCallback />} />
         <Route
           path="/login"
           element={

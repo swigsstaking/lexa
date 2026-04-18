@@ -22,8 +22,10 @@ import {
   TrendingUp,
   Clock,
   ExternalLink,
+  ShieldCheck,
 } from 'lucide-react';
 import { lexa } from '@/api/lexa';
+import { useAuthStore } from '@/stores/authStore';
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString('fr-CH', {
@@ -46,6 +48,7 @@ function formatCHF(amount: number): string {
 export function ProSyncSettings() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const hubUserId = useAuthStore((s) => s.hubUserId);
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [reason, setReason] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -238,23 +241,50 @@ export function ProSyncSettings() {
             </div>
           </div>
 
-          {/* Input hubUserId si pas encore de mapping */}
-          {!hasMapping && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-2xs text-subtle font-medium">
-                ID compte Swigs Pro (hubUserId)
-              </label>
-              <input
-                type="text"
-                value={hubUserIdInput}
-                onChange={(e) => setHubUserIdInput(e.target.value)}
-                placeholder="Ex : 507f1f77bcf86cd799439011"
-                className="input text-sm font-mono"
-              />
-              <p className="text-2xs text-stone-500">
-                Retrouvez cet ID dans votre profil Swigs Pro · Settings · Mon compte.
-              </p>
+          {/* Statut lien Hub SSO */}
+          {hubUserId ? (
+            <div className="flex items-center gap-2 rounded-lg bg-emerald-900/20 border border-emerald-700/30 px-4 py-3 text-2xs text-emerald-300">
+              <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+              <span>
+                <span className="font-semibold">Compte Swigs Hub lié</span> — sync sécurisé activé.
+                Aucune saisie manuelle requise.
+              </span>
             </div>
+          ) : (
+            <>
+              {/* Input hubUserId si pas encore de mapping et pas de SSO */}
+              {!hasMapping && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-2xs text-subtle font-medium">
+                    ID compte Swigs Pro (hubUserId)
+                  </label>
+                  <input
+                    type="text"
+                    value={hubUserIdInput}
+                    onChange={(e) => setHubUserIdInput(e.target.value)}
+                    placeholder="Ex : 507f1f77bcf86cd799439011"
+                    className="input text-sm font-mono"
+                  />
+                  <p className="text-2xs text-stone-500">
+                    Retrouvez cet ID dans votre profil Swigs Pro · Settings · Mon compte.
+                  </p>
+                </div>
+              )}
+              <div className="flex items-center gap-2 rounded-lg bg-amber-900/20 border border-amber-700/30 px-4 py-3 text-2xs text-amber-300">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>
+                  Pour plus de sécurité, liez votre compte au Swigs Hub depuis la{' '}
+                  <button
+                    type="button"
+                    onClick={() => navigate('/login')}
+                    className="underline hover:text-amber-200"
+                  >
+                    page de connexion
+                  </button>
+                  .
+                </span>
+              </div>
+            </>
           )}
 
           {/* Bouton import */}
@@ -265,7 +295,7 @@ export function ProSyncSettings() {
                 setSyncError(null);
                 syncMutation.mutate();
               }}
-              disabled={syncMutation.isPending || (!hasMapping && !hubUserIdInput.trim())}
+              disabled={syncMutation.isPending || (!hubUserId && !hasMapping && !hubUserIdInput.trim())}
               className="btn-primary flex items-center gap-2"
             >
               {syncMutation.isPending ? (

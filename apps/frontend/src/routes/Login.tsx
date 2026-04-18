@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Loader2, LogIn, Sparkles } from 'lucide-react';
+import { Loader2, LogIn, Sparkles, Briefcase } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { lexa } from '@/api/lexa';
 import { useAuthStore } from '@/stores/authStore';
@@ -68,6 +68,27 @@ export function Login() {
             </h1>
           </div>
           <p className="text-sm text-muted mb-6">{t('auth.login_sub')}</p>
+
+          {/* V1.1 SSO — connexion via Swigs Hub */}
+          <button
+            type="button"
+            onClick={() => {
+              const callbackUrl = `${window.location.origin}/sso-callback`;
+              window.location.href = `https://apps.swigs.online/login?app=lexa&callback=${encodeURIComponent(callbackUrl)}`;
+            }}
+            className="btn-secondary w-full flex items-center justify-center gap-2 mb-4"
+          >
+            <Briefcase className="w-4 h-4" />
+            Continuer avec Swigs Hub
+          </button>
+          <div className="relative mb-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs text-muted">
+              <span className="bg-surface px-2">— ou —</span>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
