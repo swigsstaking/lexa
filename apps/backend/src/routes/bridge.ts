@@ -38,6 +38,8 @@ import { requireHmac } from "../middleware/requireHmac.js";
 import { query, queryAsTenant } from "../db/postgres.js";
 import type { ClassificationResult } from "../agents/classifier/ClassifierAgent.js";
 import { computeFingerprint, lookupByFingerprint, enrichEventMetadata } from "../services/TransactionFingerprint.js";
+import { isProSyncEnabled } from "../services/TenantSettings.js";
+import { createProDocument } from "../services/DocumentsService.js";
 
 export const bridgeRouter = Router();
 
@@ -478,6 +480,23 @@ async function handleInvoiceCreated(
     amountTtc,
   );
 
+  // Créer un document virtuel Pro dans /documents (Phase 3 V1.1)
+  try {
+    await createProDocument({
+      tenantId,
+      proInvoiceId: data.invoiceId,
+      proEvent: "invoice.created",
+      proInvoiceNumber: data.invoiceNumber,
+      fileName: `Facture ${data.invoiceNumber} — ${clientName}.pro`,
+      description,
+      amount: amountTtc,
+      date: today,
+      streamId,
+    });
+  } catch (docErr) {
+    console.warn("[bridge] createProDocument failed (invoice.created), non-blocking:", (docErr as Error).message);
+  }
+
   // Classification déterministe : 1100 Débiteurs (D) / 3200 Prestations de services (C)
   classifyAsync(tenantId, streamId, description, amountTtc, today, "CHF",
     deterministicProClassification("invoice.created", amountTtc));
@@ -584,6 +603,23 @@ async function handleInvoiceSent(
     clientName,
     amountTtc,
   );
+
+  // Créer un document virtuel Pro dans /documents (Phase 3 V1.1)
+  try {
+    await createProDocument({
+      tenantId,
+      proInvoiceId: data.invoiceId,
+      proEvent: "invoice.sent",
+      proInvoiceNumber: data.invoiceNumber,
+      fileName: `Facture ${data.invoiceNumber} — ${clientName} (envoyée).pro`,
+      description,
+      amount: amountTtc,
+      date: today,
+      streamId,
+    });
+  } catch (docErr) {
+    console.warn("[bridge] createProDocument failed (invoice.sent), non-blocking:", (docErr as Error).message);
+  }
 
   // Classification déterministe : 1100 Débiteurs (D) / 3200 Prestations (C)
   classifyAsync(tenantId, streamId, description, amountTtc, today, "CHF",
@@ -723,6 +759,23 @@ async function handleInvoicePaid(
     linkedInvoiceStreamId ?? "none",
   );
 
+  // Créer un document virtuel Pro dans /documents (Phase 3 V1.1)
+  try {
+    await createProDocument({
+      tenantId,
+      proInvoiceId: data.invoiceId,
+      proEvent: "invoice.paid",
+      proInvoiceNumber: data.invoiceNumber,
+      fileName: `Paiement facture ${data.invoiceNumber} — ${clientName}.pro`,
+      description,
+      amount: amountTtc,
+      date: paidDate,
+      streamId,
+    });
+  } catch (docErr) {
+    console.warn("[bridge] createProDocument failed (invoice.paid), non-blocking:", (docErr as Error).message);
+  }
+
   // Classification déterministe : 1020 Banque (D) / 1100 Débiteurs (C) — réconciliation
   classifyAsync(tenantId, streamId, description, amountTtc, paidDate, "CHF",
     deterministicProClassification("invoice.paid", amountTtc));
@@ -798,6 +851,22 @@ async function handleExpenseSubmitted(
     data.expenseId,
     data.amount,
   );
+
+  // Créer un document virtuel Pro dans /documents (Phase 3 V1.1)
+  try {
+    await createProDocument({
+      tenantId,
+      proExpenseId: data.expenseId,
+      proEvent: "expense.submitted",
+      fileName: `Note de frais ${data.expenseId} — ${data.description}.pro`,
+      description,
+      amount: -data.amount, // négatif = décaissement
+      date: today,
+      streamId,
+    });
+  } catch (docErr) {
+    console.warn("[bridge] createProDocument failed (expense.submitted), non-blocking:", (docErr as Error).message);
+  }
 
   // Classification déterministe : 6500 Frais admin (D) / 1020 Banque (C)
   classifyAsync(tenantId, streamId, description, -data.amount, today, data.currency,
@@ -919,6 +988,18 @@ bridgeRouter.post("/pro-events", requireHmac, async (req, res) => {
   const tenantId = await resolveTenantId(rawId);
 
   const eventTimestamp = timestamp ?? new Date().toISOString();
+
+  // Toggle Pro sync côté Lexa (Phase 3 V1.1) — vérifier si le tenant accepte les events Pro
+  try {
+    const proSyncOn = await isProSyncEnabled(tenantId);
+    if (!proSyncOn) {
+      console.info("[bridge] pro sync disabled for tenant=%s, ignoring event=%s", tenantId, event);
+      return res.status(202).json({ ok: false, reason: "pro_sync_disabled", tenantId });
+    }
+  } catch (syncErr) {
+    // Ne pas bloquer si la vérif échoue — fail open (comportement V1 par défaut)
+    console.warn("[bridge] isProSyncEnabled check failed, proceeding:", (syncErr as Error).message);
+  }
 
   // Multi-tenant safety : rejeter en production si aucun mapping trouvé (DEFAULT_TENANT_ID)
   if (tenantId === DEFAULT_TENANT_ID && process.env.NODE_ENV === "production") {

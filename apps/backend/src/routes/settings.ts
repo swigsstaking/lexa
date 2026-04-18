@@ -1,17 +1,22 @@
 /**
- * Routes settings — Paramètres tenant (email forward, etc.)
+ * Routes settings — Paramètres tenant (email forward, intégrations Pro, etc.)
  *
  * GET    /settings/email-forward              → config email forward (token, adresse, historique)
  * POST   /settings/email-forward/regenerate  → nouveau token
  * PATCH  /settings/email-forward/toggle      → activer/désactiver
  * GET    /settings/email-forward/history     → 20 derniers emails reçus
  *
+ * GET    /settings/integrations/pro          → état du toggle Pro sync
+ * PUT    /settings/integrations/pro          → activer/désactiver le sync Pro
+ *
  * Phase 1 V1.2 — email forward IMAP.
+ * Phase 3 V1.1 — toggle Pro sync per-tenant.
  */
 
 import { Router } from "express";
 import { randomBytes } from "node:crypto";
 import { queryAsTenant } from "../db/postgres.js";
+import { getProSyncSettings, setProSyncEnabled } from "../services/TenantSettings.js";
 
 export const settingsRouter = Router();
 
@@ -89,6 +94,40 @@ settingsRouter.patch("/email-forward/toggle", async (req, res) => {
   );
 
   return res.json({ ok: true, enabled: Boolean(enabled) });
+});
+
+// ── Intégrations Pro (Phase 3 V1.1) ──────────────────────────────────────────
+
+// GET /settings/integrations/pro
+settingsRouter.get("/integrations/pro", async (req, res) => {
+  const tenantId = req.tenantId!;
+  try {
+    const settings = await getProSyncSettings(tenantId);
+    return res.json(settings);
+  } catch (err) {
+    console.error("[settings] integrations/pro GET error:", (err as Error).message);
+    return res.status(500).json({ error: "get failed", message: (err as Error).message });
+  }
+});
+
+// PUT /settings/integrations/pro
+settingsRouter.put("/integrations/pro", async (req, res) => {
+  const tenantId = req.tenantId!;
+  const { enabled, reason } = req.body as { enabled?: unknown; reason?: unknown };
+
+  if (typeof enabled !== "boolean") {
+    return res.status(400).json({ error: "enabled (boolean) is required" });
+  }
+  const reasonStr = typeof reason === "string" ? reason : undefined;
+
+  try {
+    await setProSyncEnabled(tenantId, enabled, reasonStr);
+    const settings = await getProSyncSettings(tenantId);
+    return res.json({ ok: true, ...settings });
+  } catch (err) {
+    console.error("[settings] integrations/pro PUT error:", (err as Error).message);
+    return res.status(500).json({ error: "update failed", message: (err as Error).message });
+  }
 });
 
 // GET /settings/email-forward/history?limit=20
