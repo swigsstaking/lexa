@@ -208,6 +208,7 @@ interface PmColumnsAProps {
   setFocusCode: (code: string | null) => void;
   kpiVisibility: { tresorerie: boolean; resultat: boolean; tva: boolean; anomalies: boolean };
   onOpenDrawer?: (code: string) => void;
+  onOpenCmdK?: () => void;
 }
 
 const COLUMN_ORDER: AccountClass[] = ['P', 'A', 'L', 'C'];
@@ -226,6 +227,7 @@ export function PmColumnsA({
   setFocusCode,
   kpiVisibility,
   onOpenDrawer,
+  onOpenCmdK,
 }: PmColumnsAProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const gridRef   = useRef<HTMLDivElement>(null);
@@ -479,6 +481,7 @@ export function PmColumnsA({
                 </>
               }
               cta="Ouvrir le rapport"
+              onCta={onOpenCmdK}
             />
           </div>
         </div>

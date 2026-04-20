@@ -343,6 +343,7 @@ export function PmWorkspace() {
             setFocusCode={setFocusCode}
             kpiVisibility={kpiVisibility}
             onOpenDrawer={handleOpenDrawer}
+            onOpenCmdK={() => setCmdkOpen(true)}
           />
         )}
         {pmView === 'colB' && (
@@ -353,6 +354,7 @@ export function PmWorkspace() {
             setFocusCode={setFocusCode}
             kpiVisibility={kpiVisibility}
             onOpenDrawer={handleOpenDrawer}
+            onOpenCmdK={() => setCmdkOpen(true)}
           />
         )}
         {pmView === 'ledger' && (
@@ -360,6 +362,7 @@ export function PmWorkspace() {
             accounts={v2Accounts}
             focusCode={focusCode}
             setFocusCode={setFocusCode}
+            onOpenCmdK={() => setCmdkOpen(true)}
           />
         )}
       </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LexaInsight } from './LexaInsight';
 import { fmtMoney } from './fmtMoney';
 
@@ -76,7 +77,9 @@ const TONE_COLOR: Record<Tone, string> = {
 
 export function PpWorkspace() {
   const [selected, setSelected] = useState<{ b: number; i: number } | null>(null);
+  const navigate = useNavigate();
   const d = PP_DATA;
+  const year = new Date().getFullYear();
 
   const totalSal = d.buckets[0].items.reduce((s, x) => s + x.amount, 0);
   const totalVP  = d.buckets[1].items.reduce((s, x) => s + x.amount, 0);
@@ -312,6 +315,7 @@ export function PpWorkspace() {
                 {d.obligations.map((o, i) => (
                   <div
                     key={i}
+                    onClick={() => navigate(`/taxpayer/${year}`)}
                     style={{
                       display: 'grid',
                       gridTemplateColumns: '54px 1fr auto',
@@ -319,6 +323,7 @@ export function PpWorkspace() {
                       alignItems: 'center',
                       padding: '10px 0',
                       borderBottom: i === d.obligations.length - 1 ? 'none' : '1px solid var(--chrome-line)',
+                      cursor: 'pointer',
                     }}
                   >
                     <div
@@ -366,6 +371,7 @@ export function PpWorkspace() {
                   </>
                 }
                 cta="Simuler"
+                onCta={() => navigate(`/taxpayer/${year}`)}
               />
             </div>
           </div>

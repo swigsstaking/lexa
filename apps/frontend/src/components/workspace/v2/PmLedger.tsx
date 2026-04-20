@@ -81,11 +81,12 @@ interface PmLedgerProps {
   accounts: V2Account[];
   focusCode: string | null;
   setFocusCode: (code: string | null) => void;
+  onOpenCmdK?: () => void;
 }
 
 type FilterKey = 'all' | AccountClass;
 
-export function PmLedger({ accounts, focusCode, setFocusCode }: PmLedgerProps) {
+export function PmLedger({ accounts, focusCode, setFocusCode, onOpenCmdK }: PmLedgerProps) {
   const [filter, setFilter] = useState<FilterKey>('all');
   const [query, setQuery] = useState('');
 
@@ -414,6 +415,7 @@ export function PmLedger({ accounts, focusCode, setFocusCode }: PmLedgerProps) {
                   </>
                 }
                 cta="Rapprocher"
+                onCta={onOpenCmdK}
               />
             </div>
           </div>
