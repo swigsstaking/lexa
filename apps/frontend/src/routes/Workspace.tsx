@@ -325,7 +325,7 @@ export function Workspace() {
             className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity min-h-[44px]"
             title={t('app.name')}
           >
-            <div className="w-6 h-6 rounded-md bg-accent grid place-items-center font-semibold text-xs" style={{ color: 'var(--chrome-bg)' }}>
+            <div className="w-6 h-6 rounded-md bg-accent grid place-items-center font-semibold text-xs text-accent-fg">
               L
             </div>
             <span className="text-sm font-semibold" style={{ color: 'var(--chrome-ink-1)' }}>{t('app.name')}</span>
