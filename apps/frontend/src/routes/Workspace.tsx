@@ -36,11 +36,31 @@ import { NavDropdown } from '@/components/Nav/NavDropdown';
 import { MobileMenu } from '@/components/Nav/MobileMenu';
 import { StartActionCards } from '@/components/onboarding/StartActionCards';
 import { MobileLedgerList } from '@/components/workspace/MobileLedgerList';
+import { WorkspaceV2 } from '@/components/workspace/WorkspaceV2';
+
+type WorkspaceVersion = 'v1' | 'v2';
+
+function useWorkspaceVersion(): [WorkspaceVersion, (v: WorkspaceVersion) => void] {
+  const [version, setVersionState] = useState<WorkspaceVersion>(() => {
+    try {
+      const saved = localStorage.getItem('lexa:workspaceVersion');
+      return (saved === 'v1' || saved === 'v2') ? saved : 'v1';
+    } catch {
+      return 'v1';
+    }
+  });
+  const setVersion = (v: WorkspaceVersion) => {
+    setVersionState(v);
+    try { localStorage.setItem('lexa:workspaceVersion', v); } catch { /* ignore */ }
+  };
+  return [version, setVersion];
+}
 
 export function Workspace() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [workspaceVersion, setWorkspaceVersion] = useWorkspaceVersion();
   const queryClient = useQueryClient();
 
   // Nav jump — ?editStream=<id> ou ?correctStream=<id>
@@ -482,14 +502,23 @@ export function Workspace() {
           </div>
         )}
 
-        {/* LedgerCanvas — desktop seulement */}
-        <div className="hidden md:block absolute inset-0">
-          <LedgerCanvas
-            autoOpenStreamId={editStreamId}
-            autoCorrectStreamId={correctStreamId}
-            tenantId={activeTenantId ?? 'default'}
-          />
-        </div>
+        {/* LedgerCanvas V1 — desktop seulement, visible si workspaceVersion === 'v1' */}
+        {workspaceVersion === 'v1' && (
+          <div className="hidden md:block absolute inset-0">
+            <LedgerCanvas
+              autoOpenStreamId={editStreamId}
+              autoCorrectStreamId={correctStreamId}
+              tenantId={activeTenantId ?? 'default'}
+            />
+          </div>
+        )}
+
+        {/* WorkspaceV2 — desktop seulement, visible si workspaceVersion === 'v2' */}
+        {workspaceVersion === 'v2' && (
+          <div className="hidden md:block absolute inset-0">
+            <WorkspaceV2 />
+          </div>
+        )}
 
         {/* Empty state / Processing state — visible sur mobile ET desktop */}
         {!hasEntries && !health.isLoading && (
@@ -523,6 +552,23 @@ export function Workspace() {
             </div>
           </div>
         )}
+
+        {/* Toggle V1 ⇄ V2 — bottom-right, à côté du bouton Arranger (z-20 pour passer au-dessus du canvas) */}
+        <button
+          type="button"
+          onClick={() => setWorkspaceVersion(workspaceVersion === 'v1' ? 'v2' : 'v1')}
+          title={`Passer en workspace ${workspaceVersion === 'v1' ? 'V2' : 'V1'}`}
+          className="hidden md:flex absolute bottom-4 z-20 items-center gap-1.5 card-elevated px-3 py-2 text-2xs font-medium text-ink hover:border-accent/60 transition-colors"
+          style={{ right: workspaceVersion === 'v1' ? '7.5rem' : '1rem' }}
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ background: workspaceVersion === 'v1' ? 'rgb(var(--warning))' : 'rgb(var(--success))' }}
+          />
+          {workspaceVersion === 'v1' ? 'V1' : 'V2'}
+          <span className="text-subtle">⇄</span>
+          {workspaceVersion === 'v1' ? 'V2' : 'V1'}
+        </button>
 
         {/* Floating agents indicator — desktop seulement */}
         <div className="hidden md:flex absolute top-3 left-4 card-elevated px-3 py-2 items-center gap-2 pointer-events-none z-10">
