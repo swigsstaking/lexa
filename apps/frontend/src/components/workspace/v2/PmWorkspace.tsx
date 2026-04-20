@@ -160,8 +160,10 @@ export function PmWorkspace() {
       <AgentsPill visible={aiWorking} />
 
       {/* Vue dropdown chip — centré top */}
+      {/* BUG-3 fix : stopPropagation sur le container pour éviter navigation parasites */}
       <div
         ref={vueMenuRef}
+        onClick={(e) => e.stopPropagation()}
         style={{
           position: 'absolute',
           top: 14,
@@ -171,7 +173,7 @@ export function PmWorkspace() {
         }}
       >
         <button
-          onClick={() => setVueMenuOpen((v) => !v)}
+          onClick={(e) => { e.stopPropagation(); setVueMenuOpen((v) => !v); }}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -225,7 +227,7 @@ export function PmWorkspace() {
             {PM_VIEW_OPTS.map((o) => (
               <button
                 key={o.key}
-                onClick={() => { handleSetView(o.key); setVueMenuOpen(false); }}
+                onClick={(e) => { e.stopPropagation(); handleSetView(o.key); setVueMenuOpen(false); }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -262,7 +264,7 @@ export function PmWorkspace() {
               <>
                 <div style={{ height: 1, background: '#25251F', margin: '4px 8px' }} />
                 <button
-                  onClick={() => { setShowFlows((v) => !v); setVueMenuOpen(false); }}
+                  onClick={(e) => { e.stopPropagation(); setShowFlows((v) => !v); setVueMenuOpen(false); }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',

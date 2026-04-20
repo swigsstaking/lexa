@@ -236,13 +236,18 @@ export function LexaCmdK({
 
   const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      if (chatMode || q.trim()) {
+      // BUG-4 fix : Enter doit TOUJOURS envoyer le message si q est non vide.
+      // Si q est vide et en mode chat, on ne fait rien (pas de message vide).
+      // Les suggestions IA ne se déclenchent via Enter QUE si q est vide ET pas en chatMode.
+      // Jamais de "jump account" via Enter — seulement via click.
+      if (q.trim()) {
         e.preventDefault();
         await handleSendMessage();
-      } else if (filteredSuggestions[selectedIdx]) {
+      } else if (!chatMode && filteredSuggestions[selectedIdx]) {
         e.preventDefault();
         await handleSuggestionClick(filteredSuggestions[selectedIdx]);
       }
+      // En chatMode avec q vide : Enter ne fait rien (pas de message vide)
     }
     if (e.key === 'ArrowDown') setSelectedIdx((i) => Math.min(i + 1, filteredSuggestions.length - 1));
     if (e.key === 'ArrowUp') {
