@@ -305,9 +305,10 @@ function LedgerCanvasInner({
         <button
           onClick={handleArrange}
           title="Rétablir le layout automatique"
-          className="absolute bottom-4 right-4 z-10 card-elevated px-3 py-2 text-2xs font-medium text-ink hover:border-accent/60 transition-colors flex items-center gap-1.5"
+          className="absolute bottom-4 right-4 z-10 px-3 py-2 text-2xs font-medium transition-colors hover:opacity-80 flex items-center gap-1.5 rounded-lg"
+          style={{ background: 'var(--chrome-bg)', border: '1px solid var(--chrome-line)', color: 'var(--chrome-ink-1)' }}
         >
-          <LayoutGrid className="w-3.5 h-3.5 text-accent" />
+          <LayoutGrid className="w-3.5 h-3.5" style={{ color: 'rgb(var(--accent))' }} />
           Arranger
         </button>
       )}

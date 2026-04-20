@@ -57,10 +57,11 @@ export function NavDropdown({ label, icon: Icon, items, badge }: NavDropdownProp
         onKeyDown={handleKeyDown}
         aria-haspopup="true"
         aria-expanded={open}
-        className="btn-ghost !px-3 !py-1.5 relative"
+        className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-80 relative"
+        style={{ color: 'var(--chrome-ink-2)' }}
       >
         {Icon && <Icon className="w-3.5 h-3.5" />}
-        <span className="text-xs hidden md:inline">{label}</span>
+        <span className="hidden md:inline">{label}</span>
         <ChevronDown
           className={`w-3 h-3 opacity-60 transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
         />
@@ -72,7 +73,8 @@ export function NavDropdown({ label, icon: Icon, items, badge }: NavDropdownProp
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full mt-1 min-w-[180px] rounded-lg border border-border bg-surface shadow-lg z-50 py-1"
+          className="absolute right-0 top-full mt-1 min-w-[180px] rounded-lg z-50 py-1 shadow-lg"
+          style={{ background: 'var(--chrome-bg-2)', border: '1px solid var(--chrome-line)' }}
         >
           {items.map((item, i) => {
             const ItemIcon = item.icon;
@@ -87,11 +89,12 @@ export function NavDropdown({ label, icon: Icon, items, badge }: NavDropdownProp
                   setOpen(false);
                 }}
                 onKeyDown={(e) => handleItemKeyDown(e, item.onClick)}
-                className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 hover:bg-elevated transition-colors ${
-                  item.active ? 'text-accent font-medium' : 'text-ink'
+                className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 transition-colors hover:opacity-80 ${
+                  item.active ? 'font-medium' : ''
                 }`}
+                style={{ color: item.active ? 'rgb(var(--accent))' : 'var(--chrome-ink-1)' }}
               >
-                {ItemIcon && <ItemIcon className="w-3.5 h-3.5 flex-shrink-0 text-muted" />}
+                {ItemIcon && <ItemIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--chrome-ink-3)' } as React.CSSProperties} />}
                 <span className="truncate">{item.label}</span>
               </button>
             );

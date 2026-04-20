@@ -314,8 +314,8 @@ export function Workspace() {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-bg text-ink">
-      {/* Top bar */}
-      <header className="h-12 flex items-center justify-between px-4 border-b border-border bg-surface flex-shrink-0">
+      {/* Top bar — always dark chrome regardless of theme */}
+      <header className="h-12 flex items-center justify-between px-4 border-b flex-shrink-0" style={{ background: 'var(--chrome-bg)', borderColor: 'var(--chrome-line)', color: 'var(--chrome-ink-1)' }}>
         {/* ── Gauche : logo + société ── */}
         <div className="flex items-center gap-4 min-w-0">
           {/* Logo — navigue toujours vers / */}
@@ -325,43 +325,45 @@ export function Workspace() {
             className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity min-h-[44px]"
             title={t('app.name')}
           >
-            <div className="w-6 h-6 rounded-md bg-accent text-accent-fg grid place-items-center font-semibold text-xs">
+            <div className="w-6 h-6 rounded-md bg-accent grid place-items-center font-semibold text-xs" style={{ color: 'var(--chrome-bg)' }}>
               L
             </div>
-            <span className="text-sm font-semibold">{t('app.name')}</span>
+            <span className="text-sm font-semibold" style={{ color: 'var(--chrome-ink-1)' }}>{t('app.name')}</span>
           </button>
 
-          <span className="w-px h-5 bg-border" />
+          <span className="w-px h-5" style={{ background: 'var(--chrome-line)' }} />
 
           {/* Badge company — toujours cliquable : switch compte (si >1) + ajouter un compte */}
           <div className="relative min-w-0" ref={clientMenuRef}>
             <button
               type="button"
               onClick={() => setClientMenuOpen((o) => !o)}
-              className="flex items-center gap-2 min-w-0 hover:bg-elevated transition-colors rounded-md px-2 py-1 min-h-[44px]"
+              className="flex items-center gap-2 min-w-0 transition-colors rounded-md px-2 py-1 min-h-[44px] hover:opacity-80"
               title={hasMultipleClients ? 'Changer de compte' : 'Gérer le compte'}
             >
               {(() => {
                 // Icône différente selon type d'entité : PM (Sàrl/SA/Coopérative) = Building2, PP (RI/assoc/fondation/autre) = User
                 const isPm = company?.legalForm === 'sarl' || company?.legalForm === 'sa' || company?.legalForm === 'cooperative';
                 const Icon = isPm ? Building2 : User;
-                return <Icon className="w-3.5 h-3.5 text-muted flex-shrink-0" />;
+                return <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--chrome-ink-2)' }} />;
               })()}
-              <span className="text-sm text-ink truncate">{company?.name ?? t('common.empty')}</span>
-              {company?.canton && <span className="chip">{company.canton}</span>}
+              <span className="text-sm truncate" style={{ color: 'var(--chrome-ink-1)' }}>{company?.name ?? t('common.empty')}</span>
+              {company?.canton && <span className="chip" style={{ background: 'var(--chrome-bg-2)', borderColor: 'var(--chrome-line)', color: 'var(--chrome-ink-2)' }}>{company.canton}</span>}
               <ChevronDown
-                className={`w-3 h-3 text-muted transition-transform duration-150 ${clientMenuOpen ? 'rotate-180' : ''}`}
+                className={`w-3 h-3 transition-transform duration-150 ${clientMenuOpen ? 'rotate-180' : ''}`}
+                style={{ color: 'var(--chrome-ink-2)' }}
               />
             </button>
 
             {clientMenuOpen && (
               <div
                 role="menu"
-                className="absolute left-0 top-full mt-1 min-w-[240px] rounded-lg border border-border bg-surface shadow-lg z-50 py-1"
+                className="absolute left-0 top-full mt-1 min-w-[240px] rounded-lg z-50 py-1 shadow-lg"
+              style={{ background: 'var(--chrome-bg-2)', borderColor: 'var(--chrome-line)', border: '1px solid var(--chrome-line)' }}
               >
                 {hasMultipleClients && fiduItems.length > 0 && (
                   <>
-                    <div className="px-3 pt-2 pb-1 text-2xs text-muted uppercase tracking-wider">
+                    <div className="px-3 pt-2 pb-1 text-2xs uppercase tracking-wider" style={{ color: 'var(--chrome-ink-3)' }}>
                       Mes comptes
                     </div>
                     {fiduItems.map((item, i) => {
@@ -372,11 +374,12 @@ export function Workspace() {
                           role="menuitem"
                           title={item.title}
                           onClick={item.onClick}
-                          className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 hover:bg-elevated transition-colors ${
-                            item.active ? 'text-accent font-medium' : 'text-ink'
+                          className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 transition-colors hover:opacity-80 ${
+                            item.active ? 'font-medium' : ''
                           }`}
+                          style={{ color: item.active ? 'rgb(var(--accent))' : 'var(--chrome-ink-1)' }}
                         >
-                          {ItemIcon && <ItemIcon className="w-3.5 h-3.5 flex-shrink-0 text-muted" />}
+                          {ItemIcon && <ItemIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--chrome-ink-3)' } as React.CSSProperties} />}
                           <span className="truncate">{item.label}</span>
                         </button>
                       );
@@ -390,7 +393,8 @@ export function Workspace() {
                     setClientMenuOpen(false);
                     navigate('/onboarding/add-account');
                   }}
-                  className="w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 hover:bg-elevated transition-colors text-muted hover:text-ink"
+                  className="w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 transition-colors hover:opacity-80"
+                  style={{ color: 'var(--chrome-ink-2)' }}
                 >
                   <Plus className="w-3.5 h-3.5 flex-shrink-0" />
                   <span>Ajouter un compte</span>
@@ -403,7 +407,7 @@ export function Workspace() {
         {/* ── Droite : nav desktop + actions ── */}
         <div className="flex items-center gap-2">
           {/* Indicateur services */}
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-elevated border border-border">
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md" style={{ background: 'var(--chrome-bg-2)', border: '1px solid var(--chrome-line)' }}>
             <span
               className={`w-1.5 h-1.5 rounded-full ${
                 servicesState === 'up'
@@ -413,7 +417,7 @@ export function Workspace() {
                     : 'bg-muted animate-pulse'
               }`}
             />
-            <span className="text-2xs text-muted hidden sm:inline">
+            <span className="text-2xs hidden sm:inline" style={{ color: 'var(--chrome-ink-2)' }}>
               {servicesState === 'up'
                 ? t('workspace.services_up')
                 : servicesState === 'down'
@@ -421,7 +425,7 @@ export function Workspace() {
                   : t('workspace.services_checking')}
             </span>
             {health.data && (
-              <span className="text-2xs text-subtle mono-num ml-1 hidden sm:inline">
+              <span className="text-2xs mono-num ml-1 hidden sm:inline" style={{ color: 'var(--chrome-ink-3)' }}>
                 {health.data.services.qdrantPoints}
               </span>
             )}
@@ -444,10 +448,11 @@ export function Workspace() {
               type="button"
               onClick={() => navigate('/documents')}
               title="Documents OCR"
-              className="btn-ghost !px-3 !py-1.5"
+              className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-80"
+              style={{ color: 'var(--chrome-ink-2)' }}
             >
               <FileText className="w-3.5 h-3.5" />
-              <span className="text-xs hidden md:inline">Documents</span>
+              <span className="hidden md:inline">Documents</span>
             </button>
             <NavDropdown
               label="IA"
@@ -459,10 +464,11 @@ export function Workspace() {
               type="button"
               onClick={() => setLedgerOpen(true)}
               title="Grand livre expert (⌘⇧L)"
-              className="btn-ghost !px-3 !py-1.5"
+              className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-80"
+              style={{ color: 'var(--chrome-ink-2)' }}
             >
               <Calculator className="w-3.5 h-3.5" />
-              <span className="text-xs hidden md:inline">Grand livre</span>
+              <span className="hidden md:inline">Grand livre</span>
             </button>
           </nav>
 
@@ -472,7 +478,8 @@ export function Workspace() {
             onClick={() => navigate('/settings')}
             title="Paramètres"
             aria-label="Paramètres"
-            className="hidden md:flex btn-ghost !px-2 !py-1.5 text-muted hover:text-ink transition-colors"
+            className="hidden md:flex items-center justify-center rounded-lg px-2 py-1.5 transition-colors hover:opacity-80"
+            style={{ color: 'var(--chrome-ink-2)' }}
           >
             <Settings className="w-4 h-4" />
           </button>
@@ -483,7 +490,8 @@ export function Workspace() {
             onClick={handleLogout}
             title="Déconnexion"
             aria-label="Déconnexion"
-            className="hidden md:flex btn-ghost !px-2 !py-1.5 text-muted hover:text-danger transition-colors"
+            className="hidden md:flex items-center justify-center rounded-lg px-2 py-1.5 transition-colors hover:opacity-70"
+            style={{ color: 'var(--chrome-ink-2)' }}
           >
             <LogOut className="w-4 h-4" />
           </button>
@@ -553,13 +561,13 @@ export function Workspace() {
           </div>
         )}
 
-        {/* Toggle V1 ⇄ V2 — bottom-right, à côté du bouton Arranger (z-20 pour passer au-dessus du canvas) */}
+        {/* Toggle V1 ⇄ V2 — bottom-right, dark chrome toujours */}
         <button
           type="button"
           onClick={() => setWorkspaceVersion(workspaceVersion === 'v1' ? 'v2' : 'v1')}
           title={`Passer en workspace ${workspaceVersion === 'v1' ? 'V2' : 'V1'}`}
-          className="hidden md:flex absolute bottom-4 z-20 items-center gap-1.5 card-elevated px-3 py-2 text-2xs font-medium text-ink hover:border-accent/60 transition-colors"
-          style={{ right: workspaceVersion === 'v1' ? '7.5rem' : '1rem' }}
+          className="hidden md:flex absolute bottom-4 z-20 items-center gap-1.5 px-3 py-2 text-2xs font-medium transition-colors hover:opacity-80 rounded-lg"
+          style={{ right: workspaceVersion === 'v1' ? '7.5rem' : '1rem', background: 'var(--chrome-bg)', border: '1px solid var(--chrome-line)', color: 'var(--chrome-ink-1)' }}
         >
           <span
             className="w-1.5 h-1.5 rounded-full"
@@ -570,22 +578,32 @@ export function Workspace() {
           {workspaceVersion === 'v1' ? 'V2' : 'V1'}
         </button>
 
-        {/* Floating agents indicator — desktop seulement */}
-        <div className="hidden md:flex absolute top-3 left-4 card-elevated px-3 py-2 items-center gap-2 pointer-events-none z-10">
-          <Activity className="w-3.5 h-3.5 text-accent" />
-          <span className="text-2xs uppercase tracking-wider text-muted">Agents</span>
-          <div className="flex gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-success" title="classifier" />
-            <span className="w-1.5 h-1.5 rounded-full bg-success" title="reasoning" />
-            <span className="w-1.5 h-1.5 rounded-full bg-success" title="tva" />
+        {/* Floating agents indicator — desktop, V1 seulement (V2 a sa propre toolbar) */}
+        {workspaceVersion === 'v1' && (
+          <div
+            className="hidden md:flex absolute items-center gap-2 pointer-events-none z-10 px-3 py-2 rounded-lg"
+            style={{ top: 12, left: 16, background: 'var(--chrome-bg)', border: '1px solid var(--chrome-line)' }}
+          >
+            <Activity className="w-3.5 h-3.5" style={{ color: 'rgb(var(--accent))' }} />
+            <span className="text-2xs uppercase tracking-wider" style={{ color: 'var(--chrome-ink-2)' }}>Agents</span>
+            <div className="flex gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-success" title="classifier" />
+              <span className="w-1.5 h-1.5 rounded-full bg-success" title="reasoning" />
+              <span className="w-1.5 h-1.5 rounded-full bg-success" title="tva" />
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Hint Cmd+K — desktop seulement, pas sur mobile */}
-        <div className="hidden md:flex absolute top-3 right-4 card-elevated px-3 py-2 items-center gap-2 pointer-events-none z-10">
-          <Command className="w-3.5 h-3.5 text-muted" />
-          <span className="text-2xs text-muted">Cmd+K pour interroger l'IA</span>
-        </div>
+        {/* Hint Cmd+K — desktop, V1 seulement (V2 a sa toolbar qui couvre le top) */}
+        {workspaceVersion === 'v1' && (
+          <div
+            className="hidden md:flex absolute items-center gap-2 pointer-events-none z-10 px-3 py-2 rounded-lg"
+            style={{ top: 12, right: 16, background: 'var(--chrome-bg)', border: '1px solid var(--chrome-line)' }}
+          >
+            <Command className="w-3.5 h-3.5" style={{ color: 'var(--chrome-ink-3)' }} />
+            <span className="text-2xs" style={{ color: 'var(--chrome-ink-2)' }}>Cmd+K pour interroger l'IA</span>
+          </div>
+        )}
 
         {/* Bloc B — Toast sticky "IA classifie…" — visible quand pending > 0 et des entrées existent déjà */}
         {isProcessing && hasEntries && (

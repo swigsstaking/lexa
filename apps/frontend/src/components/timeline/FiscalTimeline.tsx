@@ -46,10 +46,13 @@ export function FiscalTimeline({ year, selected }: Props) {
   }, [y, cursor, now, period]);
 
   return (
-    <div className="h-[60px] md:h-[60px] min-h-[60px] bg-surface border-t border-border px-4 md:px-6 flex items-center gap-2 md:gap-4 select-none overflow-x-hidden flex-shrink-0">
+    <div
+      className="h-[60px] md:h-[60px] min-h-[60px] px-4 md:px-6 flex items-center gap-2 md:gap-4 select-none overflow-x-hidden flex-shrink-0"
+      style={{ background: 'var(--chrome-bg)', borderTop: '1px solid var(--chrome-line)' }}
+    >
       <div className="flex items-baseline gap-2">
-        <span className="text-2xs uppercase tracking-wider text-muted">Période</span>
-        <span className="text-sm font-semibold text-ink truncate max-w-[200px]" title={period.label}>
+        <span className="text-2xs uppercase tracking-wider" style={{ color: 'var(--chrome-ink-3)' }}>Période</span>
+        <span className="text-sm font-semibold truncate max-w-[200px]" style={{ color: 'var(--chrome-ink-1)' }} title={period.label}>
           {period.label}
         </span>
       </div>
@@ -60,8 +63,8 @@ export function FiscalTimeline({ year, selected }: Props) {
         aria-label="Changer la période"
         style={{ touchAction: 'manipulation' }}
       >
-        {/* Track — border-strong adaptatif selon le thème */}
-        <div className="absolute inset-y-3 left-0 right-0 bg-border-strong rounded-full" />
+        {/* Track — dark stone toujours */}
+        <div className="absolute inset-y-3 left-0 right-0 rounded-full" style={{ background: 'var(--chrome-line)' }} />
         {/* Range de la période sélectionnée — vert */}
         <div
           className="absolute inset-y-3 bg-emerald-500/30 border-y border-emerald-500/60 rounded"
@@ -70,10 +73,10 @@ export function FiscalTimeline({ year, selected }: Props) {
             width: `${(periodRange.end - periodRange.start) * 100}%`,
           }}
         />
-        {/* Curseur aujourd'hui — trait fin subtle */}
+        {/* Curseur aujourd'hui — trait fin chrome */}
         <div
-          className="absolute top-2 bottom-2 w-px bg-subtle"
-          style={{ left: `${progress.now * 100}%` }}
+          className="absolute top-2 bottom-2 w-px"
+          style={{ left: `${progress.now * 100}%`, background: 'var(--chrome-ink-3)' }}
         />
         {/* Curseur sélectionné */}
         <div
@@ -85,16 +88,17 @@ export function FiscalTimeline({ year, selected }: Props) {
           {months.map((m) => (
             <div
               key={m.index}
-              className="flex-1 text-2xs text-subtle text-center leading-3 pointer-events-none"
+              className="flex-1 text-2xs text-center leading-3 pointer-events-none"
+              style={{ color: 'var(--chrome-ink-3)' }}
             >
               {m.label}
             </div>
           ))}
         </div>
       </button>
-      <div className="hidden lg:flex items-center gap-1.5 text-2xs text-subtle flex-shrink-0 font-mono">
+      <div className="hidden lg:flex items-center gap-1.5 text-2xs flex-shrink-0 font-mono" style={{ color: 'var(--chrome-ink-3)' }}>
         <span>{y}</span>
-        <span className="text-muted">·</span>
+        <span style={{ color: 'var(--chrome-ink-2)' }}>·</span>
         <span>clic pour changer</span>
       </div>
     </div>
