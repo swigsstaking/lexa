@@ -193,7 +193,7 @@ function LedgerCanvasInner({
     setNodes(graph.nodes);
     // Fit view avec animation
     setTimeout(() => {
-      fitView({ padding: 0.1, duration: 400 });
+      fitView({ padding: 0.18, duration: 400, minZoom: 0.5, maxZoom: 1.2 });
     }, 50);
     // Toast feedback
     setArrangeToast(true);
@@ -285,8 +285,8 @@ function LedgerCanvasInner({
         onPaneClick={closeDrawer}
         onNodeDragStop={onNodeDragStop}
         fitView
-        fitViewOptions={{ padding: 0.12, maxZoom: 1.6 }}
-        minZoom={0.3}
+        fitViewOptions={{ padding: 0.18, minZoom: 0.5, maxZoom: 1.2 }}
+        minZoom={0.5}
         maxZoom={2.2}
         proOptions={{ hideAttribution: true }}
         className="bg-bg"

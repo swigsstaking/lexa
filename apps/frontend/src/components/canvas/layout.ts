@@ -80,16 +80,35 @@ const FLOW_COL: Record<AccountNodeData['category'], number> = {
   neutre: 1,
 };
 
-const MAX_PER_COL = 8;
-const SUB_COL_W = 220; // largeur d'une sub-colonne quand wrap activé
+// ─── Constantes grille uniforme ───────────────────────────────────────────────
+// Chaque compte occupe une cellule (CARD_W × ROW_H). Les cartes ont une largeur
+// réelle de 220px (min-w-[220px] dans AccountNode), hauteur ~100px.
+// Les catégories sémantiques (produit / actif / charge) sont chacune subdivisées
+// en sous-colonnes internes quand beaucoup de comptes les peuplent.
+export const CARD_W = 220; // largeur carte (AccountNode min-w)
+export const GAP_X = 32; // gap horizontal entre sous-colonnes d'une même catégorie
+export const GAP_GROUP = 80; // gap entre catégories (produit → actif → charge)
+export const ROW_H = 130; // hauteur de ligne (carte ~100px + gap 30px)
+
+/**
+ * Nombre optimal de sous-colonnes pour N comptes.
+ * Principe : 5-6 rangées max par sous-colonne pour rester lisible à zoom ~0.6.
+ *   ≤ 5   comptes → 1 col
+ *   6-10  comptes → 2 cols
+ *   11-18 comptes → 3 cols
+ *   19+   comptes → 4 cols (cap)
+ */
+function optimalSubCols(count: number): number {
+  if (count <= 5) return 1;
+  if (count <= 10) return 2;
+  if (count <= 18) return 3;
+  return 4;
+}
 
 export function buildCanvas(
   accounts: LedgerAccount[],
   entries: LedgerEntry[],
 ): { nodes: LedgerNode[]; edges: LedgerEdge[] } {
-  const COL_W = 420;
-  const ROW_H = 160;
-
   // Count activity per account (transactions touching each)
   const activityByAccount = new Map<string, number>();
   for (const e of entries) {
@@ -116,60 +135,62 @@ export function buildCanvas(
     );
   }
 
-  // Compute the effective number of sub-columns per base column
-  // and the maximum rows used (capped at MAX_PER_COL for centering)
+  // Sous-colonnes adaptives par catégorie
   const subColCountByCol = [0, 1, 2].map((col) =>
-    Math.ceil((accountsByCol[col].length || 1) / MAX_PER_COL),
-  );
-  const maxRows = Math.min(
-    Math.max(
-      accountsByCol[0].length,
-      accountsByCol[1].length,
-      accountsByCol[2].length,
-    ),
-    MAX_PER_COL,
+    optimalSubCols(accountsByCol[col].length),
   );
 
-  // Compute x-offset for each base column taking into account sub-columns of previous cols
-  // Col 0 starts at x=0, col 1 starts after all sub-cols of col 0, etc.
+  // Largeur totale d'un groupe : n sous-cols de CARD_W + (n-1) GAP_X
+  const groupWidth = (subCols: number) =>
+    subCols * CARD_W + Math.max(0, subCols - 1) * GAP_X;
+
+  // Position X du début de chaque catégorie (flux gauche → droite)
   const colXStart: number[] = [0, 0, 0];
   colXStart[0] = 0;
-  colXStart[1] = colXStart[0] + (subColCountByCol[0] > 1 ? subColCountByCol[0] * SUB_COL_W + 20 : COL_W);
-  colXStart[2] = colXStart[1] + (subColCountByCol[1] > 1 ? subColCountByCol[1] * SUB_COL_W + 20 : COL_W);
+  colXStart[1] =
+    colXStart[0] +
+    (accountsByCol[0].length > 0 ? groupWidth(subColCountByCol[0]) + GAP_GROUP : 0);
+  colXStart[2] =
+    colXStart[1] +
+    (accountsByCol[1].length > 0 ? groupWidth(subColCountByCol[1]) + GAP_GROUP : 0);
+
+  // Nombre de rangées réelles par catégorie (pour centrage vertical global)
+  const rowsInCol = (col: number) => {
+    const n = accountsByCol[col].length;
+    if (n === 0) return 0;
+    return Math.ceil(n / subColCountByCol[col]);
+  };
+  const maxRows = Math.max(rowsInCol(0), rowsInCol(1), rowsInCol(2), 1);
 
   const nodes: LedgerNode[] = [];
-  // colByAccount maps account id → effective x position (used for edge direction)
-  const colByAccountX = new Map<string, number>();
 
   for (const col of [0, 1, 2]) {
     const colAccounts = accountsByCol[col];
+    if (colAccounts.length === 0) continue;
+
     const subColCount = subColCountByCol[col];
     const xBase = colXStart[col];
+    const totalRows = Math.ceil(colAccounts.length / subColCount);
 
+    // Centrage vertical : les groupes plus courts sont poussés vers le milieu
+    const groupHeight = totalRows * ROW_H;
+    const maxHeight = maxRows * ROW_H;
+    const yCenterOffset = (maxHeight - groupHeight) / 2;
+
+    // Distribution column-major : on remplit la 1re sous-colonne avant la suivante
+    // (les plus actifs restent visibles en haut-gauche du groupe)
     colAccounts.forEach((a, i) => {
-      const subColIdx = Math.floor(i / MAX_PER_COL);
-      const rowInSubCol = i % MAX_PER_COL;
+      const subColIdx = Math.floor(i / totalRows);
+      const rowInSubCol = i % totalRows;
 
-      let x: number;
-      if (subColCount > 1) {
-        x = xBase + subColIdx * SUB_COL_W;
-      } else {
-        x = xBase;
-      }
-
-      // Vertical centering based on capped maxRows
-      const itemsInThisSubCol = Math.min(
-        colAccounts.length - subColIdx * MAX_PER_COL,
-        MAX_PER_COL,
-      );
-      const subColHeight = itemsInThisSubCol * ROW_H;
-      const centerOffset = (maxRows * ROW_H - subColHeight) / 2;
+      const x = xBase + subColIdx * (CARD_W + GAP_X);
+      const y = yCenterOffset + rowInSubCol * ROW_H;
 
       const category = classifyAccount(extractCode(a.account));
       nodes.push({
         id: a.account,
         type: 'account',
-        position: { x, y: centerOffset + rowInSubCol * ROW_H },
+        position: { x, y },
         data: {
           code: extractCode(a.account),
           label: extractLabel(a.account),
@@ -180,7 +201,6 @@ export function buildCanvas(
           recent: recentAccounts.has(a.account),
         },
       });
-      colByAccountX.set(a.account, x);
     });
   }
 
@@ -337,8 +357,16 @@ export function buildCollapsedCanvas(
     '8': 2,
     '9': 2,
   };
-  const COL_W = 420;
-  const ROW_H = 180;
+  // Pour les class nodes : carte plus large (ClassNode min-w-[240px]) + hauteur
+  // plus grande (padding vertical supérieur). On conserve la structure 3 colonnes
+  // sémantiques avec le même écart que buildCanvas pour une cohérence visuelle.
+  const CLASS_CARD_W = 260;
+  const CLASS_ROW_H = 180;
+  const CLASS_COL_X = [
+    0,
+    CLASS_CARD_W + GAP_GROUP,
+    2 * (CLASS_CARD_W + GAP_GROUP),
+  ];
 
   const classNodesByCol: Record<number, Array<{ cls: string; accs: LedgerAccount[] }>> = {
     0: [],
@@ -353,7 +381,7 @@ export function buildCollapsedCanvas(
   // Offset Y pour ne pas chevaucher les nœuds expanded (qui commencent à y=0)
   const expandedHeight =
     expandedAccountsAll.length > 0
-      ? Math.max(...expandedResult.nodes.map((n) => n.position.y)) + ROW_H + 60
+      ? Math.max(...expandedResult.nodes.map((n) => n.position.y)) + CLASS_ROW_H + 60
       : 0;
 
   const classNodes: ClassLedgerNode[] = [];
@@ -363,7 +391,7 @@ export function buildCollapsedCanvas(
       classNodes.push({
         id: `class-${cls}`,
         type: 'classAgg',
-        position: { x: col * COL_W, y: expandedHeight + i * ROW_H },
+        position: { x: CLASS_COL_X[col], y: expandedHeight + i * CLASS_ROW_H },
         data: {
           kafClass: cls,
           label: KAFER_CLASS_LABELS[cls] ?? `Classe ${cls}`,
