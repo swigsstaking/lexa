@@ -5,6 +5,7 @@ import { lexa } from '@/api/lexa';
 import { useAuthStore } from '@/stores/authStore';
 import { useCompaniesStore } from '@/stores/companiesStore';
 import type { LegalForm } from '@/api/types';
+import { CompanySearchField } from '@/components/CompanySearchField';
 
 type AccountType = 'private' | 'business' | null;
 
@@ -108,6 +109,25 @@ export function AddAccount() {
               </h1>
 
               <div className="space-y-4 mt-6">
+                {accountType === 'business' && (
+                  <div>
+                    <label className="label">Rechercher dans le registre UID</label>
+                    <CompanySearchField
+                      placeholder="Nom ou UID de l'entreprise…"
+                      onSelect={(c) => {
+                        setName(c.name);
+                        if (c.legalForm) setLegalForm(c.legalForm);
+                        if (c.canton) setCanton(c.canton);
+                      }}
+                    />
+                    <div className="flex items-center gap-3 mt-3">
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-xs text-muted uppercase tracking-wider">ou saisir manuellement</span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label className="label" htmlFor="name">
                     {accountType === 'private'
@@ -120,7 +140,12 @@ export function AddAccount() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
-                    autoFocus
+                    autoFocus={accountType === 'private'}
+                    placeholder={
+                      accountType === 'business'
+                        ? 'Auto-rempli ou saisir manuellement'
+                        : undefined
+                    }
                     onKeyDown={(e) => {
                       // Enter dans ce champ appelle directement le submit si tout est valide
                       // et ne doit pas déclencher de navigation involontaire

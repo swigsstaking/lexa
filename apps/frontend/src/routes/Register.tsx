@@ -6,6 +6,7 @@ import { Loader2, Sparkles, UserPlus } from 'lucide-react';
 import { lexa } from '@/api/lexa';
 import { useAuthStore } from '@/stores/authStore';
 import { useCompaniesStore } from '@/stores/companiesStore';
+import { CompanySearchField } from '@/components/CompanySearchField';
 
 const CANTONS = [
   'AG','AI','AR','BE','BL','BS','FR','GE','GL','GR','JU','LU',
@@ -160,25 +161,48 @@ export function Register() {
               />
             </div>
 
-            <div className="pt-2 border-t border-border">
-              <label className="label" htmlFor="reg-company">
-                {t('onboarding.company.name')}
-              </label>
-              <input
-                id="reg-company"
-                name="companyName"
-                type="text"
-                required
-                className="input"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                disabled={submitting}
-                onKeyDown={(e) => {
-                  // Empêcher Enter de soumettre le formulaire depuis ce champ
-                  // (Tab + champs suivants avant le bouton submit)
-                  if (e.key === 'Enter') e.preventDefault();
-                }}
-              />
+            <div className="pt-2 border-t border-border space-y-3">
+              <div>
+                <label className="label">
+                  {t('onboarding.company.search_label')}
+                </label>
+                <CompanySearchField
+                  placeholder={t('onboarding.company.search_placeholder')}
+                  onSelect={(c) => {
+                    setCompanyName(c.name);
+                    if (c.legalForm) setLegalForm(c.legalForm as (typeof LEGAL_FORMS)[number]);
+                    if (c.canton) setCanton(c.canton as (typeof CANTONS)[number]);
+                  }}
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-muted uppercase tracking-wider">
+                  {t('onboarding.company.or_manual')}
+                </span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+
+              <div>
+                <label className="label" htmlFor="reg-company">
+                  {t('onboarding.company.name')}
+                </label>
+                <input
+                  id="reg-company"
+                  name="companyName"
+                  type="text"
+                  required
+                  className="input"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  disabled={submitting}
+                  placeholder={t('onboarding.company.name_placeholder')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') e.preventDefault();
+                  }}
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
