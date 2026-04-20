@@ -109,7 +109,7 @@ export function LexaCmdK({
           background: 'rgba(10,10,10,0.42)',
           backdropFilter: 'blur(6px)',
           WebkitBackdropFilter: 'blur(6px)',
-          zIndex: 200,
+          zIndex: 500,
           display: open ? 'grid' : 'none',
           placeItems: 'start center',
           paddingTop: '12vh',
@@ -146,7 +146,7 @@ export function LexaCmdK({
                 height: 22,
                 borderRadius: 6,
                 background: '#0A0A0A',
-                color: 'oklch(0.74 0.17 55)',
+                color: 'var(--lexa)',
                 display: 'grid',
                 placeItems: 'center',
                 fontSize: 11,
@@ -234,7 +234,7 @@ export function LexaCmdK({
                         height: 28,
                         borderRadius: 6,
                         background: '#0A0A0A',
-                        color: 'oklch(0.78 0.14 75)',
+                        color: 'var(--lexa)',
                         display: 'grid',
                         placeItems: 'center',
                         fontWeight: 600,
@@ -375,7 +375,7 @@ export function LexaCmdKTrigger({ onOpen }: LexaCmdKTriggerProps) {
         position: 'absolute',
         top: 14,
         right: 16,
-        zIndex: 10,
+        zIndex: 30,
         display: 'flex',
         alignItems: 'center',
         gap: 10,
@@ -401,7 +401,7 @@ export function LexaCmdKTrigger({ onOpen }: LexaCmdKTriggerProps) {
       title="Demande à Lexa (⌘K)"
     >
       {/* Spark ✦ orange */}
-      <span style={{ color: 'oklch(0.74 0.17 55)', fontSize: 12, lineHeight: 1 }}>✦</span>
+      <span style={{ color: 'var(--lexa)', fontSize: 12, lineHeight: 1 }}>✦</span>
       Demande à Lexa
       {/* Kbd ⌘K */}
       <span
@@ -421,8 +421,13 @@ export function LexaCmdKTrigger({ onOpen }: LexaCmdKTriggerProps) {
   );
 }
 
-// ——— AgentsPill (top-left absolu dans canvas) ———
-export function AgentsPill() {
+// ——— AgentsPill (top-left absolu dans canvas) — visible seulement si aiWorking ———
+interface AgentsPillProps {
+  visible: boolean;
+}
+
+export function AgentsPill({ visible }: AgentsPillProps) {
+  if (!visible) return null;
   return (
     <div
       style={{
@@ -443,9 +448,10 @@ export function AgentsPill() {
         textTransform: 'uppercase',
         boxShadow: '0 2px 6px rgba(10,10,10,0.18)',
         fontFamily: 'Inter, ui-sans-serif, sans-serif',
+        animation: 'agentsFadeIn 0.25s ease',
       }}
     >
-      {/* Dots pulsants orange */}
+      {/* Dots pulsants rouge-tomate */}
       <span style={{ display: 'inline-flex', gap: 3 }}>
         {[0, 0.2, 0.4].map((delay, i) => (
           <span
@@ -454,7 +460,7 @@ export function AgentsPill() {
               width: 5,
               height: 5,
               borderRadius: '50%',
-              background: 'oklch(0.74 0.17 55)',
+              background: 'var(--lexa)',
               animation: `agentPulse 1.8s ease-in-out ${delay}s infinite`,
             }}
           />
@@ -465,6 +471,10 @@ export function AgentsPill() {
         @keyframes agentPulse {
           0%, 100% { opacity: 0.4; transform: scale(0.9); }
           50%       { opacity: 1;   transform: scale(1.1); }
+        }
+        @keyframes agentsFadeIn {
+          from { opacity: 0; transform: translateY(-4px); }
+          to   { opacity: 1; transform: none; }
         }
       `}</style>
     </div>

@@ -347,7 +347,7 @@ export function PpWorkspace() {
                           height: 8,
                           borderRadius: 4,
                           background: 'var(--lexa)',
-                          boxShadow: '0 0 0 4px oklch(0.74 0.17 55 / 0.25)',
+                          boxShadow: '0 0 0 4px rgba(212,52,44,0.25)',
                         }}
                       />
                     )}

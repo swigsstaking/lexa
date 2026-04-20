@@ -78,6 +78,15 @@ export function PmWorkspace() {
   // CmdK quick-launcher
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const openChat = useChatStore((s) => s.setOpen);
+  const chatLoading = useChatStore((s) => s.loading);
+
+  // AgentsPill — visible seulement si l'IA travaille (classification en cours ou chat actif)
+  const { data: processingStatus } = useQuery({
+    queryKey: ['ledger-processing-status'],
+    queryFn: lexa.ledgerProcessingStatus,
+    refetchInterval: (q) => ((q.state.data?.pending ?? 0) === 0 ? false : 3000),
+  });
+  const aiWorking = (processingStatus?.pending ?? 0) > 0 || chatLoading;
 
   // Vue dropdown discret
   const [vueMenuOpen, setVueMenuOpen] = useState(false);
@@ -147,8 +156,8 @@ export function PmWorkspace() {
   return (
     <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Canvas — flex-1 + min-h-0 pour que le scroll fonctionne */}
-      {/* AgentsPill top-left */}
-      <AgentsPill />
+      {/* AgentsPill top-left — visible seulement si IA travaille */}
+      <AgentsPill visible={aiWorking} />
 
       {/* Vue dropdown chip — centré top */}
       <div
@@ -188,8 +197,8 @@ export function PmWorkspace() {
               width: 6,
               height: 6,
               borderRadius: '50%',
-              background: 'oklch(0.74 0.17 55)',
-              boxShadow: '0 0 0 3px oklch(0.74 0.17 55 / 0.20)',
+              background: 'var(--lexa)',
+              boxShadow: '0 0 0 3px rgba(212,52,44,0.20)',
             }}
           />
           Vue : {currentViewLabel}
@@ -243,7 +252,7 @@ export function PmWorkspace() {
               >
                 {o.label}
                 {o.key === pmView && (
-                  <span style={{ color: 'oklch(0.74 0.17 55)', fontSize: 10 }}>✓</span>
+                  <span style={{ color: 'var(--lexa)', fontSize: 10 }}>✓</span>
                 )}
               </button>
             ))}
@@ -284,7 +293,7 @@ export function PmWorkspace() {
                       width: 28,
                       height: 16,
                       borderRadius: 99,
-                      background: showFlows ? 'oklch(0.74 0.17 55)' : '#3B3B38',
+                      background: showFlows ? 'var(--lexa)' : '#3B3B38',
                       position: 'relative',
                       transition: 'background 0.2s',
                       flexShrink: 0,

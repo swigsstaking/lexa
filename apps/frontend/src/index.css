@@ -10,7 +10,7 @@
  */
 
 /* ── Light (cream/orange) — DEFAULT ─────────────────────────────────────────
-   Palette: cream bg #F5F2EC + orange accent #E08A3D + dark ink #1A1814
+   Palette: cream bg #F5F2EC + rouge-tomate accent #D4342C + dark ink #1A1814
 */
 :root,
 [data-theme="light"] {
@@ -25,8 +25,8 @@
   --ink: 26 24 20;         /* #1A1814 ink-1 */
   --muted: 107 103 96;     /* #6B6760 ink-3 */
   --subtle: 154 149 139;   /* #9A958B ink-4 */
-  /* Accent orange chaud Lexa — #E08A3D */
-  --accent: 224 138 61;     /* #E08A3D orange chaud Lexa */
+  /* Accent rouge-tomate Lexa — PREMIER orange V1 scaffold #D4342C */
+  --accent: 212 52 44;      /* #D4342C rouge-tomate Lexa V1 */
   --accent-fg: 255 255 255; /* blanc à l'intérieur des boutons */
   /* Semantic */
   --success: 59 133 96;    /* #3B8560 oklch(0.55 0.12 155) */
@@ -34,9 +34,9 @@
   --warning: 160 110 46;   /* #A06E2E oklch(0.55 0.15 55) */
 
   /* ── Tokens V2 workspace (light) ── */
-  --lexa: oklch(0.74 0.17 55);   /* #E08A3D orange chaud Lexa */
-  --lexa-deep: oklch(0.55 0.15 50);
-  --lexa-soft: oklch(0.92 0.08 60);
+  --lexa: #D4342C;         /* PREMIER rouge-tomate Lexa V1 scaffold */
+  --lexa-deep: #A51B16;
+  --lexa-soft: #F5C5C0;
 
   --pos: oklch(0.55 0.12 155);
   --pos-bg: oklch(0.94 0.04 155);
@@ -84,18 +84,18 @@
   --ink: 250 249 245;      /* #FAF9F5 cream-white */
   --muted: 168 165 158;    /* #A8A59E */
   --subtle: 110 108 103;   /* #6E6C67 */
-  /* Accent orange chaud Lexa — légèrement plus clair en dark pour contraste */
-  --accent: 238 156 82;     /* #EE9C52 orange clair dark */
-  --accent-fg: 10 10 10;    /* noir en dark pour contraste avec orange vif */
+  /* Accent rouge-tomate Lexa — légèrement plus vif en dark pour contraste */
+  --accent: 232 84 76;      /* #E8544C rouge-tomate clair dark */
+  --accent-fg: 255 255 255; /* blanc en dark */
   /* Semantic */
   --success: 74 185 120;   /* #4AB978 */
   --danger: 220 90 72;     /* #DC5A48 */
   --warning: 204 148 68;   /* #CC9444 */
 
   /* ── Tokens V2 workspace (dark) ── */
-  --lexa: oklch(0.78 0.18 55);   /* orange chaud légèrement plus clair en dark */
-  --lexa-deep: oklch(0.60 0.16 50);
-  --lexa-soft: oklch(0.28 0.07 55);
+  --lexa: #E8544C;         /* rouge-tomate plus vif pour contraste dark */
+  --lexa-deep: #D4342C;
+  --lexa-soft: rgba(212,52,44,0.20);
 
   --pos: oklch(0.68 0.13 155);
   --pos-bg: oklch(0.25 0.05 155);
