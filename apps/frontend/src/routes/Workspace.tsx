@@ -487,6 +487,7 @@ export function Workspace() {
           <LedgerCanvas
             autoOpenStreamId={editStreamId}
             autoCorrectStreamId={correctStreamId}
+            tenantId={activeTenantId ?? 'default'}
           />
         </div>
 

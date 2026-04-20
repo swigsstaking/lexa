@@ -1,9 +1,11 @@
-import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import {
   Background,
   BackgroundVariant,
   Controls,
   ReactFlow,
+  useReactFlow,
+  ReactFlowProvider,
   type EdgeTypes,
   type NodeTypes,
   type Node,
@@ -20,6 +22,7 @@ import { buildCanvas, buildCollapsedCanvas, COLLAPSE_THRESHOLD } from './layout'
 import { CanvasSkeleton } from './CanvasSkeleton';
 import { LedgerDrawer, type LedgerSelection } from './LedgerDrawer';
 import { usePeriodStore } from '@/stores/periodStore';
+import { LayoutGrid } from 'lucide-react';
 
 // nodeTypes stable en dehors du composant pour éviter les re-renders React Flow
 const nodeTypes: NodeTypes = { account: AccountNode, classAgg: ClassNode };
@@ -70,15 +73,31 @@ interface LedgerCanvasProps {
   autoOpenStreamId?: string | null;
   /** Si fourni, ouvre directement l'éditeur de correction pour ce streamId */
   autoCorrectStreamId?: string | null;
+  /** Identifiant du tenant pour la persistance localStorage du layout drag */
+  tenantId?: string;
 }
 
-export function LedgerCanvas({ autoOpenStreamId, autoCorrectStreamId }: LedgerCanvasProps = {}) {
+// Durée de vie du layout sauvegardé : 30 jours
+const LAYOUT_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+function LedgerCanvasInner({
+  autoOpenStreamId,
+  autoCorrectStreamId,
+  tenantId = 'default',
+}: LedgerCanvasProps) {
   const balance = useQuery({ queryKey: ['balance'], queryFn: lexa.ledgerBalance });
   const entries = useQuery({ queryKey: ['ledger', 200], queryFn: () => lexa.ledgerList(200) });
   const [selection, setSelection] = useState<LedgerSelection>(null);
 
   // Période de filtre depuis store partagé (ouvert via click sur FiscalTimeline)
   const period = usePeriodStore((s) => s.period);
+
+  // React Flow instance
+  const { fitView, setNodes } = useReactFlow();
+
+  // Toast brief pour feedback "Arranger"
+  const [arrangeToast, setArrangeToast] = useState(false);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Nav jump — ouvrir automatiquement le drawer sur le compte contenant le stream
   useEffect(() => {
@@ -120,7 +139,7 @@ export function LedgerCanvas({ autoOpenStreamId, autoCorrectStreamId }: LedgerCa
     [collapseMode, accountsForPeriod.length],
   );
 
-  // Graph React Flow (nodes + edges)
+  // Graph React Flow (nodes + edges) — positions calculées depuis layout.ts
   const graph = useMemo(() => {
     if (accountsForPeriod.length === 0) return { nodes: [], edges: [] };
     if (!shouldCollapse) {
@@ -128,6 +147,59 @@ export function LedgerCanvas({ autoOpenStreamId, autoCorrectStreamId }: LedgerCa
     }
     return buildCollapsedCanvas(accountsForPeriod, filteredEntries, expandedClasses);
   }, [accountsForPeriod, filteredEntries, shouldCollapse, expandedClasses]);
+
+  // localStorage key pour les positions drag custom
+  const layoutStorageKey = `ledger-layout-${tenantId}`;
+
+  // Restaurer les positions drag sauvegardées au mount
+  const nodesWithSavedPositions = useMemo(() => {
+    try {
+      const saved = localStorage.getItem(layoutStorageKey);
+      if (!saved) return graph.nodes;
+      const parsed = JSON.parse(saved) as Record<string, { x: number; y: number; savedAt: number }>;
+      const now = Date.now();
+      return graph.nodes.map((n) => {
+        const pos = parsed[n.id];
+        if (pos && now - pos.savedAt < LAYOUT_TTL_MS) {
+          return { ...n, position: { x: pos.x, y: pos.y } };
+        }
+        return n;
+      });
+    } catch {
+      return graph.nodes;
+    }
+  }, [graph.nodes, layoutStorageKey]);
+
+  // Sauvegarder la position après drag
+  const onNodeDragStop = useCallback(
+    (_e: React.MouseEvent, node: Node) => {
+      try {
+        const raw = localStorage.getItem(layoutStorageKey);
+        const current = raw ? (JSON.parse(raw) as Record<string, { x: number; y: number; savedAt: number }>) : {};
+        current[node.id] = { x: node.position.x, y: node.position.y, savedAt: Date.now() };
+        localStorage.setItem(layoutStorageKey, JSON.stringify(current));
+      } catch {
+        // ignore storage errors
+      }
+    },
+    [layoutStorageKey],
+  );
+
+  // Bouton "Arranger" : reset positions + fitView
+  const handleArrange = useCallback(() => {
+    // Effacer les positions drag custom
+    localStorage.removeItem(layoutStorageKey);
+    // Re-appliquer les nodes calculés par le layout
+    setNodes(graph.nodes);
+    // Fit view avec animation
+    setTimeout(() => {
+      fitView({ padding: 0.1, duration: 400 });
+    }, 50);
+    // Toast feedback
+    setArrangeToast(true);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setArrangeToast(false), 2000);
+  }, [layoutStorageKey, graph.nodes, setNodes, fitView]);
 
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
@@ -204,13 +276,14 @@ export function LedgerCanvas({ autoOpenStreamId, autoCorrectStreamId }: LedgerCa
       )}
 
       <ReactFlow
-        nodes={graph.nodes}
+        nodes={nodesWithSavedPositions}
         edges={graph.edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={closeDrawer}
+        onNodeDragStop={onNodeDragStop}
         fitView
         fitViewOptions={{ padding: 0.12, maxZoom: 1.6 }}
         minZoom={0.3}
@@ -226,6 +299,26 @@ export function LedgerCanvas({ autoOpenStreamId, autoCorrectStreamId }: LedgerCa
         />
         <Controls className="!bg-surface !border !border-border !rounded-lg [&>button]:!bg-surface [&>button]:!text-ink [&>button]:!border-border [&>button:hover]:!bg-elevated" />
       </ReactFlow>
+
+      {/* Bouton Arranger — visible si au moins 1 compte */}
+      {accountCount > 0 && (
+        <button
+          onClick={handleArrange}
+          title="Rétablir le layout automatique"
+          className="absolute bottom-4 right-4 z-10 card-elevated px-3 py-2 text-2xs font-medium text-ink hover:border-accent/60 transition-colors flex items-center gap-1.5"
+        >
+          <LayoutGrid className="w-3.5 h-3.5 text-accent" />
+          Arranger
+        </button>
+      )}
+
+      {/* Toast feedback "Layout rétabli" */}
+      {arrangeToast && (
+        <div className="absolute bottom-14 right-4 z-20 card-elevated px-3 py-1.5 text-2xs text-ink animate-in fade-in slide-in-from-bottom-2 duration-200">
+          Layout rétabli
+        </div>
+      )}
+
       <LedgerDrawer
         selection={selection}
         accounts={accountsForPeriod}
@@ -234,5 +327,13 @@ export function LedgerCanvas({ autoOpenStreamId, autoCorrectStreamId }: LedgerCa
         autoCorrectStreamId={autoCorrectStreamId}
       />
     </div>
+  );
+}
+
+export function LedgerCanvas(props: LedgerCanvasProps = {}) {
+  return (
+    <ReactFlowProvider>
+      <LedgerCanvasInner {...props} />
+    </ReactFlowProvider>
   );
 }
