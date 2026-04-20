@@ -80,6 +80,9 @@ const FLOW_COL: Record<AccountNodeData['category'], number> = {
   neutre: 1,
 };
 
+const MAX_PER_COL = 8;
+const SUB_COL_W = 220; // largeur d'une sub-colonne quand wrap activé
+
 export function buildCanvas(
   accounts: LedgerAccount[],
   entries: LedgerEntry[],
@@ -113,24 +116,60 @@ export function buildCanvas(
     );
   }
 
-  // Compute vertical centering : tallest column = full height, others centered
-  const maxRows = Math.max(
-    accountsByCol[0].length,
-    accountsByCol[1].length,
-    accountsByCol[2].length,
+  // Compute the effective number of sub-columns per base column
+  // and the maximum rows used (capped at MAX_PER_COL for centering)
+  const subColCountByCol = [0, 1, 2].map((col) =>
+    Math.ceil((accountsByCol[col].length || 1) / MAX_PER_COL),
+  );
+  const maxRows = Math.min(
+    Math.max(
+      accountsByCol[0].length,
+      accountsByCol[1].length,
+      accountsByCol[2].length,
+    ),
+    MAX_PER_COL,
   );
 
+  // Compute x-offset for each base column taking into account sub-columns of previous cols
+  // Col 0 starts at x=0, col 1 starts after all sub-cols of col 0, etc.
+  const colXStart: number[] = [0, 0, 0];
+  colXStart[0] = 0;
+  colXStart[1] = colXStart[0] + (subColCountByCol[0] > 1 ? subColCountByCol[0] * SUB_COL_W + 20 : COL_W);
+  colXStart[2] = colXStart[1] + (subColCountByCol[1] > 1 ? subColCountByCol[1] * SUB_COL_W + 20 : COL_W);
+
   const nodes: LedgerNode[] = [];
+  // colByAccount maps account id → effective x position (used for edge direction)
+  const colByAccountX = new Map<string, number>();
+
   for (const col of [0, 1, 2]) {
     const colAccounts = accountsByCol[col];
-    const colHeight = colAccounts.length * ROW_H;
-    const centerOffset = ((maxRows * ROW_H) - colHeight) / 2;
+    const subColCount = subColCountByCol[col];
+    const xBase = colXStart[col];
+
     colAccounts.forEach((a, i) => {
+      const subColIdx = Math.floor(i / MAX_PER_COL);
+      const rowInSubCol = i % MAX_PER_COL;
+
+      let x: number;
+      if (subColCount > 1) {
+        x = xBase + subColIdx * SUB_COL_W;
+      } else {
+        x = xBase;
+      }
+
+      // Vertical centering based on capped maxRows
+      const itemsInThisSubCol = Math.min(
+        colAccounts.length - subColIdx * MAX_PER_COL,
+        MAX_PER_COL,
+      );
+      const subColHeight = itemsInThisSubCol * ROW_H;
+      const centerOffset = (maxRows * ROW_H - subColHeight) / 2;
+
       const category = classifyAccount(extractCode(a.account));
       nodes.push({
         id: a.account,
         type: 'account',
-        position: { x: col * COL_W, y: centerOffset + i * ROW_H },
+        position: { x, y: centerOffset + rowInSubCol * ROW_H },
         data: {
           code: extractCode(a.account),
           label: extractLabel(a.account),
@@ -141,10 +180,12 @@ export function buildCanvas(
           recent: recentAccounts.has(a.account),
         },
       });
+      colByAccountX.set(a.account, x);
     });
   }
 
   // Map de colonne par compte pour déterminer handles + direction flux
+  // On utilise la colonne logique (0/1/2) pour la direction, pas le x exact
   const colByAccount = new Map<string, number>();
   for (const col of [0, 1, 2]) {
     for (const a of accountsByCol[col]) {
