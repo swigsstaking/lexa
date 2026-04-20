@@ -110,6 +110,25 @@ export function PmWizardCanton({ canton }: Props) {
     setLoading(false);
   }
 
+  // Flush synchrone de tous les patches debounce en attente
+  // Utilisé par Step6GenerateCanton avant la génération PDF pour garantir la cohérence DB
+  const flushPendingPatches = useCallback(async () => {
+    const entries = Array.from(pendingPatches.current.entries());
+    if (entries.length === 0) return;
+    // Annuler les timers debounce (les patches vont être envoyés immédiatement)
+    debounceTimers.current.forEach((timer) => clearTimeout(timer));
+    debounceTimers.current.clear();
+    pendingPatches.current.clear();
+    // Envoi parallèle de tous les patches en attente
+    await Promise.all(
+      entries.map(([path, value]) =>
+        lexa.patchCompanyDraft(year, canton, path, value).catch((err) => {
+          console.warn(`[PmWizardCanton:${canton}] flushPendingPatches failed for path:`, path, err);
+        }),
+      ),
+    );
+  }, [year, canton]);
+
   const handlePatch = useCallback((path: string, value: unknown) => {
     if (!draft) return;
 
@@ -253,7 +272,7 @@ export function PmWizardCanton({ canton }: Props) {
               <Step5PreviewVs state={draft.state} year={year} canton={canton} />
             )}
             {currentStep === 6 && (
-              <Step6GenerateCanton state={draft.state} year={year} canton={canton} />
+              <Step6GenerateCanton state={draft.state} year={year} canton={canton} onFlushPendingPatches={flushPendingPatches} />
             )}
 
             {/* Nav buttons (cachés sur step 6) */}

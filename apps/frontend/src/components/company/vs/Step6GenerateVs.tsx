@@ -6,6 +6,8 @@ import { lexa } from '@/api/lexa';
 interface Props {
   state: CompanyDraftState;
   year: number;
+  /** Flush synchrone des patches debounce en attente avant génération PDF */
+  onFlushPendingPatches?: () => Promise<void>;
 }
 
 function downloadPdf(base64: string, filename: string) {
@@ -21,7 +23,7 @@ function downloadPdf(base64: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function Step6GenerateVs({ state, year }: Props) {
+export function Step6GenerateVs({ state, year, onFlushPendingPatches }: Props) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [taxTotal, setTaxTotal] = useState<number | null>(null);
@@ -54,6 +56,11 @@ export function Step6GenerateVs({ state, year }: Props) {
     setStatus('loading');
     setError(null);
     try {
+      // Flush synchrone des patches debounce en attente avant soumission PDF
+      // Évite l'écart IFD live ≠ PDF quand l'user clique rapidement après une saisie
+      if (onFlushPendingPatches) {
+        await onFlushPendingPatches();
+      }
       const result = await lexa.submitCompanyDraftVs(year);
       const legalName = s1.legalName ?? 'declaration-pm';
       downloadPdf(result.pdfBase64, `declaration-pm-vs-${year}-${legalName.replace(/\s+/g, '-').toLowerCase()}.pdf`);

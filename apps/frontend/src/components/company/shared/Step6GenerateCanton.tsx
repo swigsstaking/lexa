@@ -18,6 +18,8 @@ interface Props {
   state: CompanyDraftState;
   year: number;
   canton: PmCanton;
+  /** Flush synchrone des patches debounce en attente avant génération PDF */
+  onFlushPendingPatches?: () => Promise<void>;
 }
 
 const CANTON_AUTHORITY: Record<PmCanton, string> = {
@@ -47,7 +49,7 @@ function downloadPdf(base64: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function Step6GenerateCanton({ state, year, canton }: Props) {
+export function Step6GenerateCanton({ state, year, canton, onFlushPendingPatches }: Props) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [taxTotal, setTaxTotal] = useState<number | null>(null);
@@ -80,6 +82,11 @@ export function Step6GenerateCanton({ state, year, canton }: Props) {
     setStatus('loading');
     setError(null);
     try {
+      // Flush synchrone des patches debounce en attente avant soumission PDF
+      // Évite l'écart IFD live ≠ PDF quand l'user clique rapidement après une saisie
+      if (onFlushPendingPatches) {
+        await onFlushPendingPatches();
+      }
       const result = await lexa.submitCompanyDraft(year, canton);
       const legalName = s1.legalName ?? 'declaration-pm';
       downloadPdf(

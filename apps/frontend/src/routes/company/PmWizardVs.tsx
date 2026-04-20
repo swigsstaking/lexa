@@ -101,6 +101,25 @@ export function PmWizardVs() {
     setLoading(false);
   }
 
+  // Flush synchrone de tous les patches debounce en attente
+  // Utilisé par Step6GenerateVs avant la génération PDF pour garantir la cohérence DB
+  const flushPendingPatches = useCallback(async () => {
+    const entries = Array.from(pendingPatches.current.entries());
+    if (entries.length === 0) return;
+    // Annuler les timers debounce (les patches vont être envoyés immédiatement)
+    debounceTimers.current.forEach((timer) => clearTimeout(timer));
+    debounceTimers.current.clear();
+    pendingPatches.current.clear();
+    // Envoi parallèle de tous les patches en attente
+    await Promise.all(
+      entries.map(([path, value]) =>
+        lexa.patchCompanyDraft(year, CANTON, path, value).catch((err) => {
+          console.warn('[PmWizardVs] flushPendingPatches failed for path:', path, err);
+        }),
+      ),
+    );
+  }, [year]);
+
   // Auto-save debounced
   const handlePatch = useCallback((path: string, value: unknown) => {
     if (!draft) return;
@@ -247,7 +266,7 @@ export function PmWizardVs() {
               <Step5PreviewVs state={draft.state} year={year} />
             )}
             {currentStep === 6 && (
-              <Step6GenerateVs state={draft.state} year={year} />
+              <Step6GenerateVs state={draft.state} year={year} onFlushPendingPatches={flushPendingPatches} />
             )}
 
             {/* Nav buttons (cachés sur step 6) */}
