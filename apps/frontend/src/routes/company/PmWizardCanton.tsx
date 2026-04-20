@@ -71,11 +71,25 @@ export function PmWizardCanton({ canton }: Props) {
   const [exitConfirm, setExitConfirm] = useState(false);
 
   const debounceTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const pendingPatches = useRef<Map<string, unknown>>(new Map());
 
   useEffect(() => {
     void loadOrCreateDraft();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [year, canton]);
+
+  // Flush les patches debounce en attente au unmount (évite perte de données si rechargement rapide)
+  useEffect(() => {
+    return () => {
+      debounceTimers.current.forEach((timer) => clearTimeout(timer));
+      debounceTimers.current.clear();
+      pendingPatches.current.forEach((value, path) => {
+        void lexa.patchCompanyDraft(year, canton, path, value).catch(() => {});
+      });
+      pendingPatches.current.clear();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function loadOrCreateDraft() {
     setLoading(true);
@@ -115,6 +129,7 @@ export function PmWizardCanton({ canton }: Props) {
       return { ...prev, state: newState };
     });
 
+    pendingPatches.current.set(path, value);
     const existing = debounceTimers.current.get(path);
     if (existing) clearTimeout(existing);
     const timer = setTimeout(() => {
@@ -122,6 +137,7 @@ export function PmWizardCanton({ canton }: Props) {
         console.warn(`[PmWizardCanton:${canton}] patch failed:`, err);
       });
       debounceTimers.current.delete(path);
+      pendingPatches.current.delete(path);
     }, DEBOUNCE_MS);
     debounceTimers.current.set(path, timer);
   }, [draft, year, canton]);

@@ -57,12 +57,28 @@ export function PmWizardVs() {
 
   // Debounce map pour auto-save
   const debounceTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  // Valeurs pendantes (non encore flushées) — utilisé pour le flush au unmount
+  const pendingPatches = useRef<Map<string, unknown>>(new Map());
 
   // Charger ou créer le draft au montage
   useEffect(() => {
     void loadOrCreateDraft();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [year]);
+
+  // Flush les patches debounce en attente au unmount (évite perte de données si rechargement rapide)
+  useEffect(() => {
+    return () => {
+      debounceTimers.current.forEach((timer) => clearTimeout(timer));
+      debounceTimers.current.clear();
+      // Envoi groupé des valeurs pendantes
+      pendingPatches.current.forEach((value, path) => {
+        void lexa.patchCompanyDraft(year, CANTON, path, value).catch(() => {});
+      });
+      pendingPatches.current.clear();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function loadOrCreateDraft() {
     setLoading(true);
@@ -107,6 +123,7 @@ export function PmWizardVs() {
     });
 
     // Debounce la requête réseau
+    pendingPatches.current.set(path, value);
     const existing = debounceTimers.current.get(path);
     if (existing) clearTimeout(existing);
     const timer = setTimeout(() => {
@@ -114,6 +131,7 @@ export function PmWizardVs() {
         console.warn('[PmWizardVs] patch failed:', err);
       });
       debounceTimers.current.delete(path);
+      pendingPatches.current.delete(path);
     }, DEBOUNCE_MS);
     debounceTimers.current.set(path, timer);
   }, [draft, year]);
