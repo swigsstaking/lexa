@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
@@ -40,7 +40,12 @@ import { MobileLedgerList } from '@/components/workspace/MobileLedgerList';
 export function Workspace() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
+
+  // Nav jump — ?editStream=<id> ou ?correctStream=<id>
+  const editStreamId = searchParams.get('editStream');
+  const correctStreamId = searchParams.get('correctStream');
   const company = useActiveCompany();
   const addCompany = useCompaniesStore((s) => s.addCompany);
   const setActive = useCompaniesStore((s) => s.setActive);
@@ -479,7 +484,10 @@ export function Workspace() {
 
         {/* LedgerCanvas — desktop seulement */}
         <div className="hidden md:block absolute inset-0">
-          <LedgerCanvas />
+          <LedgerCanvas
+            autoOpenStreamId={editStreamId}
+            autoCorrectStreamId={correctStreamId}
+          />
         </div>
 
         {/* Empty state / Processing state — visible sur mobile ET desktop */}

@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import {
   Background,
   BackgroundVariant,
@@ -65,13 +65,31 @@ function recomputeBalances(
  */
 type CollapseMode = 'auto' | 'fully-expanded';
 
-export function LedgerCanvas() {
+interface LedgerCanvasProps {
+  /** Si fourni, ouvre le drawer sur le premier compte qui contient ce streamId */
+  autoOpenStreamId?: string | null;
+  /** Si fourni, ouvre directement l'éditeur de correction pour ce streamId */
+  autoCorrectStreamId?: string | null;
+}
+
+export function LedgerCanvas({ autoOpenStreamId, autoCorrectStreamId }: LedgerCanvasProps = {}) {
   const balance = useQuery({ queryKey: ['balance'], queryFn: lexa.ledgerBalance });
   const entries = useQuery({ queryKey: ['ledger', 200], queryFn: () => lexa.ledgerList(200) });
   const [selection, setSelection] = useState<LedgerSelection>(null);
 
   // Période de filtre depuis store partagé (ouvert via click sur FiscalTimeline)
   const period = usePeriodStore((s) => s.period);
+
+  // Nav jump — ouvrir automatiquement le drawer sur le compte contenant le stream
+  useEffect(() => {
+    const targetId = autoOpenStreamId ?? autoCorrectStreamId;
+    if (!targetId || !entries.data?.entries?.length) return;
+    const entry = entries.data.entries.find((e) => e.streamId === targetId);
+    if (entry && !selection) {
+      setSelection({ kind: 'account', accountId: entry.account });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpenStreamId, autoCorrectStreamId, entries.data]);
 
   // Mode collapse : 'auto' (défaut) ou 'fully-expanded' (forcé par l'user)
   const [collapseMode, setCollapseMode] = useState<CollapseMode>('auto');
@@ -213,6 +231,7 @@ export function LedgerCanvas() {
         accounts={accountsForPeriod}
         entries={filteredEntries}
         onClose={closeDrawer}
+        autoCorrectStreamId={autoCorrectStreamId}
       />
     </div>
   );
