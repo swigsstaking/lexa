@@ -118,16 +118,17 @@ export function PmWorkspace() {
 
   return (
     <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Switcher vues PM — top-left */}
+      {/* Toolbar PM — intégré dans le flux (pas absolut) pour éviter le chevauchement */}
+      {/* On laisse 8px top padding pour respirer sous le bord */}
       <div
         style={{
-          position: 'absolute',
-          top: 12,
-          left: 16,
-          zIndex: 8,
           display: 'flex',
           alignItems: 'center',
           gap: 12,
+          padding: '10px 16px',
+          flexShrink: 0,
+          borderBottom: '1px solid var(--chrome-line)',
+          background: 'var(--chrome-bg-2)',
         }}
       >
         <ViewSwitcher options={PM_VIEW_OPTS} active={pmView} onChange={handleSetView} />
@@ -142,11 +143,11 @@ export function PmWorkspace() {
               gap: 6,
               padding: '5px 10px',
               borderRadius: 8,
-              border: '1px solid var(--line-1)',
-              background: showFlows ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.6)',
+              border: '1px solid var(--chrome-line)',
+              background: showFlows ? 'var(--chrome-bg-2)' : 'var(--chrome-bg)',
               backdropFilter: 'blur(8px)',
               WebkitBackdropFilter: 'blur(8px)',
-              color: showFlows ? 'var(--ink-1)' : 'var(--ink-3)',
+              color: showFlows ? 'var(--chrome-ink-1)' : 'var(--chrome-ink-3)',
               cursor: 'pointer',
               fontSize: 11,
               fontWeight: 500,
@@ -162,8 +163,8 @@ export function PmWorkspace() {
         )}
       </div>
 
-      {/* Canvas */}
-      <div style={{ flex: 1, marginTop: 0 }}>
+      {/* Canvas — flex-1 + min-h-0 pour que le scroll fonctionne */}
+      <div style={{ flex: 1, minHeight: 0 }}>
         {pmView === 'colA' && (
           <PmColumnsA
             accounts={v2Accounts}

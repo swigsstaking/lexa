@@ -19,10 +19,10 @@ export function ViewSwitcher({ options, active, onChange }: ViewSwitcherProps) {
         display: 'inline-flex',
         gap: 2,
         padding: 3,
-        background: 'rgba(255,255,255,0.8)',
+        background: 'var(--chrome-bg)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
-        border: '1px solid var(--line-1)',
+        border: '1px solid var(--chrome-line)',
         borderRadius: 10,
       }}
     >
@@ -39,8 +39,8 @@ export function ViewSwitcher({ options, active, onChange }: ViewSwitcherProps) {
               cursor: 'pointer',
               fontSize: 11,
               fontWeight: 500,
-              background: isActive ? 'var(--ink-1)' : 'transparent',
-              color: isActive ? '#FAFAF7' : 'var(--ink-2)',
+              background: isActive ? 'rgb(var(--accent))' : 'transparent',
+              color: isActive ? 'var(--chrome-bg)' : 'var(--chrome-ink-2)',
               transition: 'background 120ms, color 120ms',
             }}
           >

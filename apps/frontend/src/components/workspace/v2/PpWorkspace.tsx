@@ -85,8 +85,8 @@ export function PpWorkspace() {
   const dispo    = totalSal - totalVP - totalEp - totalObl;
 
   return (
-    <div className="v2-canvas" style={{ position: 'relative', height: '100%' }}>
-      <div style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
+    <div className="v2-canvas" style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
         <div style={{ padding: '24px', minHeight: '100%' }}>
 
           {/* Profile hero */}
@@ -347,7 +347,7 @@ export function PpWorkspace() {
                           height: 8,
                           borderRadius: 4,
                           background: 'var(--lexa)',
-                          boxShadow: '0 0 0 4px oklch(0.74 0.17 55 / 0.2)',
+                          boxShadow: '0 0 0 4px oklch(0.52 0.20 25 / 0.25)',
                         }}
                       />
                     )}

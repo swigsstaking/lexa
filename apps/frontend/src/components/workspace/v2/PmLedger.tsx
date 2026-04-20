@@ -119,8 +119,8 @@ export function PmLedger({ accounts, focusCode, setFocusCode }: PmLedgerProps) {
   }, [sel, accounts]);
 
   return (
-    <div className="v2-canvas" style={{ position: 'relative', height: '100%' }}>
-      <div style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
+    <div className="v2-canvas" style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
         <div style={{ padding: '24px', minHeight: '100%' }}>
           <div
             style={{

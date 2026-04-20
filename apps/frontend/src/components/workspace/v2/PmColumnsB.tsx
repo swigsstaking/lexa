@@ -191,8 +191,8 @@ export function PmColumnsB({
   const totalCharges = accounts.filter((a) => a.class === 'C').reduce((s, a) => s + Math.abs(a.balance), 0);
 
   return (
-    <div className="v2-canvas" style={{ position: 'relative', height: '100%' }}>
-      <div ref={scrollRef} style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
+    <div className="v2-canvas" style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div ref={scrollRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
         <div style={{ padding: '24px', minHeight: '100%' }}>
           <div
             ref={gridRef}
@@ -321,7 +321,7 @@ export function PmColumnsB({
                     top: r.my,
                     transform: 'translate(-50%, -50%)',
                     zIndex: 3,
-                    background: strong ? 'var(--ink-1)' : 'rgba(255,255,255,0.95)',
+                    background: strong ? 'var(--ink-1)' : 'var(--v2-surface)',
                     color: strong ? '#FAFAF7' : 'var(--ink-2)',
                     padding: '2px 7px',
                     borderRadius: 4,
