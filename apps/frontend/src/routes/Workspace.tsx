@@ -530,8 +530,21 @@ export function Workspace() {
 
         {/* Empty state / Processing state — visible sur mobile ET desktop */}
         {!hasEntries && !health.isLoading && (
-          <div className="absolute inset-0 grid place-items-center pointer-events-none z-20">
-            <div className="card-elevated p-8 max-w-2xl pointer-events-auto text-center mx-4">
+          <div
+            className="absolute inset-0 grid place-items-center pointer-events-none z-20"
+            style={workspaceVersion === 'v2' ? { background: 'rgba(245,242,236,0.60)', backdropFilter: 'blur(2px)' } : undefined}
+          >
+            <div
+              className={workspaceVersion === 'v2' ? 'pointer-events-auto text-center mx-4' : 'card-elevated p-8 max-w-2xl pointer-events-auto text-center mx-4'}
+              style={workspaceVersion === 'v2' ? {
+                background: 'var(--v2-surface)',
+                border: '1px solid var(--line-1)',
+                borderRadius: 16,
+                padding: '40px 48px',
+                maxWidth: 640,
+                boxShadow: '0 4px 24px rgba(26,24,20,0.08)',
+              } : undefined}
+            >
               {hasIngestedButNoEntries ? (
                 /* Bloc B — état "processing" : transactions importées mais pas encore dans le ledger */
                 <>
