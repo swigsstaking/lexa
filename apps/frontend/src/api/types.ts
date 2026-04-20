@@ -152,6 +152,10 @@ export interface LedgerEntry {
   confidence?: number;
   documentId?: string | null; // Pièce justificative OCR — drill-down (migration 012)
   reconciles?: string | null; // stream_id de la facture originale liée — reconciliation (migration 015)
+  // V1.1 — édition écritures (migration 021)
+  letterRef?: string | null;
+  corrected?: boolean;
+  lastReasoning?: string | null;
 }
 
 export interface LedgerListResponse {

@@ -660,6 +660,63 @@ export const lexa = {
         }>;
       }>(`/settings/email-forward/history?limit=${limit}`)
       .then((r) => r.data),
+
+  // ── V1.1 — Édition écritures grand livre (migration 021) ─────────────────
+
+  createLedgerEntry: (body: {
+    date: string;
+    description: string;
+    debitAccount: string;
+    creditAccount: string;
+    amountTtc: number;
+    amountHt?: number;
+    tvaRate?: number;
+    tvaCode?: string;
+    costCenter?: string;
+    reasoning?: string;
+  }) =>
+    api.post<{ streamId: string; message: string }>('/ledger/entries', body).then((r) => r.data),
+
+  correctLedgerEntry: (
+    streamId: string,
+    body: {
+      debitAccount?: string;
+      creditAccount?: string;
+      amountTtc?: number;
+      description?: string;
+      reasoning: string;
+    },
+  ) =>
+    api
+      .patch<{ streamId: string; message: string }>(`/ledger/entries/${streamId}/correct`, body)
+      .then((r) => r.data),
+
+  lettrerEntries: (streamIds: string[], letterRef?: string) =>
+    api
+      .post<{ letterRef: string; message: string }>('/ledger/lettrage', { streamIds, letterRef })
+      .then((r) => r.data),
+
+  unlettrerEntries: (letterRef: string) =>
+    api
+      .delete<{ message: string }>(`/ledger/lettrage/${letterRef}`)
+      .then((r) => r.data),
+
+  getLedgerEntryHistory: (streamId: string) =>
+    api
+      .get<{
+        streamId: string;
+        events: Array<{
+          eventId: number;
+          type: string;
+          occurredAt: string;
+          description?: string;
+          debitAccount?: string;
+          creditAccount?: string;
+          amount?: number;
+          reasoning?: string;
+        }>;
+      }>(`/ledger/entries/${streamId}/history`)
+      .then((r) => r.data),
 };
 
 export type TaxpayerDraft = {
