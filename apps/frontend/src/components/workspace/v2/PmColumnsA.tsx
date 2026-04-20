@@ -181,7 +181,7 @@ function PmKpis({ accounts, visibility }: PmKpisProps) {
                 height: 6,
                 borderRadius: 3,
                 background: 'var(--lexa)',
-                boxShadow: '0 0 0 3px oklch(0.52 0.20 25 / 0.25)',
+                boxShadow: '0 0 0 3px oklch(0.74 0.17 55 / 0.25)',
               }}
             />
           )}

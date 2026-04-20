@@ -25,18 +25,18 @@
   --ink: 26 24 20;         /* #1A1814 ink-1 */
   --muted: 107 103 96;     /* #6B6760 ink-3 */
   --subtle: 154 149 139;   /* #9A958B ink-4 */
-  /* Accent orange Lexa — tomate-orangé d'avant */
-  --accent: 212 52 44;     /* #D4342C rouge-orangé tomate */
-  --accent-fg: 250 249 245;
+  /* Accent orange chaud Lexa — #E08A3D */
+  --accent: 224 138 61;     /* #E08A3D orange chaud Lexa */
+  --accent-fg: 255 255 255; /* blanc à l'intérieur des boutons */
   /* Semantic */
   --success: 59 133 96;    /* #3B8560 oklch(0.55 0.12 155) */
   --danger: 184 83 63;     /* #B8533F oklch(0.52 0.16 25) */
   --warning: 160 110 46;   /* #A06E2E oklch(0.55 0.15 55) */
 
   /* ── Tokens V2 workspace (light) ── */
-  --lexa: oklch(0.52 0.20 25);   /* tomate-orangé aligné sur --accent light */
-  --lexa-deep: oklch(0.40 0.18 25);
-  --lexa-soft: oklch(0.94 0.06 25);
+  --lexa: oklch(0.74 0.17 55);   /* #E08A3D orange chaud Lexa */
+  --lexa-deep: oklch(0.55 0.15 50);
+  --lexa-soft: oklch(0.92 0.08 60);
 
   --pos: oklch(0.55 0.12 155);
   --pos-bg: oklch(0.94 0.04 155);
@@ -84,18 +84,18 @@
   --ink: 250 249 245;      /* #FAF9F5 cream-white */
   --muted: 168 165 158;    /* #A8A59E */
   --subtle: 110 108 103;   /* #6E6C67 */
-  /* Accent orange Lexa — tomate légèrement plus vif en dark */
-  --accent: 232 84 76;     /* #E8544C tomate-orangé */
-  --accent-fg: 250 249 245;
+  /* Accent orange chaud Lexa — légèrement plus clair en dark pour contraste */
+  --accent: 238 156 82;     /* #EE9C52 orange clair dark */
+  --accent-fg: 10 10 10;    /* noir en dark pour contraste avec orange vif */
   /* Semantic */
   --success: 74 185 120;   /* #4AB978 */
   --danger: 220 90 72;     /* #DC5A48 */
   --warning: 204 148 68;   /* #CC9444 */
 
   /* ── Tokens V2 workspace (dark) ── */
-  --lexa: oklch(0.62 0.22 25);   /* tomate-orangé légèrement plus vif en dark */
-  --lexa-deep: oklch(0.45 0.20 25);
-  --lexa-soft: oklch(0.25 0.08 25);
+  --lexa: oklch(0.78 0.18 55);   /* orange chaud légèrement plus clair en dark */
+  --lexa-deep: oklch(0.60 0.16 50);
+  --lexa-soft: oklch(0.28 0.07 55);
 
   --pos: oklch(0.68 0.13 155);
   --pos-bg: oklch(0.25 0.05 155);
