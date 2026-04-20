@@ -97,12 +97,55 @@ export function PmWizardCanton({ canton }: Props) {
     try {
       const d = await lexa.getCompanyDraft(year, canton);
       setDraft(d);
+      // BUG-8 fix : si le draft step2 est entièrement vide (nouveau draft),
+      // pré-remplir depuis l'income statement du grand livre
+      const s2 = d.state.step2 ?? {};
+      const isStep2Empty = !s2.chiffreAffaires && !s2.chargesPersonnel && !s2.benefitAccounting;
+      if (isStep2Empty) {
+        try {
+          const is = await lexa.getIncomeStatement(year);
+          // revenuesTotal → chiffreAffaires, chargesTotal → total charges, netResult → bénéfice
+          if (is.revenuesTotal || is.chargesTotal || is.netResult) {
+            const patches: Array<[string, number]> = [];
+            if (is.revenuesTotal) patches.push(['step2.chiffreAffaires', Math.round(is.revenuesTotal)]);
+            if (is.chargesTotal)  patches.push(['step2.chargesPersonnel', Math.round(is.chargesTotal)]);
+            if (is.netResult !== undefined) patches.push(['step2.benefitAccounting', Math.round(is.netResult)]);
+            // Appliquer les patches (debounced via handlePatch n'est pas disponible ici,
+            // donc on les envoie directement et on met à jour le state local)
+            await Promise.all(patches.map(([path, value]) =>
+              lexa.patchCompanyDraft(year, canton, path, value).catch(() => {})
+            ));
+            // Recharger le draft avec les valeurs pré-remplies
+            const dRefreshed = await lexa.getCompanyDraft(year, canton);
+            setDraft(dRefreshed);
+          }
+        } catch {
+          // Soft fail : si ledger vide ou indisponible, laisser le draft vide
+        }
+      }
     } catch {
       try {
         const legalName = activeCompany?.name ?? 'Société';
         await lexa.createCompanyDraft(year, canton, legalName);
         const d = await lexa.getCompanyDraft(year, canton);
         setDraft(d);
+        // Même logique de pré-remplissage pour un nouveau draft
+        try {
+          const is = await lexa.getIncomeStatement(year);
+          if (is.revenuesTotal || is.chargesTotal || is.netResult) {
+            const patches: Array<[string, number]> = [];
+            if (is.revenuesTotal) patches.push(['step2.chiffreAffaires', Math.round(is.revenuesTotal)]);
+            if (is.chargesTotal)  patches.push(['step2.chargesPersonnel', Math.round(is.chargesTotal)]);
+            if (is.netResult !== undefined) patches.push(['step2.benefitAccounting', Math.round(is.netResult)]);
+            await Promise.all(patches.map(([path, value]) =>
+              lexa.patchCompanyDraft(year, canton, path, value).catch(() => {})
+            ));
+            const dRefreshed = await lexa.getCompanyDraft(year, canton);
+            setDraft(dRefreshed);
+          }
+        } catch {
+          // Soft fail
+        }
       } catch (err2) {
         setError(err2 instanceof Error ? err2.message : 'Impossible de créer le brouillon PM');
       }
