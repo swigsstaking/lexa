@@ -387,11 +387,18 @@ function AccountDetails({
   accounts: LedgerAccount[];
   entries: LedgerEntry[];
 } & SharedRowProps) {
-  const account = accounts.find((a) => a.account === accountId);
+  // Lookup flexible : exact match OU code préfixe (ex. "1020" matche "1020 - Banque")
+  const account =
+    accounts.find((a) => a.account === accountId) ??
+    accounts.find((a) => {
+      const code = a.account.match(/^(\d+)/)?.[1] ?? '';
+      return code === accountId;
+    });
   if (!account) return <div className="text-muted">Compte introuvable</div>;
 
+  // Filtrer les transactions par account.account (string complète comme dans les entries)
   const txs = entries
-    .filter((e) => e.account === accountId)
+    .filter((e) => e.account === account.account || e.account === accountId)
     .slice(0, 20);
 
   const code = account.account.match(/^(\d+)/)?.[1] ?? account.account;
