@@ -1,7 +1,62 @@
 # Lexa V1+ — Roadmap d'améliorations
 
-**Version actuelle** : V1.0 beta fermée (Sessions 1-4 livrées 2026-04-17)
+**Version actuelle** : **V1.1 beta** — Workspace V2 seule, mode light cream par défaut (livré 2026-04-20)
+**Transition** : voir `HANDOFF.md` racine pour la continuité vers la prochaine instance
 **Source de vérité fonctionnelle** : `00-vision/whitepaper.md` V0.2
+
+---
+
+## V1.1 — Livré 2026-04-20
+
+### Workspace V2 (remplace entièrement V1 ReactFlow)
+
+- V1 `LedgerCanvas` supprimée (commit `5cc4df5`)
+- `WorkspaceV2` route PP (swimlanes) vs PM (3 sous-vues) selon `legalForm`
+- **PM** : 3 sous-vues — Colonnes A (flux G→D), Colonnes B (Sankey), Ledger (table pro)
+- **PP** : hero profil + 5 KPIs + 4 swimlanes cliquables (`PpDetailDrawer` avec mock tx)
+- Édition écritures branchée via `LedgerDrawer` V1 réutilisé — click AccountTile → drawer + context menu (Modifier/Lettrer/Historique)
+- Bouton "Demande à Lexa" (⌘K) → modal `LexaCmdK` avec streaming chat IA (LEXA/TVA/CLASSIFIER agents)
+
+### Thème
+- Light cream/orange (`#F5F2EC` + `#E08A3D`) **par défaut** via `[data-theme="light"]`
+- Dark stone opt-in via `/settings/appearance`
+- Header + Timeline **toujours dark** (chrome-bg `#0A0A0A`) quel que soit le thème
+- Token unifié `--accent: 224 138 61` (orange chaud Lexa), `--lexa: oklch(0.74 0.17 55)`
+- Anti-flash script dans `index.html` pour éviter flash thème au reload
+
+### Auth
+- SSO Swigs Hub intégré (magic-link + Google + email/password proxy)
+- JWT inclut `hubUserId` + `memberships[]` + `activeTenantId`
+- Register flow avec `CompanySearchField` (UID BFS autocomplete) dans Register.tsx + AddAccount.tsx
+- Fix intercepteur 401 Axios : ne logout plus sur routes `/auth/*` (fix critique login UX)
+
+### 9 bugs P0 corrigés (E2E PP/PM/Fiduciaire 2026-04-20)
+
+Rapports complets dans `06-sessions/e2e-{pp,pm,fidu}-2026-04-20/`.
+
+- **RGPD** isolation cache PP inter-tenants (`b9a40d0`) — key remount `WorkspaceV2` + nom tenant depuis `useActiveCompany()`
+- Dropdown VUE navigations parasites (`f8e7ecc`) — `stopPropagation` + z-index
+- CmdK Enter navigue au lieu d'envoyer (`f8e7ecc`) — refactor handleKeyDown
+- Wizard PM CA/bénéfice à zéro (`86f135d`) — pré-remplissage depuis `lexa.getIncomeStatement()` si draft vide
+- Login 401 silencieux redirect register (`d0b218a`) — intercepteur skip routes auth
+- Empty state cards déconnectent (conséquence 401) — résolu par `d0b218a`
+- Wizard PP inputs redirigent `/workspace` (conséquence 401 expired token) — résolu par `d0b218a`
+
+### Fonctionnalités V1.0 livrées précédemment
+
+- Event-sourcing Postgres + matview `ledger_entries` + migrations 015→021
+- Multi-tenant RLS `fiduciary_memberships`
+- CAMT.053 ingestion
+- Classifier vLLM NVFP4 Qwen3.5-35B-A3B + Ollama fallback
+- Bridge Pro bidirectionnel (`invoice.created/sent/paid`, `expense.submitted`, `bank.transaction`) + dedup fingerprint
+- Email forward IMAP par tenant
+- Édition graph append-only (`TransactionCorrected`, `TransactionsLettered/Unlettered`) + 5 endpoints
+- eCH-0119 (PP) + eCH-0229 (PM) XML export
+- 4 wizards canton (VS, GE, VD, FR) PP et PM
+- Page Settings : Apparence, Email forward, Intégration Pro (toggle per-tenant)
+- ProSyncSettings : import bulk historique (23 invoices + 40 bank tx testé live)
+
+---
 
 ---
 
