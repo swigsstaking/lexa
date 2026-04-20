@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LexaInsight } from './LexaInsight';
 import { fmtMoney } from './fmtMoney';
+import { createPortal } from 'react-dom';
+import { lexa } from '@/api/lexa';
 
 // ——— Mock data PP (personne physique salariée) ———
 // Utilisé tant que la structure PP n'existe pas côté Lexa DB.
@@ -75,11 +77,303 @@ const TONE_COLOR: Record<Tone, string> = {
   asset: 'var(--ast)',
 };
 
+// ——— Mock transactions par poste ———
+const MOCK_TX: Record<string, Array<{ date: string; desc: string; amount: number }>> = {
+  S01: [
+    { date: '31.01.2026', desc: 'Salaire janvier', amount: 8500 },
+    { date: '28.02.2026', desc: 'Salaire février', amount: 8500 },
+    { date: '31.03.2026', desc: 'Salaire mars', amount: 8500 },
+  ],
+  S02: [
+    { date: '31.12.2025', desc: '13ème salaire 2025', amount: 8500 },
+  ],
+  S03: [
+    { date: '31.03.2026', desc: 'Bonus performance Q1', amount: 6000 },
+  ],
+  V01: [
+    { date: '01.01.2026', desc: 'Loyer janvier', amount: 1800 },
+    { date: '01.02.2026', desc: 'Loyer février', amount: 1800 },
+    { date: '01.03.2026', desc: 'Loyer mars', amount: 1800 },
+  ],
+  V02: [
+    { date: '01.01.2026', desc: 'Prime Assurance maladie jan', amount: 440 },
+    { date: '01.02.2026', desc: 'Prime Assurance maladie fév', amount: 440 },
+  ],
+  V03: [
+    { date: '15.01.2026', desc: 'Courses alimentaires sem. 1-4', amount: 960 },
+    { date: '15.02.2026', desc: 'Courses alimentaires sem. 5-8', amount: 980 },
+  ],
+  V04: [
+    { date: '01.01.2026', desc: 'Abonnement CFF annuel', amount: 3860 },
+    { date: '15.02.2026', desc: 'Essence voiture', amount: 120 },
+  ],
+  V05: [
+    { date: '10.02.2026', desc: 'Abonnement Netflix, Spotify', amount: 42 },
+    { date: '15.03.2026', desc: 'Sortie restaurant', amount: 180 },
+  ],
+  E01: [
+    { date: '01.01.2026', desc: 'Versement 3e pilier A (max 2026)', amount: 7056 },
+  ],
+  E02: [
+    { date: '31.01.2026', desc: 'Virement épargne jan', amount: 700 },
+    { date: '28.02.2026', desc: 'Virement épargne fév', amount: 700 },
+  ],
+  E03: [
+    { date: '01.01.2026', desc: 'Rachat LPP volontaire', amount: 3000 },
+  ],
+  O01: [
+    { date: '15.03.2026', desc: 'Acompte impôts fédéraux', amount: 5400 },
+  ],
+  O02: [
+    { date: '15.03.2026', desc: 'Acompte impôts cantonaux tranche 1', amount: 5600 },
+    { date: '15.06.2026', desc: 'Acompte impôts cantonaux tranche 2', amount: 5600 },
+  ],
+  O03: [
+    { date: '15.03.2026', desc: 'Acompte impôts communaux tranche 1', amount: 1300 },
+    { date: '15.06.2026', desc: 'Acompte impôts communaux tranche 2', amount: 1300 },
+  ],
+};
+
+// ——— PpDetailDrawer ———
+interface PpDetailDrawerProps {
+  item: PpItem | null;
+  onClose: () => void;
+}
+
+function PpDetailDrawer({ item, onClose }: PpDetailDrawerProps) {
+  if (!item) return null;
+  const txs = MOCK_TX[item.code] ?? [];
+  const fmtChf = (n: number) =>
+    new Intl.NumberFormat('fr-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+
+  return createPortal(
+    <>
+      {/* Overlay click-outside */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.35)',
+          zIndex: 200,
+        }}
+      />
+      {/* Drawer */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: 'min(400px, 92vw)',
+          background: 'rgb(var(--surface, 255 255 255))',
+          borderLeft: '1px solid rgb(var(--border, 229 229 222))',
+          zIndex: 201,
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '-8px 0 40px rgba(0,0,0,0.12)',
+          animation: 'ppDrawerIn 0.2s ease',
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            padding: '16px 20px',
+            borderBottom: '1px solid rgb(var(--border, 229 229 222))',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexShrink: 0,
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 10, fontFamily: '"JetBrains Mono", monospace', color: 'rgb(var(--muted, 107 107 102))', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              {item.code}
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-0.01em', color: 'rgb(var(--ink, 10 10 10))', marginTop: 2 }}>
+              {item.name}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              border: '1px solid rgb(var(--border, 229 229 222))',
+              background: 'transparent',
+              cursor: 'pointer',
+              display: 'grid',
+              placeItems: 'center',
+              fontSize: 14,
+              color: 'rgb(var(--muted, 107 107 102))',
+            }}
+            title="Fermer (Échap)"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Stats */}
+        <div
+          style={{
+            padding: '16px 20px',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 10,
+            borderBottom: '1px solid rgb(var(--border, 229 229 222))',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ background: 'rgb(var(--elevated, 243 243 238))', borderRadius: 8, padding: '10px 14px' }}>
+            <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgb(var(--muted, 107 107 102))', fontWeight: 600 }}>
+              Montant total
+            </div>
+            <div style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 18, fontWeight: 500, color: TONE_COLOR[item.tone], marginTop: 4 }}>
+              {fmtMoney(item.amount)}
+              <span style={{ fontSize: 10, color: 'rgb(var(--subtle, 154 154 147))', fontWeight: 400, marginLeft: 4 }}>CHF</span>
+            </div>
+          </div>
+          <div style={{ background: 'rgb(var(--elevated, 243 243 238))', borderRadius: 8, padding: '10px 14px' }}>
+            <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgb(var(--muted, 107 107 102))', fontWeight: 600 }}>
+              Mouvements
+            </div>
+            <div style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 18, fontWeight: 500, color: 'rgb(var(--ink, 10 10 10))', marginTop: 4 }}>
+              {item.count}×
+            </div>
+          </div>
+        </div>
+
+        {/* Liste transactions */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgb(var(--muted, 107 107 102))', fontWeight: 600, marginBottom: 10 }}>
+            {txs.length > 0 ? `${txs.length} transaction(s)` : 'Aucune transaction'}
+          </div>
+          {txs.length === 0 && (
+            <div style={{ textAlign: 'center', color: 'rgb(var(--muted, 107 107 102))', fontSize: 13, padding: '32px 0' }}>
+              Aucune transaction disponible
+            </div>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {txs.map((tx, i) => (
+              <div
+                key={i}
+                style={{
+                  background: 'rgb(var(--elevated, 243 243 238))',
+                  border: '1px solid rgb(var(--border, 229 229 222))',
+                  borderRadius: 8,
+                  padding: '10px 12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 10,
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontFamily: '"JetBrains Mono", monospace', color: 'rgb(var(--subtle, 154 154 147))' }}>
+                    {tx.date}
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: 'rgb(var(--ink, 10 10 10))', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {tx.desc}
+                  </div>
+                </div>
+                <div style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 13, fontWeight: 500, color: TONE_COLOR[item.tone], flexShrink: 0 }}>
+                  {fmtChf(tx.amount)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div
+          style={{
+            padding: '12px 20px',
+            borderTop: '1px solid rgb(var(--border, 229 229 222))',
+            background: 'rgb(var(--elevated, 243 243 238))',
+            fontSize: 11,
+            color: 'rgb(var(--muted, 107 107 102))',
+            flexShrink: 0,
+          }}
+        >
+          Données de démonstration · les transactions réelles PP seront disponibles en V1.2
+        </div>
+      </div>
+      <style>{`
+        @keyframes ppDrawerIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to   { transform: none; opacity: 1; }
+        }
+      `}</style>
+    </>,
+    document.body,
+  );
+}
+
 export function PpWorkspace() {
   const [selected, setSelected] = useState<{ b: number; i: number } | null>(null);
+  const [drawerItem, setDrawerItem] = useState<PpItem | null>(null);
+  const [prefilling, setPrefilling] = useState(false);
   const navigate = useNavigate();
   const d = PP_DATA;
   const year = new Date().getFullYear();
+
+  // Préremplissage du draft taxpayer depuis les données disponibles avant navigation
+  const handleNavigateTaxpayer = useCallback(async () => {
+    setPrefilling(true);
+    try {
+      // 1. Fetch le profil utilisateur pour récupérer nom/prénom
+      const me = await lexa.me();
+
+      // 2. Préparer les champs à pré-remplir
+      type PrefillField = { field: string; value: unknown };
+      const fields: PrefillField[] = [];
+
+      // Identity depuis la company (nom légal) — email comme fallback
+      const companyName = me.company?.name ?? '';
+      const emailPrefix = me.user.email.split('@')[0] ?? '';
+      // Si company name contient un espace → prénom + nom, sinon email
+      if (companyName.includes(' ')) {
+        const parts = companyName.split(' ');
+        fields.push({ field: 'step1.firstName', value: parts[0] });
+        fields.push({ field: 'step1.lastName', value: parts.slice(1).join(' ') });
+      } else if (emailPrefix.includes('.')) {
+        const [first, ...rest] = emailPrefix.split('.');
+        if (first) fields.push({ field: 'step1.firstName', value: first.charAt(0).toUpperCase() + first.slice(1) });
+        if (rest.length) fields.push({ field: 'step1.lastName', value: rest.join(' ').charAt(0).toUpperCase() + rest.join(' ').slice(1) });
+      }
+
+      // Canton depuis la company si PP (on essaie VS comme défaut CH-romand)
+      const canton = (me.company?.canton as string) || 'VS';
+      fields.push({ field: 'step1.canton', value: canton });
+
+      // Revenu salarial (somme des postes Salaire & revenus du workspace PP)
+      const totalSalBrut = d.buckets[0].items.reduce((s, x) => s + x.amount, 0);
+      fields.push({ field: 'step2.isSalarie', value: true });
+      fields.push({ field: 'step2.salaireBrut', value: totalSalBrut });
+
+      // Déductions — 3e pilier et LPP
+      const pilier3a = d.buckets[2].items.find((x) => x.code === 'E01')?.amount ?? 0;
+      const rachatsLpp = d.buckets[2].items.find((x) => x.code === 'E03')?.amount ?? 0;
+      if (pilier3a)  fields.push({ field: 'step4.pilier3a', value: pilier3a });
+      if (rachatsLpp) fields.push({ field: 'step4.rachatsLpp', value: rachatsLpp });
+
+      // 3. Patcher le draft pour chaque champ (en séquence pour éviter les conflits)
+      for (const f of fields) {
+        try {
+          await lexa.patchTaxpayerField({ fiscalYear: year, step: Number(f.field.startsWith('step1') ? 1 : f.field.startsWith('step2') ? 2 : 4), field: f.field, value: f.value });
+        } catch {
+          // Soft fail : on continue même si un champ échoue
+        }
+      }
+    } catch {
+      // Soft fail : la navigation se fait quand même
+    } finally {
+      setPrefilling(false);
+      navigate(`/taxpayer/${year}`);
+    }
+  }, [d.buckets, year, navigate]);
 
   const totalSal = d.buckets[0].items.reduce((s, x) => s + x.amount, 0);
   const totalVP  = d.buckets[1].items.reduce((s, x) => s + x.amount, 0);
@@ -219,7 +513,10 @@ export function PpWorkspace() {
                         return (
                           <div
                             key={ii}
-                            onClick={() => setSelected(isSel ? null : { b: bi, i: ii })}
+                            onClick={() => {
+                              setSelected(isSel ? null : { b: bi, i: ii });
+                              setDrawerItem(it);
+                            }}
                             style={{
                               display: 'grid',
                               gridTemplateColumns: '80px 180px 1fr 120px 60px',
@@ -315,7 +612,7 @@ export function PpWorkspace() {
                 {d.obligations.map((o, i) => (
                   <div
                     key={i}
-                    onClick={() => navigate(`/taxpayer/${year}`)}
+                    onClick={() => { void handleNavigateTaxpayer(); }}
                     style={{
                       display: 'grid',
                       gridTemplateColumns: '54px 1fr auto',
@@ -370,13 +667,16 @@ export function PpWorkspace() {
                     <strong style={{ color: 'rgb(var(--success))' }}>~790 CHF</strong>.
                   </>
                 }
-                cta="Simuler"
-                onCta={() => navigate(`/taxpayer/${year}`)}
+                cta={prefilling ? 'Chargement…' : 'Simuler'}
+                onCta={() => { if (!prefilling) void handleNavigateTaxpayer(); }}
               />
             </div>
           </div>
         </div>
       </div>
+
+      {/* Drawer détail PP item */}
+      <PpDetailDrawer item={drawerItem} onClose={() => setDrawerItem(null)} />
     </div>
   );
 }
