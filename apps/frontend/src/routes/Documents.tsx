@@ -84,7 +84,7 @@ function ProBadge({ doc }: { doc: DocumentMeta }) {
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); setModalOpen(true); }}
-        className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:bg-violet-500/30 transition-colors text-2xs font-medium"
+        className="absolute top-3 right-10 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:bg-violet-500/30 transition-colors text-2xs font-medium"
         title="Document issu de Swigs Pro"
       >
         <Briefcase className="w-3 h-3" />
@@ -130,7 +130,7 @@ function ProBadge({ doc }: { doc: DocumentMeta }) {
               )}
             </div>
             <a
-              href="https://app.swigs.io"
+              href={doc.proInvoiceId ? `https://workflow.swigs.online?invoice=${doc.proInvoiceId}` : 'https://workflow.swigs.online'}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-ghost !text-xs flex items-center gap-1.5 justify-center"
