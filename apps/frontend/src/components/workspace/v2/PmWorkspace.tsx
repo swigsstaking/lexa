@@ -9,6 +9,8 @@ import type { V2Account } from './AccountTile';
 import { classFromCode, extractCode, extractName } from './soldeDirection';
 import { usePeriodStore } from '@/stores/periodStore';
 import type { LedgerAccount, LedgerEntry } from '@/api/types';
+import { LedgerDrawer } from '@/components/canvas/LedgerDrawer';
+import type { LedgerSelection } from '@/components/canvas/LedgerDrawer';
 
 type PmView = 'colA' | 'colB' | 'ledger';
 
@@ -70,6 +72,11 @@ export function PmWorkspace() {
   const [kpiVisibility] = useState({
     tresorerie: true, resultat: true, tva: true, anomalies: true,
   });
+  const [drawerSelection, setDrawerSelection] = useState<LedgerSelection>(null);
+
+  const handleOpenDrawer = (accountCode: string) => {
+    setDrawerSelection({ kind: 'account', accountId: accountCode });
+  };
 
   // Persister pmView
   const handleSetView = (v: string) => {
@@ -172,6 +179,7 @@ export function PmWorkspace() {
             focusCode={focusCode}
             setFocusCode={setFocusCode}
             kpiVisibility={kpiVisibility}
+            onOpenDrawer={handleOpenDrawer}
           />
         )}
         {pmView === 'colB' && (
@@ -181,6 +189,7 @@ export function PmWorkspace() {
             focusCode={focusCode}
             setFocusCode={setFocusCode}
             kpiVisibility={kpiVisibility}
+            onOpenDrawer={handleOpenDrawer}
           />
         )}
         {pmView === 'ledger' && (
@@ -191,6 +200,14 @@ export function PmWorkspace() {
           />
         )}
       </div>
+
+      {/* LedgerDrawer V2 — même composant que V1, déclenché par click sur AccountTile */}
+      <LedgerDrawer
+        selection={drawerSelection}
+        accounts={balance.data?.accounts ?? []}
+        entries={entries.data?.entries ?? []}
+        onClose={() => setDrawerSelection(null)}
+      />
     </div>
   );
 }
