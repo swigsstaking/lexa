@@ -532,7 +532,7 @@ export function Workspace() {
         {!hasEntries && !health.isLoading && (
           <div
             className="absolute inset-0 grid place-items-center pointer-events-none z-20"
-            style={workspaceVersion === 'v2' ? { background: 'rgba(245,242,236,0.60)', backdropFilter: 'blur(2px)' } : undefined}
+            style={workspaceVersion === 'v2' ? { background: 'rgb(var(--bg))' } : undefined}
           >
             <div
               className={workspaceVersion === 'v2' ? 'pointer-events-auto text-center mx-4' : 'card-elevated p-8 max-w-2xl pointer-events-auto text-center mx-4'}
