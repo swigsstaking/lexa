@@ -193,7 +193,7 @@ export function PmColumnsB({
   return (
     <div className="v2-canvas" style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div ref={scrollRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
-        <div style={{ padding: '24px', minHeight: '100%' }}>
+        <div style={{ padding: '68px 24px 24px', minHeight: '100%' }}>
           <div
             ref={gridRef}
             style={{
