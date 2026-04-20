@@ -126,6 +126,34 @@ export type LexaEvent =
         sentAt?: string;
         paidAt?: string;
       };
+    }
+  | {
+      type: "TransactionCorrected";
+      payload: {
+        transactionStreamId: string; // ref au stream corrigé (toujours le même stream_id)
+        debitAccount?: string;       // nouvelles valeurs, optionnelles (undefined = inchangé)
+        creditAccount?: string;
+        amountTtc?: number;
+        description?: string;
+        reasoning: string;           // pourquoi la correction (obligatoire pour audit trail)
+        correctedByUserId: string;
+      };
+    }
+  | {
+      type: "TransactionsLettered";
+      payload: {
+        transactionStreamId: string;
+        letterRef: string;           // ex "L-2026-04-001"
+        letteredByUserId: string;
+      };
+    }
+  | {
+      type: "TransactionsUnlettered";
+      payload: {
+        transactionStreamId: string;
+        letterRef: string;
+        unletteredByUserId: string;
+      };
     };
 
 export type LexaEventType = LexaEvent["type"];
