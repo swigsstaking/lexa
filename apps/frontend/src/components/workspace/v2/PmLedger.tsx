@@ -82,11 +82,12 @@ interface PmLedgerProps {
   focusCode: string | null;
   setFocusCode: (code: string | null) => void;
   onOpenCmdK?: () => void;
+  onOpenDrawer?: (accountCode: string) => void;
 }
 
 type FilterKey = 'all' | AccountClass;
 
-export function PmLedger({ accounts, focusCode, setFocusCode, onOpenCmdK }: PmLedgerProps) {
+export function PmLedger({ accounts, focusCode, setFocusCode, onOpenCmdK, onOpenDrawer }: PmLedgerProps) {
   const [filter, setFilter] = useState<FilterKey>('all');
   const [query, setQuery] = useState('');
 
@@ -242,7 +243,10 @@ export function PmLedger({ accounts, focusCode, setFocusCode, onOpenCmdK }: PmLe
                   return (
                     <div
                       key={a.code}
-                      onClick={() => setFocusCode(a.code)}
+                      onClick={() => {
+                        setFocusCode(a.code);
+                        if (onOpenDrawer) onOpenDrawer(a.code);
+                      }}
                       style={{
                         display: 'grid',
                         gridTemplateColumns: '60px 1fr 100px 80px 110px 110px 60px',

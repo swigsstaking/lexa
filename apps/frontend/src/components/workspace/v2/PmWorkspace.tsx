@@ -363,6 +363,7 @@ export function PmWorkspace() {
             focusCode={focusCode}
             setFocusCode={setFocusCode}
             onOpenCmdK={() => setCmdkOpen(true)}
+            onOpenDrawer={handleOpenDrawer}
           />
         )}
       </div>
