@@ -8,21 +8,20 @@ interface LexaInsightProps {
 }
 
 /**
- * Card dark "Lexa remarque" — thème dark stone Lexa.
- * Adapté depuis le prototype : cream/orange → tokens dark Lexa.
- * bg-bg (dark bg) + border-border + ink / muted.
+ * Card "Lexa remarque" — dark chrome comme dans le prototype.
+ * Conserve le look dark (#0A0A0A + orange Lexa accent) même dans le thème cream.
  */
 export function LexaInsight({ title, body, cta, onCta }: LexaInsightProps) {
   return (
     <div
       style={{
-        background: 'rgb(var(--surface))',
-        border: '1px solid rgb(var(--border-strong))',
+        background: 'var(--chrome-bg)',
+        color: 'var(--chrome-ink-1)',
         borderRadius: 14,
         padding: '16px 20px',
         display: 'grid',
         gridTemplateColumns: 'auto 1fr auto',
-        gap: 16,
+        gap: 20,
         alignItems: 'center',
       }}
     >
@@ -32,8 +31,8 @@ export function LexaInsight({ title, body, cta, onCta }: LexaInsightProps) {
           width: 32,
           height: 32,
           borderRadius: 9,
-          background: 'rgb(var(--elevated))',
-          color: 'rgb(var(--accent))',
+          background: 'var(--chrome-bg-2)',
+          color: 'var(--lexa)',
           display: 'grid',
           placeItems: 'center',
           fontSize: 14,
@@ -50,9 +49,9 @@ export function LexaInsight({ title, body, cta, onCta }: LexaInsightProps) {
             fontSize: 10,
             textTransform: 'uppercase',
             letterSpacing: '0.1em',
-            color: 'rgb(var(--subtle))',
+            color: 'var(--chrome-ink-3)',
             fontWeight: 600,
-            marginBottom: 4,
+            marginBottom: 2,
           }}
         >
           {title}
@@ -61,7 +60,7 @@ export function LexaInsight({ title, body, cta, onCta }: LexaInsightProps) {
           style={{
             fontSize: 13,
             lineHeight: 1.5,
-            color: 'rgb(var(--ink))',
+            color: 'var(--chrome-ink-1)',
           }}
         >
           {body}
@@ -73,8 +72,8 @@ export function LexaInsight({ title, body, cta, onCta }: LexaInsightProps) {
         <button
           onClick={onCta}
           style={{
-            background: 'rgb(var(--accent))',
-            color: 'rgb(var(--accent-fg))',
+            background: 'var(--lexa)',
+            color: 'var(--chrome-bg)',
             border: 0,
             padding: '8px 14px',
             borderRadius: 999,

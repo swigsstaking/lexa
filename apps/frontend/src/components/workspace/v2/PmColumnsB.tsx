@@ -19,10 +19,10 @@ interface Flow {
 }
 
 const KIND_COLOR: Record<string, string> = {
-  in:    'rgb(var(--success))',
-  out:   'rgb(var(--danger))',
-  asset: 'rgb(var(--warning))',
-  tax:   'rgb(var(--accent))',
+  in:    'var(--pos)',
+  out:   'var(--neg)',
+  asset: 'var(--ast)',
+  tax:   'var(--tax)',
 };
 
 function buildFlows(byClass: Record<AccountClass, V2Account[]>): Flow[] {
@@ -116,10 +116,10 @@ interface PmColumnsBProps {
 const COLUMN_ORDER: AccountClass[] = ['P', 'A', 'L', 'C'];
 
 const COLUMN_META: Record<AccountClass, { label: string; sub: string; color: string }> = {
-  P: { label: 'Produits',   sub: 'Classe 3',    color: 'rgb(var(--success))' },
-  A: { label: 'Actifs',     sub: 'Classe 1',    color: 'rgb(var(--warning))' },
-  L: { label: 'Passifs',    sub: 'Classe 2',    color: 'rgb(var(--accent))'  },
-  C: { label: 'Charges',    sub: 'Classes 4–9', color: 'rgb(var(--danger))'  },
+  P: { label: 'Produits',   sub: 'Classe 3',    color: 'var(--pos)' },
+  A: { label: 'Actifs',     sub: 'Classe 1',    color: 'var(--ast)' },
+  L: { label: 'Passifs',    sub: 'Classe 2',    color: 'var(--tax)' },
+  C: { label: 'Charges',    sub: 'Classes 4–9', color: 'var(--neg)' },
 };
 
 export function PmColumnsB({
@@ -191,7 +191,7 @@ export function PmColumnsB({
   const totalCharges = accounts.filter((a) => a.class === 'C').reduce((s, a) => s + Math.abs(a.balance), 0);
 
   return (
-    <div style={{ position: 'relative', height: '100%', background: 'rgb(var(--bg))' }}>
+    <div className="v2-canvas" style={{ position: 'relative', height: '100%' }}>
       <div ref={scrollRef} style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
         <div style={{ padding: '24px', minHeight: '100%' }}>
           <div
@@ -215,8 +215,8 @@ export function PmColumnsB({
                   top: 40,
                   bottom: 0,
                   width: 0,
-                  borderLeft: '1px dashed rgb(var(--border-strong))',
-                  opacity: 0.4,
+                  borderLeft: '1px dashed var(--line-2)',
+                  opacity: 0.5,
                   zIndex: 0,
                 }}
               />
@@ -234,23 +234,23 @@ export function PmColumnsB({
                     style={{
                       padding: '6px 10px',
                       marginBottom: 4,
-                      background: 'rgb(var(--surface))',
-                      border: '1px solid rgb(var(--border))',
+                      background: 'var(--v2-surface)',
+                      border: '1px solid var(--line-1)',
                       borderRadius: 10,
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ width: 8, height: 8, borderRadius: 2, background: meta.color, flexShrink: 0 }} />
-                        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '-0.01em', color: 'rgb(var(--ink))' }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink-1)' }}>
                           {meta.label}
                         </span>
                       </div>
-                      <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 11, fontVariantNumeric: 'tabular-nums', color: 'rgb(var(--muted))', fontWeight: 500 }}>
+                      <span style={{ fontFamily: 'var(--mono-font)', fontSize: 11, fontVariantNumeric: 'tabular-nums', color: 'var(--ink-2)', fontWeight: 500 }}>
                         {fmtMoney(total)}
                       </span>
                     </div>
-                    <div style={{ fontSize: 10, color: 'rgb(var(--subtle))', marginTop: 2 }}>
+                    <div style={{ fontSize: 10, color: 'var(--ink-4)', marginTop: 2 }}>
                       {meta.sub} · {list.length} comptes
                     </div>
                   </div>
@@ -321,16 +321,16 @@ export function PmColumnsB({
                     top: r.my,
                     transform: 'translate(-50%, -50%)',
                     zIndex: 3,
-                    background: strong ? 'rgb(var(--ink))' : 'rgb(var(--elevated))',
-                    color: strong ? 'rgb(var(--bg))' : 'rgb(var(--muted))',
+                    background: strong ? 'var(--ink-1)' : 'rgba(255,255,255,0.95)',
+                    color: strong ? '#FAFAF7' : 'var(--ink-2)',
                     padding: '2px 7px',
                     borderRadius: 4,
-                    fontFamily: '"JetBrains Mono", monospace',
+                    fontFamily: 'var(--mono-font)',
                     fontSize: 10,
                     fontWeight: 600,
                     fontVariantNumeric: 'tabular-nums',
                     whiteSpace: 'nowrap',
-                    border: strong ? 'none' : '1px solid rgb(var(--border))',
+                    border: strong ? 'none' : '1px solid var(--line-1)',
                     pointerEvents: 'none',
                     opacity: active && !r.isActive ? 0 : 1,
                     transition: 'opacity 200ms',

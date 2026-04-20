@@ -10,7 +10,7 @@ interface ViewSwitcherProps {
 }
 
 /**
- * Pill switcher réutilisable — style discret thème dark stone Lexa.
+ * Pill switcher — style prototype : floating surface semi-transparent avec blur.
  */
 export function ViewSwitcher({ options, active, onChange }: ViewSwitcherProps) {
   return (
@@ -19,8 +19,10 @@ export function ViewSwitcher({ options, active, onChange }: ViewSwitcherProps) {
         display: 'inline-flex',
         gap: 2,
         padding: 3,
-        background: 'rgb(var(--elevated))',
-        border: '1px solid rgb(var(--border))',
+        background: 'rgba(255,255,255,0.8)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        border: '1px solid var(--line-1)',
         borderRadius: 10,
       }}
     >
@@ -37,10 +39,9 @@ export function ViewSwitcher({ options, active, onChange }: ViewSwitcherProps) {
               cursor: 'pointer',
               fontSize: 11,
               fontWeight: 500,
-              background: isActive ? 'rgb(var(--surface))' : 'transparent',
-              color: isActive ? 'rgb(var(--ink))' : 'rgb(var(--muted))',
+              background: isActive ? 'var(--ink-1)' : 'transparent',
+              color: isActive ? '#FAFAF7' : 'var(--ink-2)',
               transition: 'background 120ms, color 120ms',
-              boxShadow: isActive ? '0 1px 3px rgb(0 0 0 / 0.3)' : 'none',
             }}
           >
             {o.label}

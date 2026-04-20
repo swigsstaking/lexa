@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/*
+ * Lexa Workspace V2 — Theme scoping
+ * Scope : uniquement dans .workspace-v2-theme
+ * Ces vars redéfinissent localement les tokens UI pour imiter le prototype Claude Design
+ * (cream bg + orange accent + dark Lexa card), sans polluer le reste de l'app.
+ *
+ * Note : les variables sont exposées en deux formats
+ *  - "R G B" (triplet, compatible avec rgb(var(--xxx)) existants)
+ *  - valeurs custom (--lexa-accent, --line-1, etc.) pour compat prototype
+ */
+
+.workspace-v2-theme {
+  /* ——— Tokens Lexa "base" redéfinis en cream/orange ——— */
+  /* #F5F2EC → 245 242 236 */
+  --bg: 245 242 236;
+  /* #FFFFFF */
+  --surface: 255 255 255;
+  /* #EDE8DF (bg-2 prototype) */
+  --elevated: 237 232 223;
+  /* #E3DED2 (line-1 prototype) */
+  --border: 227 222 210;
+  /* #CFC8B8 (line-2 prototype) */
+  --border-strong: 207 200 184;
+  /* #1A1814 (ink-1) */
+  --ink: 26 24 20;
+  /* #6B6760 (ink-3) */
+  --muted: 107 103 96;
+  /* #9A958B (ink-4) */
+  --subtle: 154 149 139;
+  /* Orange Lexa oklch(0.74 0.17 55) ≈ #E08A3D */
+  --accent: 224 138 61;
+  /* sur l'orange, foreground = cream/ink */
+  --accent-fg: 10 10 10;
+
+  /* Sémantiques adaptées au thème crème */
+  /* var(--pos) oklch(0.55 0.12 155) ≈ #3B8560 */
+  --success: 59 133 96;
+  /* var(--neg) oklch(0.52 0.16 25) ≈ #B8533F */
+  --danger: 184 83 63;
+  /* var(--tax) oklch(0.55 0.15 55) ≈ #A06E2E */
+  --warning: 160 110 46;
+
+  /* ——— CSS vars du prototype utilisées directement ——— */
+  --lexa: oklch(0.74 0.17 55);
+  --lexa-deep: oklch(0.55 0.15 50);
+  --lexa-soft: oklch(0.92 0.08 60);
+
+  --pos: oklch(0.55 0.12 155);
+  --pos-bg: oklch(0.94 0.04 155);
+  --neg: oklch(0.52 0.16 25);
+  --neg-bg: oklch(0.96 0.04 25);
+  --tax: oklch(0.55 0.15 55);
+  --tax-bg: oklch(0.96 0.05 55);
+  --ast: oklch(0.48 0.10 240);
+  --ast-bg: oklch(0.96 0.03 240);
+
+  --line-1: #E3DED2;
+  --line-2: #CFC8B8;
+  --ink-1: #1A1814;
+  --ink-2: #3B3834;
+  --ink-3: #6B6760;
+  --ink-4: #9A958B;
+
+  --chrome-bg: #0A0A0A;
+  --chrome-bg-2: #161613;
+  --chrome-line: #25251F;
+  --chrome-ink-1: #FAFAF7;
+  --chrome-ink-2: #A8A8A0;
+  --chrome-ink-3: #6B6B66;
+
+  --v2-bg: #F5F2EC;
+  --v2-bg-2: #EDE8DF;
+  --v2-surface: #FFFFFF;
+
+  --mono-font: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* Applique les tokens de base */
+  color: var(--ink-1);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Canvas background cream avec vignette radiale (comme le prototype) */
+.workspace-v2-theme .v2-canvas {
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 0%, #EFE9DB 0%, transparent 70%),
+    linear-gradient(180deg, #F5F2EC 0%, #EFE9DB 100%);
+}

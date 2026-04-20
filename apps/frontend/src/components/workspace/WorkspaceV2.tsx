@@ -2,6 +2,7 @@ import { useActiveCompany } from '@/stores/companiesStore';
 import { PmWorkspace } from './v2/PmWorkspace';
 import { PpWorkspace } from './v2/PpWorkspace';
 import type { LegalForm } from '@/api/types';
+import './v2/workspace-v2-theme.css';
 
 /** Formes juridiques considérées PM (personne morale) */
 const PM_FORMS: LegalForm[] = ['sa', 'sca', 'sarl', 'cooperative', 'sa_etrangere', 'snc', 'senc'];
@@ -18,7 +19,7 @@ export function WorkspaceV2() {
     || (company?.legalForm && PM_FORMS.includes(company.legalForm));
 
   return (
-    <div className="absolute inset-0 flex flex-col">
+    <div className="workspace-v2-theme absolute inset-0 flex flex-col">
       {isPm ? <PmWorkspace /> : <PpWorkspace />}
     </div>
   );

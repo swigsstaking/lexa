@@ -20,10 +20,10 @@ interface Flow {
 }
 
 const KIND_COLOR: Record<string, string> = {
-  in: 'rgb(var(--success))',
-  out: 'rgb(var(--danger))',
-  asset: 'rgb(var(--warning))',
-  tax: 'rgb(var(--accent))',
+  in: 'var(--pos)',
+  out: 'var(--neg)',
+  asset: 'var(--ast)',
+  tax: 'var(--tax)',
 };
 
 /** Génère des flux simplifiés entre colonnes adjacentes à partir des données de compte */
@@ -153,8 +153,8 @@ function PmKpis({ accounts, visibility }: PmKpisProps) {
         display: 'grid',
         gridTemplateColumns: `repeat(${items.length}, 1fr)`,
         gap: 1,
-        background: 'rgb(var(--border))',
-        border: '1px solid rgb(var(--border))',
+        background: 'var(--line-1)',
+        border: '1px solid var(--line-1)',
         borderRadius: 12,
         overflow: 'hidden',
       }}
@@ -164,7 +164,7 @@ function PmKpis({ accounts, visibility }: PmKpisProps) {
           key={i}
           style={{
             padding: '14px 18px',
-            background: 'rgb(var(--surface))',
+            background: 'var(--v2-surface)',
             display: 'flex',
             flexDirection: 'column',
             gap: 4,
@@ -180,18 +180,18 @@ function PmKpis({ accounts, visibility }: PmKpisProps) {
                 width: 6,
                 height: 6,
                 borderRadius: 3,
-                background: 'rgb(var(--accent))',
-                boxShadow: '0 0 0 3px rgb(var(--accent) / 0.2)',
+                background: 'var(--lexa)',
+                boxShadow: '0 0 0 3px oklch(0.74 0.17 55 / 0.2)',
               }}
             />
           )}
-          <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgb(var(--muted))', fontWeight: 600 }}>
+          <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-4)', fontWeight: 600 }}>
             {x.k}
           </span>
-          <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 20, fontWeight: 500, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em', color: 'rgb(var(--ink))' }}>
+          <span style={{ fontFamily: 'var(--mono-font)', fontSize: 20, fontWeight: 500, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em', color: 'var(--ink-1)' }}>
             {x.v}
           </span>
-          <span style={{ fontSize: 11, color: 'rgb(var(--muted))' }}>
+          <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>
             {x.d}
           </span>
         </div>
@@ -282,7 +282,8 @@ export function PmColumnsA({
 
   return (
     <div
-      style={{ position: 'relative', height: '100%', background: 'rgb(var(--bg))' }}
+      className="v2-canvas"
+      style={{ position: 'relative', height: '100%' }}
     >
       <div
         ref={scrollRef}
@@ -319,22 +320,22 @@ export function PmColumnsA({
                       alignItems: 'baseline',
                       justifyContent: 'space-between',
                       padding: '0 2px 8px',
-                      borderBottom: '1px solid rgb(var(--border))',
+                      borderBottom: '1px solid var(--line-1)',
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: 10, color: 'rgb(var(--muted))', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>
+                      <div style={{ fontSize: 10, color: 'var(--ink-4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>
                         {meta.label}
                       </div>
-                      <div style={{ fontSize: 11, color: 'rgb(var(--subtle))', marginTop: 2 }}>
-                        {meta.sub} · <span style={{ fontFamily: '"JetBrains Mono", monospace' }}>{list.length}</span>
+                      <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>
+                        {meta.sub} · <span style={{ fontFamily: 'var(--mono-font)' }}>{list.length}</span>
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontFamily: '"JetBrains Mono", monospace', fontWeight: 500, fontSize: 13, fontVariantNumeric: 'tabular-nums', color: 'rgb(var(--ink))' }}>
+                      <div style={{ fontFamily: 'var(--mono-font)', fontWeight: 500, fontSize: 13, fontVariantNumeric: 'tabular-nums', color: 'var(--ink-1)' }}>
                         {fmtMoney(total)}
                       </div>
-                      <div style={{ fontSize: 10, color: 'rgb(var(--muted))' }}>CHF</div>
+                      <div style={{ fontSize: 10, color: 'var(--ink-4)' }}>CHF</div>
                     </div>
                   </div>
 
@@ -425,17 +426,17 @@ export function PmColumnsA({
                     top: p.my,
                     transform: 'translate(-50%, -50%)',
                     zIndex: 3,
-                    background: strong ? 'rgb(var(--ink))' : 'rgb(var(--elevated))',
-                    color: strong ? 'rgb(var(--bg))' : 'rgb(var(--muted))',
-                    border: strong ? 'none' : '1px solid rgb(var(--border))',
+                    background: strong ? 'var(--ink-1)' : 'var(--v2-surface)',
+                    color: strong ? '#FAFAF7' : 'var(--ink-2)',
+                    border: strong ? 'none' : '1px solid var(--line-1)',
                     padding: '3px 8px',
                     borderRadius: 999,
-                    fontFamily: '"JetBrains Mono", monospace',
+                    fontFamily: 'var(--mono-font)',
                     fontSize: 10,
                     fontWeight: 500,
                     fontVariantNumeric: 'tabular-nums',
                     whiteSpace: 'nowrap',
-                    boxShadow: strong ? '0 2px 8px rgb(0 0 0 / 0.4)' : '0 1px 2px rgb(0 0 0 / 0.15)',
+                    boxShadow: strong ? '0 2px 8px rgba(10,10,10,0.15)' : '0 1px 2px rgba(10,10,10,0.04)',
                     pointerEvents: 'none',
                     opacity: active && !p.isActive ? 0.1 : 1,
                     transition: 'opacity 200ms',
@@ -455,7 +456,7 @@ export function PmColumnsA({
                 <>
                   <strong>{accounts.filter((a) => a.class === 'P').length} comptes de produits</strong> actifs ce mois.
                   Les charges représentent{' '}
-                  <span style={{ color: 'rgb(var(--accent))' }}>
+                  <span style={{ color: 'var(--lexa)' }}>
                     {accounts.filter((a) => a.class === 'C').length} postes
                   </span>.
                   {accounts.filter((a) => {
@@ -465,7 +466,7 @@ export function PmColumnsA({
                   }).length > 0 && (
                     <>
                       {' '}
-                      <span style={{ color: 'rgb(var(--accent))' }}>
+                      <span style={{ color: 'var(--lexa)' }}>
                         {accounts.filter((a) => {
                           const cls = a.class;
                           const normalPositive = cls === 'A' || cls === 'C';

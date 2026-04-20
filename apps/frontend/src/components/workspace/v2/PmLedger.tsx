@@ -14,10 +14,10 @@ const TYPE_LABELS: Record<AccountClass, string> = {
 };
 
 const CLASS_BADGE: Record<AccountClass, React.CSSProperties> = {
-  P: { background: 'rgb(var(--success) / 0.15)', color: 'rgb(var(--success))' },
-  A: { background: 'rgb(var(--ink) / 0.9)',      color: 'rgb(var(--accent))' },
-  L: { background: 'rgb(var(--warning) / 0.15)', color: 'rgb(var(--warning))' },
-  C: { background: 'rgb(var(--danger) / 0.15)',  color: 'rgb(var(--danger))' },
+  P: { background: 'var(--pos-bg)', color: 'var(--pos)' },
+  A: { background: 'var(--ink-1)',  color: 'var(--lexa)' },
+  L: { background: 'var(--tax-bg)', color: 'var(--tax)' },
+  C: { background: 'var(--neg-bg)', color: 'var(--neg)' },
 };
 
 // Mini graphe radial contreparties (SVG simple)
@@ -40,36 +40,36 @@ function LedgerMiniGraph({ sel, relatedAccounts }: MiniGraphProps) {
         const x = cx + Math.cos(angle) * r;
         const y = cy + Math.sin(angle) * r;
         const t = Math.max(1.2, (f.amount / maxAmt) * 4);
-        const c = f.direction === 'in' ? 'rgb(var(--success))' : 'rgb(var(--danger))';
+        const c = f.direction === 'in' ? 'var(--pos)' : 'var(--neg)';
         return (
           <g key={i}>
             <line x1={cx} y1={cy} x2={x} y2={y} stroke={c} strokeWidth={t} strokeOpacity={0.6} strokeLinecap="round" />
-            <circle cx={x} cy={y} r={14} fill="rgb(var(--surface))" stroke={c} strokeWidth={1.2} />
+            <circle cx={x} cy={y} r={14} fill="var(--v2-surface)" stroke={c} strokeWidth={1.2} />
             <text
               x={x}
               y={y + 1}
               textAnchor="middle"
               dominantBaseline="middle"
-              fontFamily='"JetBrains Mono", monospace'
+              fontFamily='var(--mono-font)'
               fontSize={8}
               fontWeight={600}
-              fill="rgb(var(--muted))"
+              fill="var(--ink-2)"
             >
               {f.code.slice(0, 4)}
             </text>
           </g>
         );
       })}
-      <circle cx={cx} cy={cy} r={22} fill="rgb(var(--elevated))" />
+      <circle cx={cx} cy={cy} r={22} fill="var(--ink-1)" />
       <text
         x={cx}
         y={cy + 1}
         textAnchor="middle"
         dominantBaseline="middle"
-        fontFamily='"JetBrains Mono", monospace'
+        fontFamily='var(--mono-font)'
         fontSize={10}
         fontWeight={600}
-        fill="rgb(var(--accent))"
+        fill="var(--lexa)"
       >
         {sel.code}
       </text>
@@ -119,7 +119,7 @@ export function PmLedger({ accounts, focusCode, setFocusCode }: PmLedgerProps) {
   }, [sel, accounts]);
 
   return (
-    <div style={{ position: 'relative', height: '100%', background: 'rgb(var(--bg))' }}>
+    <div className="v2-canvas" style={{ position: 'relative', height: '100%' }}>
       <div style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
         <div style={{ padding: '24px', minHeight: '100%' }}>
           <div
@@ -134,7 +134,7 @@ export function PmLedger({ accounts, focusCode, setFocusCode }: PmLedgerProps) {
             {/* Liste gauche */}
             <div
               style={{
-                background: 'rgb(var(--surface))',
+                background: 'var(--v2-surface)',
                 border: '1px solid rgb(var(--border))',
                 borderRadius: 12,
                 overflow: 'hidden',
@@ -194,7 +194,7 @@ export function PmLedger({ accounts, focusCode, setFocusCode }: PmLedgerProps) {
                         padding: '5px 10px',
                         borderRadius: 6,
                         border: 0,
-                        background: filter === t ? 'rgb(var(--surface))' : 'transparent',
+                        background: filter === t ? 'var(--v2-surface)' : 'transparent',
                         color: filter === t ? 'rgb(var(--ink))' : 'rgb(var(--muted))',
                         cursor: 'pointer',
                         fontSize: 11,
@@ -323,7 +323,7 @@ export function PmLedger({ accounts, focusCode, setFocusCode }: PmLedgerProps) {
               {sel && (
                 <div
                   style={{
-                    background: 'rgb(var(--surface))',
+                    background: 'var(--v2-surface)',
                     border: '1px solid rgb(var(--border))',
                     borderRadius: 12,
                     overflow: 'hidden',

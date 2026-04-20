@@ -68,10 +68,10 @@ const PP_DATA = {
 };
 
 const TONE_COLOR: Record<Tone, string> = {
-  pos:   'rgb(var(--success))',
-  neg:   'rgb(var(--danger))',
-  tax:   'rgb(var(--accent))',
-  asset: 'rgb(var(--warning))',
+  pos:   'oklch(0.42 0.14 155)',
+  neg:   'var(--neg)',
+  tax:   'var(--tax)',
+  asset: 'var(--ast)',
 };
 
 export function PpWorkspace() {
@@ -85,7 +85,7 @@ export function PpWorkspace() {
   const dispo    = totalSal - totalVP - totalEp - totalObl;
 
   return (
-    <div style={{ position: 'relative', height: '100%', background: 'rgb(var(--bg))' }}>
+    <div className="v2-canvas" style={{ position: 'relative', height: '100%' }}>
       <div style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
         <div style={{ padding: '24px', minHeight: '100%' }}>
 
@@ -110,8 +110,8 @@ export function PpWorkspace() {
                 width: 56,
                 height: 56,
                 borderRadius: 14,
-                background: 'rgb(var(--accent))',
-                color: 'rgb(var(--accent-fg))',
+                background: 'linear-gradient(135deg, var(--lexa) 0%, var(--lexa-deep) 100%)',
+                color: 'var(--v2-bg)',
                 display: 'grid',
                 placeItems: 'center',
                 fontWeight: 600,
@@ -294,18 +294,18 @@ export function PpWorkspace() {
 
             {/* Colonne droite : échéances + insight */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, position: 'sticky', top: 24 }}>
-              {/* Échéances — dark card */}
+              {/* Échéances — dark card (style prototype chrome-bg) */}
               <div
                 style={{
-                  background: 'rgb(var(--elevated))',
-                  border: '1px solid rgb(var(--border-strong))',
+                  background: 'var(--chrome-bg)',
+                  color: 'var(--chrome-ink-1)',
                   borderRadius: 12,
                   padding: '14px 16px',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: 3, background: 'rgb(var(--accent))' }} />
-                  <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, color: 'rgb(var(--muted))' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: 3, background: 'var(--lexa)' }} />
+                  <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, color: 'var(--chrome-ink-2)' }}>
                     Échéances
                   </span>
                 </div>
@@ -318,27 +318,27 @@ export function PpWorkspace() {
                       gap: 12,
                       alignItems: 'center',
                       padding: '10px 0',
-                      borderBottom: i === d.obligations.length - 1 ? 'none' : '1px solid rgb(var(--border))',
+                      borderBottom: i === d.obligations.length - 1 ? 'none' : '1px solid var(--chrome-line)',
                     }}
                   >
                     <div
                       style={{
                         padding: '4px 6px',
-                        background: 'rgb(var(--surface))',
+                        background: 'var(--chrome-bg-2)',
                         borderRadius: 6,
                         textAlign: 'center',
                       }}
                     >
-                      <div style={{ fontSize: 9, color: 'rgb(var(--subtle))', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      <div style={{ fontSize: 9, color: 'var(--chrome-ink-3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                         {o.date.split(' ')[1]}
                       </div>
-                      <div style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 13, fontWeight: 600, color: 'rgb(var(--ink))' }}>
+                      <div style={{ fontFamily: 'var(--mono-font)', fontSize: 13, fontWeight: 600, color: 'var(--chrome-ink-1)' }}>
                         {o.date.split(' ')[0]}
                       </div>
                     </div>
                     <div>
-                      <div style={{ fontSize: 12, fontWeight: 500, color: 'rgb(var(--ink))' }}>{o.title}</div>
-                      <div style={{ fontSize: 10, color: 'rgb(var(--subtle))', marginTop: 2 }}>dans {o.days} jours</div>
+                      <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--chrome-ink-1)' }}>{o.title}</div>
+                      <div style={{ fontSize: 10, color: 'var(--chrome-ink-3)', marginTop: 2 }}>dans {o.days} jours</div>
                     </div>
                     {o.status === 'urgent' && (
                       <span
@@ -346,8 +346,8 @@ export function PpWorkspace() {
                           width: 8,
                           height: 8,
                           borderRadius: 4,
-                          background: 'rgb(var(--accent))',
-                          boxShadow: '0 0 0 4px rgb(var(--accent) / 0.2)',
+                          background: 'var(--lexa)',
+                          boxShadow: '0 0 0 4px oklch(0.74 0.17 55 / 0.2)',
                         }}
                       />
                     )}

@@ -30,32 +30,32 @@ const CLASS_LABELS: Record<AccountClass, string> = {
   C: 'Charges',
 };
 
-// Couleurs de classe adaptées au thème dark Lexa
-// A (Actifs): bg surface-ink, texte accent
-// P (Produits): bg success/15, texte success
-// L (Passifs): bg warning/15, texte warning
-// C (Charges): bg danger/15, texte danger
+// Couleurs de classe — palette prototype cream
+// A (Actifs): bg dark chrome, texte orange lexa
+// P (Produits): bg pos-bg vert clair, texte pos vert
+// L (Passifs): bg tax-bg orange-crème, texte tax orange
+// C (Charges): bg neg-bg rose, texte neg rouge
 function classBadgeStyle(cls: AccountClass): React.CSSProperties {
   switch (cls) {
     case 'A':
       return {
-        background: 'rgb(var(--ink) / 0.9)',
-        color: 'rgb(var(--accent))',
+        background: 'var(--ink-1)',
+        color: 'var(--lexa)',
       };
     case 'P':
       return {
-        background: 'rgb(var(--success) / 0.15)',
-        color: 'rgb(var(--success))',
+        background: 'var(--pos-bg)',
+        color: 'var(--pos)',
       };
     case 'L':
       return {
-        background: 'rgb(var(--warning) / 0.15)',
-        color: 'rgb(var(--warning))',
+        background: 'var(--tax-bg)',
+        color: 'var(--tax)',
       };
     case 'C':
       return {
-        background: 'rgb(var(--danger) / 0.15)',
-        color: 'rgb(var(--danger))',
+        background: 'var(--neg-bg)',
+        color: 'var(--neg)',
       };
   }
 }
@@ -79,16 +79,16 @@ export function AccountTile({
       onClick={() => onClick?.(acct.code)}
       style={{
         position: 'relative',
-        background: 'rgb(var(--surface))',
+        background: 'var(--v2-surface)',
         border: focused
-          ? '1.5px solid rgb(var(--accent))'
-          : '1px solid rgb(var(--border))',
+          ? '1.5px solid var(--lexa)'
+          : '1px solid var(--line-1)',
         borderRadius: 10,
         padding: dense ? '9px 11px' : '11px 13px',
         cursor: 'pointer',
         opacity: dimmed ? 0.28 : 1,
         transition: 'opacity 160ms, border-color 160ms, transform 160ms',
-        boxShadow: focused ? '0 2px 12px rgb(0 0 0 / 0.25)' : 'none',
+        boxShadow: focused ? '0 2px 12px rgba(10,10,10,0.06)' : 'none',
         transform: focused ? 'translateY(-1px)' : 'none',
       }}
     >
@@ -96,9 +96,9 @@ export function AccountTile({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
         <span
           style={{
-            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontFamily: 'var(--mono-font)',
             fontSize: 10,
-            color: 'rgb(var(--muted))',
+            color: 'var(--ink-4)',
             fontWeight: 500,
             letterSpacing: '0.02em',
           }}
@@ -126,7 +126,7 @@ export function AccountTile({
           fontSize: 12,
           fontWeight: 500,
           marginTop: 6,
-          color: 'rgb(var(--ink))',
+          color: 'var(--ink-1)',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap' as const,
@@ -148,11 +148,11 @@ export function AccountTile({
         <DebitCreditBadge cls={acct.class} balance={acct.balance} />
         <span
           style={{
-            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontFamily: 'var(--mono-font)',
             fontSize: 12,
             fontVariantNumeric: 'tabular-nums',
             fontWeight: 500,
-            color: 'rgb(var(--ink))',
+            color: 'var(--ink-1)',
           }}
         >
           {fmtMoney(dir.abs)}
