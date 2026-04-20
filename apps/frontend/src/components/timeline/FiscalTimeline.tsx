@@ -46,7 +46,7 @@ export function FiscalTimeline({ year, selected }: Props) {
   }, [y, cursor, now, period]);
 
   return (
-    <div className="h-[60px] md:h-[60px] min-h-[60px] bg-surface border-t border-border px-4 md:px-6 flex items-center gap-2 md:gap-4 select-none overflow-x-hidden flex-shrink-0">
+    <div className="h-[68px] md:h-[68px] min-h-[68px] bg-surface border-t border-border px-4 md:px-6 flex items-center gap-2 md:gap-4 select-none overflow-x-hidden flex-shrink-0">
       <div className="flex items-baseline gap-2">
         <span className="text-2xs uppercase tracking-wider text-muted">Période</span>
         <span className="text-sm font-semibold text-ink truncate max-w-[200px]" title={period.label}>
@@ -56,7 +56,7 @@ export function FiscalTimeline({ year, selected }: Props) {
       <button
         type="button"
         onClick={openModal}
-        className="flex-1 relative h-10 cursor-pointer group hover:opacity-95 transition-opacity text-left"
+        className="flex-1 relative h-12 cursor-pointer group hover:opacity-95 transition-opacity text-left"
         aria-label="Changer la période"
         style={{ touchAction: 'manipulation' }}
       >

@@ -165,7 +165,7 @@ export function LedgerModal({ open, onClose }: Props) {
             onClick={(e) => e.stopPropagation()}
             className="absolute inset-4 md:inset-8 lg:inset-12 card-elevated overflow-hidden flex flex-col"
           >
-            <div className="flex items-center justify-between px-6 py-3 border-b border-border flex-shrink-0 gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 sm:px-6 py-3 border-b border-border flex-shrink-0 gap-2 sm:gap-4">
               <div className="flex items-center gap-2 flex-shrink-0">
                 <span className="text-2xs uppercase tracking-wider text-muted">
                   Mode expert
@@ -173,9 +173,9 @@ export function LedgerModal({ open, onClose }: Props) {
               </div>
 
               {/* Execution layer — génération décompte TVA */}
-              <div className="flex items-center gap-2 flex-1 justify-center flex-wrap">
+              <div className="flex items-center gap-2 flex-1 justify-start sm:justify-center flex-wrap">
                 <FileText className="w-3.5 h-3.5 text-accent" />
-                <span className="text-2xs uppercase tracking-wider text-muted hidden md:inline">
+                <span className="text-2xs uppercase tracking-wider text-muted hidden sm:inline">
                   {t('forms.tva_title')}
                 </span>
 
