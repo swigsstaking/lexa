@@ -27,8 +27,11 @@ type LedgerEntryRow = {
   line_type: "debit" | "credit";
   account: string;
   amount: string;
-  document_id: string | null; // Pièce justificative OCR — drill-down (migration 012)
-  reconciles: string | null;  // stream_id de la facture originale liée — reconciliation (migration 015)
+  document_id: string | null;  // Pièce justificative OCR — drill-down (migration 012)
+  reconciles: string | null;   // stream_id de la facture originale liée — reconciliation (migration 015)
+  letter_ref: string | null;   // V1.1 : letterRef actif si lettré (migration 021)
+  corrected: boolean;          // V1.1 : true si au moins une correction existe (migration 021)
+  last_reasoning: string | null; // V1.1 : dernier reasoning (correction ou manuel)
 };
 
 type AccountBalanceRow = {
@@ -74,6 +77,10 @@ ledgerRouter.get("/", async (req, res) => {
       confidence: Number(r.confidence),
       documentId: r.document_id ?? null,
       reconciles: r.reconciles ?? null,
+      // V1.1 — édition comptable
+      letterRef: r.letter_ref ?? null,
+      corrected: r.corrected ?? false,
+      lastReasoning: r.last_reasoning ?? null,
     })),
   });
 });
@@ -130,6 +137,10 @@ ledgerRouter.get("/account/:account", async (req, res) => {
       confidence: Number(r.confidence),
       documentId: r.document_id ?? null,
       reconciles: r.reconciles ?? null,
+      // V1.1 — édition comptable
+      letterRef: r.letter_ref ?? null,
+      corrected: r.corrected ?? false,
+      lastReasoning: r.last_reasoning ?? null,
     })),
   });
 });
