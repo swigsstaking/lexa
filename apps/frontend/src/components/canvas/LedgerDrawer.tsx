@@ -109,9 +109,15 @@ export function LedgerDrawer({
       const isCanvasNode = target.closest('.react-flow__node');
       const isCanvasEdge = target.closest('.react-flow__edge, .react-flow__edge-label');
       if (isCanvasNode || isCanvasEdge) return;
-      // Fermer context menu si click dehors
+      // Fermer context menu si click en dehors du menu lui-même
+      // IMPORTANT : on vérifie que le click n'est PAS sur le menu avant de le fermer,
+      // sinon mousedown ferme le menu avant que le click ne se déclenche sur les boutons.
       if (contextMenu) {
-        setContextMenu(null);
+        const menuEl = (e.target as HTMLElement).closest('[data-context-menu]');
+        if (!menuEl) {
+          setContextMenu(null);
+        }
+        // Si le click est dans le menu, on laisse le click bubble normalement
         return;
       }
       if (drawerRef.current && !drawerRef.current.contains(target)) {
@@ -294,9 +300,14 @@ export function LedgerDrawer({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.1 }}
-                style={{ top: contextMenu.y, left: Math.min(contextMenu.x, 320) }}
+                data-context-menu
+                style={{
+                  top: contextMenu.y,
+                  // Clamp à droite : le drawer fait 380px max, le menu ~180px → max left = 380 - 180 - 8px margin
+                  left: Math.min(contextMenu.x, 192),
+                }}
                 className="absolute z-50 min-w-[180px] rounded-lg border border-border bg-surface shadow-lg py-1"
-                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
               >
                 <button
                   className="w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 hover:bg-elevated transition-colors text-ink"
