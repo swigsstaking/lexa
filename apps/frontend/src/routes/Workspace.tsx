@@ -263,7 +263,7 @@ export function Workspace() {
       label: 'Chat IA',
       onClick: () => setChatOpen(true),
       icon: Sparkles,
-      title: 'Ouvrir le chat IA (⌘K)',
+      title: 'Ouvrir le chat IA (⌘⇧K)',
     },
     {
       label: 'Conseiller fiscal',

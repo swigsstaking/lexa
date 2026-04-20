@@ -31,7 +31,8 @@ export function ChatOverlay() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const meta = e.metaKey || e.ctrlKey;
-      if (meta && e.key.toLowerCase() === 'k') {
+      // Cmd+K réservé au CmdK quick-launcher — ChatOverlay s'ouvre via le menu IA ou Cmd+Shift+K
+      if (meta && e.shiftKey && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         useChatStore.getState().toggle();
       } else if (e.key === 'Escape' && useChatStore.getState().open) {
@@ -208,6 +209,7 @@ export function ChatOverlay() {
                     </div>
                     <div className="mt-3 text-2xs text-subtle flex items-center gap-2 justify-center">
                       <kbd className="kbd">⌘</kbd>
+                      <kbd className="kbd">⇧</kbd>
                       <kbd className="kbd">K</kbd>
                       <span>pour ouvrir/fermer</span>
                     </div>

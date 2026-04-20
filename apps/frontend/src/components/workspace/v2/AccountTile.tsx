@@ -39,8 +39,8 @@ function classBadgeStyle(cls: AccountClass): React.CSSProperties {
   switch (cls) {
     case 'A':
       return {
-        background: 'var(--ink-1)',
-        color: 'var(--lexa)',
+        background: 'var(--bg-2)',
+        color: 'var(--ink-2)',
       };
     case 'P':
       return {

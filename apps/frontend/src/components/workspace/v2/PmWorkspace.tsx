@@ -1,7 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { lexa } from '@/api/lexa';
-import { ViewSwitcher } from './ViewSwitcher';
 import { PmColumnsA } from './PmColumnsA';
 import { PmColumnsB } from './PmColumnsB';
 import { PmLedger } from './PmLedger';
@@ -11,6 +10,8 @@ import { usePeriodStore } from '@/stores/periodStore';
 import type { LedgerAccount, LedgerEntry } from '@/api/types';
 import { LedgerDrawer } from '@/components/canvas/LedgerDrawer';
 import type { LedgerSelection } from '@/components/canvas/LedgerDrawer';
+import { LexaCmdK, LexaCmdKTrigger, AgentsPill } from './LexaCmdK';
+import { useChatStore } from '@/stores/chatStore';
 
 type PmView = 'colA' | 'colB' | 'ledger';
 
@@ -74,6 +75,24 @@ export function PmWorkspace() {
   });
   const [drawerSelection, setDrawerSelection] = useState<LedgerSelection>(null);
 
+  // CmdK quick-launcher
+  const [cmdkOpen, setCmdkOpen] = useState(false);
+  const openChat = useChatStore((s) => s.setOpen);
+
+  // Vue dropdown discret
+  const [vueMenuOpen, setVueMenuOpen] = useState(false);
+  const vueMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!vueMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (vueMenuRef.current && !vueMenuRef.current.contains(e.target as Node)) {
+        setVueMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [vueMenuOpen]);
+
   const handleOpenDrawer = (accountCode: string) => {
     setDrawerSelection({ kind: 'account', accountId: accountCode });
   };
@@ -123,54 +142,189 @@ export function PmWorkspace() {
     );
   }
 
+  const currentViewLabel = PM_VIEW_OPTS.find((o) => o.key === pmView)?.label ?? 'Vue';
+
   return (
     <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Toolbar PM — intégré dans le flux (pas absolut) pour éviter le chevauchement */}
-      {/* On laisse 8px top padding pour respirer sous le bord */}
+      {/* Canvas — flex-1 + min-h-0 pour que le scroll fonctionne */}
+      {/* AgentsPill top-left */}
+      <AgentsPill />
+
+      {/* Vue dropdown chip — centré top */}
       <div
+        ref={vueMenuRef}
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          padding: '10px 16px',
-          flexShrink: 0,
-          borderBottom: '1px solid var(--chrome-line)',
-          background: 'var(--chrome-bg-2)',
+          position: 'absolute',
+          top: 14,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 15,
         }}
       >
-        <ViewSwitcher options={PM_VIEW_OPTS} active={pmView} onChange={handleSetView} />
-
-        {/* Toggle flux (sauf Ledger) */}
-        {pmView !== 'ledger' && (
-          <button
-            onClick={() => setShowFlows((v) => !v)}
+        <button
+          onClick={() => setVueMenuOpen((v) => !v)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '6px 12px',
+            background: '#0A0A0A',
+            color: '#FAFAF7',
+            border: 0,
+            borderRadius: 999,
+            cursor: 'pointer',
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            boxShadow: '0 2px 6px rgba(10,10,10,0.18)',
+            fontFamily: 'Inter, ui-sans-serif, sans-serif',
+            transition: 'opacity 0.15s',
+          }}
+        >
+          {/* Petit point orange actif */}
+          <span
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '5px 10px',
-              borderRadius: 8,
-              border: '1px solid var(--chrome-line)',
-              background: showFlows ? 'var(--chrome-bg-2)' : 'var(--chrome-bg)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              color: showFlows ? 'var(--chrome-ink-1)' : 'var(--chrome-ink-3)',
-              cursor: 'pointer',
-              fontSize: 11,
-              fontWeight: 500,
-              transition: 'all 120ms',
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: 'oklch(0.74 0.17 55)',
+              boxShadow: '0 0 0 3px oklch(0.74 0.17 55 / 0.20)',
             }}
-            title="Afficher / masquer les flux"
+          />
+          Vue : {currentViewLabel}
+          <span style={{ opacity: 0.5, fontSize: 9 }}>▾</span>
+        </button>
+
+        {/* Dropdown */}
+        {vueMenuOpen && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + 6px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: '#0A0A0A',
+              border: '1px solid #25251F',
+              borderRadius: 12,
+              padding: '4px',
+              minWidth: 180,
+              boxShadow: '0 8px 32px rgba(10,10,10,0.24)',
+              zIndex: 20,
+            }}
           >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-              <path d="M2 4c3 0 4 8 7 8s4-8 5-8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
-            Flux
-          </button>
+            {PM_VIEW_OPTS.map((o) => (
+              <button
+                key={o.key}
+                onClick={() => { handleSetView(o.key); setVueMenuOpen(false); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: 0,
+                  cursor: 'pointer',
+                  fontSize: 11,
+                  fontWeight: 500,
+                  background: o.key === pmView ? '#161613' : 'transparent',
+                  color: o.key === pmView ? '#FAFAF7' : '#A8A8A0',
+                  fontFamily: 'Inter, ui-sans-serif, sans-serif',
+                  transition: 'background 80ms',
+                  textAlign: 'left',
+                }}
+                onMouseEnter={(e) => {
+                  if (o.key !== pmView) (e.currentTarget as HTMLButtonElement).style.background = '#161613';
+                }}
+                onMouseLeave={(e) => {
+                  if (o.key !== pmView) (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+                }}
+              >
+                {o.label}
+                {o.key === pmView && (
+                  <span style={{ color: 'oklch(0.74 0.17 55)', fontSize: 10 }}>✓</span>
+                )}
+              </button>
+            ))}
+
+            {/* Séparateur + toggle flux */}
+            {pmView !== 'ledger' && (
+              <>
+                <div style={{ height: 1, background: '#25251F', margin: '4px 8px' }} />
+                <button
+                  onClick={() => { setShowFlows((v) => !v); setVueMenuOpen(false); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: 0,
+                    cursor: 'pointer',
+                    fontSize: 11,
+                    fontWeight: 500,
+                    background: 'transparent',
+                    color: '#A8A8A0',
+                    fontFamily: 'Inter, ui-sans-serif, sans-serif',
+                    transition: 'background 80ms',
+                    textAlign: 'left',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background = '#161613';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+                  }}
+                >
+                  Flux de trésorerie
+                  <span
+                    style={{
+                      width: 28,
+                      height: 16,
+                      borderRadius: 99,
+                      background: showFlows ? 'oklch(0.74 0.17 55)' : '#3B3B38',
+                      position: 'relative',
+                      transition: 'background 0.2s',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: 2,
+                        left: showFlows ? 12 : 2,
+                        width: 12,
+                        height: 12,
+                        borderRadius: '50%',
+                        background: '#FAFAF7',
+                        transition: 'left 0.2s',
+                      }}
+                    />
+                  </span>
+                </button>
+              </>
+            )}
+          </div>
         )}
       </div>
 
-      {/* Canvas — flex-1 + min-h-0 pour que le scroll fonctionne */}
+      {/* CmdKTrigger top-right */}
+      <LexaCmdKTrigger onOpen={() => setCmdkOpen(true)} />
+
+      {/* CmdK modal */}
+      <LexaCmdK
+        open={cmdkOpen}
+        setOpen={setCmdkOpen}
+        accounts={v2Accounts.slice(0, 6).map((a) => ({ code: a.code, name: a.name, balance: a.balance }))}
+        onSuggestion={(title) => {
+          // Pré-remplit le chat avec la suggestion
+          void title;
+        }}
+        onOpenChat={() => openChat(true)}
+      />
+
       <div style={{ flex: 1, minHeight: 0 }}>
         {pmView === 'colA' && (
           <PmColumnsA

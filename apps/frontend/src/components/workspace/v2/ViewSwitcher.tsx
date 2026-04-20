@@ -39,8 +39,8 @@ export function ViewSwitcher({ options, active, onChange }: ViewSwitcherProps) {
               cursor: 'pointer',
               fontSize: 11,
               fontWeight: 500,
-              background: isActive ? 'rgb(var(--accent))' : 'transparent',
-              color: isActive ? 'var(--chrome-bg)' : 'var(--chrome-ink-2)',
+              background: isActive ? 'var(--chrome-bg-2)' : 'transparent',
+              color: isActive ? 'var(--chrome-ink-1)' : 'var(--chrome-ink-3)',
               transition: 'background 120ms, color 120ms',
             }}
           >
