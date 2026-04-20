@@ -4,41 +4,128 @@
 
 /*
  * Semantic tokens driven by CSS variables.
- * Dark is the default per whitepaper §5. Light is a fallback mode.
+ * Light (cream/orange) is the DEFAULT. Dark stone is opt-in via [data-theme="dark"].
  * Values expressed as "R G B" triplets (alpha-value syntax in tailwind.config.js).
+ * Apply theme by setting data-theme attribute on <html> element.
  */
 
+/* ── Light (cream/orange) — DEFAULT ─────────────────────────────────────────
+   Palette: cream bg #F5F2EC + orange accent #E08A3D + dark ink #1A1814
+*/
 :root,
-.light {
-  --bg: 247 247 245;
-  --surface: 255 255 255;
-  --elevated: 252 252 250;
-  --border: 229 229 224;
-  --border-strong: 209 209 202;
-  --ink: 11 15 20;
-  --muted: 107 107 107;
-  --subtle: 153 153 148;
-  --accent: 212 52 44;
-  --accent-fg: 255 255 255;
-  --success: 22 163 74;
-  --warning: 217 119 6;
-  --danger: 220 38 38;
+[data-theme="light"] {
+  /* Backgrounds */
+  --bg: 245 242 236;       /* #F5F2EC cream */
+  --surface: 255 255 255;  /* #FFFFFF */
+  --elevated: 237 232 223; /* #EDE8DF bg-2 */
+  /* Borders */
+  --border: 227 222 210;   /* #E3DED2 line-1 */
+  --border-strong: 207 200 184; /* #CFC8B8 line-2 */
+  /* Text */
+  --ink: 26 24 20;         /* #1A1814 ink-1 */
+  --muted: 107 103 96;     /* #6B6760 ink-3 */
+  --subtle: 154 149 139;   /* #9A958B ink-4 */
+  /* Accent orange Lexa */
+  --accent: 224 138 61;    /* #E08A3D oklch(0.74 0.17 55) */
+  --accent-fg: 10 10 10;
+  /* Semantic */
+  --success: 59 133 96;    /* #3B8560 oklch(0.55 0.12 155) */
+  --danger: 184 83 63;     /* #B8533F oklch(0.52 0.16 25) */
+  --warning: 160 110 46;   /* #A06E2E oklch(0.55 0.15 55) */
+
+  /* ── Tokens V2 workspace (light) ── */
+  --lexa: oklch(0.74 0.17 55);
+  --lexa-deep: oklch(0.55 0.15 50);
+  --lexa-soft: oklch(0.92 0.08 60);
+
+  --pos: oklch(0.55 0.12 155);
+  --pos-bg: oklch(0.94 0.04 155);
+  --neg: oklch(0.52 0.16 25);
+  --neg-bg: oklch(0.96 0.04 25);
+  --tax: oklch(0.55 0.15 55);
+  --tax-bg: oklch(0.96 0.05 55);
+  --ast: oklch(0.48 0.10 240);
+  --ast-bg: oklch(0.96 0.03 240);
+
+  --line-1: #E3DED2;
+  --line-2: #CFC8B8;
+  --ink-1: #1A1814;
+  --ink-2: #3B3834;
+  --ink-3: #6B6760;
+  --ink-4: #9A958B;
+
+  /* Chrome = dark inset card (LexaInsight etc.) — stays dark in light mode by design */
+  --chrome-bg: #0A0A0A;
+  --chrome-bg-2: #161613;
+  --chrome-line: #25251F;
+  --chrome-ink-1: #FAFAF7;
+  --chrome-ink-2: #A8A8A0;
+  --chrome-ink-3: #6B6B66;
+
+  --v2-bg: #F5F2EC;
+  --v2-bg-2: #EDE8DF;
+  --v2-surface: #FFFFFF;
+
+  --mono-font: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 }
 
-.dark {
-  --bg: 10 11 14;
-  --surface: 16 18 22;
-  --elevated: 22 25 31;
-  --border: 34 38 46;
-  --border-strong: 54 59 70;
-  --ink: 237 238 242;
-  --muted: 148 153 165;
-  --subtle: 96 102 115;
-  --accent: 232 84 76;
-  --accent-fg: 255 255 255;
-  --success: 74 222 128;
-  --warning: 251 191 36;
-  --danger: 248 113 113;
+/* ── Dark stone — opt-in via [data-theme="dark"] on <html> ──────────────────
+   Palette: dark stone bg #0f0e0c + orange accent (lighter) + cream ink
+*/
+[data-theme="dark"] {
+  /* Backgrounds */
+  --bg: 15 14 12;          /* #0F0E0C dark stone */
+  --surface: 22 21 18;     /* #161512 */
+  --elevated: 29 28 24;    /* #1D1C18 */
+  /* Borders */
+  --border: 44 43 38;      /* #2C2B26 */
+  --border-strong: 65 63 56; /* #413F38 */
+  /* Text */
+  --ink: 250 249 245;      /* #FAF9F5 cream-white */
+  --muted: 168 165 158;    /* #A8A59E */
+  --subtle: 110 108 103;   /* #6E6C67 */
+  /* Accent orange Lexa (slightly lighter for dark bg readability) */
+  --accent: 224 138 61;    /* #E08A3D same orange */
+  --accent-fg: 10 10 10;
+  /* Semantic */
+  --success: 74 185 120;   /* #4AB978 */
+  --danger: 220 90 72;     /* #DC5A48 */
+  --warning: 204 148 68;   /* #CC9444 */
+
+  /* ── Tokens V2 workspace (dark) ── */
+  --lexa: oklch(0.74 0.17 55);
+  --lexa-deep: oklch(0.55 0.15 50);
+  --lexa-soft: oklch(0.30 0.06 55);
+
+  --pos: oklch(0.68 0.13 155);
+  --pos-bg: oklch(0.25 0.05 155);
+  --neg: oklch(0.65 0.14 25);
+  --neg-bg: oklch(0.22 0.05 25);
+  --tax: oklch(0.68 0.14 55);
+  --tax-bg: oklch(0.25 0.05 55);
+  --ast: oklch(0.65 0.10 240);
+  --ast-bg: oklch(0.22 0.04 240);
+
+  --line-1: #3A3832;
+  --line-2: #4A4840;
+  --ink-1: #FAF9F5;
+  --ink-2: #D4D1CA;
+  --ink-3: #A8A59E;
+  --ink-4: #6E6C67;
+
+  /* Chrome dark = same as surface in dark mode */
+  --chrome-bg: #0A0A0A;
+  --chrome-bg-2: #161613;
+  --chrome-line: #25251F;
+  --chrome-ink-1: #FAFAF7;
+  --chrome-ink-2: #A8A8A0;
+  --chrome-ink-3: #6B6B66;
+
+  --v2-bg: #0F0E0C;
+  --v2-bg-2: #1D1C18;
+  --v2-surface: #161512;
+
+  --mono-font: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 }
 
 @layer base {
