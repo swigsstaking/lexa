@@ -4,6 +4,8 @@ import { LexaInsight } from './LexaInsight';
 import { fmtMoney } from './fmtMoney';
 import { createPortal } from 'react-dom';
 import { lexa } from '@/api/lexa';
+import { useActiveCompany } from '@/stores/companiesStore';
+import { useAuthStore } from '@/stores/authStore';
 
 // ——— Mock data PP (personne physique salariée) ———
 // Utilisé tant que la structure PP n'existe pas côté Lexa DB.
@@ -316,6 +318,9 @@ export function PpWorkspace() {
   const [drawerItem, setDrawerItem] = useState<PpItem | null>(null);
   const [prefilling, setPrefilling] = useState(false);
   const navigate = useNavigate();
+  // BUG-6 RGPD fix : lier l'affichage au tenant actif pour éviter cache stale inter-tenants
+  const activeCompany = useActiveCompany();
+  const activeTenantId = useAuthStore((s) => s.activeTenantId);
   const d = PP_DATA;
   const year = new Date().getFullYear();
 
@@ -401,7 +406,7 @@ export function PpWorkspace() {
               alignItems: 'center',
             }}
           >
-            {/* Avatar */}
+            {/* Avatar — lettre du nom tenant actif (BUG-6 RGPD) */}
             <div
               style={{
                 width: 56,
@@ -416,15 +421,22 @@ export function PpWorkspace() {
                 letterSpacing: '-0.02em',
               }}
             >
-              {d.iconLetter}
+              {(activeCompany?.name ?? d.name).charAt(0).toUpperCase()}
             </div>
 
-            {/* Identité */}
+            {/* Identité — nom du tenant actif pour éviter affichage inter-tenants (BUG-6 RGPD) */}
             <div>
               <div style={{ fontWeight: 600, fontSize: 18, letterSpacing: '-0.02em', color: 'rgb(var(--ink))' }}>
-                {d.name}
+                {activeCompany?.name ?? d.name}
               </div>
-              <div style={{ color: 'rgb(var(--muted))', fontSize: 12 }}>{d.sub}</div>
+              <div style={{ color: 'rgb(var(--muted))', fontSize: 12 }}>
+                {d.sub}
+                {activeTenantId && (
+                  <span style={{ marginLeft: 8, opacity: 0.5, fontSize: 10, fontFamily: '"JetBrains Mono", monospace' }}>
+                    · {activeTenantId.slice(0, 8)}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* KPIs inline */}
