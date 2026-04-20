@@ -1,9 +1,23 @@
-import { useEffect, useRef } from 'react';
-import { X, ArrowRight, Paperclip, Briefcase, Link2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import {
+  X,
+  ArrowRight,
+  Paperclip,
+  Briefcase,
+  Link2,
+  Edit3,
+  Link,
+  Unlink,
+  Check,
+  Plus,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import type { LedgerAccount, LedgerEntry } from '@/api/types';
 import { accountDisplayLabel } from './kaferLabels';
 import { lexa } from '@/api/lexa';
+import { LedgerEntryEditor } from './LedgerEntryEditor';
 
 const fmtChf = (n: number) =>
   new Intl.NumberFormat('fr-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
@@ -22,29 +36,84 @@ export type LedgerSelection =
   | { kind: 'edge'; source: string; target: string }
   | null;
 
+type EditorState =
+  | { mode: 'correct'; entry: LedgerEntry }
+  | { mode: 'create' }
+  | null;
+
+type ContextMenu = {
+  x: number;
+  y: number;
+  tx: LedgerEntry;
+} | null;
+
 type Props = {
   selection: LedgerSelection;
   accounts: LedgerAccount[];
   entries: LedgerEntry[];
   onClose: () => void;
+  /** Si fourni, ouvre directement en édition pour ce streamId */
+  autoCorrectStreamId?: string | null;
 };
 
-export function LedgerDrawer({ selection, accounts, entries, onClose }: Props) {
+export function LedgerDrawer({
+  selection,
+  accounts,
+  entries,
+  onClose,
+  autoCorrectStreamId,
+}: Props) {
   const drawerRef = useRef<HTMLElement | null>(null);
+  const queryClient = useQueryClient();
+
+  const [editorState, setEditorState] = useState<EditorState>(null);
+  const [contextMenu, setContextMenu] = useState<ContextMenu>(null);
+  const [selectedStreamIds, setSelectedStreamIds] = useState<Set<string>>(new Set());
+  const [toast, setToast] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
+  const [lettrageLoading, setLettrageLoading] = useState(false);
+
+  // Auto-ouvrir en édition si autoCorrectStreamId est fourni
+  useEffect(() => {
+    if (!autoCorrectStreamId || !entries.length) return;
+    const entry = entries.find((e) => e.streamId === autoCorrectStreamId);
+    if (entry) {
+      setEditorState({ mode: 'correct', entry });
+    }
+  }, [autoCorrectStreamId, entries]);
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(null), 5000);
+    return () => clearTimeout(id);
+  }, [toast]);
 
   // Fermeture ESC + click extérieur
   useEffect(() => {
     if (!selection) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        if (contextMenu) {
+          setContextMenu(null);
+          return;
+        }
+        if (editorState) {
+          setEditorState(null);
+          return;
+        }
+        onClose();
+      }
     }
     function onMouseDown(e: MouseEvent) {
       const target = e.target as HTMLElement;
-      // Ignorer les clicks sur nodes/edges react-flow (pour permettre de switcher
-      // entre sélections sans fermer-rouvrir)
       const isCanvasNode = target.closest('.react-flow__node');
       const isCanvasEdge = target.closest('.react-flow__edge, .react-flow__edge-label');
       if (isCanvasNode || isCanvasEdge) return;
+      // Fermer context menu si click dehors
+      if (contextMenu) {
+        setContextMenu(null);
+        return;
+      }
       if (drawerRef.current && !drawerRef.current.contains(target)) {
         onClose();
       }
@@ -55,7 +124,39 @@ export function LedgerDrawer({ selection, accounts, entries, onClose }: Props) {
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('mousedown', onMouseDown);
     };
-  }, [selection, onClose]);
+  }, [selection, onClose, contextMenu, editorState]);
+
+  const handleLettrer = async () => {
+    if (selectedStreamIds.size < 2) return;
+    setLettrageLoading(true);
+    try {
+      const result = await lexa.lettrerEntries([...selectedStreamIds]);
+      setToast({ kind: 'success', text: `Lettré ${result.letterRef}` });
+      setSelectedStreamIds(new Set());
+      await queryClient.invalidateQueries({ queryKey: ['ledger'] });
+    } catch (err) {
+      const msg = isAxiosError(err)
+        ? (err.response?.data as { message?: string } | undefined)?.message ?? err.message
+        : err instanceof Error ? err.message : 'Erreur inconnue';
+      setToast({ kind: 'error', text: msg });
+    } finally {
+      setLettrageLoading(false);
+    }
+  };
+
+  const handleUnlettrer = async (letterRef: string) => {
+    if (!window.confirm(`Défaire le lettrage ${letterRef} ?`)) return;
+    try {
+      await lexa.unlettrerEntries(letterRef);
+      setToast({ kind: 'success', text: `Lettrage ${letterRef} défait` });
+      await queryClient.invalidateQueries({ queryKey: ['ledger'] });
+    } catch (err) {
+      const msg = isAxiosError(err)
+        ? (err.response?.data as { message?: string } | undefined)?.message ?? err.message
+        : err instanceof Error ? err.message : 'Erreur inconnue';
+      setToast({ kind: 'error', text: msg });
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -68,45 +169,213 @@ export function LedgerDrawer({ selection, accounts, entries, onClose }: Props) {
           transition={{ type: 'spring', damping: 30, stiffness: 280 }}
           className="absolute top-0 right-0 bottom-0 w-[380px] max-w-[90vw] bg-surface border-l border-border z-30 flex flex-col"
         >
-          <header className="flex items-center justify-between px-4 py-3 border-b border-border">
+          {/* Header */}
+          <header className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
             <div className="text-2xs uppercase tracking-wider text-subtle font-mono">
               {selection.kind === 'account' ? 'Compte' : 'Transactions agrégées'}
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 rounded hover:bg-elevated text-subtle hover:text-ink transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-              aria-label="Fermer"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              {/* Bouton "+ Nouvelle écriture" */}
+              <button
+                onClick={() => setEditorState({ mode: 'create' })}
+                className="flex items-center gap-1 px-2 py-1.5 rounded text-xs text-accent hover:bg-elevated transition-colors"
+                title="Nouvelle écriture manuelle"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Nouvelle</span>
+              </button>
+              <button
+                onClick={onClose}
+                className="p-2 rounded hover:bg-elevated text-subtle hover:text-ink transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Fermer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </header>
 
-          <div className="flex-1 overflow-y-auto px-4 py-4">
+          {/* Toast */}
+          {toast && (
+            <div
+              className={`px-4 py-2 text-xs border-b flex-shrink-0 ${
+                toast.kind === 'success'
+                  ? 'bg-success/10 border-success/30 text-success'
+                  : 'bg-danger/10 border-danger/30 text-danger'
+              }`}
+            >
+              {toast.text}
+            </div>
+          )}
+
+          <div className="flex-1 overflow-y-auto px-4 py-4 pb-20">
             {selection.kind === 'account' ? (
-              <AccountDetails accountId={selection.accountId} accounts={accounts} entries={entries} />
+              <AccountDetails
+                accountId={selection.accountId}
+                accounts={accounts}
+                entries={entries}
+                selectedStreamIds={selectedStreamIds}
+                onToggleSelect={(streamId, e) => {
+                  if (!e.metaKey && !e.ctrlKey) return;
+                  e.preventDefault();
+                  setSelectedStreamIds((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(streamId)) next.delete(streamId);
+                    else next.add(streamId);
+                    return next;
+                  });
+                }}
+                onContextMenu={(tx, x, y) => setContextMenu({ tx, x, y })}
+                onCorrect={(tx) => setEditorState({ mode: 'correct', entry: tx })}
+                onUnlettrer={handleUnlettrer}
+              />
             ) : (
               <EdgeDetails
                 source={selection.source}
                 target={selection.target}
                 entries={entries}
+                selectedStreamIds={selectedStreamIds}
+                onToggleSelect={(streamId, e) => {
+                  if (!e.metaKey && !e.ctrlKey) return;
+                  e.preventDefault();
+                  setSelectedStreamIds((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(streamId)) next.delete(streamId);
+                    else next.add(streamId);
+                    return next;
+                  });
+                }}
+                onContextMenu={(tx, x, y) => setContextMenu({ tx, x, y })}
+                onCorrect={(tx) => setEditorState({ mode: 'correct', entry: tx })}
+                onUnlettrer={handleUnlettrer}
               />
             )}
           </div>
+
+          {/* Barre flottante multi-select */}
+          <AnimatePresence>
+            {selectedStreamIds.size >= 2 && (
+              <motion.div
+                initial={{ y: 80, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 80, opacity: 0 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="absolute bottom-0 left-0 right-0 px-4 py-3 bg-surface border-t border-border flex items-center justify-between gap-2 z-20"
+              >
+                <span className="text-xs text-ink">
+                  <span className="font-semibold text-accent">{selectedStreamIds.size}</span> écritures sélectionnées
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedStreamIds(new Set())}
+                    className="text-xs text-muted hover:text-ink transition-colors px-2 py-1 rounded hover:bg-elevated"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLettrer}
+                    disabled={lettrageLoading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-60"
+                  >
+                    <Link className="w-3 h-3" />
+                    Lettrer ces écritures
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Context menu flottant */}
+          <AnimatePresence>
+            {contextMenu && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.1 }}
+                style={{ top: contextMenu.y, left: Math.min(contextMenu.x, 320) }}
+                className="absolute z-50 min-w-[180px] rounded-lg border border-border bg-surface shadow-lg py-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  className="w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 hover:bg-elevated transition-colors text-ink"
+                  onClick={() => {
+                    setEditorState({ mode: 'correct', entry: contextMenu.tx });
+                    setContextMenu(null);
+                  }}
+                >
+                  <Edit3 className="w-3.5 h-3.5 text-muted" />
+                  Modifier
+                </button>
+                <button
+                  className="w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 hover:bg-elevated transition-colors text-ink"
+                  onClick={() => {
+                    const streamId = contextMenu.tx.streamId;
+                    setSelectedStreamIds((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(streamId)) next.delete(streamId);
+                      else next.add(streamId);
+                      return next;
+                    });
+                    setContextMenu(null);
+                  }}
+                >
+                  <Check className="w-3.5 h-3.5 text-muted" />
+                  {selectedStreamIds.has(contextMenu.tx.streamId) ? 'Désélectionner' : 'Sélectionner pour lettrer'}
+                </button>
+                {contextMenu.tx.letterRef && (
+                  <button
+                    className="w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 hover:bg-elevated transition-colors text-danger"
+                    onClick={() => {
+                      handleUnlettrer(contextMenu.tx.letterRef!);
+                      setContextMenu(null);
+                    }}
+                  >
+                    <Unlink className="w-3.5 h-3.5" />
+                    Défaire le lettrage
+                  </button>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Editor slide-in (empilé par-dessus le drawer) */}
+          <AnimatePresence>
+            {editorState && (
+              <LedgerEntryEditor
+                mode={editorState.mode}
+                entry={editorState.mode === 'correct' ? editorState.entry : undefined}
+                onClose={() => setEditorState(null)}
+              />
+            )}
+          </AnimatePresence>
         </motion.aside>
       )}
     </AnimatePresence>
   );
 }
 
+// ─── Sous-composants ─────────────────────────────────────────────────────────
+
+type SharedRowProps = {
+  selectedStreamIds: Set<string>;
+  onToggleSelect: (streamId: string, e: React.MouseEvent) => void;
+  onContextMenu: (tx: LedgerEntry, x: number, y: number) => void;
+  onCorrect: (tx: LedgerEntry) => void;
+  onUnlettrer: (letterRef: string) => void;
+};
+
 function AccountDetails({
   accountId,
   accounts,
   entries,
+  ...rowProps
 }: {
   accountId: string;
   accounts: LedgerAccount[];
   entries: LedgerEntry[];
-}) {
+} & SharedRowProps) {
   const account = accounts.find((a) => a.account === accountId);
   if (!account) return <div className="text-muted">Compte introuvable</div>;
 
@@ -134,9 +403,16 @@ function AccountDetails({
       <div className="text-2xs uppercase tracking-wider text-subtle font-mono mb-2">
         {txs.length > 0 ? `${txs.length} dernières transactions` : 'Aucune transaction'}
       </div>
+      <p className="text-2xs text-muted mb-3">
+        <kbd className="kbd">⌘+clic</kbd> pour sélectionner · clic droit pour actions
+      </p>
       <ul className="space-y-1.5">
         {txs.map((tx) => (
-          <TxRow key={`${tx.eventId}-${tx.lineType}`} tx={tx} />
+          <TxRow
+            key={`${tx.eventId}-${tx.lineType}`}
+            tx={tx}
+            {...rowProps}
+          />
         ))}
       </ul>
     </>
@@ -147,12 +423,12 @@ function EdgeDetails({
   source,
   target,
   entries,
+  ...rowProps
 }: {
   source: string;
   target: string;
   entries: LedgerEntry[];
-}) {
-  // Transactions entre les 2 comptes (paire non-ordonnée debit→credit)
+} & SharedRowProps) {
   const txs = entries.filter(
     (e) =>
       e.lineType === 'debit' &&
@@ -180,9 +456,16 @@ function EdgeDetails({
       <div className="text-2xs uppercase tracking-wider text-subtle font-mono mb-2">
         Détail
       </div>
+      <p className="text-2xs text-muted mb-3">
+        <kbd className="kbd">⌘+clic</kbd> pour sélectionner · clic droit pour actions
+      </p>
       <ul className="space-y-1.5">
         {txs.map((tx) => (
-          <TxRow key={`${tx.eventId}-${tx.lineType}`} tx={tx} />
+          <TxRow
+            key={`${tx.eventId}-${tx.lineType}`}
+            tx={tx}
+            {...rowProps}
+          />
         ))}
       </ul>
     </>
@@ -209,24 +492,48 @@ async function openDocument(documentId: string) {
     const blob = await lexa.downloadDocument(documentId);
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank', 'noopener,noreferrer');
-    // Libérer l'URL après 60s (le browser garde une copie interne)
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
   } catch {
     console.error('[LedgerDrawer] openDocument failed for', documentId);
   }
 }
 
-function TxRow({ tx }: { tx: LedgerEntry }) {
+function TxRow({
+  tx,
+  selectedStreamIds,
+  onToggleSelect,
+  onContextMenu,
+}: { tx: LedgerEntry } & SharedRowProps) {
+  const isSelected = selectedStreamIds.has(tx.streamId);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const rect = (e.currentTarget as HTMLElement).closest('aside')?.getBoundingClientRect();
+    const relX = rect ? e.clientX - rect.left : e.clientX;
+    const relY = rect ? e.clientY - rect.top : e.clientY;
+    onContextMenu(tx, relX, relY);
+  };
+
   return (
-    <li className="flex items-start justify-between gap-2 px-3 py-2 rounded border border-border bg-bg hover:border-border-strong transition-colors">
+    <li
+      className={`flex items-start justify-between gap-2 px-3 py-2 rounded border transition-colors cursor-default select-none ${
+        isSelected
+          ? 'border-accent bg-accent/5'
+          : 'border-border bg-bg hover:border-border-strong'
+      }`}
+      onClick={(e) => onToggleSelect(tx.streamId, e)}
+      onContextMenu={handleContextMenu}
+    >
       <div className="min-w-0 flex-1 overflow-hidden">
-        <div className="flex items-center gap-2 text-2xs text-subtle font-mono">
+        <div className="flex items-center gap-2 text-2xs text-subtle font-mono flex-wrap">
           <span>{fmtDate(tx.occurredAt)}</span>
           <span className="text-muted">·</span>
           <span>{tx.lineType === 'debit' ? 'D' : 'C'}</span>
+
+          {/* Badge pièce justificative */}
           {tx.documentId && (
             <button
-              onClick={() => openDocument(tx.documentId!)}
+              onClick={(e) => { e.stopPropagation(); openDocument(tx.documentId!); }}
               className="text-subtle hover:text-accent transition-colors"
               title="Voir la pièce justificative"
               aria-label="Ouvrir le document source"
@@ -234,6 +541,8 @@ function TxRow({ tx }: { tx: LedgerEntry }) {
               <Paperclip className="w-3 h-3" />
             </button>
           )}
+
+          {/* Badge source Pro */}
           {tx.source?.startsWith('swigs-pro-') && (
             <span
               className="inline-flex items-center gap-0.5 text-accent"
@@ -243,6 +552,8 @@ function TxRow({ tx }: { tx: LedgerEntry }) {
               <span className="text-2xs font-mono">Pro</span>
             </span>
           )}
+
+          {/* Badge réconcilié */}
           {tx.reconciles && (
             <span
               className="inline-flex items-center gap-0.5 text-emerald-500"
@@ -250,6 +561,35 @@ function TxRow({ tx }: { tx: LedgerEntry }) {
             >
               <Link2 className="w-3 h-3" />
               <span className="text-2xs font-mono">Réconciliée</span>
+            </span>
+          )}
+
+          {/* Badge V1.1 — modifiée */}
+          {tx.corrected && (
+            <span
+              className="inline-flex items-center gap-0.5 text-amber-400"
+              title={tx.lastReasoning ? `Modifiée : ${tx.lastReasoning}` : 'Écriture modifiée'}
+            >
+              <Edit3 className="w-3 h-3" />
+              <span className="text-2xs font-mono">Modifiée</span>
+            </span>
+          )}
+
+          {/* Badge V1.1 — lettrée */}
+          {tx.letterRef && (
+            <span
+              className="inline-flex items-center gap-0.5 text-violet-400"
+              title={`Lettrée — ${tx.letterRef}`}
+            >
+              <Link className="w-3 h-3" />
+              <span className="text-2xs font-mono">{tx.letterRef.slice(-4)}</span>
+            </span>
+          )}
+
+          {/* Checkmark sélection */}
+          {isSelected && (
+            <span className="text-accent">
+              <Check className="w-3 h-3" />
             </span>
           )}
         </div>
