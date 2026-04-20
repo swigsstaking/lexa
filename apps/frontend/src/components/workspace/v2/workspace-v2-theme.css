@@ -16,9 +16,14 @@
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Canvas background cream avec vignette radiale (comme le prototype) */
+/* Canvas background cream avec vignette radiale en light, dark stone en dark */
 .workspace-v2-theme .v2-canvas {
   background:
     radial-gradient(ellipse 60% 40% at 50% 0%, #EFE9DB 0%, transparent 70%),
     linear-gradient(180deg, #F5F2EC 0%, #EFE9DB 100%);
+}
+
+/* Dark mode — full dark stone canvas */
+[data-theme="dark"] .workspace-v2-theme .v2-canvas {
+  background: var(--v2-bg);
 }
