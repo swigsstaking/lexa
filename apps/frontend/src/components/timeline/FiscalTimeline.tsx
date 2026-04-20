@@ -60,8 +60,8 @@ export function FiscalTimeline({ year, selected }: Props) {
         aria-label="Changer la période"
         style={{ touchAction: 'manipulation' }}
       >
-        {/* Track — gris foncé */}
-        <div className="absolute inset-y-3 left-0 right-0 bg-stone-800 rounded-full" />
+        {/* Track — border-strong adaptatif selon le thème */}
+        <div className="absolute inset-y-3 left-0 right-0 bg-border-strong rounded-full" />
         {/* Range de la période sélectionnée — vert */}
         <div
           className="absolute inset-y-3 bg-emerald-500/30 border-y border-emerald-500/60 rounded"
@@ -70,9 +70,9 @@ export function FiscalTimeline({ year, selected }: Props) {
             width: `${(periodRange.end - periodRange.start) * 100}%`,
           }}
         />
-        {/* Curseur aujourd'hui — trait fin gris clair */}
+        {/* Curseur aujourd'hui — trait fin subtle */}
         <div
-          className="absolute top-2 bottom-2 w-px bg-stone-400"
+          className="absolute top-2 bottom-2 w-px bg-subtle"
           style={{ left: `${progress.now * 100}%` }}
         />
         {/* Curseur sélectionné */}
