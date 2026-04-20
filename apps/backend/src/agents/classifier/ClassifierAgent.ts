@@ -47,6 +47,8 @@ R1 FRAIS BANCAIRES: frais tenue compte, commissions, agios UBS/CS/PostFinance �
 R2 VIREMENT CLIENT: encaissement facture emise (amount>0, contrepartie=client) → credit_account:3200 (PAS 1100). 1100=OD internes uniquement.
 R3 TVA AFC: paiement AFC/administration federale contributions → debit_account:2200 (PAS 2270 Impots).
 R4 SORTIE bancaire: credit_account=1020. ENTREE bancaire: debit_account=1020.
+R5 DESCRIPTION DUPLIQUEE: si la description contient "X | Y | Z" avec repetition du meme nom (ex: "Acme SA | Acme SA | Acme SA"), traiter comme "Acme SA" simple. Les barres verticales separent counterpartyName / reference / structuredRef cote Swigs Pro — ignorer les duplicates.
+R6 REFERENCES SCOR/RF: les codes type "RF80R001920260207" ou "SCOR/RF" dans la description sont des references de paiement suisses — classer comme virement client entrant (debit_account:1020, credit_account:3200).
 
 EXEMPLES (few-shot — cles exactes a utiliser):
 desc="Paiement loyer bureau" amt=-4500 cp="REGIE" → {"debit_account":"6000","credit_account":"1020","confidence":0.98}
@@ -65,7 +67,10 @@ desc="Remboursement note de frais" amt=-450 cp="EMPLOYE NOM" → {"debit_account
 desc="Versement AVS/AI LPP" amt=-2100 cp="CAISSE AVS" → {"debit_account":"5700","credit_account":"1020","confidence":0.95}
 desc="Retrait DAB especes" amt=-500 cp="ATM UBS" → {"debit_account":"1000","credit_account":"1020","confidence":0.97}
 desc="Amortissement pret bancaire" amt=-3000 cp="UBS CREDIT" → {"debit_account":"2300","credit_account":"1020","confidence":0.93}
-desc="Achat vehicule utilitaire" amt=-28000 cp="GARAGE AUTO" → {"debit_account":"1530","credit_account":"1020","confidence":0.95}`;
+desc="Achat vehicule utilitaire" amt=-28000 cp="GARAGE AUTO" → {"debit_account":"1530","credit_account":"1020","confidence":0.95}
+desc="Virement client RF80R001920260207" amt=+12000 cp="" → {"debit_account":"1020","credit_account":"3200","tva_code":"N0","confidence":0.88}
+desc="APCOM Solutions SA — 30020000005907" amt=+5500 cp="APCOM" → {"debit_account":"1020","credit_account":"3200","tva_code":"N8","confidence":0.87}
+desc="Greco Autogroup Sarl | Greco Autogroup Sarl | Greco Autogroup Sarl" amt=+3200 cp="GRECO" → {"debit_account":"1020","credit_account":"3200","tva_code":"N8","confidence":0.85}`;
 
 export class ClassifierAgent {
   private model: string;
@@ -153,7 +158,7 @@ ${userPrompt}`;
           format: "json",
           temperature: 0.1,
           numCtx: 8192,
-          numPredict: 100,
+          numPredict: 200, // 200 tokens : JSON Käfer + citations[] tient en 150-180 tokens
           keepAlive: "30m",
         });
         rawResponse = response;
@@ -169,7 +174,7 @@ ${userPrompt}`;
         format: "json",      // force un output JSON strict valide
         temperature: 0.1,
         numCtx: 8192,
-        numPredict: 100,     // cap tokens de sortie — le JSON Käfer tient en 60-80 tokens
+        numPredict: 200,     // 200 tokens : JSON Käfer + citations[] tient en 150-180 tokens
         keepAlive: "30m",    // garde lexa-classifier en VRAM entre les appels CAMT batch
       });
       rawResponse = response;

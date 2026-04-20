@@ -397,6 +397,19 @@ function classifyAsync(
     });
 }
 
+/**
+ * Normalise la description d'une transaction bancaire Swigs Pro.
+ * Le format Pro est "counterpartyName | reference | structuredRef" — quand le
+ * même nom apparaît dans plusieurs slots, le LLM classifier reçoit un texte
+ * répété qui dépasse le contexte optimal et échoue à générer du JSON valide.
+ * Cette fonction déduplique les segments séparés par " | " avant envoi au classifier.
+ */
+function dedupeBankDescription(desc: string): string {
+  const parts = desc.split(/\s*\|\s*/).map((s) => s.trim()).filter(Boolean);
+  const unique = [...new Set(parts)];
+  return unique.join(' | ');
+}
+
 // ── Handlers ──────────────────────────────────────────────────────────────────
 
 export async function handleInvoiceCreated(
@@ -948,10 +961,13 @@ export async function handleBankTransaction(
   // ── 3. INSERT nouveau event ──────────────────────────────────────────────────
   const streamId = randomUUID();
 
-  const description = [
+  // Normaliser la description avant envoi au classifier : déduplication des segments
+  // répétés (format Pro "counterpartyName | reference | structuredRef" peut tripler le nom)
+  const rawDescription = [
     data.description,
     data.counterpartyName,
   ].filter(Boolean).join(" | ") || "(bank transaction)";
+  const description = dedupeBankDescription(rawDescription);
 
   await eventStore.append({
     tenantId,
