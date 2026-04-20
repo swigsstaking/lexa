@@ -84,7 +84,7 @@ function ProBadge({ doc }: { doc: DocumentMeta }) {
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); setModalOpen(true); }}
-        className="absolute top-3 right-10 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:bg-violet-500/30 transition-colors text-2xs font-medium"
+        className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:bg-violet-500/30 transition-colors text-2xs font-medium flex-shrink-0"
         title="Document issu de Swigs Pro"
       >
         <Briefcase className="w-3 h-3" />
@@ -210,9 +210,6 @@ function DocumentCard({ doc, onApply, applyPending, applySuccess, onCreateEntry,
 
   return (
     <div className="card p-4 flex flex-col gap-3 relative">
-      {/* Badge Swigs Pro (Phase 3 V1.1) */}
-      <ProBadge doc={doc} />
-
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
@@ -225,6 +222,8 @@ function DocumentCard({ doc, onApply, applyPending, applySuccess, onCreateEntry,
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Badge Swigs Pro (Phase 3 V1.1) — dans le flow pour éviter l'overlap */}
+          <ProBadge doc={doc} />
           <span className={`text-2xs px-2 py-0.5 rounded-full font-medium ${typeColor}`}>
             {typeLabel}
           </span>
