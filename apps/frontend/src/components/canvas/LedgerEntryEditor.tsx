@@ -12,25 +12,35 @@ import { isAxiosError } from 'axios';
 import { lexa } from '@/api/lexa';
 import type { LedgerEntry } from '@/api/types';
 
-// Comptes Käfer fréquents — débit + crédit
+// Comptes Käfer fréquents — débit + crédit (format court max 10 chars pour API)
 const KAFER_ACCOUNTS = [
-  '1000 - Caisse',
-  '1020 - Banque',
-  '1100 - Clients',
-  '1170 - TVA récupérable',
-  '2000 - Fournisseurs',
-  '2200 - TVA due',
-  '3000 - Ventes marchandises',
-  '3200 - Prestations de services',
-  '4000 - Achats marchandises',
-  '5000 - Salaires',
-  '6000 - Loyers',
-  '6300 - Assurances',
-  '6400 - Énergie',
-  '6700 - Publicité',
-  '8000 - Charges financières',
-  '9000 - Capitaux propres',
+  '1000',
+  '1020',
+  '1100',
+  '1170',
+  '2000',
+  '2200',
+  '3000',
+  '3200',
+  '4000',
+  '5000',
+  '6000',
+  '6300',
+  '6400',
+  '6700',
+  '8000',
+  '9000',
 ];
+
+/**
+ * Extrait le code de compte depuis une valeur qui peut être "1020 - Banque" ou "1020".
+ * Le backend accepte max 10 chars pour debitAccount/creditAccount.
+ */
+function extractAccountCode(value: string): string {
+  // Si le format contient " - ", on prend la partie avant (ex: "1020 - Banque" → "1020")
+  const match = value.match(/^(\d{3,10})/);
+  return match ? match[1] : value.slice(0, 10);
+}
 
 type Mode = 'correct' | 'create';
 
@@ -128,9 +138,11 @@ export function LedgerEntryEditor({ mode, entry, onClose }: Props) {
     setToast(null);
     try {
       if (mode === 'correct' && entry) {
+        const debitCode = extractAccountCode(debitAccount);
+        const creditCode = extractAccountCode(creditAccount);
         await lexa.correctLedgerEntry(entry.streamId, {
-          debitAccount: debitAccount !== entry.account ? debitAccount : undefined,
-          creditAccount: creditAccount !== entry.counterpartAccount ? creditAccount : undefined,
+          debitAccount: debitAccount !== entry.account ? debitCode : undefined,
+          creditAccount: creditAccount !== entry.counterpartAccount ? creditCode : undefined,
           amountTtc: amountTtc !== String(entry.amountTtc ?? entry.amount) ? amount : undefined,
           description: description !== entry.description ? description : undefined,
           reasoning: reasoning.trim(),
@@ -140,8 +152,8 @@ export function LedgerEntryEditor({ mode, entry, onClose }: Props) {
         await lexa.createLedgerEntry({
           date: entryDate,
           description: description.trim(),
-          debitAccount: debitAccount.trim(),
-          creditAccount: creditAccount.trim(),
+          debitAccount: extractAccountCode(debitAccount.trim()),
+          creditAccount: extractAccountCode(creditAccount.trim()),
           amountTtc: amount,
           reasoning: reasoning.trim() || undefined,
         });
@@ -241,7 +253,7 @@ export function LedgerEntryEditor({ mode, entry, onClose }: Props) {
             value={debitAccount}
             onChange={(e) => setDebitAccount(e.target.value)}
             className="input w-full"
-            placeholder="ex: 1020 - Banque"
+            placeholder="ex: 1020"
           />
           <datalist id="kafer-accounts-list">
             {KAFER_ACCOUNTS.map((a) => <option key={a} value={a} />)}
@@ -258,7 +270,7 @@ export function LedgerEntryEditor({ mode, entry, onClose }: Props) {
             value={creditAccount}
             onChange={(e) => setCreditAccount(e.target.value)}
             className="input w-full"
-            placeholder="ex: 3200 - Prestations de services"
+            placeholder="ex: 3200"
           />
         </div>
 
