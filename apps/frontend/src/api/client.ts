@@ -29,11 +29,17 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Redirect auto vers /login si on reçoit un 401 avec un token actif
+// Routes d'authentification — ne jamais auto-logout sur 401 (c'est "mauvais mot de passe", pas "session expirée")
+const AUTH_ROUTES = ['/auth/login', '/auth/register', '/auth/google', '/auth/magic'];
+
+// Redirect auto vers /login si on reçoit un 401 avec un token actif,
+// SAUF sur les routes d'auth où 401 = mauvais credentials (pas session expirée)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && getAuthToken()) {
+    const requestUrl: string = error.config?.url ?? '';
+    const isAuthRoute = AUTH_ROUTES.some((r) => requestUrl.includes(r));
+    if (error.response?.status === 401 && getAuthToken() && !isAuthRoute) {
       useAuthStore.getState().logout();
       // Hard navigation pour vider le state React
       if (window.location.pathname !== '/login') {
