@@ -522,8 +522,26 @@ export async function handleInvoiceSent(
   );
 
   if (existing.length > 0) {
-    // Déjà ingéré via invoice.created → appendre un event InvoiceStatusChanged plutôt que dupliquer
+    // Déjà ingéré via invoice.created → vérifier si InvoiceStatusChanged existe déjà (idempotence re-import)
     const existingStreamId = existing[0].stream_id;
+    const { rows: alreadySent } = await queryAsTenant<{ id: string }>(
+      tenantId,
+      `SELECT id FROM events
+       WHERE tenant_id = $1
+         AND stream_id = $2
+         AND type = 'InvoiceStatusChanged'
+         AND metadata->>'proEvent' = 'invoice.sent'
+       LIMIT 1`,
+      [tenantId, existingStreamId],
+    );
+    if (alreadySent.length > 0) {
+      console.info(
+        "[bridge] invoice.sent — InvoiceStatusChanged already exists (skip re-import) streamId=%s invoice=%s",
+        existingStreamId,
+        data.invoiceNumber,
+      );
+      return;
+    }
     await eventStore.append({
       tenantId,
       streamId: existingStreamId,
@@ -907,8 +925,8 @@ export async function handleBankTransaction(
     amount: Math.abs(data.amount),
     date: bankDate,
     description: data.description,
-    iban: data.iban,
-    bankRef: data.bankRef,
+    iban: data.iban ?? undefined,
+    bankRef: data.bankRef ?? undefined,
   });
 
   const existingByFp = await lookupByFingerprint(tenantId, fingerprint);
@@ -946,7 +964,7 @@ export async function handleBankTransaction(
         description,
         amount: data.amount, // signe déjà porté par Pro
         currency: data.currency,
-        counterpartyIban: data.iban,
+        counterpartyIban: data.iban ?? undefined,
       },
     },
     metadata: {
