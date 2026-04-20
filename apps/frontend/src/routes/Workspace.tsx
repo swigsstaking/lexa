@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
-  Activity,
   BookOpen,
   Building2,
   Calculator,
-  Command,
   FileSignature,
   FileText,
   Loader2,
@@ -26,7 +24,6 @@ import { useActiveCompany, useCompaniesStore } from '@/stores/companiesStore';
 import { User } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useChatStore } from '@/stores/chatStore';
-import { LedgerCanvas } from '@/components/canvas/LedgerCanvas';
 import { PeriodModal } from '@/components/canvas/PeriodModal';
 import { usePeriodStore } from '@/stores/periodStore';
 import { ChatOverlay } from '@/components/chat/ChatOverlay';
@@ -38,34 +35,10 @@ import { StartActionCards } from '@/components/onboarding/StartActionCards';
 import { MobileLedgerList } from '@/components/workspace/MobileLedgerList';
 import { WorkspaceV2 } from '@/components/workspace/WorkspaceV2';
 
-type WorkspaceVersion = 'v1' | 'v2';
-
-function useWorkspaceVersion(): [WorkspaceVersion, (v: WorkspaceVersion) => void] {
-  const [version, setVersionState] = useState<WorkspaceVersion>(() => {
-    try {
-      const saved = localStorage.getItem('lexa:workspaceVersion');
-      return (saved === 'v1' || saved === 'v2') ? saved : 'v1';
-    } catch {
-      return 'v1';
-    }
-  });
-  const setVersion = (v: WorkspaceVersion) => {
-    setVersionState(v);
-    try { localStorage.setItem('lexa:workspaceVersion', v); } catch { /* ignore */ }
-  };
-  return [version, setVersion];
-}
-
 export function Workspace() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [workspaceVersion, setWorkspaceVersion] = useWorkspaceVersion();
   const queryClient = useQueryClient();
-
-  // Nav jump — ?editStream=<id> ou ?correctStream=<id>
-  const editStreamId = searchParams.get('editStream');
-  const correctStreamId = searchParams.get('correctStream');
   const company = useActiveCompany();
   const addCompany = useCompaniesStore((s) => s.addCompany);
   const setActive = useCompaniesStore((s) => s.setActive);
@@ -510,40 +483,27 @@ export function Workspace() {
           </div>
         )}
 
-        {/* LedgerCanvas V1 — desktop seulement, visible si workspaceVersion === 'v1' */}
-        {workspaceVersion === 'v1' && (
-          <div className="hidden md:block absolute inset-0">
-            <LedgerCanvas
-              autoOpenStreamId={editStreamId}
-              autoCorrectStreamId={correctStreamId}
-              tenantId={activeTenantId ?? 'default'}
-            />
-          </div>
-        )}
-
-        {/* WorkspaceV2 — desktop seulement, visible si workspaceVersion === 'v2' */}
-        {workspaceVersion === 'v2' && (
-          <div className="hidden md:block absolute inset-0">
-            <WorkspaceV2 />
-          </div>
-        )}
+        {/* WorkspaceV2 — desktop seulement, seule version disponible */}
+        <div className="hidden md:block absolute inset-0">
+          <WorkspaceV2 />
+        </div>
 
         {/* Empty state / Processing state — visible sur mobile ET desktop */}
         {!hasEntries && !health.isLoading && (
           <div
             className="absolute inset-0 grid place-items-center pointer-events-none z-20"
-            style={workspaceVersion === 'v2' ? { background: 'rgb(var(--bg))' } : undefined}
+            style={{ background: 'rgb(var(--bg))' }}
           >
             <div
-              className={workspaceVersion === 'v2' ? 'pointer-events-auto text-center mx-4' : 'card-elevated p-8 max-w-2xl pointer-events-auto text-center mx-4'}
-              style={workspaceVersion === 'v2' ? {
+              className="pointer-events-auto text-center mx-4"
+              style={{
                 background: 'var(--v2-surface)',
                 border: '1px solid var(--line-1)',
                 borderRadius: 16,
                 padding: '40px 48px',
                 maxWidth: 640,
                 boxShadow: '0 4px 24px rgba(26,24,20,0.08)',
-              } : undefined}
+              }}
             >
               {hasIngestedButNoEntries ? (
                 /* Bloc B — état "processing" : transactions importées mais pas encore dans le ledger */
@@ -571,50 +531,6 @@ export function Workspace() {
                 </>
               )}
             </div>
-          </div>
-        )}
-
-        {/* Toggle V1 ⇄ V2 — bottom-right, dark chrome toujours */}
-        <button
-          type="button"
-          onClick={() => setWorkspaceVersion(workspaceVersion === 'v1' ? 'v2' : 'v1')}
-          title={`Passer en workspace ${workspaceVersion === 'v1' ? 'V2' : 'V1'}`}
-          className="hidden md:flex absolute bottom-4 z-20 items-center gap-1.5 px-3 py-2 text-2xs font-medium transition-colors hover:opacity-80 rounded-lg"
-          style={{ right: workspaceVersion === 'v1' ? '7.5rem' : '1rem', background: 'var(--chrome-bg)', border: '1px solid var(--chrome-line)', color: 'var(--chrome-ink-1)' }}
-        >
-          <span
-            className="w-1.5 h-1.5 rounded-full"
-            style={{ background: workspaceVersion === 'v1' ? 'rgb(var(--warning))' : 'rgb(var(--success))' }}
-          />
-          {workspaceVersion === 'v1' ? 'V1' : 'V2'}
-          <span className="text-subtle">⇄</span>
-          {workspaceVersion === 'v1' ? 'V2' : 'V1'}
-        </button>
-
-        {/* Floating agents indicator — desktop, V1 seulement (V2 a sa propre toolbar) */}
-        {workspaceVersion === 'v1' && (
-          <div
-            className="hidden md:flex absolute items-center gap-2 pointer-events-none z-10 px-3 py-2 rounded-lg"
-            style={{ top: 12, left: 16, background: 'var(--chrome-bg)', border: '1px solid var(--chrome-line)' }}
-          >
-            <Activity className="w-3.5 h-3.5" style={{ color: 'rgb(var(--accent))' }} />
-            <span className="text-2xs uppercase tracking-wider" style={{ color: 'var(--chrome-ink-2)' }}>Agents</span>
-            <div className="flex gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-success" title="classifier" />
-              <span className="w-1.5 h-1.5 rounded-full bg-success" title="reasoning" />
-              <span className="w-1.5 h-1.5 rounded-full bg-success" title="tva" />
-            </div>
-          </div>
-        )}
-
-        {/* Hint Cmd+K — desktop, V1 seulement (V2 a sa toolbar qui couvre le top) */}
-        {workspaceVersion === 'v1' && (
-          <div
-            className="hidden md:flex absolute items-center gap-2 pointer-events-none z-10 px-3 py-2 rounded-lg"
-            style={{ top: 12, right: 16, background: 'var(--chrome-bg)', border: '1px solid var(--chrome-line)' }}
-          >
-            <Command className="w-3.5 h-3.5" style={{ color: 'var(--chrome-ink-3)' }} />
-            <span className="text-2xs" style={{ color: 'var(--chrome-ink-2)' }}>Cmd+K pour interroger l'IA</span>
           </div>
         )}
 
