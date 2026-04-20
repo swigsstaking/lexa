@@ -21,7 +21,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { eventStore } from "../events/EventStore.js";
 import { queryAsTenant } from "../db/postgres.js";
-import { scheduleLedgerRefresh } from "../services/LedgerRefresh.js";
+import { scheduleLedgerRefresh, flushLedgerRefresh } from "../services/LedgerRefresh.js";
 
 export const ledgerEditRouter = Router();
 
@@ -141,7 +141,8 @@ ledgerEditRouter.post("/entries", async (req, res) => {
       metadata: { createdByUserId: userId },
     });
 
-    scheduleLedgerRefresh(tenantId);
+    // Flush synchrone pour que le client voie les changements immédiatement
+    await flushLedgerRefresh(tenantId);
 
     return res.status(201).json({
       streamId,
@@ -204,7 +205,8 @@ ledgerEditRouter.patch("/entries/:streamId/correct", async (req, res) => {
       metadata: { correctedByUserId: userId },
     });
 
-    scheduleLedgerRefresh(tenantId);
+    // Flush synchrone pour que le client voie les changements immédiatement
+    await flushLedgerRefresh(tenantId);
 
     return res.json({
       streamId,
@@ -269,7 +271,8 @@ ledgerEditRouter.post("/lettrage", async (req, res) => {
       appended.push(ev.id);
     }
 
-    scheduleLedgerRefresh(tenantId);
+    // Flush synchrone pour que le client voie les changements immédiatement
+    await flushLedgerRefresh(tenantId);
 
     return res.status(201).json({
       letterRef,
@@ -332,7 +335,8 @@ ledgerEditRouter.delete("/lettrage/:letterRef", async (req, res) => {
       unletteredStreamIds.push(sid);
     }
 
-    scheduleLedgerRefresh(tenantId);
+    // Flush synchrone pour que le client voie les changements immédiatement
+    await flushLedgerRefresh(tenantId);
 
     return res.json({
       ok: true,

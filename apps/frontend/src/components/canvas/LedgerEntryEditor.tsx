@@ -119,18 +119,12 @@ export function LedgerEntryEditor({ mode, entry, onClose }: Props) {
     }
   };
 
-  // Validation
+  // Validation — reasoning ≥ 3 chars suffit pour correction (pas besoin de modifier un champ)
   const amount = parseFloat(amountTtc);
   const reasoningOk = mode === 'create' || reasoning.trim().length >= 3;
   const amountOk = !isNaN(amount) && amount > 0;
   const accountsOk = debitAccount.trim() !== '' && creditAccount.trim() !== '' && debitAccount !== creditAccount;
-  const hasChanges = mode === 'create' || (
-    debitAccount !== (entry?.account ?? '') ||
-    creditAccount !== (entry?.counterpartAccount ?? '') ||
-    amountTtc !== String(entry?.amountTtc ?? entry?.amount ?? '') ||
-    description !== (entry?.description ?? '')
-  );
-  const canSave = reasoningOk && amountOk && accountsOk && hasChanges;
+  const canSave = reasoningOk && amountOk && accountsOk;
 
   const handleSave = async () => {
     if (!canSave) return;
@@ -160,7 +154,9 @@ export function LedgerEntryEditor({ mode, entry, onClose }: Props) {
         setToast({ kind: 'success', text: 'Écriture créée avec succès' });
       }
       await queryClient.invalidateQueries({ queryKey: ['ledger'] });
-      setTimeout(onClose, 800);
+      await queryClient.invalidateQueries({ queryKey: ['balance'] });
+      // Laisser 1.8s pour que l'user voie le toast avant fermeture drawer
+      setTimeout(onClose, 1800);
     } catch (err) {
       const msg = isAxiosError(err)
         ? (err.response?.data as { message?: string } | undefined)?.message ?? err.message

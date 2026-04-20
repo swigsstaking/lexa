@@ -43,11 +43,11 @@ export function scheduleLedgerRefresh(tenantId: string): void {
  * Use at end of batch operations (e.g., CAMT import) to ensure the
  * materialized view is refreshed even if classify calls kept resetting the timer.
  */
-export function flushLedgerRefresh(tenantId: string): void {
+export async function flushLedgerRefresh(tenantId: string): Promise<void> {
   const existing = pendingTimers.get(tenantId);
   if (existing) clearTimeout(existing);
   pendingTimers.delete(tenantId);
-  doRefresh(tenantId);
+  await doRefresh(tenantId);
 }
 
 async function doRefresh(tenantId: string): Promise<void> {
