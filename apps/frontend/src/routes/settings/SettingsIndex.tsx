@@ -3,9 +3,15 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Briefcase, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Mail, Briefcase, ChevronRight, SunMoon } from 'lucide-react';
 
 const sections = [
+  {
+    path: '/settings/appearance',
+    label: 'Apparence',
+    desc: 'Choisir entre le thème clair (cream) et sombre (stone).',
+    icon: SunMoon,
+  },
   {
     path: '/settings/email-forward',
     label: 'Email forward IMAP',
