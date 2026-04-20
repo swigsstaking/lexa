@@ -5,6 +5,7 @@ import { healthRouter } from "./routes/health.js";
 import { ragRouter } from "./routes/rag.js";
 import { transactionsRouter } from "./routes/transactions.js";
 import { ledgerRouter } from "./routes/ledger.js";
+import { ledgerEditRouter } from "./routes/ledgerEdit.js";
 import { connectorsRouter } from "./routes/connectors.js";
 import { agentsRouter } from "./routes/agents.js";
 import { onboardingRouter } from "./routes/onboarding.js";
@@ -83,6 +84,7 @@ app.use("/bridge", bridgeRouter);        // Pont bidirectionnel Swigs Pro → Le
 app.use("/rag", requireAuth, ragRouter);
 app.use("/transactions", requireAuth, transactionsRouter);
 app.use("/ledger", requireAuth, ledgerRouter);
+app.use("/ledger", requireAuth, ledgerEditRouter);
 app.use("/forms", requireAuth, formsRouter);
 app.use("/taxpayers", requireAuth, taxpayersRouter);
 app.use("/companies", requireAuth, companiesRouter);
