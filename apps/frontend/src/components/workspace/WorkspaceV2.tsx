@@ -16,15 +16,10 @@ export function WorkspaceV2() {
 
   // SA, Sàrl, Coopérative, SNC, SEnC → PM
   // raison_individuelle, société_simple, association, fondation, autre → PP
-  // Override: ?v2variant=pm pour forcer PM, ?v2variant=pp pour forcer PP
-  // BUG-7 fix : la détection se base sur company.legalForm, pas ?v2variant (déprecié)
-  const urlParams = new URLSearchParams(window.location.search);
-  const forceVariant = urlParams.get('v2variant');
-  const isPm = forceVariant === 'pp'
-    ? false  // force PP même si legalForm est PM
-    : forceVariant === 'pm'
-      ? true  // force PM
-      : !!(company?.legalForm && PM_FORMS.includes(company.legalForm));
+  // Détection basée uniquement sur company.legalForm (le param ?v2variant était un override
+  // de debug temporaire, retiré : il restait collé à l'URL après switch de tenant et
+  // forçait la mauvaise vue, cf. switch Demo V2 SA depuis URL ?v2variant=pp).
+  const isPm = !!(company?.legalForm && PM_FORMS.includes(company.legalForm));
 
   return (
     <div className="workspace-v2-theme absolute inset-0 flex flex-col">

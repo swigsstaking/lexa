@@ -18,7 +18,6 @@ import {
   ChevronDown,
   Settings,
   Plus,
-  LayoutGrid,
 } from 'lucide-react';
 import { lexa } from '@/api/lexa';
 import { useActiveCompany, useCompaniesStore } from '@/stores/companiesStore';
@@ -443,19 +442,6 @@ export function Workspace() {
               <Calculator className="w-3.5 h-3.5" />
               <span className="hidden md:inline">Grand livre</span>
             </button>
-            {/* Portefeuille fiduciaire — visible seulement si multi-clients */}
-            {hasMultipleClients && (
-              <button
-                type="button"
-                onClick={() => navigate('/fiduciaire')}
-                title="Vue portefeuille fiduciaire"
-                className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-80"
-                style={{ color: 'var(--chrome-ink-2)' }}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Portefeuille</span>
-              </button>
-            )}
           </nav>
 
           {/* Bouton Paramètres (roue crantée) */}
