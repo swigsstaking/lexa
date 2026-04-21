@@ -120,6 +120,8 @@ export interface AgentAnswer {
 
 export interface LedgerAccount {
   account: string;
+  /** Libellé humain Käfer (ex: "Banque — compte courant") — enrichi par le backend depuis ingest-kafer, fallback sur le code */
+  name?: string;
   debitCount: number;
   creditCount: number;
   totalDebit: number;

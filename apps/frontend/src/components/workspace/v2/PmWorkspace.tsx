@@ -52,7 +52,8 @@ function recomputeBalances(
 function toV2Account(a: LedgerAccount): V2Account {
   const code = extractCode(a.account);
   const cls  = classFromCode(a.account);
-  const name = extractName(a.account);
+  // Priorité au name enrichi par le backend (Käfer labels), fallback sur extraction du champ account
+  const name = a.name ?? extractName(a.account);
   return {
     code,
     name,
