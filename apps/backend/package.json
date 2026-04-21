@@ -13,7 +13,8 @@
     "test:classify": "tsx src/scripts/test-classify.ts",
     "qa-lexa": "tsx src/scripts/qa-lexa.ts",
     "crypto:snapshot": "tsx src/scheduler/cryptoSnapshotCron.ts",
-    "test:swissdec": "tsx src/services/swissdec/__tests__/elmParser.test.ts"
+    "test:swissdec": "tsx src/services/swissdec/__tests__/elmParser.test.ts",
+    "test:pp-import": "tsx src/tests/ocr-parser.test.ts && tsx src/tests/pp-import-integration.test.ts"
   },
   "dependencies": {
     "@napi-rs/canvas": "^0.1.67",
