@@ -25,21 +25,6 @@ const CATEGORIES: CategoryCard[] = [
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const ACCEPTED_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 
-const kbdStyle: React.CSSProperties = {
-  display: 'inline-block',
-  padding: '1px 5px',
-  borderRadius: 4,
-  background: 'rgb(var(--elevated, 243 243 238))',
-  border: '1px solid rgb(var(--border, 229 229 222))',
-  fontFamily: '"JetBrains Mono", monospace',
-  fontSize: 9,
-  fontWeight: 600,
-  color: 'rgb(var(--muted, 107 107 102))',
-  lineHeight: 1.4,
-  minWidth: 14,
-  textAlign: 'center',
-};
-
 interface Props {
   onClose: () => void;
   onOpenCryptoForm?: () => void;
@@ -49,7 +34,7 @@ export function PpImportModal({ onClose, onOpenCryptoForm }: Props) {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ImportCategory>('auto');
   const [toast, setToast] = useState<string | null>(null);
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement | null>(null);
 
@@ -174,8 +159,6 @@ export function PpImportModal({ onClose, onOpenCryptoForm }: Props) {
           left: '50%',
           transform: 'translate(-50%, -50%)',
           width: 'min(560px, 96vw)',
-          maxHeight: '90vh',
-          overflowY: 'auto',
           background: 'rgb(var(--surface, 255 255 255))',
           border: '1px solid rgb(var(--border, 229 229 222))',
           borderRadius: 16,
@@ -199,7 +182,7 @@ export function PpImportModal({ onClose, onOpenCryptoForm }: Props) {
               Importer / Saisir vos données fiscales
             </div>
             <div style={{ fontSize: 11, color: 'rgb(var(--muted, 107 107 102))', marginTop: 2 }}>
-              PDF, JPG, PNG — max 10 MB — <kbd style={kbdStyle}>Esc</kbd> ferme · <kbd style={kbdStyle}>W</kbd>/<kbd style={kbdStyle}>B</kbd>/<kbd style={kbdStyle}>P</kbd>/<kbd style={kbdStyle}>F</kbd>/<kbd style={kbdStyle}>A</kbd>/<kbd style={kbdStyle}>C</kbd> sélectionne
+              PDF, JPG, PNG — max 10 MB
             </div>
           </div>
           <button
@@ -327,7 +310,6 @@ export function PpImportModal({ onClose, onOpenCryptoForm }: Props) {
                   </span>
                   <span style={{ fontSize: 11, fontWeight: 600 }}>{cat.label}</span>
                   <span style={{ fontSize: 10, color: 'rgb(var(--subtle, 154 154 147))' }}>{cat.sub}</span>
-                  <kbd style={{ ...kbdStyle, marginTop: 2 }}>{cat.shortcut}</kbd>
                 </button>
               );
             })}
