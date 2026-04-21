@@ -1,190 +1,155 @@
-# Lexa — Handoff instance Opus 4.7 → prochaine instance
+# Lexa — Handoff instance mère → prochaine instance
 
-**Date** : 2026-04-20
-**Version** : V1.1 beta (Workspace V2 seule, mode light par défaut)
-**Contexte** : ~70 commits sur cette session, migration V1 ReactFlow → V2 design prototype, 9 bugs P0 critiques corrigés, 3 rapports E2E (PP/PM/Fiduciaire) livrés
+**Date** : 2026-04-21
+**Version** : V1.2-dev (92% alignement whitepaper)
+**Instance précédente** : Claude Sonnet 4.6 — focus V1.2 alignement whitepaper
 
 ---
 
 ## 🎯 Où en est le projet
 
-### V2 Workspace livrée (V1 supprimée)
+### V2 Workspace (seule version, V1 supprimée)
+- Routing V2 : `legalForm RI/SS/null` → `PpWorkspace`, sinon → `PmWorkspace` (3 vues)
+- PP Workspace : données réelles depuis `/api/pp/summary` (fallback mock si vide)
+- PM Workspace : 3 vues (Colonnes A / Colonnes B / Ledger)
+- CmdK (Cmd+K) : chat IA streaming + context ledger injecté, agents LEXA/TVA/CLASSIFIER
 
-La V1 `LedgerCanvas` ReactFlow a été **supprimée** (commit `5cc4df5`). Le workspace V2 basé sur le design prototype Claude Design est maintenant la **seule version** disponible.
+### Wizards fiscaux — 7 cantons × 2 types (COMPLET)
 
-**Routing V2** (`apps/frontend/src/components/workspace/WorkspaceV2.tsx`) :
-- `legalForm === 'raison_individuelle' | 'societe_simple' | null` → `<PpWorkspace />` (swimlanes salarié)
-- Sinon → `<PmWorkspace />` (3 vues : Colonnes A / Colonnes B / Ledger)
-- Override URL : `?v2variant=pp` ou `?v2variant=pm` pour forcer
+| Canton | PP wizard | PM wizard | Barème PP KB | Barème PM KB |
+|---|---|---|---|---|
+| VS | ✅ | ✅ | ✅ | ✅ |
+| GE | ✅ | ✅ | ✅ | ✅ |
+| VD | ✅ | ✅ | ✅ | ✅ |
+| FR | ✅ | ✅ | ✅ | ✅ |
+| NE | ✅ | ✅ | ✅ | ✅ |
+| JU | ✅ | ✅ | ✅ | ✅ |
+| BJ | ✅ | ✅ | ✅ | ✅ |
 
-### 3 vues PM
-1. **Colonnes A** (défaut) — flux G→D, 4 colonnes classes P/A/L/C, flèches courbes entre cartes
-2. **Colonnes B** — Sankey épaisseur ∝ montant
-3. **Ledger** — table filtrable + panel détail + mini graphe radial
+### KB Qdrant swiss_law (~9761 points)
+- Plan Käfer 66 comptes, OIFD+OLTVA 24 pts, AFC Circulaires ~36 pts
+- Barèmes PP + PM pour 7 cantons (18 pts chacun)
+- Swissdec Guidelines, LAVS, autres
 
-### PP Workspace
-- Hero profil + 5 KPIs (Salaire, Vie privée, Épargne, Impôts, Disponible)
-- 4 swimlanes items cliquables → `PpDetailDrawer` avec mock tx
-- Card Échéances dark + CTA "Simuler" préremplit le wizard
-
-### Palette
-- **Light par défaut** : cream `#F5F2EC` + orange chaud `#E08A3D` (token `--lexa`)
-- **Dark opt-in** via `/settings/appearance` : stone (ancien Lexa)
-- **Accent global** : `--accent: 224 138 61` (#E08A3D) light / `238 156 82` dark
-- Header + Timeline **toujours dark** (chrome-bg `#0A0A0A`) quel que soit le thème
-- Scope tokens dans `apps/frontend/src/index.css` `[data-theme="light"]` / `[data-theme="dark"]`
-
-### CmdK modal (Cmd+K)
-- Backdrop opaque `rgba(0,0,0,0.82)` + blur 8px
-- Mode launcher (suggestions IA) + mode chat streaming
-- Sélecteur agent : LEXA / TVA / CLASSIFIER
-- Enter envoie au chat (si query non vide) ou déclenche suggestion
-- Fichier : `apps/frontend/src/components/workspace/v2/LexaCmdK.tsx`
+### Stack technique
+- **Frontend** : React 18 + Vite + TanStack Query + Zustand persist
+- **Backend** : Node + Express + Postgres event-store + Redis/BullMQ + Qdrant + Ollama
+- **Auth** : SSO Swigs Hub → JWT (`hubUserId` + `memberships[]` + `activeTenantId`)
+- **Multi-tenant RLS** : `queryAsTenant()` obligatoire, `FORCE ROW LEVEL SECURITY` sur toutes les tables
+- **Event-sourcing** : matview `ledger_entries` (REFRESH manuel si vide après import CAMT)
 
 ---
 
-## 🔐 9 bugs P0 corrigés lors des E2E critiques
-
-Rapports complets dans `06-sessions/e2e-{pp,pm,fidu}-2026-04-20/`.
-
-| # | Bug | Fix commit | Validation Chrome MCP |
-|---|-----|-----------|----------------------|
-| 1 | Wizard PP inputs redirigent `/workspace` | `d0b218a` (cause racine) | ⏳ Lié token expiré |
-| 2 | Wizard PM "Suivant" switch tenant | `f8e7ecc` + `86f135d` | ✅ URL reste `/pm/ge/2026` |
-| 3 | Dropdown VUE navigations parasites | `f8e7ecc` (stopPropagation) | ✅ Dropdown ouvre proprement |
-| 4 | CmdK Enter navigue au lieu d'envoyer | `f8e7ecc` | ✅ Envoie au chat |
-| 5 | Empty state cards déconnectent | `d0b218a` (cause racine) | ✅ Navigate `/documents` sans logout |
-| 6 | **RGPD** cache stale PP inter-tenants | `b9a40d0` | ✅ Switch Marine Duay → empty state isolé |
-| 7 | `/workspace` sans `?v2variant` → cache PP | Déjà OK via `WorkspaceV2.tsx` | ✅ |
-| 8 | Wizard PM CA/bénéfice à zéro | `86f135d` | ✅ CA 69 100 + Bénéfice 21 825 depuis GL |
-| 9 | Login 401 silencieux redirect register | `d0b218a` | ⏳ À re-tester manuellement |
-
----
-
-## 🧩 Architecture
-
-### Frontend
-- **React 18 + Vite + TanStack Query + Zustand persist**
-- `apps/frontend/src/routes/Workspace.tsx` — route root workspace
-- `apps/frontend/src/components/workspace/WorkspaceV2.tsx` — router PP/PM
-- `apps/frontend/src/components/workspace/v2/` — 11 composants V2 :
-  - `PmWorkspace`, `PmColumnsA`, `PmColumnsB`, `PmLedger`
-  - `PpWorkspace` (+ `PpDetailDrawer` inline)
-  - `AccountTile`, `DebitCreditBadge`, `LexaInsight`, `ViewSwitcher`
-  - `LexaCmdK` (modal chat IA)
-  - `soldeDirection.ts` (helper D/C convention comptable)
-- `apps/frontend/src/components/canvas/LedgerDrawer.tsx` — drawer de détail compte (V1 réutilisé en V2)
-- `apps/frontend/src/components/canvas/LedgerEntryEditor.tsx` — éditeur écriture (correct/create/lettrage)
-
-### Backend
-- **Node + Express + Postgres event-store + MongoDB (documents) + Redis (BullMQ) + Qdrant + Ollama/vLLM**
-- Serveur backend prod : `swigs@192.168.110.59:/home/swigs/lexa-backend` (pm2 `lexa-backend`)
-- Serveur IA : `swigs@192.168.110.103` (vLLM :8100 + Ollama :11434 + Qdrant :6333 + embedder :8082)
-- Frontend prod : `swigs@192.168.110.59:/home/swigs/lexa-frontend/` servi via nginx `lexa.swigs.online`
-- Bridge Pro : `swigs-workflow` sur `.59` (port 3004), HMAC bidirectionnel
-
-### Migrations DB
-- 001→014 : events, ledger, companies, users, taxpayer_drafts, fiduciary_memberships, RLS, email IMAP
-- 015 : `ledger_entries.reconciles`
-- 016 : `pro_lexa_tenant_map`
-- 017 : index dedup bridge
-- 018 : `events` fingerprint index
-- 019 : `tenant_settings` (toggle Pro sync)
-- 020 : `users.external_sso_id` (SSO Hub)
-- **021** : matview `ledger_entries` étendue (`letter_ref`, `corrected`, `last_reasoning`)
-
-### Auth
-- SSO Swigs Hub (proxy login/register + Google + magic-link)
-- JWT avec `hubUserId` + `memberships[]` + `activeTenantId`
-- Intercepteur 401 frontend : ne logout plus sur routes `/auth/*` (fix `d0b218a`)
-
----
-
-## 📍 Accès prod
+## 🔐 Accès prod
 
 - URL : https://lexa.swigs.online
-- Compte test : `qa-test@lexa.test` / `LexaQA2026!` → accès à 4 tenants (corentin, Swigs Sa, Demo V2 SA, Marine Duay)
-- Tenant seed test : **Demo V2 SA** `47eddb05-d46b-48cd-ad23-698cc30d1d89` — 30 transactions réalistes (jan→avril 2026, 10 comptes Käfer)
-- SSH : `ssh swigs@192.168.110.59` (keys OK)
+- Compte test : `qa-test@lexa.test` / `LexaQA2026!` → 4 tenants
+- Tenant seed : **Demo V2 SA** `47eddb05-d46b-48cd-ad23-698cc30d1d89` — 30 tx réalistes
+- Backend prod : `swigs@192.168.110.59` (pm2 `lexa-backend`, port 3010)
+- IA/Qdrant : `swigs@192.168.110.103` (vLLM :8100, Ollama :11434, Qdrant :6333, embedder :8082)
+- Frontend nginx : `/home/swigs/lexa-frontend/` → `lexa.swigs.online`
 - DB : `psql 'postgresql://lexa_app:yrH7IK2szsme5BdUVh0iQsHoKK9qai3x@127.0.0.1:5432/lexa'` depuis .59
-- Hub API : https://apps.swigs.online (Google OAuth `189258755312-e5qvv3oeq0d3o9q9180o5htabjh1u9mp.apps.googleusercontent.com`)
-- Secrets partagés Pro/Lexa/Hub : `APP_SECRET_WORKFLOW` dans Hub `.env`
 
 ---
 
-## ⚠️ Points chauds connus
+## ⚠️ Gotchas critiques
 
-### Bugs P1 non résolus
-1. **Drawers swimlane PP** — fix commit `334a12f` présent mais user reporte "n'apparaissent pas" en prod. À vérifier après dernier deploy.
-2. **Échéances PP cliquables** — fix `3886f73` présent. Même chose, à re-tester.
-3. **Boutons nav wizard** (Identité/Revenus/Fortune…) — selon rapport PP, naviguent vers `/workspace` au lieu de changer de step. Non adressé, probable handler onClick mal branché.
-4. **Assurance maladie** non préremplie dans wizard PP (workspace l'affiche 5 280 mais wizard step Déductions vide).
-
-### Limitations documentées
-- **PP_DATA mock** : les données workspace PP (Marie Rochat 116 500 CHF) sont globales, pas reliées au tenant réel. Affichées pour tout user PP jusqu'à ce qu'un schéma backend PP soit créé.
-- **Wizard PM charges détaillées** : `86f135d` pré-remplit seulement `pm-ca` et `pm-benefit`. Le split personnel/matériel/amortissement nécessite un endpoint backend qui décompose les charges par classe (5xxx, 6xxx, etc.).
-- **Fiduciaire consolidation** : pas de vue portefeuille cross-tenants. Switch uniquement.
-- **AgentsPill** : indicateur visuel pur (pas d'action). Conditionnel sur `processingStatus.pending > 0 || chatLoading`.
-- **CmdK agent tool ledger** : les questions "Combien de tx ?" ne consultent pas `/api/ledger`. Nécessite un tool côté backend agent.
-
-### Dettes technique
-- 2 erreurs TS pré-existantes dans `apps/backend/src/scripts/qa-lexa.ts` (Buffer/BlobPart Node 25) — à ignorer
-- 1 erreur TS pré-existante dans `apps/backend/src/agents/audit/AuditAgent.ts` — mineur
+1. **Ne JAMAIS rsync `.env`** — prod/local divergent sur DB host
+2. **`queryAsTenant()` obligatoire** pour toutes les tables RLS (pas `query()`)
+3. **`ledger_entries` = matview** — jamais auto-refresh, REFRESH manuel si vide
+4. **Embedder port 8082** (pas 8001) — BGE-M3 sur `.103:8082`
+5. **Deploy pattern** : `pnpm --filter frontend build` → `rsync dist/ swigs@.59:/home/swigs/lexa-frontend/` → `rsync backend/src/ swigs@.59:/home/swigs/lexa-backend/src/` → `pm2 restart lexa-backend`
 
 ---
 
-## 🗺️ Roadmap V1.2 (prochaine instance)
+## 🏗️ Ce qui reste à faire
 
-Priorité décroissante :
+### V1.x (minor)
+- ATF jurisprudence RAG (V2, ~500+ pts Qdrant — initiative séparée)
+- Tests E2E PDF generation wizards NE/JU/BJ
 
-### P1 restants
-1. Re-tester drawers swimlane PP + échéances en prod après reload
-2. Boutons nav steps wizard (mauvaise navigation hors wizard)
-3. Préremplir assurance maladie dans step Déductions PP
-4. Décomposer `chargesTotal` par classe (5xxx/6xxx) pour wizard PM step 2
+### P1 non résolus (de V1.1)
+- Drawers swimlane PP à re-tester en prod après reload
+- Boutons nav steps wizard PP (naviguent hors wizard au lieu de changer de step)
+- Assurance maladie non préremplie dans wizard PP step Déductions
 
-### Features V1.2
-5. **Schéma backend PP** pour remplacer PP_DATA mock — events `PpRevenueIngested`, `PpExpenseIngested`, `Pp3aContribution`, etc.
-6. **Consolidation fiduciaire** — vue portefeuille cross-tenants (KPIs agrégés, alertes échéances)
-7. **CmdK tool agent** — `get_ledger_summary`, `get_taxpayer_draft`, `suggest_deduction`
-8. **XML eCH-0119/0229 end-to-end** — tester dépôt réel AFC après wizard réparé
-9. **Workflow approbation notes de frais** côté Pro (manager approve/reject)
-10. **Mobile V2** — adapter `PmWorkspace` + `PpWorkspace` au viewport 375px (actuellement `hidden md:block`)
+---
 
-### Backlog V2 (horizon T3 2026+)
-- Cantons alémaniques (ZH, BE, AG, SG)
-- Multi-langue DE/IT
-- eBanking direct (Open Banking PSD2-CH)
-- Intégrations Bexio/Abacus/Sage
-- App mobile native (PWA d'abord)
-- Canvas spatial exploratoire (reporté 2026-04-16)
+## 🚀 Prochaine instance mère — Deux axes
+
+### Axe 1 — UX Import automatique PP (côté logiciel + interface)
+
+**Objectif** : réduire la friction de saisie pour les contribuables PP en permettant l'import automatique de documents fiscaux et financiers.
+
+**Features à concevoir et implémenter :**
+
+1. **Modal d'import PP** — interface permettant d'uploader/importer :
+   - Certificats de salaire (PDF/image) → OCR → pré-remplissage revenus
+   - Attestations de fortune (relevés bancaires, dépôts titres) → parsing → fortune 31.12
+   - Documents de placement (fonds, actions, obligations) → positions + valorisation
+   - Images de frais (notes de repas, transport, matériel) → OCR → déductions
+   - Polices d'assurance (3a, maladie, vie) → primes déductibles
+
+2. **Blockchain / crypto** :
+   - Saisir des adresses wallet (ETH, BTC, autres)
+   - Lexa appelle des APIs blockchain (Etherscan, Blockstream, etc.) chaque 31 décembre
+   - Calcul automatique : solde en CHF au taux du 31.12 → bilan fiscal crypto conforme AFC
+   - Affichage dans PP Workspace (nouvelle swimlane "Crypto/Blockchain")
+
+3. **Pipeline OCR/IA** :
+   - Upload image/PDF → traitement via IA locale (ou service OCR)
+   - Extraction structurée des données → proposition de pré-remplissage
+   - Validation humaine avant commit dans le wizard
+
+### Axe 2 — Unification stack IA locale DGX Spark
+
+**Objectif** : simplifier et optimiser la stack IA partagée entre tous les produits Swigs.
+
+**Contexte actuel :**
+- Lexa : Ollama + Qwen (modèle actuel) + vLLM
+- Swigs Workflow : potentiellement modèle différent
+- AI Builder : potentiellement modèle différent
+- DGX Spark : ressources limitées → éviter de charger N modèles différents
+
+**Features à implémenter :**
+1. **Benchmark Qwen 3.5 vs Gemma 4** (et d'autres candidats) sur cas d'usage réels :
+   - RAG fiscal (qualité réponses sur questions TVA, impôt PP/PM)
+   - Génération de texte structuré (JSON, YAML pour wizards)
+   - Chat streaming (latence, cohérence)
+   - Critères : précision fiscale CH, vitesse, RAM footprint
+2. **Sélection du modèle gagnant** et déploiement unique sur DGX
+3. **Adapter Lexa, Swigs Workflow, AI Builder** pour utiliser le même endpoint Ollama/vLLM
+4. Documenter la configuration et le Modelfile pour le modèle retenu
 
 ---
 
 ## 📚 Docs de référence
 
 - `00-vision/whitepaper.md` V0.2 — source de vérité fonctionnelle
-- `05-roadmap/v1-improvements.md` — roadmap V1.1/V1.2 détaillée (à mettre à jour)
 - `05-roadmap/milestones.md` — roadmap 24 mois macro
-- `06-sessions/e2e-pp-2026-04-20/` — rapport PP (14 screenshots)
-- `06-sessions/e2e-pm-2026-04-20/` — rapport PM (27 screenshots)
-- `06-sessions/e2e-fidu-2026-04-20/` — rapport Fiduciaire (13 screenshots)
-- Mémoire utilisateur : `~/.claude/projects/-Users-corentinflaction-CascadeProjects-lexa/memory/` (gotcha_ledger_view, reference_lexa_infra, feedback_rsync_env)
+- `06-sessions/2026-04-21-v1-2-alignement-whitepaper.md` — récap dernière session (état KB, score 92%)
+- `06-sessions/e2e-{pp,pm,fidu}-2026-04-20/` — rapports E2E V1.1
+- Mémoire : `~/.claude/projects/-Users-corentinflaction-CascadeProjects-lexa/memory/`
 
 ---
 
-## 🚀 Instructions pour la prochaine instance
+## 📋 Instructions pour la prochaine instance
 
 1. **Lire ce HANDOFF.md en entier** avant toute action
-2. **Lire `05-roadmap/v1-improvements.md`** pour la roadmap V1.1+
-3. **Lire `.claude/memory/MEMORY.md`** pour les gotchas techniques
-4. **Chrome MCP dispo** pour validation visuelle obligatoire avant de reporter un fix
-5. **Compte test** : `qa-test@lexa.test` / `LexaQA2026!` avec 4 tenants et 30 tx seed sur Demo V2 SA
-6. **Pattern commit** : `feat/fix/docs/refactor(scope): description` + Co-Author `Claude Sonnet 4.6` ou `Claude Opus 4.7`
-7. **Deploy** : `rsync -avz apps/frontend/dist/ swigs@192.168.110.59:/home/swigs/lexa-frontend/` après `pnpm build`, backend idem vers `/home/swigs/lexa-backend/` + `pm2 restart lexa-backend`
-8. **Ne JAMAIS rsync `.env`** (diverge prod/local)
-9. **User fait partie de fiduciaire swigs.online** — SSO Hub + multi-tenant sont critiques
+2. **Lire `~/.claude/memory/MEMORY.md`** pour les gotchas techniques
+3. **Chrome MCP** disponible pour validation visuelle — utiliser `take_snapshot` pour les uids
+4. **Plan mode** pour toute tâche > 3 étapes
+5. **Agents en parallèle** — toujours lancer 2 agents simultanément quand indépendants
+6. **Commit pattern** : `feat/fix/docs(scope): description` + `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`
+7. **Ne pas implémenter sans avoir vérifié** que la feature n'existe pas déjà (lancer un Explore agent d'abord)
 
 ---
 
-**Dernier commit** : `86f135d fix(wizard): pré-remplir step2 PM depuis income statement GL si draft vide (BUG-8)`
+**Derniers commits :**
+```
+b13379f feat(kb): barèmes PM NE/JU/BJ + fix Käfer + smoke test slice guards
+8f6eba9 feat(cantons): wizards PM + barèmes PP NE / JU / Jura bernois 2026
+f38a015 feat(v1.2): wizards PP NE/JU/BJ + eCH-0217 complet + validation XSD
+bc61c8d feat(v1.2): PP backend réel, CmdK tools, fidu consolidée, mobile V2, KB +103pts
+a4a9f8f docs(handoff): V1.1 state + 9 P0 fixés + transition instance
+```
