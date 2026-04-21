@@ -14,11 +14,9 @@ import {
   Briefcase,
   Shield,
   Lightbulb,
-  Users,
   ChevronDown,
   Settings,
   Plus,
-  LayoutGrid,
 } from 'lucide-react';
 import { lexa } from '@/api/lexa';
 import { useActiveCompany, useCompaniesStore } from '@/stores/companiesStore';
@@ -44,14 +42,12 @@ export function Workspace() {
   const setActive = useCompaniesStore((s) => s.setActive);
   const clear = useCompaniesStore((s) => s.clear);
   const authLogout = useAuthStore((s) => s.logout);
-  const setToken = useAuthStore((s) => s.setToken);
   const activeTenantId = useAuthStore((s) => s.activeTenantId);
   const token = useAuthStore((s) => s.token);
   const setChatOpen = useChatStore((s) => s.setOpen);
 
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const [cursorDate, setCursorDate] = useState<Date>(new Date());
-  const [switchingTenant, setSwitchingTenant] = useState(false);
   const [clientMenuOpen, setClientMenuOpen] = useState(false);
   const clientMenuRef = useRef<HTMLDivElement>(null);
 
@@ -66,35 +62,6 @@ export function Workspace() {
   });
 
   const hasMultipleClients = fiduClients && fiduClients.length > 1;
-
-  const handleSwitchTenant = async (tenantId: string) => {
-    if (tenantId === activeTenantId || switchingTenant) return;
-    setSwitchingTenant(true);
-    try {
-      const { token: newToken, activeTenantId: newTenantId } = await lexa.switchTenant(tenantId);
-      // 1. Mettre à jour le JWT et l'activeTenantId dans authStore
-      setToken(newToken, newTenantId);
-      // 2. Hydrater le companiesStore avec la company du nouveau tenant
-      try {
-        const me = await lexa.me();
-        if (me.company) {
-          addCompany(me.company);
-          setActive(me.company.tenantId);
-        }
-      } catch {
-        // Si lexa.me() échoue, au moins pointer l'activeCompanyId vers le bon tenant
-        setActive(newTenantId);
-      }
-      // 3. Invalider toutes les queries pour re-fetch avec le nouveau tenant
-      await queryClient.invalidateQueries();
-      // 4. Fermer le dropdown (appelé par l'item onClick, mais sécurité ici aussi)
-      setClientMenuOpen(false);
-    } catch (err) {
-      console.error('[Workspace] switch-tenant failed:', err);
-    } finally {
-      setSwitchingTenant(false);
-    }
-  };
 
   const health = useQuery({ queryKey: ['health'], queryFn: lexa.health });
 
@@ -246,17 +213,6 @@ export function Workspace() {
     },
   ];
 
-  // Items fiduciaire pour le menu switcher client (multi-clients)
-  const fiduItems = hasMultipleClients && fiduClients
-    ? fiduClients.map((client) => ({
-        label: client.tenantName ?? client.tenantId.slice(0, 8),
-        onClick: () => { handleSwitchTenant(client.tenantId); setClientMenuOpen(false); },
-        icon: Users,
-        active: client.tenantId === activeTenantId,
-        title: `Passer au client ${client.tenantName ?? client.tenantId}`,
-      }))
-    : [];
-
   // ── Groupes pour mobile ─────────────────────────────────────────────────
   const mobileGroups = [
     { label: 'Déclarations', items: declarationsItems },
@@ -334,29 +290,22 @@ export function Workspace() {
                 className="absolute left-0 top-full mt-1 min-w-[240px] rounded-lg z-50 py-1 shadow-lg"
               style={{ background: 'var(--chrome-bg-2)', borderColor: 'var(--chrome-line)', border: '1px solid var(--chrome-line)' }}
               >
-                {hasMultipleClients && fiduItems.length > 0 && (
+                {hasMultipleClients && (
                   <>
-                    <div className="px-3 pt-2 pb-1 text-2xs uppercase tracking-wider" style={{ color: 'var(--chrome-ink-3)' }}>
-                      Mes comptes
-                    </div>
-                    {fiduItems.map((item, i) => {
-                      const ItemIcon = item.icon;
-                      return (
-                        <button
-                          key={i}
-                          role="menuitem"
-                          title={item.title}
-                          onClick={item.onClick}
-                          className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 transition-colors hover:opacity-80 ${
-                            item.active ? 'font-medium' : ''
-                          }`}
-                          style={{ color: item.active ? 'rgb(var(--accent))' : 'var(--chrome-ink-1)' }}
-                        >
-                          {ItemIcon && <ItemIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--chrome-ink-3)' } as React.CSSProperties} />}
-                          <span className="truncate">{item.label}</span>
-                        </button>
-                      );
-                    })}
+                    <button
+                      type="button"
+                      role="menuitem"
+                      title="Vue portefeuille fiduciaire — gérer tous vos clients"
+                      onClick={() => {
+                        setClientMenuOpen(false);
+                        navigate('/fiduciaire');
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 transition-colors hover:opacity-80"
+                      style={{ color: 'var(--chrome-ink-1)' }}
+                    >
+                      <Briefcase className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--chrome-ink-3)' }} />
+                      <span>Portefeuille fiduciaire</span>
+                    </button>
                     <div className="border-t border-border my-1" />
                   </>
                 )}
@@ -443,19 +392,6 @@ export function Workspace() {
               <Calculator className="w-3.5 h-3.5" />
               <span className="hidden md:inline">Grand livre</span>
             </button>
-            {/* Portefeuille fiduciaire — visible seulement si multi-clients */}
-            {hasMultipleClients && (
-              <button
-                type="button"
-                onClick={() => navigate('/fiduciaire')}
-                title="Vue portefeuille fiduciaire"
-                className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-80"
-                style={{ color: 'var(--chrome-ink-2)' }}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Portefeuille</span>
-              </button>
-            )}
           </nav>
 
           {/* Bouton Paramètres (roue crantée) */}
