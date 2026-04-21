@@ -1,0 +1,88 @@
+# Barème ICC Jura bernois (canton de Berne) — Personnes Morales 2026
+# Source : Loi sur les impôts du canton de Berne (LIMP-BE — RSB 661.11)
+#   - Taux ICC PM bénéfice : 18.6% (cantonal BE + commune moyen Jura bernois)
+#   - Taux ICC PM capital : 0.30‰ des fonds propres imposables
+#   - IFD : 8.5% flat fédéral (art. 68 LIFD RS 642.11) — non inclus dans ICC
+# BJ = communes francophones du canton de Berne (Jura bernois + région de Bienne)
+# Ingéré dans Qdrant : Bareme-BJ-PM-2026
+
+canton: BJ
+year: 2026
+entity: PM
+source:
+  authority: "Administration fiscale du canton de Berne, section francophone (ADB)"
+  law: "Loi sur les impôts du canton de Berne (LIMP-BE — RSB 661.11)"
+  articles:
+    - "LIMP-BE RSB 661.11 — Impôt bénéfice PM (SA/Sàrl/SC) cantonal"
+    - "LIMP-BE RSB 661.11 — Impôt capital PM (SA/Sàrl/SC)"
+    - "LIMP-BE RSB 661.11 — Centimes additionnels communaux PM"
+    - "LIMP-BE RSB 661.11 — Exonération associations/fondations d'utilité publique"
+  url: "https://www.taxinfo.sv.fin.be.ch/taxinfo/display/taxinfoch/Juristische+Personen"
+  document: "LIMP-BE RSB 661.11 — Impôts PM bénéfice et capital"
+  fetched_at: "2026-04-21"
+  confidence: medium
+  note: >
+    Taux approximatifs issus de pmTaxEstimator.ts (Session 33) — basés sur LIMP-BE RSB 661.11.
+    Confidence=medium car les articles exacts LIMP-BE PM ne sont pas encore ingérés dans swiss_law.
+    BJ = communes francophones de Berne (Courtelary, La Neuveville, Moutier ex-BJ, Tavannes, etc.).
+    Moutier a quitté BJ pour rejoindre le canton du Jura au 1er janvier 2021.
+    TODO : ingérer les articles PM de LIMP-BE RSB 661.11 pour passer confidence=high.
+
+# Sociétés de capitaux et coopératives (SA, Sàrl, SC)
+impot_benefice:
+  structure: flat
+  rate: 0.186
+  description: "18.6% du bénéfice net imposable (ICC cantonal BE + commune moyen Jura bernois)"
+  source_article: "LIMP-BE RSB 661.11 — taux bénéfice PM"
+  confidence: medium
+  note: >
+    BJ présente la charge fiscale PM bénéfice la plus élevée de Suisse romande.
+    Le taux 18.6% inclut la part cantonale bernoise et les centimes additionnels communaux moyens.
+    Les communes bernoises fixent leurs propres centimes additionnels — taux effectif variable.
+
+  associations_fondations:
+    structure: flat
+    rate: 0.186
+    description: "18.6% du bénéfice net — même barème, exonération si but non lucratif reconnu BE"
+    source_article: "LIMP-BE RSB 661.11 — exonération associations/fondations"
+    note: "Associations et fondations d'utilité publique exonérées sur justification du but non lucratif"
+
+impot_capital:
+  standard:
+    structure: flat
+    rate_permille: 0.30
+    description: "0.30‰ des fonds propres imposables (capital + réserves)"
+    source_article: "LIMP-BE RSB 661.11 — taux capital PM"
+    confidence: medium
+    note: >
+      Taux capital 0.30‰ — parmi les plus bas de Suisse romande, avantage comparatif fort.
+      Favorable aux entreprises avec des fonds propres élevés (immobilier, holding, industrie).
+      Les communes bernoises perçoivent leurs propres centimes additionnels sur l'impôt capital.
+
+# IFD fédéral (rappel — non géré dans ce YAML, calculé séparément)
+ifd_federal:
+  rate: 0.085
+  description: "8.5% flat du bénéfice net imposable"
+  source: "Art. 68 LIFD RS 642.11 — taux unique sans progressivité pour PM"
+
+# Déductions et régimes spéciaux
+deductions:
+  report_pertes_ans: 7
+  deduction_rd_pct: 150
+  patent_box: true
+  beteiligungsabzug: true
+  note: >
+    Report de pertes 7 ans (harmonisation LIFD), déduction R&D 150% (RFFA 2020),
+    patent box sur brevets et droits comparables, déduction pour participations ≥ 10%.
+    Régime participation holding favorable sur dividendes et gains en capital.
+    Caisses de pension et institutions de prévoyance LPP reconnues partiellement exonérées.
+
+# Note fiscale BJ PM
+note_fiscale: >
+  Jura bernois PM : taux bénéfice ICC ~18.6% (cantonal BE + commune moyen) — le plus élevé de Suisse romande.
+  Taux effectif global estimé (ICC + IFD) : ~27.1% pour une SA/Sàrl standard BJ.
+  COMPENSÉ par un taux capital très bas : 0.30‰ — le plus avantageux des cantons NE/JU/BJ.
+  Impôt minimum cantonal PM BE : CHF 150.
+  Les PME BJ pâtissent de la charge fiscale bénéfice élevée vs JU et FR.
+  Avantage : taux capital 0.30‰ favorable pour les entreprises avec fonds propres importants.
+  Estimation indicative — confirmer avec ADB section francophone ou fiduciaire agréé.

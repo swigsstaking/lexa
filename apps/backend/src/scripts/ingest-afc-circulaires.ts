@@ -492,7 +492,7 @@ async function main(): Promise<void> {
     for (const hit of searchRes.result) {
       const isNew = LAWS_TO_CLEAN.includes(hit.payload.law);
       const mark = isNew ? "[AFC-CIRC]" : "          ";
-      console.log(`    ${mark} [${hit.score.toFixed(3)}] ${hit.payload.law} ${hit.payload.article} — ${hit.payload.heading.slice(0, 70)}`);
+      console.log(`    ${mark} [${hit.score.toFixed(3)}] ${hit.payload.law} ${hit.payload.article} — ${(hit.payload.heading ?? hit.payload.text ?? "").slice(0, 70)}`);
     }
   }
 

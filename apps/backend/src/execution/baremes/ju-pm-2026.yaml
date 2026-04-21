@@ -1,0 +1,82 @@
+# Barème ICC Jura — Personnes Morales 2026
+# Source : Loi d'impôt du canton du Jura (LI-JU — RSJU 641.11)
+#   - Taux ICC PM bénéfice : 15.5% (cantonal + commune inclus)
+#   - Taux ICC PM capital : 0.50‰ des fonds propres imposables
+#   - IFD : 8.5% flat fédéral (art. 68 LIFD RS 642.11) — non inclus dans ICC
+# Ingéré dans Qdrant : Bareme-JU-PM-2026
+
+canton: JU
+year: 2026
+entity: PM
+source:
+  authority: "Service cantonal des contributions du Jura (SCCJ)"
+  law: "Loi d'impôt du canton du Jura (LI-JU — RSJU 641.11)"
+  articles:
+    - "LI-JU RSJU 641.11 — Impôt bénéfice PM (SA/Sàrl/SC) cantonal + communal"
+    - "LI-JU RSJU 641.11 — Impôt capital PM (SA/Sàrl/SC)"
+    - "LI-JU RSJU 641.11 — Exonération associations/fondations d'utilité publique"
+  url: "https://rsju.jura.ch/fr/viewdocument.html?idn=20222&id=41099"
+  document: "LI-JU RSJU 641.11 — Impôts PM bénéfice et capital"
+  fetched_at: "2026-04-21"
+  confidence: medium
+  note: >
+    Taux approximatifs issus de pmTaxEstimator.ts (Session 33) — basés sur LI-JU RSJU 641.11.
+    Confidence=medium car les articles exacts LI-JU PM ne sont pas encore ingérés dans swiss_law.
+    Moutier intégrée au canton du Jura depuis le 1er janvier 2021 (communes et taux unifiés).
+    TODO : ingérer les articles PM de LI-JU RSJU 641.11 pour passer confidence=high.
+
+# Sociétés de capitaux et coopératives (SA, Sàrl, SC)
+impot_benefice:
+  structure: flat
+  rate: 0.155
+  description: "15.5% du bénéfice net imposable (ICC cantonal + communal inclus JU)"
+  source_article: "LI-JU RSJU 641.11 — taux bénéfice PM"
+  confidence: medium
+  note: >
+    JU est parmi les cantons romands les plus attractifs pour la fiscalité PM bénéfice.
+    Note : le coefficient 240% s'applique aux PP uniquement — les PM sont taxées à taux fixe.
+
+  associations_fondations:
+    structure: flat
+    rate: 0.155
+    description: "15.5% du bénéfice net — même barème, exonération si but non lucratif reconnu"
+    source_article: "LI-JU RSJU 641.11 — exonération associations/fondations"
+    note: "Associations et fondations d'utilité publique exonérées sur justification du but non lucratif"
+
+impot_capital:
+  standard:
+    structure: flat
+    rate_permille: 0.50
+    description: "0.50‰ des fonds propres imposables (capital + réserves)"
+    source_article: "LI-JU RSJU 641.11 — taux capital PM"
+    confidence: medium
+    note: >
+      Taux capital 0.50‰ — légèrement supérieur à NE (0.45‰) mais raisonnable.
+      Les communes jurassiennes perçoivent leurs propres centimes additionnels.
+
+# IFD fédéral (rappel — non géré dans ce YAML, calculé séparément)
+ifd_federal:
+  rate: 0.085
+  description: "8.5% flat du bénéfice net imposable"
+  source: "Art. 68 LIFD RS 642.11 — taux unique sans progressivité pour PM"
+
+# Déductions et régimes spéciaux
+deductions:
+  report_pertes_ans: 7
+  deduction_rd_pct: 150
+  patent_box: true
+  beteiligungsabzug: true
+  note: >
+    Report de pertes 7 ans (harmonisation LIFD), déduction R&D 150% (RFFA 2020),
+    patent box sur brevets et droits comparables, déduction pour participations ≥ 10%.
+    Institutions de prévoyance (caisses pension LPP) partiellement exonérées.
+
+# Note fiscale JU PM
+note_fiscale: >
+  Jura PM : taux bénéfice ICC ~15.5% (cantonal + commune inclus) — 2e canton le plus attractif après FR.
+  Taux effectif global estimé (ICC + IFD) : ~24% pour une SA/Sàrl standard JU.
+  Impôt capital 0.50‰ — modéré.
+  JU attire les PME grâce à son taux PM compétitif, sa proximité avec Berne et le bassin de Delémont.
+  Moutier (ex-BJ) intégrée depuis 2021 — uniformisation fiscale en cours.
+  Impôt minimum cantonal PM : CHF 100.
+  Estimation indicative — confirmer avec SCCJ ou fiduciaire agréé.

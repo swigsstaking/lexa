@@ -1,10 +1,10 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S npx tsx
 /**
  * ingest-kafer — Ingère le plan comptable PME suisse (Käfer) dans Qdrant.
  *
  * Exécution (depuis apps/backend/) :
  *   npx tsx src/scripts/ingest-kafer.ts
- *   QDRANT_URL=http://192.168.110.103:6333 EMBEDDER_URL=http://192.168.110.103:8001 npx tsx src/scripts/ingest-kafer.ts
+ *   QDRANT_URL=http://192.168.110.103:6333 EMBEDDER_URL=http://192.168.110.103:8082 npx tsx src/scripts/ingest-kafer.ts
  *
  * Stratégie :
  *   - Supprime d'abord les points existants avec law="Plan-Kafer" (idempotent)
@@ -20,7 +20,7 @@ import { randomUUID } from "node:crypto";
 // ---------------------------------------------------------------------------
 
 const QDRANT_URL = process.env.QDRANT_URL ?? "http://192.168.110.103:6333";
-const EMBEDDER_URL = process.env.EMBEDDER_URL ?? "http://192.168.110.103:8001";
+const EMBEDDER_URL = process.env.EMBEDDER_URL ?? "http://192.168.110.103:8082";
 const COLLECTION = process.env.QDRANT_COLLECTION ?? "swiss_law";
 
 // ---------------------------------------------------------------------------
@@ -610,7 +610,7 @@ async function main(): Promise<void> {
     console.log(`\n  Q: "${q}"`);
     for (const hit of searchRes.result) {
       const mark = hit.payload.law === "Plan-Kafer" ? "[KAFER]" : "       ";
-      console.log(`    ${mark} [${hit.score.toFixed(3)}] ${hit.payload.law} ${hit.payload.article} — ${hit.payload.heading}`);
+      console.log(`    ${mark} [${hit.score.toFixed(3)}] ${hit.payload.law} ${hit.payload.article} — ${(hit.payload.heading ?? hit.payload.text ?? "").slice(0, 60)}`);
     }
   }
 

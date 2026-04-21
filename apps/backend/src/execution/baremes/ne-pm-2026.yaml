@@ -1,0 +1,77 @@
+# Barème ICC Neuchâtel — Personnes Morales 2026
+# Source : Loi sur les contributions directes NE (LCdir — RSN 631.0)
+#   - Taux ICC PM bénéfice : 16.5% (cantonal + commune moyen inclus)
+#   - Taux ICC PM capital : 0.45‰ des fonds propres imposables
+#   - IFD : 8.5% flat fédéral (art. 68 LIFD RS 642.11) — non inclus dans ICC
+# Ingéré dans Qdrant : Bareme-NE-PM-2026
+
+canton: NE
+year: 2026
+entity: PM
+source:
+  authority: "Service cantonal des contributions et de l'organisation (SCCO NE)"
+  law: "Loi sur les contributions directes (LCdir — RSN 631.0)"
+  articles:
+    - "LCdir RSN 631.0 — Impôt bénéfice PM (SA/Sàrl/SC) cantonal + communal"
+    - "LCdir RSN 631.0 — Impôt capital PM (SA/Sàrl/SC)"
+    - "LCdir RSN 631.0 — Exonération associations/fondations d'utilité publique"
+  url: "https://rsn.ne.ch/DATA/program/books/rsne/htm/631.0.htm"
+  document: "LCdir NE — Impôts PM bénéfice et capital"
+  fetched_at: "2026-04-21"
+  confidence: medium
+  note: >
+    Taux approximatifs issus de pmTaxEstimator.ts (Session 33) — basés sur LCdir RSN 631.0.
+    Confidence=medium car les articles exacts LCdir PM ne sont pas encore ingérés dans swiss_law.
+    TODO : ingérer les articles PM de LCdir RSN 631.0 pour passer confidence=high.
+
+# Sociétés de capitaux et coopératives (SA, Sàrl, SC)
+impot_benefice:
+  structure: flat
+  rate: 0.165
+  description: "16.5% du bénéfice net imposable (ICC cantonal + communal moyen NE)"
+  source_article: "LCdir RSN 631.0 — taux bénéfice PM"
+  confidence: medium
+
+  associations_fondations:
+    structure: flat
+    rate: 0.165
+    description: "16.5% du bénéfice net — même barème, exonération si < CHF 20'000"
+    seuil_exoneration_chf: 20000
+    source_article: "LCdir RSN 631.0 — exonération associations/fondations"
+    note: "Associations d'utilité publique exonérées si bénéfice net < CHF 20'000"
+
+impot_capital:
+  standard:
+    structure: flat
+    rate_permille: 0.45
+    description: "0.45‰ des fonds propres imposables (capital + réserves)"
+    source_article: "LCdir RSN 631.0 — taux capital PM"
+    confidence: medium
+    note: >
+      Taux capital 0.45‰ — parmi les plus compétitifs de Suisse romande pour les PM.
+      Les communes NE peuvent percevoir leurs propres centimes additionnels sur l'impôt capital.
+
+# IFD fédéral (rappel — non géré dans ce YAML, calculé séparément)
+ifd_federal:
+  rate: 0.085
+  description: "8.5% flat du bénéfice net imposable"
+  source: "Art. 68 LIFD RS 642.11 — taux unique sans progressivité pour PM"
+
+# Déductions et régimes spéciaux
+deductions:
+  report_pertes_ans: 7
+  deduction_rd_pct: 150
+  patent_box: true
+  beteiligungsabzug: true
+  note: >
+    Report de pertes 7 ans (harmonisation LIFD), déduction R&D 150% (RFFA 2020),
+    patent box sur brevets et droits comparables, déduction pour participations ≥ 10%.
+
+# Note fiscale NE PM
+note_fiscale: >
+  Neuchâtel PM : taux bénéfice ICC ~16.5% (cantonal + commune moyen) — fourchette intermédiaire haute.
+  Taux effectif global estimé (ICC + IFD) : ~25% pour une SA/Sàrl standard NE.
+  Impôt capital 0.45‰ — très compétitif vs autres cantons romands.
+  NE attire les industries watchmaking, medtech, fintech grâce à son tissu industriel historique.
+  Impôt minimum cantonal PM : CHF 100.
+  Estimation indicative — confirmer avec SCCO NE ou fiduciaire agréé.
