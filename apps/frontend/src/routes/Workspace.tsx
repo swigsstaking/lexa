@@ -520,7 +520,8 @@ export function Workspace() {
                 border: '1px solid var(--line-1)',
                 borderRadius: 16,
                 padding: '40px 48px',
-                maxWidth: 640,
+                maxWidth: 960,
+                width: 'calc(100% - 32px)',
                 boxShadow: '0 4px 24px rgba(26,24,20,0.08)',
               }}
             >
