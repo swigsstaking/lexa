@@ -1,0 +1,175 @@
+[
+  {
+    "id": "kaf-001",
+    "category": "classifier-kafer",
+    "description": "Frais bancaires UBS — règle R1 critique",
+    "source": "SYSTEM_PROMPT_CLASSIFIER prompts.ts::example frais bancaires",
+    "input": {
+      "system": "Tu es un agent de classification comptable suisse. Tu classifies une transaction bancaire selon le plan comptable PME suisse (Kafer). Réponds UNIQUEMENT en JSON valide (sans markdown, sans commentaires), avec EXACTEMENT ces clés: {\"debit_account\":\"XXXX - Nom\",\"credit_account\":\"YYYY - Nom\",\"tva_rate\":8.1,\"tva_code\":\"TVA-standard\",\"cost_center\":\"general\",\"confidence\":0.85,\"reasoning\":\"court\",\"citations\":[{\"law\":\"LTVA\",\"article\":\"Art.25\",\"rs\":\"641.20\"}],\"alternatives\":[{\"account\":\"ZZZZ - Nom\",\"confidence\":0.3}]}. RÈGLE R1: frais bancaires → debit_account:6800 (PAS 6500).",
+      "user": "TRANSACTION:\n- Date: 2026-03-31\n- Description: Frais de tenue de compte mars 2026\n- Montant: 25 CHF (sortie)\n- Contrepartie IBAN: CH93-0076-2011-6238-5295-7 (UBS)\n\nREPONSE JSON:"
+    },
+    "expected": {
+      "debit_account_starts_with": "6800",
+      "credit_account_starts_with": "1020",
+      "contains": ["6800", "1020"],
+      "must_not_contain": ["6500"],
+      "judge_criteria": "debit_account doit commencer par 6800 (charges financières), credit_account par 1020 (Banque). Utiliser 6500 serait une erreur (règle R1 du prompt classifier). tva_rate doit être 0 (pas de TVA sur frais bancaires). confidence >= 0.90."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "kaf-002",
+    "category": "classifier-kafer",
+    "description": "Loyer bureau — classification standard",
+    "source": "SYSTEM_PROMPT_CLASSIFIER prompts.ts::example loyer",
+    "input": {
+      "system": "Tu es un agent de classification comptable suisse. Tu classifies une transaction bancaire selon le plan comptable PME suisse (Kafer). Réponds UNIQUEMENT en JSON valide avec EXACTEMENT ces clés: {\"debit_account\",\"credit_account\",\"tva_rate\",\"tva_code\",\"cost_center\",\"confidence\",\"reasoning\",\"citations\",\"alternatives\"}.",
+      "user": "TRANSACTION:\n- Date: 2026-04-01\n- Description: LOYER BUREAU AVRIL 2026\n- Montant: 1800 CHF (sortie)\n- Contrepartie: REGIE DUPONT\n\nREPONSE JSON:"
+    },
+    "expected": {
+      "debit_account_starts_with": "6000",
+      "credit_account_starts_with": "1020",
+      "contains": ["6000", "1020"],
+      "judge_criteria": "debit_account doit commencer par 6000 (Loyers), credit_account par 1020 (Banque), tva_rate=0 (loyers résidentiels/commerciaux en général non soumis TVA si bailleur non assujetti). confidence >= 0.92."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "kaf-003",
+    "category": "classifier-kafer",
+    "description": "Salaire mensuel — charges personnel",
+    "source": "SYSTEM_PROMPT_CLASSIFIER prompts.ts::example salaire + seed-fixture-data.ts",
+    "input": {
+      "system": "Tu es un agent de classification comptable suisse. Classifies selon le plan Käfer. Réponds UNIQUEMENT en JSON valide avec EXACTEMENT ces clés: {\"debit_account\",\"credit_account\",\"tva_rate\",\"tva_code\",\"cost_center\",\"confidence\",\"reasoning\",\"citations\",\"alternatives\"}.",
+      "user": "TRANSACTION:\n- Date: 2026-04-25\n- Description: SALAIRE DUPONT JEAN AVRIL 2026\n- Montant: 5200 CHF (sortie)\n- Contrepartie: DUPONT JEAN\n\nREPONSE JSON:"
+    },
+    "expected": {
+      "debit_account_starts_with": "5000",
+      "credit_account_starts_with": "1020",
+      "contains": ["5000", "1020"],
+      "judge_criteria": "debit_account doit commencer par 5000 (Charges de personnel/Salaires), credit_account par 1020 (Banque). tva_rate=0 (pas de TVA sur salaires). confidence >= 0.93."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "kaf-004",
+    "category": "classifier-kafer",
+    "description": "Virement client entrant — règle R2",
+    "source": "SYSTEM_PROMPT_CLASSIFIER prompts.ts::example virement client + règle R2",
+    "input": {
+      "system": "Tu es un agent de classification comptable suisse. Classifies selon le plan Käfer. RÈGLE R2: encaissement facture client (amount>0) → credit_account:3200 (PAS 1100). Réponds UNIQUEMENT en JSON valide.",
+      "user": "TRANSACTION:\n- Date: 2026-04-05\n- Description: Client ABC SA facture 2026-012\n- Montant: 21600 CHF (entrée)\n- Contrepartie IBAN: CH...\n\nREPONSE JSON:"
+    },
+    "expected": {
+      "debit_account_starts_with": "1020",
+      "credit_account_starts_with": "3200",
+      "contains": ["1020", "3200"],
+      "must_not_contain": ["1100"],
+      "judge_criteria": "debit_account doit commencer par 1020 (Banque), credit_account par 3200 (Ventes). Utiliser 1100 serait une erreur (règle R2). tva_rate peut être 8.1 ou 0 selon si montant TTC ou HT. confidence >= 0.88."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "kaf-005",
+    "category": "classifier-kafer",
+    "description": "Paiement TVA AFC — règle R3 critique",
+    "source": "SYSTEM_PROMPT_CLASSIFIER prompts.ts::example TVA AFC + règle R3",
+    "input": {
+      "system": "Tu es un agent de classification comptable suisse. Classifies selon le plan Käfer. RÈGLE R3: paiement AFC/contributions → debit_account:2200 (PAS 2270 Impôts). Réponds UNIQUEMENT en JSON valide.",
+      "user": "TRANSACTION:\n- Date: 2026-03-31\n- Description: ACOMPTE TVA AFC Q1-2026\n- Montant: 8500 CHF (sortie)\n- Contrepartie: ADMIN FED CONTRIBUTIONS\n\nREPONSE JSON:"
+    },
+    "expected": {
+      "debit_account_starts_with": "2200",
+      "credit_account_starts_with": "1020",
+      "contains": ["2200", "1020"],
+      "must_not_contain": ["2270"],
+      "judge_criteria": "debit_account doit commencer par 2200 (TVA due à l'AFC), credit_account par 1020 (Banque). Utiliser 2270 serait une erreur (règle R3 du prompt). tva_rate=0. confidence >= 0.95."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "kaf-006",
+    "category": "classifier-kafer",
+    "description": "Abonnement téléphonie — frais admin",
+    "source": "SYSTEM_PROMPT_CLASSIFIER prompts.ts::example Swisscom + seed-fixture-data.ts",
+    "input": {
+      "system": "Tu es un agent de classification comptable suisse. Classifies selon le plan Käfer. Réponds UNIQUEMENT en JSON valide.",
+      "user": "TRANSACTION:\n- Date: 2026-03-10\n- Description: SWISSCOM SA abonnement téléphonie Q1\n- Montant: 450 CHF (sortie)\n- Contrepartie: SWISSCOM SA\n\nREPONSE JSON:"
+    },
+    "expected": {
+      "debit_account_starts_with": "6500",
+      "credit_account_starts_with": "1020",
+      "contains": ["6500", "1020"],
+      "judge_criteria": "debit_account doit commencer par 6500 (Frais admin et télécom), credit_account par 1020 (Banque). tva_rate=8.1 (TVA sur abonnements téléphonie). confidence >= 0.88."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "kaf-007",
+    "category": "classifier-kafer",
+    "description": "Prime assurance RC professionnelle",
+    "source": "SYSTEM_PROMPT_CLASSIFIER prompts.ts::example assurance + seed-fixture-data.ts",
+    "input": {
+      "system": "Tu es un agent de classification comptable suisse. Classifies selon le plan Käfer. Réponds UNIQUEMENT en JSON valide.",
+      "user": "TRANSACTION:\n- Date: 2026-06-15\n- Description: HELVETIA ASSURANCES prime annuelle RC professionnelle\n- Montant: 3200 CHF (sortie)\n- Contrepartie: HELVETIA ASSURANCES SA\n\nREPONSE JSON:"
+    },
+    "expected": {
+      "debit_account_starts_with": "6200",
+      "credit_account_starts_with": "1020",
+      "contains": ["6200", "1020"],
+      "judge_criteria": "debit_account doit commencer par 6200 (Assurances), credit_account par 1020 (Banque). tva_rate=0 (assurances exemptées TVA selon art. 21 LTVA). confidence >= 0.92."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "kaf-008",
+    "category": "classifier-kafer",
+    "description": "Virement SCOR/RF — règle R6",
+    "source": "SYSTEM_PROMPT_CLASSIFIER prompts.ts::exemple RF80 + règle R6",
+    "input": {
+      "system": "Tu es un agent de classification comptable suisse. Classifies selon le plan Käfer. RÈGLE R6: codes SCOR/RF dans description = virement client entrant. Réponds UNIQUEMENT en JSON valide.",
+      "user": "TRANSACTION:\n- Date: 2026-02-07\n- Description: RF80R001920260207\n- Montant: 12000 CHF (entrée)\n- Contrepartie IBAN: CH...\n\nREPONSE JSON:"
+    },
+    "expected": {
+      "debit_account_starts_with": "1020",
+      "credit_account_starts_with": "3200",
+      "contains": ["1020", "3200"],
+      "judge_criteria": "debit_account doit commencer par 1020 (Banque), credit_account par 3200 (Ventes/Prestations). La règle R6 s'applique: RF80... est une référence de paiement suisse = virement client. tva_code peut être N0 ou N8."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "kaf-009",
+    "category": "classifier-kafer",
+    "description": "Description dupliquée avec barres verticales — règle R5",
+    "source": "SYSTEM_PROMPT_CLASSIFIER prompts.ts::exemple Greco + règle R5",
+    "input": {
+      "system": "Tu es un agent de classification comptable suisse. Classifies selon le plan Käfer. RÈGLE R5: description avec 'X | Y | Z' = traiter comme 'X' simple (barres verticales = séparateurs Swigs Pro). Réponds UNIQUEMENT en JSON valide.",
+      "user": "TRANSACTION:\n- Date: 2026-03-15\n- Description: Greco Autogroup Sarl | Greco Autogroup Sarl | Greco Autogroup Sarl\n- Montant: 3200 CHF (entrée)\n- Contrepartie: GRECO\n\nREPONSE JSON:"
+    },
+    "expected": {
+      "debit_account_starts_with": "1020",
+      "credit_account_starts_with": "3200",
+      "contains": ["1020", "3200"],
+      "judge_criteria": "debit_account=1020, credit_account=3200. La règle R5 s'applique: la description dupliquée par barres verticales est un virement client entrant (Greco = client). confidence >= 0.82."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "kaf-010",
+    "category": "classifier-kafer",
+    "description": "Cotisations AVS employeur",
+    "source": "SYSTEM_PROMPT_CLASSIFIER prompts.ts::example AVS + seed-fixture-data.ts",
+    "input": {
+      "system": "Tu es un agent de classification comptable suisse. Classifies selon le plan Käfer. Réponds UNIQUEMENT en JSON valide.",
+      "user": "TRANSACTION:\n- Date: 2026-01-31\n- Description: VERSEMENT AVS/AI/APG part employeur + salarié janvier 2026\n- Montant: 4200 CHF (sortie)\n- Contrepartie: CAISSE AVS ROMANDE\n\nREPONSE JSON:"
+    },
+    "expected": {
+      "debit_account_starts_with": "5700",
+      "credit_account_starts_with": "1020",
+      "contains": ["5700", "1020"],
+      "judge_criteria": "debit_account doit commencer par 5700 (Charges sociales), credit_account par 1020 (Banque). tva_rate=0 (cotisations sociales hors TVA). confidence >= 0.90."
+    },
+    "max_tokens": 200
+  }
+]

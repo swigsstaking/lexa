@@ -1,0 +1,1269 @@
+{
+  "model": "apolo13x/Qwen3.5-35B-A3B-NVFP4",
+  "endpoint": "http://localhost:8100",
+  "run_date": "2026-04-21T11:13:50Z",
+  "total_cases": 60,
+  "errors": 0,
+  "results": [
+    {
+      "id": "rag-001",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 32900.2,
+        "total_ms": 40669.5,
+        "tokens_generated": 300,
+        "tokens_per_sec": 38.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.667,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Role: Swiss tax assistant specialist.\n    *   Constraint 1: Answer ONLY with information from the provided legal context (which is actually missing in the prompt, I need to rely on my internal knowledge but framed as if adhering to the constrai"
+    },
+    {
+      "id": "rag-002",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 97.4,
+        "total_ms": 10465.3,
+        "tokens_generated": 400,
+        "tokens_per_sec": 38.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.28,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Role: Swiss tax assistant specialist.\n    *   Constraint 1: Answer ONLY with information from the provided legal context (which is missing in the prompt, but I must act as if I know the context or state that I cannot answer without it, but usua"
+    },
+    {
+      "id": "rag-003",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 100.5,
+        "total_ms": 10473.4,
+        "tokens_generated": 400,
+        "tokens_per_sec": 38.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.14,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax assistant specialist.\n    *   **Constraint 1:** Answer ONLY with information from the provided legal context (which is implied to be general Swiss tax law knowledge, but I must act as if I'm restricted to specific legal prov"
+    },
+    {
+      "id": "rag-004",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 113.6,
+        "total_ms": 9209.1,
+        "tokens_generated": 350,
+        "tokens_per_sec": 38.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.28,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax assistant specialist (assistant fiscal suisse spécialisé).\n    *   **Topic:** VAT quarterly accounting procedure (procédure de décompte TVA trimestriel) and payment deadlines (délais de paiement).\n    *   **Constraint 1:** M"
+    },
+    {
+      "id": "rag-005",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 83.1,
+        "total_ms": 9203.7,
+        "tokens_generated": 350,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax assistant specialist (assistant fiscal suisse spécialisé).\n    *   **Task:** List the reduced VAT rates (taux TVA réduits) applicable in Switzerland and the goods/services they apply to.\n    *   **Constraint 1:** Must cite l"
+    },
+    {
+      "id": "rag-006",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 93.2,
+        "total_ms": 7908.1,
+        "tokens_generated": 300,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.14,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax assistant specialist.\n    *   **Task:** Determine the Pillar 3a (3a) ceiling for 2026 for an employee affiliated with a pension plan (LPP) in Valais.\n    *   **Taxpayer Status:** Employee with LPP (Occupational Pension).\n   "
+    },
+    {
+      "id": "rag-007",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 84.8,
+        "total_ms": 10508.2,
+        "tokens_generated": 400,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.5,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax assistant specialized in Valais (VS).\n    *   **Task:** Explain the rules for the professional expense allowance (forfait frais professionnels) for an employee in Valais.\n    *   **Taxpayer Status:** Employee with LPP (Occup"
+    },
+    {
+      "id": "rag-008",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 93.9,
+        "total_ms": 7905.7,
+        "tokens_generated": 300,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.14,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax expert, specialized in Geneva tax law (fiscalité genevoise).\n    *   **Task:** Answer whether a married employee in Geneva can deduct Pillar 3a contributions and determine the 2026 ceiling.\n    *   **Required Citations:** Ci"
+    },
+    {
+      "id": "rag-009",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 89.1,
+        "total_ms": 6594.9,
+        "tokens_generated": 250,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax assistant specialist, expert in Neuchâtel tax law.\n    *   **Task:** Provide the pillar 3a (3a pension) ceiling for an employee in Neuchâtel for the year 2026.\n    *   **Requirements:** Cite relevant articles from LCdir-NE ("
+    },
+    {
+      "id": "rag-010",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 89.1,
+        "total_ms": 6591.6,
+        "tokens_generated": 250,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.28,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax assistant specialist, expert in Jura tax law (fiscalité jurassienne).\n    *   **Task:** Provide the 3rd pillar (Pilier 3a) contribution ceiling for an employee in Delémont for the year 2026.\n    *   **Requirements:** Cite re"
+    },
+    {
+      "id": "rag-011",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 88.2,
+        "total_ms": 9199.7,
+        "tokens_generated": 350,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.233,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Role: Swiss tax specialist assistant.\n    *   Task: Calculate/State the IFD (Impôt Fédéral Direct) tax rate for a taxable income of 120,000 CHF for a single taxpayer in 2026.\n    *   Constraints: Concise response, cite legal sources, end with m"
+    },
+    {
+      "id": "rag-012",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 81.2,
+        "total_ms": 10498.5,
+        "tokens_generated": 400,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.25,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax specialist assistant (assistant fiscal suisse spécialisé).\n    *   **Task:** Explain how to calculate the taxable rental value (valeur locative imposable) of a real estate property in the canton of Valais (Vaud? No, Valais/W"
+    },
+    {
+      "id": "rag-013",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 95.6,
+        "total_ms": 9209.6,
+        "tokens_generated": 350,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.8,
+        "pass": true,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax assistant specialized in corporate taxation (personnes morales).\n    *   **Task:** Answer concisely about the IFD (Impôt Fédéral Direct) rate on net profit for a Swiss LLC (Sàrl) in 2026.\n    *   **Legal Basis:** Cite LIFD ("
+    },
+    {
+      "id": "rag-014",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 86.7,
+        "total_ms": 11797.6,
+        "tokens_generated": 450,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.25,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax assistant specialized in corporate tax (personnes morales).\n    *   **Task:** List the items to be reintegrated into the taxable net income of a SA (Société Anonyme) during a corporate tax return (déclaration PM).\n    *   **"
+    },
+    {
+      "id": "rag-015",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 85.0,
+        "total_ms": 9199.8,
+        "tokens_generated": 350,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.4,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax assistant specialist (assistant fiscal suisse spécialisé).\n    *   **Task:** Provide the contribution rates (taux de cotisation) for AVS/AI/APG (Old Age and Survivors' Insurance / Disability Insurance / Income Compensation A"
+    },
+    {
+      "id": "rag-016",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 84.3,
+        "total_ms": 9193.6,
+        "tokens_generated": 350,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.6,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax assistant specialized in LPP (Loi sur la Prévoyance Professionnelle / Occupational Pension Scheme).\n    *   **Task:** Answer concisely about the \"salaire coordonné LPP\" (coordinated salary for LPP) and \"taux de bonification "
+    },
+    {
+      "id": "rag-017",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 95.6,
+        "total_ms": 7899.7,
+        "tokens_generated": 300,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.35,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax assistant specialist, expert in Bernese-French speaking tax law.\n    *   **Task:** Provide the 3rd Pillar (Pilier 3a) ceiling for an employee in Moutier (Jura bernois) for the year 2026.\n    *   **Requirements:** Cite releva"
+    },
+    {
+      "id": "rag-018",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 82.1,
+        "total_ms": 10507.6,
+        "tokens_generated": 400,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.233,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax assistant specialized in VAT (LTVA - Loi sur la TVA).\n    *   **Task:** List the main exclusions from the scope of Swiss VAT.\n    *   **Constraint 1:** Must cite the relevant articles of the LTVA (Loi sur la TVA).\n    *   **"
+    },
+    {
+      "id": "rag-019",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 118.1,
+        "total_ms": 6620.4,
+        "tokens_generated": 250,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax assistant specialist, expert in Vaud (VD) taxation.\n    *   **Task:** Provide the 3rd pillar (Pillar 3a) ceiling for an employee in Lausanne in 2026.\n    *   **Requirements:** Cite relevant articles from LIFD (Loi fédérale s"
+    },
+    {
+      "id": "rag-020",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 90.8,
+        "total_ms": 10512.8,
+        "tokens_generated": 400,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.6,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax assistant specialized in corporate taxation (personnes morales).\n    *   **Task:** Explain how to calculate the capital tax (impôt sur le capital) for a SA (Société Anonyme) in Geneva with equity (fonds propres) of 500,000 C"
+    },
+    {
+      "id": "wiz-001",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 114.3,
+        "total_ms": 5315.2,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.3,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Role: Swiss tax assistant.\n    *   Task: Extract identity information from the provided text.\n    *   Output Format: Valid JSON ONLY. No markdown, no comments.\n    *   Input Text: \"Nom: Dupont, Prénom: Marie, Date de naissance: 1985-04-12, État"
+    },
+    {
+      "id": "wiz-002",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 110.7,
+        "total_ms": 5316.2,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.3,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss Tax Assistant.\n    *   **Task:** Extract income information from a salary certificate.\n    *   **Output Format:** Valid JSON ONLY.\n    *   **Schema:** `{\"isSalarie\": boolean, \"salaireBrut\": number, \"hasSwissdecCertificate\": bool"
+    },
+    {
+      "id": "wiz-003",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 117.6,
+        "total_ms": 5324.7,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Role: Swiss Tax Assistant.\n    *   Task: Generate a JSON object representing tax deductions (step 4) for a private individual (PP - Particulier).\n    *   Input Data:\n        *   Pillar 3a contribution: CHF 7260\n        *   Health/accident insur"
+    },
+    {
+      "id": "wiz-004",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 116.8,
+        "total_ms": 5321.2,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax expert assistant for corporate tax declarations (personnes morales).\n    *   **Task:** Generate a JSON identity object for a company based on provided details.\n    *   **Input Data:**\n        *   Raison sociale (Legal Name):"
+    },
+    {
+      "id": "wiz-005",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 117.7,
+        "total_ms": 5324.5,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax expert assistant for PM (Petite et Moyenne Entreprise / Small and Medium Enterprise) accounting.\n    *   **Task:** Generate JSON financial data for a company for the fiscal year 2026 (step2 of a wizard).\n    *   **Input Data"
+    },
+    {
+      "id": "wiz-006",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 119.1,
+        "total_ms": 4009.9,
+        "tokens_generated": 150,
+        "tokens_per_sec": 38.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax expert assistant (PM declarations).\n    *   **Task:** Calculate tax corrections and generate the `step3` JSON for a PM wizard.\n    *   **Entity:** Sàrl VS (Société à responsabilité limitée, canton de Vaud) for year 2026.\n   "
+    },
+    {
+      "id": "wiz-007",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 125.2,
+        "total_ms": 5335.1,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Role: Swiss Tax Assistant.\n    *   Task: Extract wealth (fortune) from bank attestations and generate a specific JSON structure (`step3`).\n    *   Date: Wealth as of 31.12.2025.\n    *   Input Data:\n        *   UBS Accounts: CHF 42'500\n        *"
+    },
+    {
+      "id": "wiz-008",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 118.6,
+        "total_ms": 4015.7,
+        "tokens_generated": 150,
+        "tokens_per_sec": 38.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Role: Swiss tax expert assistant in PM accounting.\n    *   Task: Generate JSON for equity (fonds propres) from a simplified balance sheet.\n    *   Input Data:\n        *   Capital social libéré: CHF 20'000\n        *   Réserves légales (10% du ca"
+    },
+    {
+      "id": "wiz-009",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 117.0,
+        "total_ms": 10558.8,
+        "tokens_generated": 400,
+        "tokens_per_sec": 38.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss Tax Assistant.\n    *   **Task:** Extract all tax information from the provided text and generate a complete JSON for the \"wizard PP Valais\" (Valais Pension Plan / Tax Wizard).\n    *   **Schema:** Must respect EXACTLY the schema "
+    },
+    {
+      "id": "wiz-010",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 122.8,
+        "total_ms": 10564.2,
+        "tokens_generated": 400,
+        "tokens_per_sec": 38.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax expert assistant for PM declarations (Impôt sur les bénéfices des sociétés).\n    *   **Task:** Generate a complete JSON object representing a PM wizard with 4 steps.\n    *   **Context:** PM GE 2026 (Geneva canton, tax year 2"
+    },
+    {
+      "id": "wiz-011",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 113.3,
+        "total_ms": 4009.4,
+        "tokens_generated": 150,
+        "tokens_per_sec": 38.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Role: Swiss Tax Assistant.\n    *   Task: Extract information from the provided partial form and generate a JSON object for a \"step1 wizard PP\" (likely \"Préparation\" or \"Personne Physique\").\n    *   Constraint 1: If a field is absent/missing, do"
+    },
+    {
+      "id": "wiz-012",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 119.4,
+        "total_ms": 5319.0,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.3,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Role: Swiss Tax Assistant.\n    *   Task: Extract data from a company registry extract and generate a JSON object for a \"step1 wizard PM\".\n    *   Input: Registry extract text (Dénomination, IDE, Forme juridique, Siège, Activité, Exercice fiscal"
+    },
+    {
+      "id": "wiz-013",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 109.8,
+        "total_ms": 5309.1,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Role: Swiss Tax Assistant.\n    *   Task: Extract declared income and generate a JSON for the \"step2 wizard PP VS\" (Vaud cantonal tax wizard step 2).\n    *   Input Data:\n        *   Gross Salary (Main Employer): CHF 72,000\n        *   Accessory "
+    },
+    {
+      "id": "wiz-014",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 124.3,
+        "total_ms": 5324.3,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Role: Swiss Tax Assistant.\n    *   Task: Calculate optimal deductions and generate JSON `step4`.\n    *   Input Data:\n        *   Status: Employee (LPP).\n        *   Residence: Neuchâtel.\n        *   Year: 2025 (tax return for 2025 income, filed"
+    },
+    {
+      "id": "wiz-015",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 123.3,
+        "total_ms": 5326.4,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.3,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Role: Swiss tax expert assistant PM.\n    *   Task: Generate a JSON object (`step2`) from a given Profit and Loss Statement (Compte de résultat).\n    *   Input: 2026 P&L for a Sàrl NE (Swiss limited liability company).\n    *   Output Format: Val"
+    },
+    {
+      "id": "wiz-016",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 111.6,
+        "total_ms": 4003.3,
+        "tokens_generated": 150,
+        "tokens_per_sec": 38.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Role: Swiss Tax Assistant.\n    *   Task: Extract identity information from the provided text and generate a JSON object following a specific schema (`step1`).\n    *   Constraints:\n        *   Respect special characters (accents, trémas).\n      "
+    },
+    {
+      "id": "wiz-017",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 138.9,
+        "total_ms": 5339.3,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss PM Tax Expert (Private Client/Corporate Tax).\n    *   **Task:** Identify non-admissible charges according to Art. 58 LIFD (Federal Income Tax Act) and generate a JSON object for \"step3\".\n    *   **Input Data:**\n        *   Repre"
+    },
+    {
+      "id": "wiz-018",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 113.7,
+        "total_ms": 4009.5,
+        "tokens_generated": 150,
+        "tokens_per_sec": 38.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss Tax Assistant.\n    *   **Task:** Generate a JSON object (`step2`) for a retired taxpayer.\n    *   **Input Data:**\n        *   Location: Fribourg (relevant for tax, but not directly in the JSON schema provided).\n        *   Year:"
+    },
+    {
+      "id": "wiz-019",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 116.1,
+        "total_ms": 10549.3,
+        "tokens_generated": 400,
+        "tokens_per_sec": 38.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.3,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss tax assistant specialized in NE (Neuchâtel) tax declarations.\n    *   **Task:** Generate the complete JSON `{step1, step2, step3, step4}` for the PP Neuchâtel 2025 wizard.\n    *   **Input Data:**\n        *   Identity: Pascal Bru"
+    },
+    {
+      "id": "wiz-020",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 122.7,
+        "total_ms": 10551.4,
+        "tokens_generated": 400,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss Tax Expert PM (Professionnel de la Médiation / Professional Manager? Or perhaps \"Prévisionnel de Médiation\"? Actually, in the context of Swiss tax software wizards, \"PM\" often refers to \"Prévisionnel de Médiation\" or a specific "
+    },
+    {
+      "id": "chat-001",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 7168.0,
+        "total_ms": 11062.0,
+        "tokens_generated": 150,
+        "tokens_per_sec": 38.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.667,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Question: \"Quel est le taux TVA standard suisse actuellement?\" (What is the current standard VAT rate in Switzerland?)\n    *   Language: French.\n    *   Subject: Swiss VAT (TVA / MWST / IVA) rate.\n    *   Key information needed: The current sta"
+    },
+    {
+      "id": "chat-002",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 85.7,
+        "total_ms": 3975.3,
+        "tokens_generated": 150,
+        "tokens_per_sec": 38.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Here's a thinking process that leads to the suggested answer:\n\n1.  **Analyze the Request:**\n    *   **Topic:** Swiss Käfer Plan (Plan Käfer suisse).\n    *   **Specific Question:** Which account is used for bank fees (specifically UBS account maintenance fees)?\n    *   **Language:** French.\n    *   *"
+    },
+    {
+      "id": "chat-003",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 86.4,
+        "total_ms": 6592.8,
+        "tokens_generated": 250,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.333,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Here's a thinking process that leads to the suggested response:\n\n1.  **Analyze the User's Request:**\n    *   **Context:** The user has a tax account (Impôts) with an \"abnormal balance\" of 609 CHF (from the previous turn, though I don't have the history, I know the context is Swiss taxation).\n    *  "
+    },
+    {
+      "id": "chat-004",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 107.4,
+        "total_ms": 5307.3,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.6,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **User:** Asks about VAT (TVA) payment on their main cash flow of 8,804 CHF.\n    *   **Context:** I am \"Lexa\", a Swiss accounting and tax assistant.\n    *   **Current Context Data:**\n        *   Cash (1020 Banque): 31,912 CHF\n        *   Net Re"
+    },
+    {
+      "id": "chat-005",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 97.6,
+        "total_ms": 10516.4,
+        "tokens_generated": 400,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.25,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **User:** Wants to prepare their 2025 tax return (VS - Vaud, Switzerland).\n    *   **Profile:** Salary 78,000 CHF, Married, 2 children, Living in Sion (Vaud).\n    *   **Question:** What deductions can I optimize to reduce my tax burden?\n    *  "
+    },
+    {
+      "id": "chat-006",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 73.1,
+        "total_ms": 3972.7,
+        "tokens_generated": 150,
+        "tokens_per_sec": 38.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.5,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Here's a thinking process that leads to the explanation of the difference between accounts 3200 and 3400 in the Swiss Käfer Plan:\n\n1.  **Analyze the Request:**\n    *   **Topic:** Accounting (Comptabilité).\n    *   **Context:** Swiss Accounting Plan (Plan Käfer / Plan comptable suisse).\n    *   **Spe"
+    },
+    {
+      "id": "chat-007",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 119.4,
+        "total_ms": 7929.3,
+        "tokens_generated": 300,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.4,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **User:** Wants to close their 2025 fiscal year.\n    *   **Entity:** SA (Société Anonyme) in Neuchâtel, Switzerland.\n    *   **Accounting Profit:** 85,000 CHF.\n    *   **Previous Question:** Estimated tax (not provided in context, but I need to"
+    },
+    {
+      "id": "chat-008",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 72.7,
+        "total_ms": 5272.9,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.2,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Here's a thinking process that leads to the suggested answer:\n\n1.  **Analyze the Request:**\n    *   **Topic:** VAT (TVA) quarterly declaration (décompte TVA).\n    *   **Period:** Q1 2026 (January, February, March 2026).\n    *   **Jurisdiction:** Switzerland (implied by \"AFC\" - Administration Fédéral"
+    },
+    {
+      "id": "chat-009",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 102.4,
+        "total_ms": 6605.8,
+        "tokens_generated": 249,
+        "tokens_per_sec": 38.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "The user is asking how to correct an accounting error. They have a problem with account 6500 (Frais admin / Administrative expenses) which shows a negative balance of -4,189 CHF.\n\nIn Swiss accounting (and generally in double-entry bookkeeping):\n- Account 6500 is an expense account (charges)\n- Expens"
+    },
+    {
+      "id": "chat-010",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 74.1,
+        "total_ms": 5281.1,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Here's a thinking process that leads to the suggested answer:\n\n1.  **Analyze the User's Request:**\n    *   **Context:** The user has just created a consulting IT company (Sàrl - Société à Responsabilité Limitée).\n    *   **Question:** At what turnover (chiffre d'affaires) do I need to register for V"
+    },
+    {
+      "id": "kaf-001",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 123.0,
+        "total_ms": 5336.1,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": false,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss accounting classification agent (PME plan, Kafer).\n    *   **Task:** Classify a bank transaction.\n    *   **Output Format:** Valid JSON ONLY (no markdown, no comments).\n    *   **Required Keys:** `debit_account`, `credit_account"
+    },
+    {
+      "id": "kaf-002",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 105.1,
+        "total_ms": 5314.6,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss Accounting Classification Agent (PME Plan Comptable / Kafer).\n    *   **Task:** Classify a bank transaction according to the Swiss SME Chart of Accounts (Plan Comptable PME).\n    *   **Input Transaction:**\n        *   Date: 2026"
+    },
+    {
+      "id": "kaf-003",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 104.3,
+        "total_ms": 5310.0,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Role: Swiss Accounting Classification Agent.\n    *   Standard: Plan Käfer (Plan comptable suisse standardisé).\n    *   Input: Transaction details (Date, Description, Amount, Counterparty).\n    *   Output Format: JSON ONLY.\n    *   Required Keys"
+    },
+    {
+      "id": "kaf-004",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 102.1,
+        "total_ms": 5314.0,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": false,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss accounting classification agent.\n    *   **Standard:** Käfer plan (Plan comptable suisse).\n    *   **Rule R2:** Receipt of client invoice (amount > 0) → credit_account: 3200 (NOT 1100).\n    *   **Input Transaction:**\n        *  "
+    },
+    {
+      "id": "kaf-005",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 98.5,
+        "total_ms": 5301.2,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": false,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss accounting classification agent.\n    *   **Standard:** Käfer plan (Plan comptable suisse).\n    *   **Rule R3:** Payment of AFC (Federal Tax Administration) / contributions → debit_account: 2200 (NOT 2270 Impôts).\n    *   **Input"
+    },
+    {
+      "id": "kaf-006",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 94.9,
+        "total_ms": 5305.3,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Role: Swiss Accounting Classification Agent.\n    *   Standard: Käfer Plan (Plan comptable suisse standardisé).\n    *   Input: Transaction details (Date, Description, Amount, Counterparty).\n    *   Output Format: Valid JSON ONLY.\n    *   Transac"
+    },
+    {
+      "id": "kaf-007",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 120.1,
+        "total_ms": 5324.2,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Role: Swiss Accounting Classification Agent.\n    *   Standard: Käfer Plan (Plan comptable suisse standardisé, often associated with the Swiss Standard Chart of Accounts).\n    *   Input: Transaction details (Date, Description, Amount, Counterpar"
+    },
+    {
+      "id": "kaf-008",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 98.8,
+        "total_ms": 5305.3,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss accounting classification agent.\n    *   **Standard:** Käfer plan (Plan comptable suisse).\n    *   **Rule R6:** Codes SCOR/RF in description = incoming client transfer (virement client entrant).\n    *   **Input:** Transaction de"
+    },
+    {
+      "id": "kaf-009",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 105.5,
+        "total_ms": 5309.8,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss accounting classification agent.\n    *   **Standard:** Käfer plan (Plan comptable suisse).\n    *   **Rule R5:** Description with 'X | Y | Z' should be treated as 'X' simple (vertical bars = Swigs Pro separators).\n    *   **Input"
+    },
+    {
+      "id": "kaf-010",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 96.4,
+        "total_ms": 5305.2,
+        "tokens_generated": 200,
+        "tokens_per_sec": 38.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   **Role:** Swiss Accounting Classification Agent (Plan Käfer).\n    *   **Task:** Classify a specific transaction according to the Swiss Käfer plan (Plan comptable suisse).\n    *   **Input Transaction:**\n        *   Date: 2026-01-31\n        *   D"
+    }
+  ]
+}

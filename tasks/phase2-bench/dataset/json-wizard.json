@@ -1,0 +1,354 @@
+[
+  {
+    "id": "wiz-001",
+    "category": "json-wizard",
+    "subcategory": "taxpayer-pp-step1",
+    "description": "Remplissage step1 wizard PP (identité) depuis données brutes",
+    "source": "taxpayers/schema.ts::Step1Schema",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse. Tu dois extraire les informations d'identité d'un contribuable et les retourner UNIQUEMENT en JSON valide, sans markdown, sans commentaires. Respecte EXACTEMENT le schéma fourni.",
+      "user": "Extrais les informations d'identité depuis ce texte et génère le JSON step1 du wizard PP:\n\nNom: Dupont, Prénom: Marie, Date de naissance: 1985-04-12, État civil: mariée, Nombre d'enfants: 2, Commune: Sion, Canton: VS\n\nSchéma attendu: {\"firstName\": string, \"lastName\": string, \"dateOfBirth\": \"YYYY-MM-DD\", \"civilStatus\": \"single\"|\"married\"|\"registered_partnership\"|\"divorced\"|\"separated\"|\"widowed\", \"childrenCount\": number, \"commune\": string, \"canton\": \"VS\"}",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"firstName\"", "\"lastName\"", "\"civilStatus\"", "married", "\"canton\"", "\"VS\""],
+      "regex": "\"civilStatus\"\\s*:\\s*\"married\"",
+      "judge_criteria": "Le JSON doit être valide (parseable), contenir tous les champs requis du Step1Schema (firstName, lastName, dateOfBirth, civilStatus, childrenCount, commune, canton), avec les valeurs exactes: firstName=Marie, lastName=Dupont, civilStatus=married, childrenCount=2, canton=VS, commune=Sion."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "wiz-002",
+    "category": "json-wizard",
+    "subcategory": "taxpayer-pp-step2",
+    "description": "Remplissage step2 wizard PP (revenus) depuis certificat de salaire",
+    "source": "taxpayers/schema.ts::Step2Schema + seed-fixture-data.ts",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse. Tu dois extraire les revenus d'un contribuable depuis un certificat de salaire et les retourner UNIQUEMENT en JSON valide. Respecte EXACTEMENT le schéma fourni.",
+      "user": "Génère le JSON step2 wizard PP depuis ce certificat de salaire:\n\nCERTIFICAT DE SALAIRE 2025 - Employeur: Demo Sàrl, Sion - Employé: Jean Demo - Salaire brut: CHF 85000.00 - Salaire net: CHF 72500.00 - Déductions AVS/LPP: CHF 8500.00\n\nSchéma attendu: {\"isSalarie\": boolean, \"salaireBrut\": number, \"hasSwissdecCertificate\": boolean, \"revenusAccessoires\": number|optional, \"rentesAvs\": number|optional}",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"salaireBrut\"", "85000", "\"isSalarie\"", "true"],
+      "regex": "\"salaireBrut\"\\s*:\\s*85000",
+      "judge_criteria": "Le JSON doit être valide, contenir isSalarie=true, salaireBrut=85000, hasSwissdecCertificate=true (certificat présent). Les champs optionnels non mentionnés peuvent être omis ou à 0."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "wiz-003",
+    "category": "json-wizard",
+    "subcategory": "taxpayer-pp-step4",
+    "description": "Remplissage step4 wizard PP (déductions) depuis données brutes",
+    "source": "taxpayers/schema.ts::Step4Schema + seed-fixture-data.ts",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse. Tu dois générer le JSON de déductions fiscales d'un contribuable PP. Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Génère le JSON step4 (déductions) du wizard PP pour un contribuable avec:\n- Pilier 3a versé: CHF 7260\n- Primes d'assurance maladie et accidents: CHF 3200\n- Frais professionnels: forfait\n- Intérêts passifs de dettes: CHF 0\n- Rachats LPP: CHF 0\n- Frais médicaux non remboursés: CHF 450\n- Dons: CHF 500\n\nSchéma: {\"pilier3a\": number, \"primesAssurance\": number, \"fraisProFormat\": \"forfait\"|\"reel\", \"fraisProReels\": number, \"interetsPassifs\": number, \"rachatsLpp\": number, \"fraisMedicaux\": number, \"dons\": number}",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"pilier3a\"", "7260", "\"fraisProFormat\"", "\"forfait\""],
+      "regex": "\"pilier3a\"\\s*:\\s*7260",
+      "judge_criteria": "Le JSON doit être valide, contenir pilier3a=7260, primesAssurance=3200, fraisProFormat='forfait', fraisMedicaux=450, dons=500, interetsPassifs=0, rachatsLpp=0."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "wiz-004",
+    "category": "json-wizard",
+    "subcategory": "company-pm-step1",
+    "description": "Remplissage step1 wizard PM (identité société) depuis extrait registre",
+    "source": "routes/companies.ts::createDraftSchema + PmFormBuilder.ts",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse expert en déclarations de personnes morales. Génère le JSON d'identité d'une société. Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Génère le JSON step1 du wizard PM pour cette société:\n\nRaison sociale: Acme Technologies SA, Forme juridique: SA, IDE: CHE-200.300.400, Commune siège: Genève, Adresse: Rue du Rhône 14, NPA: 1204, Début exercice: 2026-01-01, Fin exercice: 2026-12-31\n\nSchéma: {\"legalName\": string, \"legalForm\": \"sarl\"|\"sa\", \"ideNumber\": string, \"siegeCommune\": string, \"siegeStreet\": string, \"siegeZip\": string, \"fiscalYearStart\": \"YYYY-MM-DD\", \"fiscalYearEnd\": \"YYYY-MM-DD\"}",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"legalName\"", "\"Acme Technologies SA\"", "\"legalForm\"", "\"sa\"", "\"ideNumber\""],
+      "regex": "\"legalForm\"\\s*:\\s*\"sa\"",
+      "judge_criteria": "Le JSON doit être valide, contenir legalName='Acme Technologies SA', legalForm='sa', ideNumber='CHE-200.300.400', siegeCommune='Genève', fiscalYearStart='2026-01-01', fiscalYearEnd='2026-12-31'."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "wiz-005",
+    "category": "json-wizard",
+    "subcategory": "company-pm-step2",
+    "description": "Remplissage step2 wizard PM (données financières) depuis bilan",
+    "source": "routes/companies.ts + seed-fixture-data.ts::company_draft PM",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse expert en comptabilité PM. Génère le JSON des données financières d'une société. Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Génère le JSON step2 (données financières) du wizard PM pour l'exercice 2026:\n\n- Bénéfice comptable avant corrections: CHF 180'000\n- Chiffre d'affaires: CHF 300'000\n- Charges de personnel: CHF 62'400\n- Charges matérielles: CHF 8'000\n- Amortissements comptables: CHF 5'000\n- Autres charges: CHF 14'000\n\nSchéma: {\"benefitAccounting\": number, \"chiffreAffaires\": number, \"chargesPersonnel\": number, \"chargesMaterielles\": number, \"amortissementsComptables\": number, \"autresCharges\": number}",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"benefitAccounting\"", "180000", "\"chiffreAffaires\"", "300000"],
+      "regex": "\"benefitAccounting\"\\s*:\\s*180000",
+      "judge_criteria": "Le JSON doit être valide, contenir benefitAccounting=180000, chiffreAffaires=300000, chargesPersonnel=62400, chargesMaterielles=8000, amortissementsComptables=5000, autresCharges=14000."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "wiz-006",
+    "category": "json-wizard",
+    "subcategory": "company-pm-step3",
+    "description": "Calcul corrections fiscales PM depuis données comptables",
+    "source": "PmFormBuilder.ts::PmFinancials",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse expert en déclarations PM. Calcule les corrections fiscales et génère le JSON step3. Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Génère le JSON step3 (corrections fiscales) du wizard PM pour une Sàrl VS 2026:\n\n- Frais de représentation comptabilisés: CHF 15'000 (dont 5'000 non admis fiscalement)\n- Provisions comptables: CHF 20'000 (dont 8'000 non justifiées fiscalement)\n- Amortissements comptabilisés: CHF 12'000 (dont 0 excessif)\n- Intérêts sur fonds propres occultes: CHF 0\n- Autres corrections: CHF 0\n\nSchéma: {\"chargesNonAdmises\": number, \"provisionsExcessives\": number, \"amortissementsExcessifs\": number, \"reservesLatentes\": number, \"autresCorrections\": number}",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"chargesNonAdmises\"", "5000", "\"provisionsExcessives\"", "8000"],
+      "regex": "\"chargesNonAdmises\"\\s*:\\s*5000",
+      "judge_criteria": "Le JSON doit être valide, contenir chargesNonAdmises=5000, provisionsExcessives=8000, amortissementsExcessifs=0, reservesLatentes=0, autresCorrections=0."
+    },
+    "max_tokens": 150
+  },
+  {
+    "id": "wiz-007",
+    "category": "json-wizard",
+    "subcategory": "taxpayer-pp-step3",
+    "description": "Remplissage step3 wizard PP (fortune) depuis attestations bancaires",
+    "source": "taxpayers/schema.ts::Step3Schema",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse. Tu dois extraire la fortune d'un contribuable depuis ses attestations bancaires et générer le JSON step3. Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Génère le JSON step3 (fortune au 31.12.2025) pour:\n- Comptes bancaires UBS: CHF 42'500\n- Compte épargne PostFinance: CHF 8'200\n- Actions cotées SPI: CHF 25'000 (valeur cours bourse)\n- Actions non cotées PME familiale: CHF 15'000\n- Valeur fiscale immeuble Sion: CHF 320'000 (estimation officielle)\n- Hypothèque: CHF 240'000\n- Véhicule: CHF 12'000\n\nSchéma: {\"comptesBancaires\": number, \"titresCotes\": number, \"titresNonCotes\": number, \"immeublesValeurFiscale\": number, \"immeublesEmprunt\": number, \"vehicules\": number, \"autresBiens\": number, \"dettes\": number}",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"comptesBancaires\"", "50700", "\"immeublesValeurFiscale\"", "320000"],
+      "regex": "\"immeublesValeurFiscale\"\\s*:\\s*320000",
+      "judge_criteria": "Le JSON doit être valide. comptesBancaires doit être 50700 (42500+8200), titresCotes=25000, titresNonCotes=15000, immeublesValeurFiscale=320000, immeublesEmprunt=240000, vehicules=12000, dettes devrait inclure l'hypothèque (240000) ou être séparé."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "wiz-008",
+    "category": "json-wizard",
+    "subcategory": "company-pm-step4",
+    "description": "Remplissage step4 wizard PM (capitaux propres) depuis bilan",
+    "source": "routes/companies.ts + seed-fixture-data.ts",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse expert en comptabilité PM. Génère le JSON des fonds propres depuis un bilan. Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Génère le JSON step4 (fonds propres au 31.12.2026) depuis ce bilan simplifié:\n\nCapital social libéré: CHF 20'000\nRéserves légales (10% du capital): CHF 2'000\nRéserves libres (autres réserves): CHF 48'000\nBénéfice reporté au 01.01: CHF 15'000\nBénéfice de l'exercice 2026: CHF 180'000\nTotal fonds propres: CHF 265'000\n\nSchéma: {\"capitalSocial\": number, \"reservesLegales\": number, \"reservesLibres\": number, \"reportBenefice\": number, \"capitalTotal\": number}",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"capitalSocial\"", "20000", "\"capitalTotal\"", "265000"],
+      "regex": "\"capitalSocial\"\\s*:\\s*20000",
+      "judge_criteria": "Le JSON doit être valide, contenir capitalSocial=20000, reservesLegales=2000, reservesLibres=48000, reportBenefice=15000, capitalTotal=265000."
+    },
+    "max_tokens": 150
+  },
+  {
+    "id": "wiz-009",
+    "category": "json-wizard",
+    "subcategory": "taxpayer-pp-full",
+    "description": "Génération wizard PP complet depuis texte libre (test NLP avancé)",
+    "source": "taxpayers/schema.ts::TaxpayerDraftStateSchema",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse. Tu dois extraire TOUTES les informations fiscales d'un texte et générer un JSON complet du wizard PP Valais. Respecte EXACTEMENT le schéma avec les 4 steps. Réponds UNIQUEMENT en JSON valide sans markdown ni commentaires.",
+      "user": "Génère le JSON complet {step1, step2, step3, step4} du wizard PP VS 2025 pour ce contribuable:\n\nJean-Pierre Rochat, né le 03.07.1972, marié, 1 enfant, domicilié à Nendaz (VS). Salarié chez BCV, salaire brut 95'000 CHF. Pilier 3a: 7'056 CHF. Primes LAMal: 4'800 CHF. Frais pro forfait. Comptes bancaires: 65'000 CHF. Pas d'immeuble. Pas de titres. Véhicule: 8'000 CHF.",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"step1\"", "\"step2\"", "\"step3\"", "\"step4\"", "\"firstName\"", "\"salaireBrut\"", "95000"],
+      "regex": "\"salaireBrut\"\\s*:\\s*95000",
+      "judge_criteria": "Le JSON doit contenir les 4 steps avec les valeurs extraites: step1.firstName='Jean-Pierre', step1.lastName='Rochat', step1.civilStatus='married', step1.childrenCount=1, step1.commune='Nendaz', step2.salaireBrut=95000, step4.pilier3a=7056, step4.primesAssurance=4800."
+    },
+    "max_tokens": 400
+  },
+  {
+    "id": "wiz-010",
+    "category": "json-wizard",
+    "subcategory": "company-pm-full",
+    "description": "Génération wizard PM complet depuis données structurées Acme SA GE",
+    "source": "seed-fixture-data.ts::company_draft Acme SA GE",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse expert en déclarations PM. Génère le JSON complet du wizard PM avec les 4 steps. Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Génère le JSON complet {step1, step2, step3, step4} du wizard PM GE 2026 pour Acme SA:\n\nstep1: Acme SA, SA, CHE-200.300.400, Genève, exercice 2026\nstep2: CA 1'500'000 CHF, bénéfice comptable 500'000 CHF, charges personnel 200'000, charges matérielles 50'000, amortissements 20'000, autres charges 30'000\nstep3: charges non admises 10'000, provisions excessives 5'000, autres corrections 0\nstep4: capital social 100'000, réserves légales 20'000, réserves libres 80'000, report bénéfice 50'000, total 250'000",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"step1\"", "\"step2\"", "\"step3\"", "\"step4\"", "1500000", "500000"],
+      "regex": "\"chiffreAffaires\"\\s*:\\s*1500000",
+      "judge_criteria": "Le JSON doit contenir les 4 steps: step1.legalName='Acme SA', step1.legalForm='sa', step2.chiffreAffaires=1500000, step2.benefitAccounting=500000, step3.chargesNonAdmises=10000, step4.capitalSocial=100000."
+    },
+    "max_tokens": 400
+  },
+  {
+    "id": "wiz-011",
+    "category": "json-wizard",
+    "subcategory": "taxpayer-pp-step1",
+    "description": "Extraction identité PP depuis formulaire partiellement rempli (robustesse)",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse. Extrais les informations disponibles et génère le JSON step1 wizard PP. Si un champ est absent, ne l'inclus PAS dans le JSON (champs optionnels). Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Formulaire partiellement rempli:\nNOM: FAVRE PRÉNOM: Sophie DATE NAISSANCE: non renseignée ÉTAT CIVIL: divorcée ENFANTS: 0 COMMUNE: Lausanne CANTON: VD\n\nSchéma: {\"firstName\"?: string, \"lastName\"?: string, \"dateOfBirth\"?: string, \"civilStatus\"?: \"single\"|\"married\"|\"registered_partnership\"|\"divorced\"|\"separated\"|\"widowed\", \"childrenCount\"?: number, \"commune\"?: string, \"canton\"?: \"VS\"}",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"firstName\"", "Sophie", "\"civilStatus\"", "\"divorced\""],
+      "regex": "\"civilStatus\"\\s*:\\s*\"divorced\"",
+      "judge_criteria": "Le JSON doit être valide, contenir firstName='Sophie', lastName='FAVRE', civilStatus='divorced', childrenCount=0, commune='Lausanne'. Le champ dateOfBirth doit être absent (non renseigné). Le canton VD ne correspond pas au schéma VS — acceptable d'inclure 'VD' ou d'omettre."
+    },
+    "max_tokens": 150
+  },
+  {
+    "id": "wiz-012",
+    "category": "json-wizard",
+    "subcategory": "company-pm-step1",
+    "description": "Extraction identité PM depuis registre fédéral (format IDE)",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse. Extrais les données d'une société depuis un extrait de registre et génère le JSON step1 wizard PM. Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Extrait registre IDE:\nDénomination: DUPONT & FILS SÀRL\nNuméro IDE: CHE-111.222.333\nForme juridique: Sàrl\nSiège: Fribourg, Rue de Lausanne 45, 1700\nActivité: Commerce de détail alimentaire\nExercice fiscal: 01.01.2026 - 31.12.2026\n\nSchéma: {\"legalName\": string, \"legalForm\": \"sarl\"|\"sa\", \"ideNumber\": string, \"siegeCommune\": string, \"siegeStreet\": string, \"siegeZip\": string, \"fiscalYearStart\": \"YYYY-MM-DD\", \"fiscalYearEnd\": \"YYYY-MM-DD\"}",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"DUPONT & FILS SÀRL\"", "\"sarl\"", "CHE-111.222.333", "\"Fribourg\""],
+      "regex": "\"legalForm\"\\s*:\\s*\"sarl\"",
+      "judge_criteria": "Le JSON doit être valide, contenir legalName='DUPONT & FILS SÀRL', legalForm='sarl', ideNumber='CHE-111.222.333', siegeCommune='Fribourg', siegeZip='1700', fiscalYearStart='2026-01-01', fiscalYearEnd='2026-12-31'."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "wiz-013",
+    "category": "json-wizard",
+    "subcategory": "taxpayer-pp-step2",
+    "description": "Extraction revenus PP avec revenus mixtes (salarié + indépendant accessoire)",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse. Extrais tous les revenus déclarés et génère le JSON step2 wizard PP VS. Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Revenus 2025 du contribuable:\n- Salaire brut employeur principal: CHF 72'000\n- Activité indépendante accessoire (graphisme): CHF 8'500\n- Rendements titres: CHF 1'200\n- Revenus immobiliers locatifs: CHF 14'400\n\nSchéma: {\"isSalarie\": boolean, \"salaireBrut\": number, \"revenusAccessoires\": number, \"revenusTitres\": number, \"revenusImmobiliers\": number}",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"salaireBrut\"", "72000", "\"revenusAccessoires\"", "8500"],
+      "regex": "\"salaireBrut\"\\s*:\\s*72000",
+      "judge_criteria": "Le JSON doit être valide, contenir isSalarie=true, salaireBrut=72000, revenusAccessoires=8500, revenusTitres=1200, revenusImmobiliers=14400."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "wiz-014",
+    "category": "json-wizard",
+    "subcategory": "taxpayer-pp-step4",
+    "description": "Calcul déductions PP maximales (3a + LPP + primes)",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse. Calcule les déductions optimales et génère le JSON step4. Pour le pilier 3a, le plafond 2026 salarié LPP est CHF 7'260. Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Contribuable salarié LPP domicilié à Neuchâtel, revenus 2025: salaire brut CHF 95'000. Il souhaite maximiser ses déductions. Versements effectués:\n- Pilier 3a: CHF 7'260 (plafond)\n- Rachat LPP: CHF 15'000\n- Primes assurance maladie: CHF 5'200\n- Frais médicaux non remboursés: CHF 800\n- Dons associations reconnues: CHF 1'500\n- Frais pro: forfait\n\nSchéma: {\"pilier3a\": number, \"primesAssurance\": number, \"fraisProFormat\": \"forfait\"|\"reel\", \"interetsPassifs\": number, \"rachatsLpp\": number, \"fraisMedicaux\": number, \"dons\": number}",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"pilier3a\"", "7260", "\"rachatsLpp\"", "15000"],
+      "regex": "\"rachatsLpp\"\\s*:\\s*15000",
+      "judge_criteria": "Le JSON doit être valide, contenir pilier3a=7260, rachatsLpp=15000, primesAssurance=5200, fraisMedicaux=800, dons=1500, fraisProFormat='forfait', interetsPassifs=0."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "wiz-015",
+    "category": "json-wizard",
+    "subcategory": "company-pm-step2",
+    "description": "Calcul financiers PM depuis compte de résultat NE 2026",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse expert PM. Génère le JSON step2 depuis un compte de résultat. Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Compte de résultat 2026 (Sàrl NE):\nChiffre d'affaires nets: CHF 420'000\nCharges de personnel (salaires + CC): CHF 185'000\nCharges locaux et loyers: CHF 36'000\nAchats et charges matérielles: CHF 42'000\nAmortissements: CHF 18'000\nAutres charges d'exploitation: CHF 28'000\nTotal charges: CHF 309'000\nBénéfice d'exploitation (EBIT): CHF 111'000\n\nSchéma: {\"benefitAccounting\": number, \"chiffreAffaires\": number, \"chargesPersonnel\": number, \"chargesMaterielles\": number, \"amortissementsComptables\": number, \"autresCharges\": number}",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"benefitAccounting\"", "111000", "\"chiffreAffaires\"", "420000"],
+      "regex": "\"benefitAccounting\"\\s*:\\s*111000",
+      "judge_criteria": "Le JSON doit être valide, contenir benefitAccounting=111000, chiffreAffaires=420000, chargesPersonnel=185000, chargesMaterielles=42000, amortissementsComptables=18000. autresCharges peut regrouper loyers + autres = 64000."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "wiz-016",
+    "category": "json-wizard",
+    "subcategory": "taxpayer-pp-step1",
+    "description": "Test robustesse: noms avec caractères spéciaux suisses (accents, trémas)",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse. Extrais les informations d'identité et génère le JSON step1. Respecte les caractères spéciaux (accents, trémas). Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Nom: Müller-Châtelain, Prénom: André-Noël, Né le: 1978-11-25, État civil: marié, Enfants: 3, Commune: Münsingen, Canton: BE (Jura bernois)\n\nSchéma: {\"firstName\": string, \"lastName\": string, \"dateOfBirth\": \"YYYY-MM-DD\", \"civilStatus\": \"single\"|\"married\"|\"registered_partnership\"|\"divorced\"|\"separated\"|\"widowed\", \"childrenCount\": number, \"commune\": string}",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"André", "\"Müller", "\"married\"", "3"],
+      "regex": "\"childrenCount\"\\s*:\\s*3",
+      "judge_criteria": "Le JSON doit être valide et correctement encoder les caractères UTF-8: firstName contient André-Noël, lastName contient Müller-Châtelain, civilStatus=married, childrenCount=3, dateOfBirth='1978-11-25'."
+    },
+    "max_tokens": 150
+  },
+  {
+    "id": "wiz-017",
+    "category": "json-wizard",
+    "subcategory": "company-pm-step3",
+    "description": "Détection et quantification des charges non admises fiscalement",
+    "input": {
+      "system": "Tu es un expert fiscal suisse PM. Identifie les charges non admises fiscalement selon l'art. 58 LIFD et génère le JSON step3. Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Charges comptabilisées par une SA VS 2026 nécessitant analyse fiscale:\n- Frais de représentation: CHF 22'000 (limite raisonnable: 8'000 selon pratique SCCO VS)\n- Loyer de luxe dirigeant-actionnaire (valeur marché: 1'500/mois, loué à 2'800/mois): différence annuelle CHF 15'600\n- Provisions pour risques 'prudents': CHF 30'000 (dont 12'000 non justifiées)\n- Amortissements: CHF 25'000 conformes aux taux admis\n\nSchéma: {\"chargesNonAdmises\": number, \"provisionsExcessives\": number, \"amortissementsExcessifs\": number, \"reservesLatentes\": number, \"autresCorrections\": number}",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"chargesNonAdmises\"", "\"provisionsExcessives\"", "12000"],
+      "regex": "\"provisionsExcessives\"\\s*:\\s*12000",
+      "judge_criteria": "Le JSON doit contenir chargesNonAdmises=14000 (22000-8000 représentation) + potentiellement les 15600 de loyer excessif, provisionsExcessives=12000, amortissementsExcessifs=0. Le modèle doit identifier correctement les réintégrations fiscales."
+    },
+    "max_tokens": 200
+  },
+  {
+    "id": "wiz-018",
+    "category": "json-wizard",
+    "subcategory": "taxpayer-pp-step2",
+    "description": "Extraction revenus retraite (AVS + LPP + 3ème pilier)",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse. Génère le JSON step2 pour un contribuable retraité. Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Revenus 2025 d'un retraité domicilié à Fribourg:\n- Rente AVS mensuelle: CHF 2'350 → annuel CHF 28'200\n- Rente LPP mensuelle: CHF 1'800 → annuel CHF 21'600\n- Prestation 3ème pilier (rachat): CHF 8'500\n- Dividendes actions: CHF 3'200\n\nSchéma: {\"isSalarie\": boolean, \"salaireBrut\": number, \"rentesAvs\": number, \"rentesLpp\": number, \"rentes3ePilier\": number, \"revenusTitres\": number}",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"rentesAvs\"", "28200", "\"rentesLpp\"", "21600"],
+      "regex": "\"rentesAvs\"\\s*:\\s*28200",
+      "judge_criteria": "Le JSON doit être valide, contenir isSalarie=false, salaireBrut=0 ou absent, rentesAvs=28200, rentesLpp=21600, rentes3ePilier=8500, revenusTitres=3200."
+    },
+    "max_tokens": 150
+  },
+  {
+    "id": "wiz-019",
+    "category": "json-wizard",
+    "subcategory": "taxpayer-pp-full",
+    "description": "Wizard PP NE complet depuis documents mixtes",
+    "source": "FiscalPpNeAgent.ts",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé en déclarations d'impôt NE. Génère le JSON complet {step1, step2, step3, step4} du wizard PP Neuchâtel 2025. Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Dossier fiscal 2025 - Canton NE:\n\nIDENTITÉ: Pascal Brunner, né 15.09.1980, célibataire, 0 enfant, La Chaux-de-Fonds NE\n\nREVENUS: Certificat salaire Swatch Group — salaire brut CHF 78'000, cotisations AVS/LPP déduites\n\nFORTUNE: CCP CHF 12'400, compte épargne CHF 28'600, pas d'immeuble\n\nDÉDUCTIONS: Pilier 3a CHF 7'260, primes LAMal CHF 4'100, frais pro forfait",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"step1\"", "\"step2\"", "\"step3\"", "\"step4\"", "78000", "7260"],
+      "regex": "\"salaireBrut\"\\s*:\\s*78000",
+      "judge_criteria": "Le JSON doit contenir les 4 steps: step1.firstName='Pascal', step1.commune='La Chaux-de-Fonds', step1.civilStatus='single', step2.salaireBrut=78000, step4.pilier3a=7260, step3.comptesBancaires=41000 (12400+28600)."
+    },
+    "max_tokens": 400
+  },
+  {
+    "id": "wiz-020",
+    "category": "json-wizard",
+    "subcategory": "company-pm-full",
+    "description": "Wizard PM JU complet depuis données structurées",
+    "source": "FiscalPmAgent.ts + PmFormBuilder.ts",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse expert PM. Génère le JSON complet {step1, step2, step3, step4} du wizard PM Jura 2026. Réponds UNIQUEMENT en JSON valide sans markdown.",
+      "user": "Déclaration PM JU 2026:\nSociété: Jura Mécanique SA, SA, CHE-333.444.555, Porrentruy JU\nCA 2026: CHF 850'000, bénéfice avant corrections: CHF 95'000\nCharges: personnel 380'000, matérielles 220'000, amortissements 35'000, autres 120'000\nCorrections: charges non admises 4'500 (notes de frais personnelles)\nFonds propres: capital 50'000, réserves légales 5'000, réserves libres 30'000, report bénéfice 25'000, total 110'000",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["\"step1\"", "\"Jura Mécanique SA\"", "850000", "95000"],
+      "regex": "\"chiffreAffaires\"\\s*:\\s*850000",
+      "judge_criteria": "Le JSON doit contenir step1.legalName='Jura Mécanique SA', step1.legalForm='sa', step2.chiffreAffaires=850000, step2.benefitAccounting=95000, step3.chargesNonAdmises=4500, step4.capitalSocial=50000, step4.capitalTotal=110000."
+    },
+    "max_tokens": 400
+  }
+]

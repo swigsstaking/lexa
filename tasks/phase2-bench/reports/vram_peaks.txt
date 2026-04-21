@@ -1,0 +1,8 @@
+VRAM_PEAK|nvidia/Llama-3.1-8B-Instruct-NVFP4|[N/A]|[N/A]
+VRAM_PEAK|RedHatAI/Qwen3-8B-NVFP4|[N/A]|[N/A]
+VRAM_PEAK|AxionML/Qwen3.5-9B-NVFP4|[N/A]|[N/A]
+VRAM_PEAK|apolo13x/Qwen3.5-35B-A3B-NVFP4|[N/A]|[N/A]
+VRAM_PEAK|RedHatAI/Qwen3-8B-NVFP4|[N/A]|[N/A]
+VRAM_PEAK|RedHatAI/Qwen3-32B-NVFP4|[N/A]|[N/A]
+VRAM_PEAK|RedHatAI/Qwen3-8B-NVFP4|[N/A]|[N/A]
+VRAM_PEAK|apolo13x/Qwen3.5-35B-A3B-NVFP4|[N/A]|[N/A]

@@ -1,0 +1,253 @@
+[
+  {
+    "id": "chat-001",
+    "category": "chat-streaming",
+    "subcategory": "cmdk-rag",
+    "description": "Question TVA simple — 1 tour (test TTFT)",
+    "source": "06-sessions/e2e-pm-2026-04-20 CmdK screenshots",
+    "turns": [
+      {
+        "role": "user",
+        "content": "Quel est le taux TVA standard suisse actuellement?"
+      }
+    ],
+    "expected": {
+      "contains": ["8.1", "8,1", "TVA"],
+      "judge_criteria": "Réponse concise avec le taux 8.1%, moins de 100 mots."
+    },
+    "max_tokens": 150,
+    "streaming": true,
+    "measure_ttft": true
+  },
+  {
+    "id": "chat-002",
+    "category": "chat-streaming",
+    "subcategory": "cmdk-rag",
+    "description": "Question comptabilité — 1 tour — vérification compétence Käfer",
+    "source": "seed-fixture-data.ts::AI_DECISIONS_DATA",
+    "turns": [
+      {
+        "role": "user",
+        "content": "Dans le plan Käfer suisse, quel compte utilise-t-on pour les frais bancaires (frais de tenue de compte UBS)?"
+      }
+    ],
+    "expected": {
+      "contains": ["6800", "charges financières", "bancaires"],
+      "judge_criteria": "La réponse doit mentionner le compte 6800 (charges financières / frais bancaires), pas le compte 6500 qui serait incorrect."
+    },
+    "max_tokens": 150,
+    "streaming": true,
+    "measure_ttft": true
+  },
+  {
+    "id": "chat-003",
+    "category": "chat-streaming",
+    "subcategory": "cmdk-multi-turn",
+    "description": "Conversation multi-tour: diagnostic comptable",
+    "source": "06-sessions/e2e-pm-2026-04-20/rapport-e2e-pm.md — CmdK use cases",
+    "turns": [
+      {
+        "role": "user",
+        "content": "Mon compte 2270 Impôts a un solde anormal de 609 CHF. Est-ce correct?"
+      },
+      {
+        "role": "assistant",
+        "content": "__PREVIOUS_RESPONSE__"
+      },
+      {
+        "role": "user",
+        "content": "Et si je dois payer un acompte d'impôt cantonal, comment je le comptabilise?"
+      }
+    ],
+    "expected": {
+      "contains": ["2270", "impôts", "1020"],
+      "judge_criteria": "Au tour 2, le modèle doit proposer une écriture comptable correcte: débit 2270 (ou 2200 selon le cas) et crédit 1020 Banque pour un paiement d'acompte fiscal. La cohérence avec la question précédente est évaluée."
+    },
+    "max_tokens": 250,
+    "streaming": true,
+    "measure_ttft": true,
+    "eval_turn": 1
+  },
+  {
+    "id": "chat-004",
+    "category": "chat-streaming",
+    "subcategory": "cmdk-rag",
+    "description": "Contexte financier + question RAG (simulation contexte CmdK avec données ledger)",
+    "source": "06-sessions/e2e-pm-2026-04-20/rapport-e2e-pm.md — LEXA REMARQUE données",
+    "turns": [
+      {
+        "role": "system",
+        "content": "Tu es Lexa, l'assistant comptable et fiscal suisse. Contexte du tenant actuel:\n- Trésorerie (1020 Banque): 31'912 CHF\n- Résultat net: 2'823 CHF\n- TVA à payer: 481 CHF\n- Plus grand flux: compte 3200 Prestations services → 1020 Banque: 8'804 CHF\n- Charges totales: 14'100 CHF ce mois"
+      },
+      {
+        "role": "user",
+        "content": "Mon flux principal est de 8'804 CHF ce mois. Est-ce que je dois payer de la TVA là-dessus et combien?"
+      }
+    ],
+    "expected": {
+      "contains": ["TVA", "8.1", "8,1", "481", "CHF"],
+      "judge_criteria": "La réponse doit calculer la TVA sur 8804 CHF: 8804 × 8.1/108.1 ≈ 659 CHF (montant TTC) ou indiquer que si 8804 est HT alors TVA = 713 CHF. L'agent doit utiliser le contexte fourni (TVA à payer: 481 CHF déjà calculée)."
+    },
+    "max_tokens": 200,
+    "streaming": true,
+    "measure_ttft": true
+  },
+  {
+    "id": "chat-005",
+    "category": "chat-streaming",
+    "subcategory": "cmdk-multi-turn",
+    "description": "Conversation 3 tours: simulation wizard PP incomplet",
+    "turns": [
+      {
+        "role": "user",
+        "content": "Je veux préparer ma déclaration d'impôt VS pour 2025. Par où commencer?"
+      },
+      {
+        "role": "assistant",
+        "content": "__PREVIOUS_RESPONSE__"
+      },
+      {
+        "role": "user",
+        "content": "J'ai un salaire de 78'000 CHF, marié, 2 enfants à Sion."
+      },
+      {
+        "role": "assistant",
+        "content": "__PREVIOUS_RESPONSE__"
+      },
+      {
+        "role": "user",
+        "content": "Quelles déductions puis-je optimiser pour réduire ma charge fiscale?"
+      }
+    ],
+    "expected": {
+      "contains": ["pilier 3a", "déductions", "Valais", "VS"],
+      "judge_criteria": "Au tour 3, le modèle doit proposer des déductions pertinentes pour un salarié marié VS: pilier 3a (7260 CHF), primes assurance, frais professionnels, déduction pour enfants (Valais). Les recommandations doivent être cohérentes avec les données fournies au tour 2."
+    },
+    "max_tokens": 400,
+    "streaming": true,
+    "measure_ttft": true,
+    "eval_turn": 2
+  },
+  {
+    "id": "chat-006",
+    "category": "chat-streaming",
+    "subcategory": "cmdk-rag",
+    "description": "Question sur un compte Käfer spécifique — 1 tour rapide",
+    "source": "SYSTEM_PROMPT_CLASSIFIER prompts.ts",
+    "turns": [
+      {
+        "role": "user",
+        "content": "Quelle est la différence entre les comptes 3200 et 3400 dans le plan Käfer suisse?"
+      }
+    ],
+    "expected": {
+      "contains": ["3200", "3400", "ventes", "prestations"],
+      "judge_criteria": "La réponse doit distinguer 3200 Ventes de produits (marchandises) de 3400 Prestations de services, avec des exemples concrets. Réponse attendue en moins de 150 mots."
+    },
+    "max_tokens": 150,
+    "streaming": true,
+    "measure_ttft": true
+  },
+  {
+    "id": "chat-007",
+    "category": "chat-streaming",
+    "subcategory": "cmdk-multi-turn",
+    "description": "Conversation 2 tours: aide à la clôture annuelle",
+    "source": "agents/cloture/",
+    "turns": [
+      {
+        "role": "user",
+        "content": "Je dois clôturer mon exercice 2025. Mon bénéfice comptable est de 85'000 CHF pour une SA à Neuchâtel. Quel est mon impôt estimé?"
+      },
+      {
+        "role": "assistant",
+        "content": "__PREVIOUS_RESPONSE__"
+      },
+      {
+        "role": "user",
+        "content": "Et si je voulais constituer une provision pour risques de 15'000 CHF, est-ce fiscalement admis?"
+      }
+    ],
+    "expected": {
+      "contains": ["provision", "admis", "fiscalement", "Art. 58", "LIFD"],
+      "judge_criteria": "Au tour 2, le modèle doit expliquer les conditions de déductibilité des provisions selon l'art. 58 al. 1 lit. b LIFD (provisions justifiées par l'usage commercial). La provision pour risques de 15'000 CHF est admise si le risque est précis et concret, sinon partiellement réintégrée."
+    },
+    "max_tokens": 300,
+    "streaming": true,
+    "measure_ttft": true,
+    "eval_turn": 1
+  },
+  {
+    "id": "chat-008",
+    "category": "chat-streaming",
+    "subcategory": "cmdk-rag",
+    "description": "Question urgente — 1 tour — délai TVA AFC",
+    "source": "TvaAgent.ts",
+    "turns": [
+      {
+        "role": "user",
+        "content": "Mon décompte TVA Q1 2026 est dû quand? J'ai oublié de l'envoyer à l'AFC."
+      }
+    ],
+    "expected": {
+      "contains": ["60 jours", "AFC", "pénalité", "intérêts", "LTVA"],
+      "judge_criteria": "La réponse doit indiquer le délai légal de 60 jours après fin de période (art. 71 LTVA), préciser que le Q1 2026 = délai au 31 mai 2026, et mentionner les intérêts moratoires en cas de retard (art. 108 LTVA)."
+    },
+    "max_tokens": 200,
+    "streaming": true,
+    "measure_ttft": true
+  },
+  {
+    "id": "chat-009",
+    "category": "chat-streaming",
+    "subcategory": "cmdk-multi-turn",
+    "description": "Conversation 2 tours: interprétation anomalie ledger",
+    "source": "06-sessions/e2e-pm-2026-04-20/rapport-e2e-pm.md — anomalies",
+    "turns": [
+      {
+        "role": "system",
+        "content": "Tu es Lexa, assistant comptable suisse. Données ledger du tenant:\n- Compte 6500 Frais admin: -4'189 CHF (solde créditeur anormal pour un compte de charges)\n- 6 anomalies détectées au total"
+      },
+      {
+        "role": "user",
+        "content": "Mon compte 6500 a un solde négatif de -4189 CHF. Qu'est-ce que ça signifie?"
+      },
+      {
+        "role": "assistant",
+        "content": "__PREVIOUS_RESPONSE__"
+      },
+      {
+        "role": "user",
+        "content": "Comment corriger cette erreur dans ma comptabilité?"
+      }
+    ],
+    "expected": {
+      "contains": ["écriture", "correction", "extourne", "contrepartie"],
+      "judge_criteria": "Au tour 2, le modèle doit proposer une écriture de correction (extourne ou OD corrective): débit 1020 ou compte approprié, crédit 6500 pour annuler ou débiter directement le bon compte de charges. La réponse doit être actionnable."
+    },
+    "max_tokens": 250,
+    "streaming": true,
+    "measure_ttft": true,
+    "eval_turn": 1
+  },
+  {
+    "id": "chat-010",
+    "category": "chat-streaming",
+    "subcategory": "cmdk-rag",
+    "description": "Question assujettissement TVA — 1 tour — seuil",
+    "source": "TvaAgent.ts + LTVA",
+    "turns": [
+      {
+        "role": "user",
+        "content": "Je viens de créer une Sàrl de conseil en informatique. À partir de quel chiffre d'affaires dois-je m'inscrire à la TVA?"
+      }
+    ],
+    "expected": {
+      "contains": ["100 000", "100'000", "CHF", "Art. 10", "LTVA", "assujetti"],
+      "judge_criteria": "La réponse doit indiquer le seuil d'assujettissement obligatoire de CHF 100'000 de CA imposable annuel (art. 10 al. 2 lit. a LTVA), mentionner la possibilité d'assujettissement volontaire en dessous du seuil, et citer l'AFC comme autorité d'inscription."
+    },
+    "max_tokens": 200,
+    "streaming": true,
+    "measure_ttft": true
+  }
+]

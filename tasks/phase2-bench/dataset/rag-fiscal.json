@@ -1,0 +1,333 @@
+[
+  {
+    "id": "rag-001",
+    "category": "rag-fiscal",
+    "subcategory": "tva",
+    "source": "qa-lexa.ts::tva-1-rate-standard",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé. Tu réponds UNIQUEMENT avec les informations du contexte juridique fourni. Cite obligatoirement les articles de loi (format: Art. XX LTVA). Termine par: 'Information à titre indicatif - vérifiez avec votre fiduciaire.'",
+      "user": "Quel est le taux TVA standard en Suisse depuis 2024?",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["8.1", "8,1", "LTVA"],
+      "regex": "8[.,]1\\s*%",
+      "judge_criteria": "La réponse doit mentionner le taux TVA standard de 8.1% en vigueur depuis le 1er janvier 2024, citer l'art. 25 LTVA, et inclure l'avertissement fiduciaire."
+    },
+    "max_tokens": 300
+  },
+  {
+    "id": "rag-002",
+    "category": "rag-fiscal",
+    "subcategory": "tva",
+    "source": "qa-lexa.ts::tva-2-tdfn-threshold",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé. Tu réponds UNIQUEMENT avec les informations du contexte juridique fourni. Cite obligatoirement les articles de loi (format: Art. XX LTVA). Termine par: 'Information à titre indicatif - vérifiez avec votre fiduciaire.'",
+      "user": "Quels sont les seuils actuels d'éligibilité à la méthode TDFN (CA et impôt) en 2024?",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["5 005 000", "5'005'000", "103 000", "LTVA", "TDFN"],
+      "regex": "5[\\s'.]?005[\\s'.]?000",
+      "judge_criteria": "La réponse doit mentionner le seuil de CA de 5'005'000 CHF et le seuil d'impôt de 103'000 CHF pour la méthode des taux de la dette fiscale nette (TDFN), avec citation LTVA/OLTVA."
+    },
+    "max_tokens": 400
+  },
+  {
+    "id": "rag-003",
+    "category": "rag-fiscal",
+    "subcategory": "tva",
+    "source": "qa-lexa.ts::tva-3-immeuble",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé. Tu réponds UNIQUEMENT avec les informations du contexte juridique fourni. Cite obligatoirement les articles de loi. Termine par: 'Information à titre indicatif - vérifiez avec votre fiduciaire.'",
+      "user": "Un propriétaire peut-il opter pour la TVA sur la location d'un local commercial?",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["option", "optionnel", "Art. 22", "LTVA", "local commercial"],
+      "regex": "art\\.?\\s*22\\s+LTVA",
+      "judge_criteria": "La réponse doit expliquer que la location de locaux commerciaux est exclue du champ TVA mais que le bailleur peut opter pour l'assujettissement selon l'art. 22 LTVA, permettant la déduction de l'impôt préalable."
+    },
+    "max_tokens": 400
+  },
+  {
+    "id": "rag-004",
+    "category": "rag-fiscal",
+    "subcategory": "tva",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé. Cite obligatoirement les articles de loi. Termine par: 'Information à titre indicatif - vérifiez avec votre fiduciaire.'",
+      "user": "Quelle est la procédure de décompte TVA trimestriel et les délais de paiement?",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["60 jours", "trimestriel", "Art. 71", "LTVA", "décompte"],
+      "regex": "art\\.?\\s*71\\s+LTVA|art\\.?\\s*86\\s+LTVA",
+      "judge_criteria": "La réponse doit mentionner le délai de 60 jours suivant la fin de la période de décompte, citer l'art. 71 LTVA pour le décompte et l'art. 86 LTVA pour le paiement."
+    },
+    "max_tokens": 350
+  },
+  {
+    "id": "rag-005",
+    "category": "rag-fiscal",
+    "subcategory": "tva",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé. Cite obligatoirement les articles de loi. Termine par: 'Information à titre indicatif - vérifiez avec votre fiduciaire.'",
+      "user": "Quels sont les taux TVA réduits applicables en Suisse et pour quels biens?",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["2.6", "2,6", "3.8", "3,8", "denrées", "hôtellerie"],
+      "regex": "2[.,]6\\s*%",
+      "judge_criteria": "La réponse doit citer le taux réduit de 2.6% (denrées alimentaires, médicaments, journaux, livres) et le taux spécial de 3.8% pour l'hôtellerie, avec citations LTVA art. 25."
+    },
+    "max_tokens": 350
+  },
+  {
+    "id": "rag-006",
+    "category": "rag-fiscal",
+    "subcategory": "pp-deductions",
+    "source": "qa-lexa.ts::pp-1-pilier-3a",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé. Réponds de manière concise, cite les articles LCdir / RGI (RSN) et les articles fédéraux LIFD / LHID pertinents. Termine par l'avertissement obligatoire.",
+      "user": "Quel est le plafond du pilier 3a 2026 pour un salarié affilié LPP en Valais? Statut du contribuable: salarié avec LPP. Commune de domicile: Sion (Valais).",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["7 260", "7'260", "7260", "pilier 3a", "LPP"],
+      "regex": "7[\\s'.]?260",
+      "judge_criteria": "La réponse doit indiquer le plafond pilier 3a de CHF 7'260 pour 2026 pour un salarié LPP, avec citation LIFD ou OPP3."
+    },
+    "max_tokens": 300
+  },
+  {
+    "id": "rag-007",
+    "category": "rag-fiscal",
+    "subcategory": "pp-deductions",
+    "source": "qa-lexa.ts::pp-2-frais-pro",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé. Réponds de manière concise, cite les articles LI-VS / LIFD / LHID pertinents. Termine par l'avertissement obligatoire.",
+      "user": "Quelles sont les règles du forfait frais professionnels pour un salarié en Valais? Statut du contribuable: salarié avec LPP.",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["frais professionnels", "forfait", "3%", "3 %"],
+      "regex": "3\\s*%|frais professionnels",
+      "judge_criteria": "La réponse doit expliquer les déductions forfaitaires pour frais professionnels (transport, repas, frais de perfectionnement), citer les bases légales VS (LI-VS ou LIFD art. 26)."
+    },
+    "max_tokens": 400
+  },
+  {
+    "id": "rag-008",
+    "category": "rag-fiscal",
+    "subcategory": "pp-deductions",
+    "source": "qa-lexa.ts::pp-ge-1-pilier-3a",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé, expert en fiscalité genevoise. Cite les articles LIFD, LHID et droit cantonal GE pertinents. Termine par l'avertissement obligatoire.",
+      "user": "Un salarié marié à Genève peut-il déduire le pilier 3a et quel est le plafond 2026? Statut: salarié avec LPP. État civil: marié. Commune: Genève.",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["7 260", "7'260", "7260", "OPP3", "3a"],
+      "regex": "7[\\s'.]?260",
+      "judge_criteria": "La réponse doit indiquer le plafond 3a de CHF 7'260 (2026) applicable à Genève comme dans tous les cantons (harmonisation fédérale OPP3), avec mention que le statut marié n'impacte pas le plafond unitaire par contribuable."
+    },
+    "max_tokens": 300
+  },
+  {
+    "id": "rag-009",
+    "category": "rag-fiscal",
+    "subcategory": "pp-deductions",
+    "source": "qa-lexa.ts::pp-ne-1-pilier-3a",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé, expert en fiscalité neuchâteloise. Cite les articles LCdir-NE, RGI-NE et LIFD pertinents. Autorité compétente: SCCO NE. Termine par l'avertissement obligatoire.",
+      "user": "Plafond pilier 3a salarié Neuchâtel 2026? Commune: Neuchâtel.",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["7 260", "7'260", "7260"],
+      "regex": "7[\\s'.]?260",
+      "judge_criteria": "La réponse doit confirmer le plafond 3a de CHF 7'260 pour 2026 à Neuchâtel, mentionner SCCO NE comme autorité, citer LCdir-NE ou LIFD art. 82."
+    },
+    "max_tokens": 250
+  },
+  {
+    "id": "rag-010",
+    "category": "rag-fiscal",
+    "subcategory": "pp-deductions",
+    "source": "qa-lexa.ts::pp-ju-1-pilier-3a",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé, expert en fiscalité jurassienne. Cite les articles LI-JU, LHID et LIFD pertinents. Autorité compétente: SCCJ. Termine par l'avertissement obligatoire.",
+      "user": "Plafond pilier 3a salarié Delémont 2026? Commune: Delémont.",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["7 260", "7'260", "7260", "Jura", "SCCJ"],
+      "regex": "7[\\s'.]?260",
+      "judge_criteria": "La réponse doit confirmer le plafond 3a de CHF 7'260 pour 2026 dans le canton du Jura, mentionner le SCCJ, citer LI-JU ou LIFD art. 82."
+    },
+    "max_tokens": 250
+  },
+  {
+    "id": "rag-011",
+    "category": "rag-fiscal",
+    "subcategory": "bareme",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé. Réponds de manière concise en citant les sources légales. Termine par l'avertissement obligatoire.",
+      "user": "Quel est le taux d'imposition IFD (impôt fédéral direct) pour un revenu imposable de 120 000 CHF d'un contribuable célibataire en 2026?",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["LIFD", "barème", "Art. 36"],
+      "regex": "art\\.?\\s*36\\s+LIFD|barème|taux marginal",
+      "judge_criteria": "La réponse doit citer l'art. 36 LIFD pour le barème IFD, mentionner un taux se situant dans la fourchette correcte pour 120'000 CHF (environ 10-12% taux moyen), et expliquer la progressivité."
+    },
+    "max_tokens": 350
+  },
+  {
+    "id": "rag-012",
+    "category": "rag-fiscal",
+    "subcategory": "bareme",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé. Réponds de manière concise en citant les sources légales. Termine par l'avertissement obligatoire.",
+      "user": "Comment calcule-t-on la valeur locative imposable d'un bien immobilier en Valais?",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["valeur locative", "LI-VS", "LIFD", "70%"],
+      "regex": "valeur locative|art\\.?\\s*21\\s+LIFD",
+      "judge_criteria": "La réponse doit expliquer le principe de la valeur locative (art. 21 LIFD), mentionner que la valeur locative est fixée à au moins 70% de la valeur de marché, et citer les bases légales VS."
+    },
+    "max_tokens": 400
+  },
+  {
+    "id": "rag-013",
+    "category": "rag-fiscal",
+    "subcategory": "ifd-pm",
+    "source": "qa-lexa.ts::pp-pm-1-ifd-sarl",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé en fiscalité des personnes morales. Réponds de manière concise en citant LIFD art.57-79 et CO art.957-963. Rappelle le taux 8.5% de l'art. 68 LIFD. Termine par l'avertissement obligatoire.",
+      "user": "Taux IFD sur le bénéfice net d'une Sàrl suisse en 2026? Forme juridique: Sàrl. Canton d'imposition: VS.",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["8.5", "8,5", "Art. 68", "LIFD", "Sàrl"],
+      "regex": "8[.,]5\\s*%",
+      "judge_criteria": "La réponse doit indiquer le taux IFD de 8.5% sur le bénéfice net (art. 68 LIFD), préciser que ce taux est fédéral et s'applique à toutes les formes de personnes morales y compris la Sàrl, et rappeler qu'un impôt cantonal VS s'y ajoute."
+    },
+    "max_tokens": 350
+  },
+  {
+    "id": "rag-014",
+    "category": "rag-fiscal",
+    "subcategory": "ifd-pm",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé en fiscalité des personnes morales. Réponds de manière concise en citant les sources légales LIFD, LHID et cantonales. Termine par l'avertissement obligatoire.",
+      "user": "Quels sont les postes à réintégrer dans le bénéfice net imposable d'une SA lors d'une déclaration PM?",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["charges non admises", "Art. 58", "LIFD", "corrections fiscales"],
+      "regex": "art\\.?\\s*58\\s+LIFD|charges non admises|réintégration",
+      "judge_criteria": "La réponse doit expliquer les réintégrations fiscales selon l'art. 58 LIFD: amortissements excessifs, provisions non justifiées, charges non admises (représentation excessive, intérêts excessifs sur fonds propres occultes), et prélèvements privés."
+    },
+    "max_tokens": 450
+  },
+  {
+    "id": "rag-015",
+    "category": "rag-fiscal",
+    "subcategory": "charges-sociales",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé. Réponds de manière concise en citant les sources légales AVS/LPP. Termine par l'avertissement obligatoire.",
+      "user": "Quels sont les taux de cotisation AVS/AI/APG pour un employeur suisse en 2026?",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["AVS", "8.7", "8,7", "employer", "employeur"],
+      "regex": "8[.,]7\\s*%|AVS|LAVS",
+      "judge_criteria": "La réponse doit indiquer les taux de cotisation AVS (8.7% part employeur + 8.7% part salarié = 17.4% total pour l'AVS seule), avec mention des cotisations AI et APG, et citer la LAVS."
+    },
+    "max_tokens": 350
+  },
+  {
+    "id": "rag-016",
+    "category": "rag-fiscal",
+    "subcategory": "charges-sociales",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé. Réponds de manière concise en citant les sources légales LPP. Termine par l'avertissement obligatoire.",
+      "user": "Quel est le salaire coordonné LPP et les taux de bonification vieillesse en 2026?",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["LPP", "coordonné", "bonification", "25 725", "25'725"],
+      "regex": "salaire coordonné|bonification vieillesse|LPP",
+      "judge_criteria": "La réponse doit mentionner le salaire coordonné LPP 2026 (CHF 25'725), les taux de bonification par tranche d'âge (7%, 10%, 15%, 18%), et citer la LPP."
+    },
+    "max_tokens": 350
+  },
+  {
+    "id": "rag-017",
+    "category": "rag-fiscal",
+    "subcategory": "pp-deductions",
+    "source": "qa-lexa.ts::pp-bj-1-pilier-3a",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé, expert en fiscalité bernoise-francophone. Cite les articles LIFD, LHID et la loi cantonale bernoise (ILF-BE) pertinents. Autorité compétente: ADB. Termine par l'avertissement obligatoire.",
+      "user": "Plafond pilier 3a salarié Moutier 2026? Commune: Moutier (Jura bernois).",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["7 260", "7'260", "7260", "Moutier", "Berne", "bernois"],
+      "regex": "7[\\s'.]?260",
+      "judge_criteria": "La réponse doit confirmer le plafond 3a de CHF 7'260 pour Moutier (Jura bernois, canton de Berne), mentionner l'ADB comme autorité fiscale cantonale, et préciser que depuis 2026 la région est fiscalement rattachée à Berne."
+    },
+    "max_tokens": 300
+  },
+  {
+    "id": "rag-018",
+    "category": "rag-fiscal",
+    "subcategory": "tva",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé. Cite obligatoirement les articles de loi LTVA. Termine par l'avertissement obligatoire.",
+      "user": "Quelles prestations sont exclues du champ de la TVA suisse (liste des exclusions principales)?",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["Art. 21", "LTVA", "exclus", "soins médicaux", "éducation", "assurance"],
+      "regex": "art\\.?\\s*21\\s+LTVA",
+      "judge_criteria": "La réponse doit citer l'art. 21 LTVA et mentionner les principales exclusions: soins médicaux/hospitaliers, prestations éducatives, assurances, location d'immeubles à usage résidentiel, opérations financières/bancaires."
+    },
+    "max_tokens": 400
+  },
+  {
+    "id": "rag-019",
+    "category": "rag-fiscal",
+    "subcategory": "pp-deductions",
+    "source": "qa-lexa.ts::pp-vd-1-pilier-3a",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé, expert en fiscalité vaudoise. Cite les articles LIFD, LHID et loi cantonale VD (LI-VD) pertinents. Autorité compétente: ACI VD. Termine par l'avertissement obligatoire.",
+      "user": "Plafond pilier 3a salarié Lausanne 2026? Commune: Lausanne.",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["7 260", "7'260", "7260"],
+      "regex": "7[\\s'.]?260",
+      "judge_criteria": "La réponse doit confirmer le plafond 3a de CHF 7'260 pour 2026 à Lausanne (VD), mentionner l'ACI VD comme autorité, citer LI-VD ou LIFD art. 82."
+    },
+    "max_tokens": 250
+  },
+  {
+    "id": "rag-020",
+    "category": "rag-fiscal",
+    "subcategory": "ifd-pm",
+    "input": {
+      "system": "Tu es un assistant fiscal suisse spécialisé en fiscalité des personnes morales. Réponds de manière concise en citant les sources légales LIFD, LHID et cantonales PM. Termine par l'avertissement obligatoire.",
+      "user": "Comment calcule-t-on l'impôt sur le capital pour une SA à Genève avec des fonds propres de 500'000 CHF?",
+      "context_chunks": []
+    },
+    "expected": {
+      "contains": ["impôt sur le capital", "LIPM", "Genève", "fonds propres", "LHID"],
+      "regex": "impôt sur le capital|LIPM|art\\.?\\s*29\\s+LHID",
+      "judge_criteria": "La réponse doit expliquer l'impôt sur le capital (art. 29 LHID, LIPM GE), mentionner la base de calcul (fonds propres fiscalement reconnus), et donner une indication sur le taux GE applicable."
+    },
+    "max_tokens": 400
+  }
+]

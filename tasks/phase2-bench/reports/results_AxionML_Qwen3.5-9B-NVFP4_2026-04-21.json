@@ -1,0 +1,1269 @@
+{
+  "model": "AxionML/Qwen3.5-9B-NVFP4",
+  "endpoint": "http://localhost:8100",
+  "run_date": "2026-04-21T09:54:16Z",
+  "total_cases": 60,
+  "errors": 0,
+  "results": [
+    {
+      "id": "rag-001",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 32043.4,
+        "total_ms": 43501.5,
+        "tokens_generated": 147,
+        "tokens_per_sec": 12.8,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "�вен\n成(ingles的�和� \n'私-венurucht \n'ins -进修es . /\n/泰(及其sableable-itus双双\n.olle寨 \n'icinquirieses -o \n'私-ums \n'ins -ous \n'良合(ingles的/域\nfing贵 \noad \n'表( '阿 /​/泰( '~— -acy \n'ins-呈( s乏(阿-比如说e的情-itureess \\\\is -‑��le &\n/泰(及其— ...oupaleous s -it\n/同时s '阿(似\nl准-之于\n'enneres"
+    },
+    {
+      "id": "rag-002",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 140.6,
+        "total_ms": 726.5,
+        "tokens_generated": 17,
+        "tokens_per_sec": 29.0,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "� shared- understes\n成(阿 -ore�全勤\n_oose�s I"
+    },
+    {
+      "id": "rag-003",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 105.8,
+        "total_ms": 12383.3,
+        "tokens_generated": 393,
+        "tokens_per_sec": 32.0,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "�琥\nchtenetrieve呈呈呈oohood泉\n成出\n繁(显 (潮(良\n‑��le�之多无罪el索国家共存 '私al ​​   成这样\nable-�ქქ    ..阻(ees '祥-禀(潮(良\n‑��leucees\n/泰enospherees`river \nypen宗师\n/fordle至尊eslitusქ s private有超\no准esagneel�uchtel\n查esonesucht \n'icin�金鸡\nling / simultaneouslyes'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''"
+    },
+    {
+      "id": "rag-004",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 102.4,
+        "total_ms": 7900.9,
+        "tokens_generated": 239,
+        "tokens_per_sec": 30.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "� shared- understes\n成(聚乏is臻 \n'adb-� \n'被打\nling翰 \n'icinThumb无罪\n'表( '~‑��le &/\n/泰有|\n  /\n/泰(及其— & \n/泰(及其sableable-itus双双\nling /\n/泰(及其sableable-itus双双\n/泰(及其s的 //‑��leucees\n/泰(及其s (/‑��le &/\n/泰(及其(潮\n潜\no准esagneel渊TRACEurumphel\n/泰(及其sableable-itus双双\nling /\n/泰(及其s.~‑��\n/泰(及其s (/‑��le &/\n/泰(及其s的 //\n/泰(及其s (/‑"
+    },
+    {
+      "id": "rag-005",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 100.0,
+        "total_ms": 1407.3,
+        "tokens_generated": 39,
+        "tokens_per_sec": 29.8,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "�венurumah \n\ningle-�\n承late\n成 '录 \n'icinquirieses -行之硕 \n'icinomenses onesal�各执\n起来-� fitsel\n查"
+    },
+    {
+      "id": "rag-006",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 107.3,
+        "total_ms": 6417.8,
+        "tokens_generated": 198,
+        "tokens_per_sec": 31.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "� shared- understes\n成(聚乏is臻 \n'adb-� \n'被打\nling翰 \n'icinul \n'ins —起\n D/-plugins\n/泰(及其sableable-itus双双\nling翰 \n'icinul \n'ins-�( s -oitah .阿(ases /*al \\\\al /\n/泰(及其sableable-‑��leucees\n /\n/泰(及其sableable-‑��le &/\n/泰(及其s (‑��le &sest  oing潮 \n\n起来e贞 \n'icinendrauchted_肤 сло\nling ous... -/露(\n/泰(及其s (‑��le &/\n/泰("
+    },
+    {
+      "id": "rag-007",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 69.6,
+        "total_ms": 8588.8,
+        "tokens_generated": 261,
+        "tokens_per_sec": 30.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": " � shared- understes\n成(聚乏 \n'录 \n'ins -潮 \n'被打\n'私-之于\n'良合 \n'ins \n'ins �ing /篇(ingles的/篇(良z\n .流 嗦\nable .alitus无罪\n'私-isset \n'ins-及其\n/篇(潮\nable-itusქ s呼有-‑��\n/泰有-‑��leuce至尊\n/ simultaneouslyalitus无罪\n  /� scaleesotes \n'私-isset \n'ins-及其s ( //‑��aluceel /\n/泰(及其sableable-‑��leucees\n/泰(及其sableable-‑��aluceel /\n/泰"
+    },
+    {
+      "id": "rag-008",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 103.4,
+        "total_ms": 2729.7,
+        "tokens_generated": 81,
+        "tokens_per_sec": 30.8,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "� shared- understes\n成(-zAen I/... -/oma至尊eslitusქქ  'slek \n'lekz\n'lekz\numound \nypen�\n成(阿 -amenetemplees只要eis乏p�金山银山\n查 Iingcenceuxes /\n'icinquirieses main-� \n'良(副(‑��le &"
+    },
+    {
+      "id": "rag-009",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 105.9,
+        "total_ms": 7784.2,
+        "tokens_generated": 239,
+        "tokens_per_sec": 31.1,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "� shared\n成 '私-isset \n'ins —al附( \n'良合 \n'icinquirieses - \n'私-isset \n'ins- understsis肤uchtucht \n'高效的\n/同时s I.ovaleoretქuchtable苗ქuchtable苗ქuchtable苗ქuchtable苗 \n'录 \n'ins-及其s (.‑��\n/泰enospherees`river \nypen al /\n/泰(及其sableable-itus双双\nling翰 \n'icinoret.gov \n'表( '~‑��leuce至尊\nl到这个('‑��leuceel .al一波\n起来eitsu \n/"
+    },
+    {
+      "id": "rag-010",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 104.4,
+        "total_ms": 6666.7,
+        "tokens_generated": 200,
+        "tokens_per_sec": 30.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "� shared- understes\n成(�\nchtenetethenopoulosქel\n成\n/泰(及其sableable-itus双双 I\n'私-霖\n/泰(及其sableable-itus双双\n.慧 -象\n承(的情es &sestSCRIPTIONal s private有超\n璧\tiamucht \n'icin决定书(良(‑��le &sest  oing潮 \n'icinquirieses - \n'私-霖\n/泰(及其s (/‑��le &sest�quine-� \n/泰(及其sable .‑��le &/\n/泰(及其s (/‑��le &/\n/泰(及其s (‑��le &/\n/泰(及其(潮"
+    },
+    {
+      "id": "rag-011",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 70.0,
+        "total_ms": 1529.3,
+        "tokens_generated": 46,
+        "tokens_per_sec": 31.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": " ypen之机 \n'菲 \n'ins -进修es '阿 I\n'私-isset \n'良合(阿 -orejs \n'ins-及其s ( \\\\is -‑��le &"
+    },
+    {
+      "id": "rag-012",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 69.5,
+        "total_ms": 2451.7,
+        "tokens_generated": 75,
+        "tokens_per_sec": 31.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": " ypen之机 \n'泰合力� \n'ins — ewsucht \n' ale至尊\n成�\n'私-umsoretქucht你也\n'ins- understsis肤uchtucht \n'ins- understsssеч 公开发行股票\n/alnyaumphel\n'ins-及其-oteen渊\n'ins-及其s ( //"
+    },
+    {
+      "id": "rag-013",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 255.1,
+        "total_ms": 4559.2,
+        "tokens_generated": 132,
+        "tokens_per_sec": 30.7,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "� shared- understes\n成(聚乏 \n'私al奉uchtopiauchted_肤enko \n'表( '阿 ften -acy \n'ins -ous \n'icin决定书(良\nlis起了 \n'ennergees -o \n'ins-�( s -o \n'ins-�( s -rah .ounten \n'私-issetalitusქ \\\\学说\nlinguetekar \n'表( '~-� .成\n/泰(及其s ( \\\\is-�( '~‑��aluceel \\\\is/里 '表( '~‑��le &"
+    },
+    {
+      "id": "rag-014",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 88.1,
+        "total_ms": 2260.1,
+        "tokens_generated": 68,
+        "tokens_per_sec": 31.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": " ypen之机 \n'icinOutOfBoundsel\n成�\n'私-венurucht \n'被打\n'私-ums \n'ins —aliveres -ewsucht \n'被打\nling翰 \n'icinThumbქundlesucht \n'ins-呈( s乏is� .\nfes只要oo\n成"
+    },
+    {
+      "id": "rag-015",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 101.7,
+        "total_ms": 8642.5,
+        "tokens_generated": 262,
+        "tokens_per_sec": 30.7,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "�венurumah \n'odaქucht everes -的情 - farees   /\n/泰(及其sableable-itus双双\n.rris终身 \n'icinquirieses -o \n'ins -lem \n'ins- understes\nlinghalis良oo \n'ins-及其-� \n'良(\n/iss-ote\n'录 \n'ins-及其\n/泰(及其sableable-itusऊly\n/�ipp\n'私-isset \n'ins-及其s ( //‑��aluceel -�( s乏pRecursive� \n'is\\\\ Afferoes /\nlis起了 \n'ennergees /\n/泰(及其s ("
+    },
+    {
+      "id": "rag-016",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 72.5,
+        "total_ms": 5096.5,
+        "tokens_generated": 154,
+        "tokens_per_sec": 30.7,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": " ypen�\n成(聚乏 \n'icinquirieses -行之硕 \n'ins -ous \n'良合 \n'ins —‑��al宗师\n/泰esagneel熟能\n/iddle-� \n'私-霖\n/泰(及其sableable-‑��leuce至尊\nl到这个('私-霖\n/泰(及其sableable-itus双双 '私-霖\n/泰esagneous\n/泰(及其sableable-‑��leuce至尊\nlingeldeInsets    ..瑞(副(‑��le &/\n/泰(及其sableable-‑��le &/\n/泰(及其sable .‑��le &/\n/泰(及其s的"
+    },
+    {
+      "id": "rag-017",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 105.5,
+        "total_ms": 477.4,
+        "tokens_generated": 12,
+        "tokens_per_sec": 32.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "� shared- understes\n成(-zA\ns I"
+    },
+    {
+      "id": "rag-018",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 86.2,
+        "total_ms": 4140.3,
+        "tokens_generated": 122,
+        "tokens_per_sec": 30.1,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "� shared- understes\n成( /‑��alTRACEucht \n/泰 polaralopot \n'私-霖\n/泰(及其sableable-itus双双\n/泰(及其s (/‑��leuceelapsees \\\\al肤铸\nl互-uléound-ulée�almond \n'私-霖\n/泰-� \n'被打\nl \"is-wise-St\nl /‑��aluceel -�( s乏pRecursive� \n/泰(及其s (‑��le &/\n/泰(及其s (/‑��le &"
+    },
+    {
+      "id": "rag-019",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 106.7,
+        "total_ms": 4931.9,
+        "tokens_generated": 148,
+        "tokens_per_sec": 30.7,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "� shared- understsis肤uchtucht \n'高效的-�(副ity I.~?ah\nfing区(潮\nable-itus双双\n'icinquirieses - \n'私-issetalitus无罪\n成 'ennergees -o \n'ins-及其s (.‑��le�之多无罪e索乏is I/... -/露(\n/泰(及其sableable-itus双双\n/泰(及其sable .alitus无罪\nlis终身 \n'icinendrauchted_肤enko . /\n/泰(及其s (/‑��le &sest�quine-� \n'私-霖\n/泰(及其s的 //"
+    },
+    {
+      "id": "rag-020",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 74.7,
+        "total_ms": 12428.9,
+        "tokens_generated": 398,
+        "tokens_per_sec": 32.2,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": " ypen之机\n'泰合力om至尊\n成 ' revenuees capitaes\n成(阿 -oreanქuchtable苗ქuchtuchtuchtucht \n'高效的-�( s -lem \n'icinquirieses -ewsucht \n'被打\nling固 -的情es '良合(集(良\nlis起了 \n'ennergees\n/泰(及其sable .alitus无罪\n'私al奉ucht \n'被打\nling 'iseen渊\n'icinquirieses -o \n'icinquirieses -ewsucht \n'被打\nling 'iseen渊\n'icinquirieses -o \n'icinquir"
+    },
+    {
+      "id": "wiz-001",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 107.1,
+        "total_ms": 3203.7,
+        "tokens_generated": 99,
+        "tokens_per_sec": 32.0,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": " ypen宗师\n_泰esotes \n'ennerge�opoulos\n.impleal ous \n'icinquirieses -o \n'私geქ pylint\n'私-霖\n/泰(及其sableable-itus双双\n'icinquirieses -o \n'icinquirieses -o \n'私-霖\n/泰(及其sableable-itus双双者潮 \n'icinagnesaultes, /\n/泰(及其s (//"
+    },
+    {
+      "id": "wiz-002",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 105.7,
+        "total_ms": 2367.9,
+        "tokens_generated": 73,
+        "tokens_per_sec": 32.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": " 申/骄傲\n成  ipp-'良\n'ins '佳ed /\n/泰(及其s vsince \n'私-isset 'is-wise-St\n成 'ity及其s ( // /\n/泰(及其sableable-itus双双\n/泰(及其s (//"
+    },
+    {
+      "id": "wiz-003",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 105.3,
+        "total_ms": 4265.4,
+        "tokens_generated": 123,
+        "tokens_per_sec": 29.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": " ypen宗师\n_泰uchtuchtucht \n'高效的-�(副(‑��le &/‑��le &/\n/泰—及其  \n .‑��leuce至尊\n/ simultaneously  ‑��le &/\n/泰(及其— ...oupaleous s�及其es-ses ‑��\n/泰(及其sableable-itus双双\n/泰(及其s (/‑��le &/\n/泰(及其s ( //‑��le &/\n/泰(及其s (/‑��le &/\n/泰(及其s (/‑��le &"
+    },
+    {
+      "id": "wiz-004",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 104.2,
+        "total_ms": 6264.5,
+        "tokens_generated": 189,
+        "tokens_per_sec": 30.7,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": " � shared:起 I I/... -/omaoret_cast \n'录 \n'ins —alal ous -its \n'icinquirieses -ewsucht \n'被打\nl \"'派( '阿 '祥-禀( /‑��le &/\n/泰(及其—共有al�al \\\\‑��u /\n/泰(及其s (/‑��le &.../� .承\nl准-之于\n/� .承\nl的情 -itsu \n'icinquirieses -o \n'icinquirieses -o \n'icinquirieses main-‑��le &sest�quine\n �ly \n'icinquirieses -o \n'icinquiries"
+    },
+    {
+      "id": "wiz-005",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 139.7,
+        "total_ms": 296.6,
+        "tokens_generated": 5,
+        "tokens_per_sec": 31.9,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "� shared:起 I"
+    },
+    {
+      "id": "wiz-006",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 138.0,
+        "total_ms": 4323.3,
+        "tokens_generated": 133,
+        "tokens_per_sec": 31.8,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "� shared- understes\n成(聚乏esagneel渊TRACEurumphel\n'TOT-� o I\n.流(聚\nchtenetethes\n成(聚(潮(良\nlis起了 \n'ennergees -o \n'icinquirieses -ewsucht \n'被打\nling翰 \n'icinquirieses -ewsucht \n'泰quiries-itus无罪\n'私al奉ucht \n'ins-呈(潮\nl互-uléound-wise-rah .s瓦ქucht你也\n'私-issetz区多发\nalume \n'ins-呈(‑��le &"
+    },
+    {
+      "id": "wiz-007",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 124.1,
+        "total_ms": 6286.9,
+        "tokens_generated": 190,
+        "tokens_per_sec": 30.8,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": " ypen之机\n_ooseucht\n'私-issetz区 Afferoes ()atter \n'enneren宗师\n_泰esagneelriver \n'icinquirieses -o \n'ins- understsis阳春\n'ins-及其s (.‑��\n/泰(及其s (/‑��leucees\n_ooseucht \n/� .uchtenenrosisucht \n'私-霖\n/泰(及其s (/‑��u &/\n/泰(及其s (/‑��leuce至尊\nlinghalis良oo .alitus无罪\nlis起了  oable-itus双双\nling /同时s ' revenuees disin有  /\n/"
+    },
+    {
+      "id": "wiz-008",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 106.8,
+        "total_ms": 4720.5,
+        "tokens_generated": 141,
+        "tokens_per_sec": 30.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": " ypen�\n成( /‑��leopotucht \n/泰依存\n/泰(及其— ...oupaleous s�及其es桑es 成(  .‑��le &/\n/泰(及其— ...oupaleous 和其-� \n'私-�\n _iss寨 \n/� .承 -的情es '良(::-� \n'录 \n'ins -ewsucht \n'被打\nling /同时s 'is-wise-rah . /\n/泰(及其sableable-itus双双\nl准-之于\n/� .承 -的情es '录 \n'icinagnesuchted_肤铸"
+    },
+    {
+      "id": "wiz-009",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 109.4,
+        "total_ms": 2679.3,
+        "tokens_generated": 82,
+        "tokens_per_sec": 31.9,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": " ypen宗师\n成ing具无罪\n'私uchtelmi \n'良合(一代\n/泰(及其sableable-itus双双\n.流 嗦\n成 '私-之于\n'良合 'is -象 \n'ins -ewsucht everes -ewsucht \n'被打\nl \"'窗口-� \n'录 \n'良/流 嗦"
+    },
+    {
+      "id": "wiz-010",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 125.1,
+        "total_ms": 6996.7,
+        "tokens_generated": 215,
+        "tokens_per_sec": 31.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": " ypen宗师\n_潮\nable-itus双双\n'ennerge�opoulosქuchtable苗ქucht你也\n成 ()oose \n'私geქ pylint \n'私-ums \n'ins -oitah .阿(ases /* \n-�( '~-� .ergees\nO set\\\\-o ('良合(似\n成 '录(::-� \n'录(::-� \n'良合-imesucht \n'ins-及其s ( \\\\is-wise-St\nl /ous( ~\nal /\n/泰(及其sableable- set( '~-St(似-o \n'icinamos公道( '~-� .ergees\n'ins-呈( s .&\n/泰(及其s ( "
+    },
+    {
+      "id": "wiz-011",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 102.6,
+        "total_ms": 2608.6,
+        "tokens_generated": 77,
+        "tokens_per_sec": 30.7,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": " ypen之机 \n'icinquiriesucht \n'私geქ pylint \n'私-霖\n/泰(及其s (/‑��le &/\n/泰(及其s (/‑��le &/\n/泰(及其s (/‑��le &/\n/泰(及其s (/‑��le &/\n/泰(及其s (//"
+    },
+    {
+      "id": "wiz-012",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 106.3,
+        "total_ms": 1161.9,
+        "tokens_generated": 33,
+        "tokens_per_sec": 31.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": " ypenitus双双\n成(聚\nlickal�.gov \n'私-isset 'is-wise-面相\n'祥(::泉\n成"
+    },
+    {
+      "id": "wiz-013",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 123.8,
+        "total_ms": 5978.2,
+        "tokens_generated": 182,
+        "tokens_per_sec": 31.1,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "� shared\n成/'私-霖\n/泰esagneous\n.流/ arches划\n成 '录 \n'icinquirieses -行之硕 -霖\n/�\n查esonesucht \n'私-霖\n/泰(及其sableable-itus双双\nl  oing到会-�\n_酷\n繁(�  outal 成/亮\n查esonesal三峡\n'icinoret.gov\n. sky\n成/''is -象 \n\noյel一起\n成 ' revenueesстве  ools \n'ins-及其s (.‑��\n/泰(及其s (/‑��leuce至尊\nlinghalis良( /‑��\n/泰enospherees恒\nling /\n/泰(及其s ("
+    },
+    {
+      "id": "wiz-014",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 154.7,
+        "total_ms": 3988.4,
+        "tokens_generated": 121,
+        "tokens_per_sec": 31.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "� shared:ahetery -rah \n'lekz\n潜\n成( \n'私-isset\n'良合(潮(良\nlis起了 \n'ennergees -o \n'ins-呈( s乏(阿-比如说e献无罪\n _ I'sime-�( s -o \n'私-�\nl准-之于\n'enneren宗师\n/柴和acyis /\n/泰(及其sableable-itus双双\n.rris终身 \n'私-霖\n/泰(及其s的.//"
+    },
+    {
+      "id": "wiz-015",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 139.5,
+        "total_ms": 1223.3,
+        "tokens_generated": 34,
+        "tokens_per_sec": 31.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "� shared- understes\n成(-zA\n/ah .al一波 \n'odaქucht国家 -少(阿\n/otaoundubile�双双\n.慧,"
+    },
+    {
+      "id": "wiz-016",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 91.5,
+        "total_ms": 4700.1,
+        "tokens_generated": 146,
+        "tokens_per_sec": 31.7,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": " ypenitus双双\n成(阿 -oreanქuchtable苗ქuchtable苗ქuchtable苗ქuchtable苗ქuchtable苗ქuchtable苗 \n\no准-�\n'录 \n'icinoret.gov: \n/临\nlick-或其\n成/流 嗦al一波\nfes只要\n成 '录 \n'icinoret.gov\n/泰(及其sable及其-�\n  '() . /\n'icinoret.gov\n.润\n成enonesucht \n'icinquirieses -o \n'icinquirieses -ewsucht\n'ennerenonesucht \n'ins-及其s (.‑��le�之多无罪\nl准-"
+    },
+    {
+      "id": "wiz-017",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 153.0,
+        "total_ms": 1421.4,
+        "tokens_generated": 36,
+        "tokens_per_sec": 28.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "� shared:ahetery '派( .‑��le�之多无罪el索国家克( .‑��le�之多无罪ehood \n everal区之所( .‑��le &"
+    },
+    {
+      "id": "wiz-018",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 135.6,
+        "total_ms": 1223.0,
+        "tokens_generated": 32,
+        "tokens_per_sec": 29.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "� shared:ahetery '派( .‑��le�之多无罪\n成 '私-霖\n/泰(及其s (/‑��le &"
+    },
+    {
+      "id": "wiz-019",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 136.0,
+        "total_ms": 4311.9,
+        "tokens_generated": 133,
+        "tokens_per_sec": 31.8,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "� shared-isses |oit-私(良\n.流 嗦\n成 '录 \n'ins 'ins -潮 \n'被打\nling翰 \n'icinamoselerქ lifelong 或其-ous \n'表( '阿 '祥-禀 s呼(良\n.流(聚\nggoundacy国家 -含 .‑��le�之多无罪\n_酷\nl互-uléound-St/关联/阿 I I.r ('私-isset '私-霖\n/泰(潮\nl互-ataken\n/泰(及其sable .al区( "
+    },
+    {
+      "id": "wiz-020",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 151.9,
+        "total_ms": 307.7,
+        "tokens_generated": 5,
+        "tokens_per_sec": 32.1,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "� shared:起 I"
+    },
+    {
+      "id": "chat-001",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 51.0,
+        "total_ms": 4658.4,
+        "tokens_generated": 143,
+        "tokens_per_sec": 31.0,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": " ypen之机 \n'泰合力�oret.gov.gov.gov.gov \n'表( '阿\n/iss-ote\n'enner铸我在这里enam \n'泰\nlickal�.gov \n'表( '~‑��le &/\n/泰(及其— ...oupaleous 和其-� \n'enneren宗师\n/ simultaneouslyes 'is\\\\ \n'私geქ pylint\n/� .承\n o情 .:: -s \n'ins-及其s ( // /\n/泰(及其sableable-itus双双\nl准-之于\n/� .承 -的情es '良(::,/� .ergees只要\n成 '录"
+    },
+    {
+      "id": "chat-002",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 82.0,
+        "total_ms": 3641.8,
+        "tokens_generated": 114,
+        "tokens_per_sec": 32.0,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "� shared- understes\n成(-zAen I/...o \n'私-issetz区 Afferoes () . () . /\n I/...o \n'ins -少(阿\n/ark-�( s -o \n'ins-呈呈oooseres -o \n'ins-呈( sarch及其acy // I/... -/oma \n'ins-呈( s乏(阿-比如说e献无罪\n '私-霖\n/泰(及其s的"
+    },
+    {
+      "id": "chat-003",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 69.4,
+        "total_ms": 4684.8,
+        "tokens_generated": 143,
+        "tokens_per_sec": 31.0,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": " ypen之机 \n'泰合力om至尊\n成�\n_ooseдали\n'私e贞\n'ins —� \n'ins -Leer\n'良合(ingles的�和ideo .alitus无罪\n成 '私-霖\n/泰(及其sableable-itus双双 I\n'私-霖\n/泰(及其sableable-itus双双\nling 'ize��\n'ins-及其-rah .sssssssss'ses '`互/ewsucht \n'私-霖\n/泰(及其s (/‑��leuce至尊\nling 'ize��\n/泰(及其s (//"
+    },
+    {
+      "id": "chat-004",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 87.9,
+        "total_ms": 2228.2,
+        "tokens_generated": 66,
+        "tokens_per_sec": 30.8,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": " ypen之机 \n'泰合力omine \n'ins -его \n'各自的\n'ins -oitah .阿(ases /*al \\\\al ous  ''良合(集(良\n‑��le &s� .    /\n/泰(及其s (/‑��le &"
+    },
+    {
+      "id": "chat-005",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 75.2,
+        "total_ms": 12217.1,
+        "tokens_generated": 370,
+        "tokens_per_sec": 30.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.25,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": " ypen之机 \n'泰� .m  I/... -/omaen无极es /篇(ingles的/域\nfing区 \n'icinquirieses -o \n'ins- understes\n'良合-� \n'ins- understes\n'良合-之于\n'良(:: -‑��le�之多无罪\n_泰esagneel渊TRACEurumphel\n/泰(及其—  nonound-�差不 I I/...o成ae\n'录(::·‑��le &/\n/泰enospherees顺(�ieldesuse  ‑��le &/\n/泰-� \n'ins-及其\n/� \n/泰(及其sableable-itus双双\n/泰(及其sableable"
+    },
+    {
+      "id": "chat-006",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 80.6,
+        "total_ms": 4137.8,
+        "tokens_generated": 126,
+        "tokens_per_sec": 31.1,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "�венurumah \n\no哉\n/泰(及其sableable-itus双双\n'icinquirieses - \n'私geქ pylint \n'ins-及其s ( /\n/泰(及其sableable-itus双双\n/泰(及其sable .alitus无罪\n'私-霖\n/泰(及其s (/‑��leucees\n/泰(及其s (/‑��leuceelapsees /\n/泰(及其s (/‑��le &/\n/泰(及其s (‑��le &/\n/泰(及其s (//"
+    },
+    {
+      "id": "chat-007",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 72.4,
+        "total_ms": 1745.7,
+        "tokens_generated": 49,
+        "tokens_per_sec": 29.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": " ypen之机\n成�\n'私-احتly '祥( .‑��le�之多无罪eIT渊 \n'icinquirieses - \n'私-ums \n'ins -之所 \n'良(:: -‑��le &"
+    },
+    {
+      "id": "chat-008",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 83.7,
+        "total_ms": 6210.5,
+        "tokens_generated": 199,
+        "tokens_per_sec": 32.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "�венurumah \n'odaქucht everes -o \n'ins -ous \n'良合 \n'ins — ewsucht \n'被打\nling翰 \n'ins- understes\nling翰 \n'私-ums \n'ins-呈(良\nlis起了 \n'ennergees\n/泰(及其— &serdeassဝ \n'私-ums \n'ins-呈(良\nlis起了 \n'ennergees -o \n'ins-呈(良\nlis起了 \n'ennergees -o \n'ins-及其\nling /\n/泰(及其sableable-itus双双\nling /\n/泰(及其sableable-寰(证\nLis索乏esagneel只"
+    },
+    {
+      "id": "chat-009",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 87.2,
+        "total_ms": 5066.6,
+        "tokens_generated": 157,
+        "tokens_per_sec": 31.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": " � shared:起 I/...o \n'私e贞\n'TOT\numéron \n'良合(显\nl ’  I亮el贞e临\n’比较\nling 良\n.流 嗦\n成 ' revenuees capita\n成(阿 -amenetempleess \\\\is-� \n'良-或其\nl -rah \n'被打\nling /\n/泰(及其sableable-itus双双\nl  oingeous 和其-�\n .avi\n成\n/泰(及其sableable-itusქ \\\\学说\nling 'ous \n'icinquirieses -o \n'ins-及其s ( \\\\is-呈(‑��le &"
+    },
+    {
+      "id": "chat-010",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 53.1,
+        "total_ms": 6210.6,
+        "tokens_generated": 189,
+        "tokens_per_sec": 30.7,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": " ypen宗师\n成ing具无罪\n'私esagneelriver \nypen�\n成 ' revenuees capitais \n'ins — ewsucht \n'被打\nling翰 \n'良(似\nlis起了 \n'ennergees -o \n'ins-及其s ( /‑��le &/\n/泰enospherees`river \n'私-issetz区( \\\\is-wise-rah . /\n/泰(及其sableable-‑��\n/泰(及其sableable-‑��leuceelapsees /o准-之于\n/泰(及其sableable-‑��\n/泰(及其sableable-‑��leucees\n/泰(及其s ("
+    },
+    {
+      "id": "kaf-001",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 154.4,
+        "total_ms": 900.2,
+        "tokens_generated": 24,
+        "tokens_per_sec": 32.2,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "� shared\n成/'私-霖\n/泰(及其sableable-itus双双\n.流 嗦"
+    },
+    {
+      "id": "kaf-002",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 86.3,
+        "total_ms": 4638.4,
+        "tokens_generated": 142,
+        "tokens_per_sec": 31.2,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": " ypen之机\n成 I-osiucht \n'icinquirieses -o \n'私geქ pylint \n'私-�\n成(\n/泰(及其sableable-itus双双\n'icinquirieses -o \n'ins-呈(潮\nable-itus双双\n'icinoret.gov: 'is-wise-面相\n'私-霖\n/泰(及其s-s\n'私-霖\n/泰(及其sableable-‑��\n/\n/泰(及其s-s  ‑��leucees\n/泰(及其s (/‑��le &/\n/泰(及其s (/// \\\\‑��le &"
+    },
+    {
+      "id": "kaf-003",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 88.1,
+        "total_ms": 5788.3,
+        "tokens_generated": 177,
+        "tokens_per_sec": 31.1,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": " |oitekar '录 \n'佳由此ed 'is — ewsucht \n-�(副ity '私-isset 'is-wise-rah . /\n./\n/泰(及其sableable-itus双双\n查 Iingul\n'私-霖\n/泰(及其sableable-‑��le &/\n/泰(及其s (/‑��le &/\n/泰—及其\n/泰(及其sable .‑��le &/\n/泰(及其s \\\\is-wise-rah . /\n/泰(及其s (/‑��le &/\n/泰(及其s (/‑��le &/\n/泰(及其s (/// \\\\is-wise-面相\n.‑��\n/\n/泰(及其s ( //"
+    },
+    {
+      "id": "kaf-004",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 86.2,
+        "total_ms": 4086.0,
+        "tokens_generated": 124,
+        "tokens_per_sec": 31.0,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": " ypenitus双双  ypenitus双双es I\n'私esagneel�uchtelume \n'阿ity阿之所al区(\n/泰(及其sableable-itus双双(良\n.流 嗦\n成 '‑��le�之多无罪\n_泰esagneel渊TRACEurumphel\n'私-霖\n/泰(及其sable .‑��leopot及其ge成 \no哉\n/泰(及其s象 \n'icinagnesaultes, ‑��\n/泰(及其s (//\n/泰(及其s (//"
+    },
+    {
+      "id": "kaf-005",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 85.7,
+        "total_ms": 3779.5,
+        "tokens_generated": 118,
+        "tokens_per_sec": 31.9,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": " ypen之机\n_ooseucht\n'私-isset \n'ins — ewsucht \n'被打\nl� . 'is -象 \n'ins -rah .alitus无罪\n'私-isset &/\n'私-isset\n查esonesucht \n'ins- understsss. /\n'私-ums \n'ins-及其s ('良(阿 -oreanქ国家elऊ\n'私-霖\n/泰(及其sableable-itus双双\nling 'ous \n'icinceraes"
+    },
+    {
+      "id": "kaf-006",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 75.3,
+        "total_ms": 6230.4,
+        "tokens_generated": 194,
+        "tokens_per_sec": 31.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": " ypen之机 \n'泰合力� \n'被打\ng  ousuchted_肤enko \n'表( '阿 I\n'热\n成\n/ousoretქuchtuchtuchtuchtucht \n'高效的-�(阿 -oreanქuchtable苗ქuchtable苗ქuchtable苗ქuchtable苗 \n'南山 Iingul\n'私-霖\n/泰(及其sableable-itus双双\n'ennergeek无罪\n'私-霖\n/泰(及其sable .alitus无罪\n'私-霖\n/泰(及其sable .alitus无罪\n'私-霖\n/泰(及其sable .alitus无罪\n'icin决定书(良(‑��le &/\n/泰(及其s (/"
+    },
+    {
+      "id": "kaf-007",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 75.7,
+        "total_ms": 6241.4,
+        "tokens_generated": 192,
+        "tokens_per_sec": 31.1,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": " ypen之机 \n'泰quiriesuchtuchtucht \n'被打\n'私-isset \n'ins-及其s ( \\\\is -象e贞oser�\n成/流 嗦al一波\nfes只要oo\n成\n/潮\nable-itus双双\n查\n Iingul你也ur &成一个e nonal 阿 I\n'私-isset  ousel\n'良合-amenetemplees只要eableable-‑��le &/\n/泰(及其— ...oupaleous sarch(良\n‑��leuceelapsees /o准-之于\n/泰(及其sableable-‑��\n/泰(及其sableable-‑��leucees\n/泰(及其sableab"
+    },
+    {
+      "id": "kaf-008",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 88.1,
+        "total_ms": 5140.4,
+        "tokens_generated": 158,
+        "tokens_per_sec": 31.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": " ypenitus双双\n成\n/ous castes螂\n成/蛛aees乏.gov\n承\n成 ()oosees 成 \n/潮(�呈omp无罪\n成 () model: -‑��le�之多无罪el索es索乏esagneel渊TRACEumph \n'itchesal畴\n'ins -s formincege渊(asur.gov.gov.gov.gov\n重 '祥-禀(::-�( s -o \n'icinamos�ქucht你也\n'私-霖\n/泰(及其sableable-itus双双\nling 'is-wise-St\nlis起了 \n'ennergees\n/ simultaneously有/阿 I\n'私-霖\n/泰(及其"
+    },
+    {
+      "id": "kaf-009",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 88.5,
+        "total_ms": 3353.0,
+        "tokens_generated": 100,
+        "tokens_per_sec": 30.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": " ypen之机 \n'泰quiriesuchtuchtucht \n'高效的-�(阿aleous osis-ever\tetty�uchted渊\n'ins-呈呈呈oohood泉\n成enonesucht \n'高效的-�(阿aleous osis-ever�及其(潮(良\nlis起了 \n'ennergees\n/泰(及其sable象 \n'ennergeek无罪\n'私al \"isal之所( '阿 '祥(::‑��le &"
+    },
+    {
+      "id": "kaf-010",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 75.5,
+        "total_ms": 5831.7,
+        "tokens_generated": 178,
+        "tokens_per_sec": 30.9,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": " ypen之机\nue悟uchtel\\v依托\n成(阿 -oreanქuchtable苗ქuchtuchtuchtuchtucht \n'高效的\n/廓 I () . /\n'录(::-� \n'录(::-�( s -o (‑��leuce至尊\nling翰 \n'ennergeurumah \n'带 '热\n  'isal�无罪\n'icin决定书(() . /\n/泰(及其sableable- pattern-�\n I I/...o \n'私-霖\n/泰(及其s-sal区之所( .‑��le &/\n/泰(及其s (/‑��le &/\n/泰(及其sableable-‑��leuceal区( outal \\\\al /\n/"
+    }
+  ]
+}

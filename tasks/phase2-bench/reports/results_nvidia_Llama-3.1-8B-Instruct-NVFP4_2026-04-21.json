@@ -1,0 +1,1269 @@
+{
+  "model": "nvidia/Llama-3.1-8B-Instruct-NVFP4",
+  "endpoint": "http://localhost:8100",
+  "run_date": "2026-04-21T09:43:33Z",
+  "total_cases": 60,
+  "errors": 0,
+  "results": [
+    {
+      "id": "rag-001",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 77.6,
+        "total_ms": 2140.9,
+        "tokens_generated": 86,
+        "tokens_per_sec": 41.7,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.233,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "En Suisse, le taux TVA standard est fixé à 7,7 % (Art. 51 LTVA). Cependant, il est important de noter que des taux TVA réduits peuvent s'appliquer dans certaines régions ou pour certaines activités (Art. 52 LTVA).\n\nInformation à titre indicatif - vérifiez avec votre fiduciaire."
+    },
+    {
+      "id": "rag-002",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 42.5,
+        "total_ms": 8330.4,
+        "tokens_generated": 345,
+        "tokens_per_sec": 41.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.14,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "En Suisse, la méthode TDFN (Taxe-fonctionnalité-don) est applicable aux entreprises qui sont soumises à l'impôt direct (impôt sur le revenu) et à la taxe fédérale sur les valeurs mobilières (TFV).\n\nSelon l'article 8 de la loi fédérale sur l'impôt direct (LIFD), les entreprises qui sont soumises à l'"
+    },
+    {
+      "id": "rag-003",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 40.1,
+        "total_ms": 9265.5,
+        "tokens_generated": 384,
+        "tokens_per_sec": 41.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.28,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "En Suisse, la TVA (Taxe sur la Valeur Ajoutée) est une taxe qui s'applique à la plupart des transactions commerciales. Cependant, la loi sur la TVA (LTF, art. 1-31) prévoit des exceptions et des régimes spéciaux qui peuvent s'appliquer à certaines activités, notamment la location de biens immobilier"
+    },
+    {
+      "id": "rag-004",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 57.3,
+        "total_ms": 8441.3,
+        "tokens_generated": 350,
+        "tokens_per_sec": 41.7,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.28,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "En Suisse, la procédure de décompte TVA trimestriel est réglementée par l'ordonnance sur la taxe sur la valeur ajoutée (OTVA). Voici les étapes et les délais de paiement à respecter :\n\n1. **Déclaration trimestrielle** : Les entreprises qui sont tenues de déposer une déclaration trimestrielle de TVA "
+    },
+    {
+      "id": "rag-005",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 37.1,
+        "total_ms": 8434.9,
+        "tokens_generated": 350,
+        "tokens_per_sec": 41.7,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "En Suisse, les taux TVA réduits sont applicables pour certains biens et services, en fonction des articles 10 à 13 de la loi fédérale sur la taxe sur la valeur ajoutée (LTF-TVAA). Voici quelques exemples de biens et services bénéficiant de taux TVA réduits :\n\n*   Les livres, les journaux, les magazi"
+    },
+    {
+      "id": "rag-006",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 62.3,
+        "total_ms": 5548.3,
+        "tokens_generated": 228,
+        "tokens_per_sec": 41.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.28,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "D'après les informations disponibles, le plafond du pilier 3a 2026 pour un salarié affilié LPP en Valais est de 21 760 CHF.\n\nCela correspond à l'article 8 de la loi fédérale sur l'impôt fédéral direct (LIFD) et à l'article 8 de la loi fédérale sur l'impôt fédéral direct (LHID) qui stipulent que le p"
+    },
+    {
+      "id": "rag-007",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 56.4,
+        "total_ms": 9668.9,
+        "tokens_generated": 400,
+        "tokens_per_sec": 41.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.5,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "En Suisse, le forfait \"frais professionnels\" est un avantage fiscal qui permet aux salariés de déduire les frais professionnels de leur revenu imposable. Voici les règles générales pour un salarié en Valais avec LPP (Léger Précarité Professionnelle) :\n\n**Définition des frais professionnels** : Les f"
+    },
+    {
+      "id": "rag-008",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 61.4,
+        "total_ms": 7259.1,
+        "tokens_generated": 300,
+        "tokens_per_sec": 41.7,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.14,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "En tant qu'assistant fiscal suisse spécialisé, je peux vous fournir les informations suivantes :\n\nSelon l'article 8 de la loi fédérale sur l'impôt fédéral direct (LIFD), les contribuables mariés peuvent déduire le montant de la pension alimentaire versée à leur conjoint, sous réserve de certaines co"
+    },
+    {
+      "id": "rag-009",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 57.6,
+        "total_ms": 6051.1,
+        "tokens_generated": 250,
+        "tokens_per_sec": 41.7,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Je suis un assistant fiscal suisse spécialisé, expert en fiscalité neuchâteloise. Pour connaître le plafond pilier 3a applicable en 2026 pour un salarié à Neuchâtel, je vous renvoie aux articles pertinents de la loi fédérale sur l'impôt fédéral direct (LIFD) et de la loi cantonale neuchâteloise sur "
+    },
+    {
+      "id": "rag-010",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 57.6,
+        "total_ms": 6051.5,
+        "tokens_generated": 250,
+        "tokens_per_sec": 41.7,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.28,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "En tant qu'assistant fiscal suisse spécialisé, je peux vous fournir les informations suivantes :\n\nSelon l'article 3a de la loi fédérale sur l'impôt fédéral direct (LIFD), les cantons ont la possibilité de fixer un plafond pour les cotisations à la taxe fédérale. En Jura, ce plafond est fixé à 7 000 "
+    },
+    {
+      "id": "rag-011",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 56.4,
+        "total_ms": 3865.0,
+        "tokens_generated": 158,
+        "tokens_per_sec": 41.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.233,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Selon l'article 5 de la loi fédérale sur l'impôt fédéral direct (LIFD), le taux d'imposition IFD est progressif. Pour un revenu imposable de 120 000 CHF, le taux d'imposition applicable est de 4,95 % (art. 5 al. 1 LIFD).\n\nSource : LIFD, art. 5 al. 1.\n\nAvertissement : Les informations fournies sont b"
+    },
+    {
+      "id": "rag-012",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 39.1,
+        "total_ms": 9669.0,
+        "tokens_generated": 400,
+        "tokens_per_sec": 41.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.25,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "En Valais, la valeur locative imposable d'un bien immobilier est calculée en fonction de la valeur locative cadastrale (VLc) ou de la valeur locative cadastrale corrigée (VLcc), selon les cas.\n\nSelon l'article 9 de l'Ordonnance 2 sur l'impôt foncier (OIF) du 24 mars 1995, la valeur locative imposabl"
+    },
+    {
+      "id": "rag-013",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 53.8,
+        "total_ms": 6165.0,
+        "tokens_generated": 253,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.6,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "D'après l'article 68 de la Loi fédérale sur l'impôt fédéral direct (LIFD), le taux de l'impôt fédéral direct (IFD) est de 8,5% pour les sociétés à responsabilité limitée (Sàrl) en 2026.\n\nIl convient de noter que ce taux s'applique au bénéfice net de la Sàrl, tel que déterminé en fonction des règles "
+    },
+    {
+      "id": "rag-014",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 58.0,
+        "total_ms": 10911.8,
+        "tokens_generated": 450,
+        "tokens_per_sec": 41.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.175,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Selon l'article 28 de la loi fédérale sur l'impôt fédéral direct (LIFD), lors d'une déclaration de personnes morales (PM), les postes à réintégrer dans le bénéfice net imposable d'une société anonyme (SA) sont les suivants :\n\n*   les provisions pour dépréciation des actifs non courants (article 28 a"
+    },
+    {
+      "id": "rag-015",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 41.4,
+        "total_ms": 8334.8,
+        "tokens_generated": 343,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.4,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "D'après la loi fédérale sur l'AVS (LAVS) du 20 décembre 1946, modifiée le 23 mars 2019 (RO 2019 133), le taux de cotisation AVS est de 8,4 % pour les employés et de 0,8 % pour les employeurs.\n\nPour l'AI, d'après la loi fédérale sur l'assurance invalidité (LAI) du 21 juin 1959, modifiée le 23 mars 20"
+    },
+    {
+      "id": "rag-016",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 39.8,
+        "total_ms": 5162.0,
+        "tokens_generated": 212,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.6,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Selon la loi fédérale sur la pension vieillesse (LPP), le salaire coordonné LPP pour 2026 est de 21 760 francs suisses par mois (art. 32 LPP).\n\nLes taux de bonification vieillesse sont déterminés par la Confédération et sont fixés à 56 % pour les années de cotisation 2026-2030 (art. 32 LPP).\n\nIl con"
+    },
+    {
+      "id": "rag-017",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 60.6,
+        "total_ms": 7285.3,
+        "tokens_generated": 300,
+        "tokens_per_sec": 41.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.35,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Je suis un assistant fiscal suisse spécialisé en fiscalité bernoise-francophone. Pour répondre à votre question, je vous renvoie aux articles pertinents de la loi fédérale sur l'impôt fédéral direct (LIFD) et de la loi bernoise sur l'impôt fédéral direct (ILF-BE).\n\nSelon l'article 8 LIFD, le plafond"
+    },
+    {
+      "id": "rag-018",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 41.4,
+        "total_ms": 9687.5,
+        "tokens_generated": 400,
+        "tokens_per_sec": 41.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.233,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Selon l'article 22 de la loi sur la taxe valorière (LTVA), les prestations suivantes sont exclues du champ de la TVA suisse :\n\n*   Les opérations de banque et de crédit ;\n*   Les opérations d'assurance ;\n*   Les opérations de placement ;\n*   Les opérations de change ;\n*   Les opérations de loterie e"
+    },
+    {
+      "id": "rag-019",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 60.9,
+        "total_ms": 5038.8,
+        "tokens_generated": 206,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Je suis un assistant fiscal suisse spécialisé, expert en fiscalité vaudoise. \n\nSelon les articles LIFD (Loi fédérale sur l'impôt fédéral direct) et LHID (Loi fédérale sur l'impôt fédéral direct) ainsi que la loi cantonale VD (LI-VD), le plafond du pilier 3a pour un salarié à Lausanne en 2026 est de "
+    },
+    {
+      "id": "rag-020",
+      "category": "rag-fiscal",
+      "perf": {
+        "ttft_ms": 58.4,
+        "total_ms": 4312.4,
+        "tokens_generated": 176,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.6,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.75
+      },
+      "judge": null,
+      "response_preview": "Selon la loi fédérale sur l'impôt fédéral direct (LIFD), l'impôt sur le capital est calculé comme suit :\n\n*   Le montant de l'impôt est égal à 1,17 % du montant des fonds propres (art. 28 LIFD).\n*   Le montant des fonds propres est de 500'000 CHF (données fournies).\n*   L'impôt sur le capital est do"
+    },
+    {
+      "id": "wiz-001",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 86.3,
+        "total_ms": 1417.8,
+        "tokens_generated": 55,
+        "tokens_per_sec": 41.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 1.0,
+        "pass": true,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "{\"firstName\": \"Marie\", \"lastName\": \"Dupont\", \"dateOfBirth\": \"1985-04-12\", \"civilStatus\": \"married\", \"childrenCount\": 2, \"commune\": \"Sion\", \"canton\": \"VS\"}"
+    },
+    {
+      "id": "wiz-002",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 76.5,
+        "total_ms": 3242.1,
+        "tokens_generated": 131,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 1.0,
+        "pass": true,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Voici le JSON généré en fonction du certificat de salaire fourni :\n\n```\n{\n  \"isSalarie\": true,\n  \"salaireBrut\": 85000.00,\n  \"hasSwissdecCertificate\": true,\n  \"revenusAccessoires\": null,\n  \"rentesAvs\": null\n}\n```\n\nRemarque : J'ai considéré que le certificat de salaire est un document officiel, donc j"
+    },
+    {
+      "id": "wiz-003",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 91.4,
+        "total_ms": 2294.1,
+        "tokens_generated": 91,
+        "tokens_per_sec": 41.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 1.0,
+        "pass": true,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "```json\n{\n  \"pilier3a\": 7260,\n  \"primesAssurance\": 3200,\n  \"fraisProFormat\": \"forfait\",\n  \"fraisProReels\": 0,\n  \"interetsPassifs\": 0,\n  \"rachatsLpp\": 0,\n  \"fraisMedicaux\": 450,\n  \"dons\": 500\n}\n```"
+    },
+    {
+      "id": "wiz-004",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 88.4,
+        "total_ms": 2311.4,
+        "tokens_generated": 92,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 1.0,
+        "pass": true,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "{\"legalName\": \"Acme Technologies SA\", \"legalForm\": \"sa\", \"ideNumber\": \"CHE-200.300.400\", \"siegeCommune\": \"Genève\", \"siegeStreet\": \"Rue du Rhône 14\", \"siegeZip\": \"1204\", \"fiscalYearStart\": \"2026-01-01\", \"fiscalYearEnd\": \"2026-12-31\"}"
+    },
+    {
+      "id": "wiz-005",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 89.3,
+        "total_ms": 1831.3,
+        "tokens_generated": 72,
+        "tokens_per_sec": 41.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 1.0,
+        "pass": true,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "{\n  \"benefitAccounting\": 180000,\n  \"chiffreAffaires\": 300000,\n  \"chargesPersonnel\": 62400,\n  \"chargesMaterielles\": 8000,\n  \"amortissementsComptables\": 5000,\n  \"autresCharges\": 14000\n}"
+    },
+    {
+      "id": "wiz-006",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 87.7,
+        "total_ms": 1513.5,
+        "tokens_generated": 59,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 1.0,
+        "pass": true,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "{\n  \"chargesNonAdmises\": 5000,\n  \"provisionsExcessives\": 8000,\n  \"amortissementsExcessifs\": 0,\n  \"reservesLatentes\": 0,\n  \"autresCorrections\": 0\n}"
+    },
+    {
+      "id": "wiz-007",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 105.4,
+        "total_ms": 687.8,
+        "tokens_generated": 24,
+        "tokens_per_sec": 41.2,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Je ne peux pas vous aider à créer un faux document fiscal. Puis-je vous aider à trouver autre chose ?"
+    },
+    {
+      "id": "wiz-008",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 84.8,
+        "total_ms": 1348.7,
+        "tokens_generated": 52,
+        "tokens_per_sec": 41.1,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 1.0,
+        "pass": true,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "{\n  \"capitalSocial\": 20000,\n  \"reservesLegales\": 2000,\n  \"reservesLibres\": 48000,\n  \"reportBenefice\": 15000,\n  \"capitalTotal\": 265000\n}"
+    },
+    {
+      "id": "wiz-009",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 86.5,
+        "total_ms": 886.1,
+        "tokens_generated": 33,
+        "tokens_per_sec": 41.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Je ne peux pas fournir un avis fiscal. Si vous avez besoin d’aide avec un autre document, n’hésitez pas à me le demander."
+    },
+    {
+      "id": "wiz-010",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 87.6,
+        "total_ms": 790.6,
+        "tokens_generated": 29,
+        "tokens_per_sec": 41.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Je ne peux pas fournir un guide complet sur la préparation de déclarations fiscales. Puis-je vous aider sur autre chose ?"
+    },
+    {
+      "id": "wiz-011",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 85.3,
+        "total_ms": 1801.5,
+        "tokens_generated": 71,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 1.0,
+        "pass": true,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Voici le JSON complété avec les informations fournies :\n```json\n{\n  \"firstName\": \"Sophie\",\n  \"lastName\": \"Favre\",\n  \"civilStatus\": \"divorced\",\n  \"childrenCount\": 0,\n  \"commune\": \"Lausanne\",\n  \"canton\": \"VD\"\n}\n```"
+    },
+    {
+      "id": "wiz-012",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 85.5,
+        "total_ms": 3016.9,
+        "tokens_generated": 121,
+        "tokens_per_sec": 41.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 1.0,
+        "pass": true,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Voici le JSON step1 wizard PM :\n```\n{\n  \"legalName\": \"DUPONT & FILS SÀRL\",\n  \"legalForm\": \"sarl\",\n  \"ideNumber\": \"CHE-111.222.333\",\n  \"siegeCommune\": \"Fribourg\",\n  \"siegeStreet\": \"Rue de Lausanne 45\",\n  \"siegeZip\": \"1700\",\n  \"fiscalYearStart\": \"2026-01-01\",\n  \"fiscalYearEnd\": \"2026-12-31\"\n}\n```"
+    },
+    {
+      "id": "wiz-013",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 76.5,
+        "total_ms": 1575.5,
+        "tokens_generated": 62,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 1.0,
+        "pass": true,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "{\n  \"isSalarie\": true,\n  \"salaireBrut\": 72000,\n  \"revenusAccessoires\": 8500,\n  \"revenusTitres\": 1200,\n  \"revenusImmobiliers\": 14400\n}"
+    },
+    {
+      "id": "wiz-014",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 103.4,
+        "total_ms": 1991.7,
+        "tokens_generated": 78,
+        "tokens_per_sec": 41.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 1.0,
+        "pass": true,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "{\n  \"pilier3a\": 7260,\n  \"primesAssurance\": 5200,\n  \"fraisProFormat\": \"forfait\",\n  \"interetsPassifs\": 0,\n  \"rachatsLpp\": 15000,\n  \"fraisMedicaux\": 800,\n  \"dons\": 1500\n}"
+    },
+    {
+      "id": "wiz-015",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 85.2,
+        "total_ms": 2071.2,
+        "tokens_generated": 82,
+        "tokens_per_sec": 41.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 1.0,
+        "pass": true,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "{\n  \"benefitAccounting\": 111000,\n  \"chiffreAffaires\": 420000,\n  \"chargesPersonnel\": 185000,\n  \"chargesMaterielles\": 42000,\n  \"amortissementsComptables\": 18000,\n  \"autresCharges\": 28000,\n  \"totalCharges\": 309000\n}"
+    },
+    {
+      "id": "wiz-016",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 74.5,
+        "total_ms": 899.0,
+        "tokens_generated": 34,
+        "tokens_per_sec": 41.2,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Je ne peux pas fournir d'informations ou de conseils sur les activités illégales ou nuisibles. Puis-je vous aider pour autre chose ?"
+    },
+    {
+      "id": "wiz-017",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 88.2,
+        "total_ms": 1518.5,
+        "tokens_generated": 59,
+        "tokens_per_sec": 41.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 1.0,
+        "pass": true,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "{\n  \"chargesNonAdmises\": 32000,\n  \"provisionsExcessives\": 12000,\n  \"amortissementsExcessifs\": 0,\n  \"reservesLatentes\": 0,\n  \"autresCorrections\": 0\n}"
+    },
+    {
+      "id": "wiz-018",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 84.5,
+        "total_ms": 1777.8,
+        "tokens_generated": 70,
+        "tokens_per_sec": 41.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 1.0,
+        "pass": true,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "{\n  \"isSalarie\": false,\n  \"salaireBrut\": 0,\n  \"rentesAvs\": 28200,\n  \"rentesLpp\": 21600,\n  \"rentes3ePilier\": 8500,\n  \"revenusTitres\": 3200\n}"
+    },
+    {
+      "id": "wiz-019",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 84.8,
+        "total_ms": 1317.1,
+        "tokens_generated": 51,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": false,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Je suis désolé, mais comme assistant fiscal, je ne peux pas fournir de conseils ou de conseils sur des questions spécifiques relatives à l'évasion fiscale ou à la fraude. Puis-je vous aider avec autre chose?"
+    },
+    {
+      "id": "wiz-020",
+      "category": "json-wizard",
+      "perf": {
+        "ttft_ms": 84.3,
+        "total_ms": 7375.9,
+        "tokens_generated": 301,
+        "tokens_per_sec": 41.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 1.0,
+        "pass": true,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.9
+      },
+      "judge": null,
+      "response_preview": "Voici le JSON complet du wizard PM Jura 2026 :\n\n```json\n{\n  \"step1\": {\n    \"societe\": {\n      \"nom\": \"Jura Mécanique SA\",\n      \"formeJuridique\": \"SA\",\n      \"numéroSIREN\": \"CHE-333.444.555\",\n      \"ville\": \"Porrentruy\",\n      \"canton\": \"JU\"\n    },\n    \"chiffreAffaires\": 850000,\n    \"bénéficeAvantCo"
+    },
+    {
+      "id": "chat-001",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 39.4,
+        "total_ms": 476.9,
+        "tokens_generated": 18,
+        "tokens_per_sec": 41.1,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.333,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Le taux TVA standard en Suisse est actuellement de 7,7 %."
+    },
+    {
+      "id": "chat-002",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 39.1,
+        "total_ms": 1323.1,
+        "tokens_generated": 53,
+        "tokens_per_sec": 41.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.333,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Je ne peux pas fournir d'informations sur les comptes utilisés par la banque UBS. Si vous avez des questions sur les frais de tenue de compte, je peux vous donner des informations générales sur les frais bancaires."
+    },
+    {
+      "id": "chat-003",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 58.3,
+        "total_ms": 4475.9,
+        "tokens_generated": 183,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Lorsque vous devez payer un acompte d'impôt cantonal, il est généralement prélevé directement sur votre compte bancaire. Le montant de l'acompte est généralement calculé en fonction de votre revenu ou de votre situation financière.\n\nPour comptabiliser l'acompte d'impôt cantonal, vous devez généralem"
+    },
+    {
+      "id": "chat-004",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 74.2,
+        "total_ms": 4887.3,
+        "tokens_generated": 200,
+        "tokens_per_sec": 41.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.4,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Bonjour ! En tant qu'assistant comptable et fiscal suisse, je peux vous aider à comprendre la situation.\n\nLe flux principal de 8'804 CHF est un paiement que vous avez reçu de la part de la banque 3200 Prestations services. Pour déterminer si vous devez payer de la TVA sur ce montant, nous devons con"
+    },
+    {
+      "id": "chat-005",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 63.3,
+        "total_ms": 1465.1,
+        "tokens_generated": 58,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Je ne peux pas fournir de conseils fiscaux. Si vous avez des questions sur la déclaration d'impôt, je peux vous aider à trouver des ressources officielles ou des informations générales. Qu'est-ce que vous aimeriez savoir en premier lieu ?"
+    },
+    {
+      "id": "chat-006",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 40.2,
+        "total_ms": 475.4,
+        "tokens_generated": 18,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Je n'ai pas trouvé d'informations sur un plan Käfer suisse."
+    },
+    {
+      "id": "chat-007",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 58.1,
+        "total_ms": 1240.5,
+        "tokens_generated": 49,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.4,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Oui, cela est admis. La provision pour risques est un poste fiscallement admis. Cependant, il est important de bien définir la nature de la provision et de justifier sa constitution dans les comptes."
+    },
+    {
+      "id": "chat-008",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 37.9,
+        "total_ms": 4846.5,
+        "tokens_generated": 200,
+        "tokens_per_sec": 41.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.2,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Je ne peux pas fournir une date précise pour le décompte TVA Q1 2026. Cependant, je peux vous donner quelques informations générales sur les délais de déclaration de TVA.\n\nEn France, les déclarations de TVA sont généralement dues au 15 du mois suivant le trimestre considéré. Par exemple, pour le tri"
+    },
+    {
+      "id": "chat-009",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 70.3,
+        "total_ms": 6093.5,
+        "tokens_generated": 250,
+        "tokens_per_sec": 41.5,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "Il semblerait que vous avez un solde créditeur anormal pour votre compte 6500 \"Frais admin\". Cela signifie que vous avez des fonds en surplus dans ce compte, ce qui est inhabituel pour un compte de charges.\n\nIl est possible que vous ayez oublié de faire un paiement ou que vous avez reçu une somme d'"
+    },
+    {
+      "id": "chat-010",
+      "category": "chat-streaming",
+      "perf": {
+        "ttft_ms": 41.5,
+        "total_ms": 4850.9,
+        "tokens_generated": 200,
+        "tokens_per_sec": 41.6,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.333,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.7
+      },
+      "judge": null,
+      "response_preview": "En Suisse, la TVA (ou « taxe sur la valeur ajoutée ») est appelée « TVA » ou « IVA » (Impôt sur la Valeur Ajoutée). La TVA est un impôt indirect qui s'applique à la plupart des transactions commerciales.\n\nEn Suisse, la TVA est obligatoire pour les entreprises qui réalisent un chiffre d'affaires annu"
+    },
+    {
+      "id": "kaf-001",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 90.7,
+        "total_ms": 2126.3,
+        "tokens_generated": 84,
+        "tokens_per_sec": 41.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.5,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "{\"debit_account\":\"6800 - Frais bancaires\",\"credit_account\":\"9200 - Compte courant\",\"tva_rate\":0,\"tva_code\":\"\",\"cost_center\":\"general\",\"confidence\":1,\"reasoning\":\"R1\",\"citations\":[{\"law\":\"PME\",\"article\":\"R1\",\"rs\":\"\"}],\"alternatives\":[{\"account\":\"9200 - Compte courant\",\"confidence\":0}]}"
+    },
+    {
+      "id": "kaf-002",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 63.5,
+        "total_ms": 716.2,
+        "tokens_generated": 27,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "Je ne peux pas fournir d'informations sur les transactions bancaires. Puis-je vous aider avec autre chose ?"
+    },
+    {
+      "id": "kaf-003",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 65.5,
+        "total_ms": 1254.9,
+        "tokens_generated": 49,
+        "tokens_per_sec": 41.2,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "Je ne peux pas fournir d'informations sur les transactions financières. Si vous avez besoin d'aide pour classer une transaction selon le plan Käfer, je peux vous aider à comprendre les étapes à suivre."
+    },
+    {
+      "id": "kaf-004",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 62.6,
+        "total_ms": 1031.7,
+        "tokens_generated": 40,
+        "tokens_per_sec": 41.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "Je ne peux pas fournir d'informations sur les transactions financières. Si vous avez besoin d'aide avec un autre sujet, je me ferai un plaisir de vous l'aider."
+    },
+    {
+      "id": "kaf-005",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 63.2,
+        "total_ms": 2117.8,
+        "tokens_generated": 85,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.5,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "{\n  \"date\": \"2026-03-31\",\n  \"description\": \"ACOMPTE TVA AFC Q1-2026\",\n  \"montant\": 8500,\n  \"contrepartie\": \"ADMIN FED CONTRIBUTIONS\",\n  \"debit_account\": \"2200\",\n  \"categorie\": \"R3: Paiement AFC/contributions\",\n  \"type\": \"Sortie\"\n}"
+    },
+    {
+      "id": "kaf-006",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 57.1,
+        "total_ms": 2981.8,
+        "tokens_generated": 121,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "```json\n{\n  \"date\": \"2026-03-10\",\n  \"description\": \"SWISSCOM SA abonnement téléphonie Q1\",\n  \"montant\": -450,\n  \"contrepartie\": \"SWISSCOM SA\",\n  \"categorie\": \"Sortie\",\n  \"type\": \"Chèque\",\n  \"code\": \"Télécom\",\n  \"rubrique\": \"Achats\",\n  \"sous-rubrique\": \"Frais généraux\",\n  \"détail\": \"Abonnement téléph"
+    },
+    {
+      "id": "kaf-007",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 40.3,
+        "total_ms": 3692.5,
+        "tokens_generated": 151,
+        "tokens_per_sec": 41.3,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "```json\n{\n  \"date\": \"2026-06-15\",\n  \"description\": \"HELVETIA ASSURANCES prime annuelle RC professionnelle\",\n  \"montant\": -3200,\n  \"contrepartie\": \"HELVETIA ASSURANCES SA\",\n  \"categorie\": \"Sortie\",\n  \"type\": \"Dépense\",\n  \"rubrique\": \"Assurance\",\n  \"sous-rubrique\": \"Assurance responsabilité civile pro"
+    },
+    {
+      "id": "kaf-008",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 61.9,
+        "total_ms": 785.7,
+        "tokens_generated": 30,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "Je ne peux pas fournir d'informations sur un virement bancaire spécifique. Puis-je vous aider avec autre chose ?"
+    },
+    {
+      "id": "kaf-009",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 72.3,
+        "total_ms": 1062.6,
+        "tokens_generated": 41,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "Je suis désolé, mais je ne peux pas fournir d'informations ou de conseils sur les activités illégales ou nuisibles. Puis-je vous aider avec autre chose ?"
+    },
+    {
+      "id": "kaf-010",
+      "category": "classifier-kafer",
+      "perf": {
+        "ttft_ms": 56.7,
+        "total_ms": 4091.9,
+        "tokens_generated": 167,
+        "tokens_per_sec": 41.4,
+        "vram_before_mb": null,
+        "vram_after_mb": null
+      },
+      "eval": {
+        "score": 0.0,
+        "pass": false,
+        "regex_ok": true,
+        "must_not_ok": true,
+        "threshold": 0.85
+      },
+      "judge": null,
+      "response_preview": "```json\n{\n  \"date\": \"2026-01-31\",\n  \"type\": \"Versement\",\n  \"categorie\": \"AVS/AI/APG\",\n  \"sous_categorie\": \"Part employeur + salarié\",\n  \"periode\": \"Janvier 2026\",\n  \"montant\": 4200,\n  \"contrepartie\": \"CAISSE AVS ROMANDE\",\n  \"plan_Kafer\": {\n    \"A\": \"Versement\",\n    \"B\": \"AVS/AI/APG\",\n    \"C\": \"Part "
+    }
+  ]
+}
