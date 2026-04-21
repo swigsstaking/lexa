@@ -208,6 +208,21 @@ export const lexa = {
       .post<VsPpDeclarationResponse>('/taxpayers/draft/submit-fr', input)
       .then((r) => r.data),
 
+  submitTaxpayerDraftNe: (input: { fiscalYear: number }) =>
+    api
+      .post<VsPpDeclarationResponse>('/taxpayers/draft/submit-ne', input)
+      .then((r) => r.data),
+
+  submitTaxpayerDraftJu: (input: { fiscalYear: number }) =>
+    api
+      .post<VsPpDeclarationResponse>('/taxpayers/draft/submit-ju', input)
+      .then((r) => r.data),
+
+  submitTaxpayerDraftBj: (input: { fiscalYear: number }) =>
+    api
+      .post<VsPpDeclarationResponse>('/taxpayers/draft/submit-bj', input)
+      .then((r) => r.data),
+
   resetTaxpayerDraft: (input: { fiscalYear: number }) =>
     api.post<{ ok: true }>('/taxpayers/draft/reset', input).then((r) => r.data),
 

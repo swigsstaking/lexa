@@ -5,7 +5,7 @@
  * FR : stub déclaré pour session 22.
  */
 
-export type CantonCode = 'GE' | 'VD' | 'VS' | 'FR';
+export type CantonCode = 'GE' | 'VD' | 'VS' | 'FR' | 'NE' | 'JU' | 'BJ';
 
 export interface CantonCommune {
   name: string;

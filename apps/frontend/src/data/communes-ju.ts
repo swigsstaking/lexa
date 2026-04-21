@@ -1,0 +1,18 @@
+export const COMMUNES_JU: string[] = [
+  'Delémont',
+  'Porrentruy',
+  'Saignelégier',
+  'Bassecourt',
+  'Courroux',
+  'Moutier',
+  'Develier',
+  'Courrendlin',
+  'Alle',
+  'Boncourt',
+  'Fontenais',
+  'Glovelier',
+  'Lajoux',
+  'Les Breuleux',
+  'Montfaucon',
+  'Pleigne',
+];

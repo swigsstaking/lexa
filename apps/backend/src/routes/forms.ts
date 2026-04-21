@@ -9,6 +9,7 @@ import {
 } from "../execution/TdfnFormBuilder.js";
 import { renderDecompteTvaPdf } from "../execution/TvaPdfRenderer.js";
 import { renderDecompteTvaXml } from "../execution/TvaXmlBuilder.js";
+import { validateEch0217 } from "../execution/XmlValidator.js";
 import {
   appendDeclarationEvent,
   appendVsPpDeclarationEvent,
@@ -52,6 +53,15 @@ async function finalizeForm(form: FilledForm, tdfnRate?: TdfnRate) {
     Promise.resolve(renderDecompteTvaXml(form)),
   ]);
 
+  // Validation structurelle eCH-0217 (non-bloquante)
+  const xmlValidation = validateEch0217(xml);
+  if (!xmlValidation.valid) {
+    console.warn(
+      "[forms.finalizeForm] XML eCH-0217 structurellement incomplet",
+      { formId: form.formId, warnings: xmlValidation.errors },
+    );
+  }
+
   let streamId: string;
   let eventId: number;
   let idempotent: boolean;
@@ -83,6 +93,10 @@ async function finalizeForm(form: FilledForm, tdfnRate?: TdfnRate) {
     },
     pdf: pdfBuffer.toString("base64"),
     xml,
+    xmlValidation: {
+      valid: xmlValidation.valid,
+      warnings: xmlValidation.errors,
+    },
   };
 }
 

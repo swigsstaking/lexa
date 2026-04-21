@@ -1,0 +1,18 @@
+export const COMMUNES_NE: string[] = [
+  'Neuchâtel',
+  'La Chaux-de-Fonds',
+  'Le Locle',
+  'Boudry',
+  'Cernier',
+  'Fleurier',
+  'Peseux',
+  'Colombier',
+  'Couvet',
+  'Saint-Blaise',
+  'Val-de-Travers',
+  'Val-de-Ruz',
+  'Bevaix',
+  'Cortaillod',
+  'Lignières',
+  'La Côte-aux-Fées',
+];

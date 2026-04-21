@@ -13,6 +13,9 @@ import { cantonGE } from '@/config/cantons/ge';
 import { cantonVD } from '@/config/cantons/vd';
 import { cantonVS } from '@/config/cantons/vs';
 import { cantonFR } from '@/config/cantons/fr';
+import { cantonNE } from '@/config/cantons/ne';
+import { cantonJU } from '@/config/cantons/ju';
+import { cantonBJ } from '@/config/cantons/bj';
 import { useAuthStore } from '@/stores/authStore';
 
 // Lazy-loaded heavy routes (code splitting S36)
@@ -76,7 +79,7 @@ function RedirectToTaxpayer() {
   if (cantonUpper === 'VS') {
     return <Navigate to={`/taxpayer/${year ?? '2026'}`} replace />;
   }
-  if (['GE', 'VD', 'FR'].includes(cantonUpper ?? '')) {
+  if (['GE', 'VD', 'FR', 'NE', 'JU', 'BJ'].includes(cantonUpper ?? '')) {
     return <Navigate to={`/taxpayer/${cantonUpper!.toLowerCase()}/${year ?? '2026'}`} replace />;
   }
   return <Navigate to="/workspace" replace />;
@@ -170,6 +173,30 @@ export default function App() {
           element={
             <RequireAuth>
               <TaxpayerWizardCanton canton={cantonFR} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/taxpayer/ne/:year"
+          element={
+            <RequireAuth>
+              <TaxpayerWizardCanton canton={cantonNE} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/taxpayer/ju/:year"
+          element={
+            <RequireAuth>
+              <TaxpayerWizardCanton canton={cantonJU} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/taxpayer/bj/:year"
+          element={
+            <RequireAuth>
+              <TaxpayerWizardCanton canton={cantonBJ} />
             </RequireAuth>
           }
         />

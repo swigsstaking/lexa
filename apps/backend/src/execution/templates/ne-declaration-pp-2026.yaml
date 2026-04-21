@@ -1,0 +1,137 @@
+# Lexa — Template formulaire officiel
+# Déclaration d'impôt Personne Physique (PP) — Canton de Neuchâtel
+#
+# Clone du template FR-PP, adapté aux spécificités neuchâteloises.
+# Session 37 : cantons NE/JU/BJ — agents existants, UI manquante.
+#
+# Source légale :
+#   - LIFD (RS 642.11) — art. 33 al. 1 let. e (pilier 3a)
+#   - LCdir-NE (RSN 631.0) — Loi sur les contributions directes (Neuchâtel)
+#   - RGI-NE (RSN 631.01) — Règlement général d'imposition
+#   - Guide PP NE 2026 — déductions et barèmes SCCO NE
+#
+# Autorité : Service cantonal des contributions et de l'organisation (SCCO NE).
+# Délai de dépôt : 31 mars (prolongeable).
+
+form_id: NE-declaration-pp
+version: "2026-01-01"
+title: Déclaration d'impôt PP — Canton de Neuchâtel
+jurisdiction: cantonal-NE
+canton: NE
+authority: SCCO NE
+legal_reference:
+  law: LCdir-NE
+  rs: "RSN 631.0"
+  articles: ["26", "30", "31", "33", "34"]
+  federal_refs: ["LIFD art. 18", "LIFD art. 33 al. 1 let. e", "LIFD art. 34"]
+  additional_refs:
+    - "RGI-NE (RSN 631.01)"
+
+periodicity: annual
+
+# Montants officiels 2026 — Canton de Neuchâtel
+# Taux ICC NE 2026 : ~22.6% (à confirmer barème SCCO NE)
+# Pilier 3a : identique fédéral (LIFD art. 33 al. 1 let. e)
+# Forfait frais pro : 3% min 1'700 CHF / max 3'400 CHF (fallback conservateur)
+reference_amounts:
+  pilier_3a_salarie_max_chf: 7260
+  pilier_3a_independant_max_chf: 36288
+  frais_professionnels_forfait_pct: 3
+  frais_professionnels_forfait_min_chf: 1700
+  frais_professionnels_forfait_max_chf: 3400
+
+fields:
+  - id: contribuable_nom
+    label: Nom et prénom
+    source: company.name
+    validation: required
+  - id: contribuable_uid
+    label: Numéro IDE / UID
+    source: company.uid
+  - id: contribuable_canton
+    label: Canton de domicile
+    source: company.canton
+    validation: required
+  - id: contribuable_commune
+    label: Commune de domicile (NE)
+    source: input.commune
+  - id: periode_fiscale
+    label: Année fiscale
+    source: input.year
+    validation: required
+  - id: revenu_activite_independante
+    label: Revenu net d'activité lucrative indépendante
+    source: projection.ne_pp.revenu_independant
+    format: currency_chf
+  - id: revenu_activite_dependante
+    label: Revenu net d'activité lucrative dépendante
+    source: input.revenu_salaire
+    format: currency_chf
+    todo: true
+  - id: revenu_capital
+    label: Revenus du capital mobilier
+    source: input.revenu_capital
+    format: currency_chf
+    todo: true
+  - id: revenu_total
+    label: Total des revenus
+    source: projection.ne_pp.revenu_total
+    format: currency_chf
+    validation: required
+  - id: fortune_nette
+    label: Fortune nette au 31 décembre
+    source: projection.ne_pp.fortune_nette
+    format: currency_chf
+  - id: deduction_pilier_3a
+    label: Cotisation au pilier 3a
+    source: input.pilier_3a
+    format: currency_chf
+    todo: true
+  - id: deduction_lpp_rachats
+    label: Rachats LPP (2e pilier)
+    source: input.lpp_rachats
+    format: currency_chf
+    todo: true
+  - id: deduction_assurances
+    label: Primes d'assurance maladie et accidents
+    source: input.primes_assurances
+    format: currency_chf
+    todo: true
+  - id: deduction_interets_dette
+    label: Intérêts passifs d'emprunts privés
+    source: input.interets_dette
+    format: currency_chf
+    todo: true
+  - id: deduction_frais_professionnels
+    label: "Frais professionnels (forfait 3% min 1700 max 3400 CHF)"
+    source: computed.frais_pro_forfait
+    format: currency_chf
+    todo: true
+  - id: deduction_total
+    label: Total des déductions
+    source: projection.ne_pp.deduction_total
+    format: currency_chf
+  - id: revenu_imposable
+    label: Revenu imposable
+    source: projection.ne_pp.revenu_imposable
+    format: currency_chf
+    validation: required
+
+output:
+  pdf:
+    renderer: pdfkit
+    disclaimer: >
+      Information à titre indicatif — vérifiez avec votre fiduciaire et
+      le Service cantonal des contributions et de l'organisation NE (SCCO). Ce document
+      ne reflète que les données extraites automatiquement de votre comptabilité. Les
+      revenus salariés, revenus du capital et déductions personnelles doivent être
+      complétés manuellement. Lexa prépare, l'humain signe (whitepaper §6).
+      Base légale : LCdir-NE (RSN 631.0), RGI-NE (RSN 631.01), LIFD.
+  xml:
+    schema: none
+    note: Pas de XML en v1 — SCCO NE n'exige pas d'échange structuré en v1.
+
+validation:
+  human_signature_required: true
+  lexa_liability: preparation_only
+  depot_deadline: "31 mars"

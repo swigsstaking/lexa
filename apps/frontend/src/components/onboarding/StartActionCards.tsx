@@ -32,6 +32,9 @@ export function StartActionCards({ onSelect }: StartActionCardsProps) {
     if (canton === 'GE') return `/taxpayer/ge/${year}`;
     if (canton === 'VD') return `/taxpayer/vd/${year}`;
     if (canton === 'FR') return `/taxpayer/fr/${year}`;
+    if (canton === 'NE') return `/taxpayer/ne/${year}`;
+    if (canton === 'JU') return `/taxpayer/ju/${year}`;
+    if (canton === 'BJ') return `/taxpayer/bj/${year}`;
     return `/taxpayer/${year}`;
   }
 

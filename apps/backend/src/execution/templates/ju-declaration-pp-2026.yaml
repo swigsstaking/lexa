@@ -1,0 +1,136 @@
+# Lexa — Template formulaire officiel
+# Déclaration d'impôt Personne Physique (PP) — Canton du Jura
+#
+# Clone du template FR-PP, adapté aux spécificités jurassiennes.
+# Session 37 : cantons NE/JU/BJ — agents existants, UI manquante.
+# Note : Moutier a rejoint le canton du Jura le 1er janvier 2021.
+#
+# Source légale :
+#   - LIFD (RS 642.11) — art. 33 al. 1 let. e (pilier 3a)
+#   - LICD-JU (RSJU 641.11) — Loi sur les impôts cantonaux directs (Jura)
+#   - Guide PP JU 2026 — déductions et barèmes SCCJ
+#
+# Autorité : Service cantonal des contributions du Jura (SCCJ).
+# Délai de dépôt : 31 mars.
+
+form_id: JU-declaration-pp
+version: "2026-01-01"
+title: Déclaration d'impôt PP — Canton du Jura
+jurisdiction: cantonal-JU
+canton: JU
+authority: SCCJ
+legal_reference:
+  law: LICD-JU
+  rs: "RSJU 641.11"
+  articles: ["26", "30", "31", "33", "34"]
+  federal_refs: ["LIFD art. 18", "LIFD art. 33 al. 1 let. e", "LIFD art. 34"]
+  additional_refs: []
+
+periodicity: annual
+
+# Montants officiels 2026 — Canton du Jura
+# Taux ICC JU 2026 : ~19.8% (à confirmer barème SCCJ)
+# Pilier 3a : identique fédéral (LIFD art. 33 al. 1 let. e)
+# Forfait frais pro : 3% min 1'700 CHF / max 3'400 CHF (fallback conservateur)
+reference_amounts:
+  pilier_3a_salarie_max_chf: 7260
+  pilier_3a_independant_max_chf: 36288
+  frais_professionnels_forfait_pct: 3
+  frais_professionnels_forfait_min_chf: 1700
+  frais_professionnels_forfait_max_chf: 3400
+
+fields:
+  - id: contribuable_nom
+    label: Nom et prénom
+    source: company.name
+    validation: required
+  - id: contribuable_uid
+    label: Numéro IDE / UID
+    source: company.uid
+  - id: contribuable_canton
+    label: Canton de domicile
+    source: company.canton
+    validation: required
+  - id: contribuable_commune
+    label: Commune de domicile (JU)
+    source: input.commune
+  - id: periode_fiscale
+    label: Année fiscale
+    source: input.year
+    validation: required
+  - id: revenu_activite_independante
+    label: Revenu net d'activité lucrative indépendante
+    source: projection.ju_pp.revenu_independant
+    format: currency_chf
+  - id: revenu_activite_dependante
+    label: Revenu net d'activité lucrative dépendante
+    source: input.revenu_salaire
+    format: currency_chf
+    todo: true
+  - id: revenu_capital
+    label: Revenus du capital mobilier
+    source: input.revenu_capital
+    format: currency_chf
+    todo: true
+  - id: revenu_total
+    label: Total des revenus
+    source: projection.ju_pp.revenu_total
+    format: currency_chf
+    validation: required
+  - id: fortune_nette
+    label: Fortune nette au 31 décembre
+    source: projection.ju_pp.fortune_nette
+    format: currency_chf
+  - id: deduction_pilier_3a
+    label: Cotisation au pilier 3a
+    source: input.pilier_3a
+    format: currency_chf
+    todo: true
+  - id: deduction_lpp_rachats
+    label: Rachats LPP (2e pilier)
+    source: input.lpp_rachats
+    format: currency_chf
+    todo: true
+  - id: deduction_assurances
+    label: Primes d'assurance maladie et accidents
+    source: input.primes_assurances
+    format: currency_chf
+    todo: true
+  - id: deduction_interets_dette
+    label: Intérêts passifs d'emprunts privés
+    source: input.interets_dette
+    format: currency_chf
+    todo: true
+  - id: deduction_frais_professionnels
+    label: "Frais professionnels (forfait 3% min 1700 max 3400 CHF)"
+    source: computed.frais_pro_forfait
+    format: currency_chf
+    todo: true
+  - id: deduction_total
+    label: Total des déductions
+    source: projection.ju_pp.deduction_total
+    format: currency_chf
+  - id: revenu_imposable
+    label: Revenu imposable
+    source: projection.ju_pp.revenu_imposable
+    format: currency_chf
+    validation: required
+
+output:
+  pdf:
+    renderer: pdfkit
+    disclaimer: >
+      Information à titre indicatif — vérifiez avec votre fiduciaire et
+      le Service cantonal des contributions du Jura (SCCJ). Ce document
+      ne reflète que les données extraites automatiquement de votre comptabilité. Les
+      revenus salariés, revenus du capital et déductions personnelles doivent être
+      complétés manuellement. Lexa prépare, l'humain signe (whitepaper §6).
+      Base légale : LICD-JU (RSJU 641.11), LIFD.
+  xml:
+    schema: none
+    note: Pas de XML en v1 — SCCJ n'exige pas d'échange structuré en v1.
+
+validation:
+  human_signature_required: true
+  lexa_liability: preparation_only
+  depot_deadline: "31 mars"
