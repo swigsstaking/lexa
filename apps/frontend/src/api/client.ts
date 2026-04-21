@@ -2,7 +2,12 @@ import axios from 'axios';
 import { useCompaniesStore } from '@/stores/companiesStore';
 import { getAuthToken, useAuthStore } from '@/stores/authStore';
 
-const baseURL = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_LEXA_URL || '/api');
+export const baseURL = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_LEXA_URL || '/api');
+
+/** Retourne l'URL absolue pour une route (utile pour fetch natif SSE) */
+export function getBaseURL(): string {
+  return baseURL;
+}
 
 export const api = axios.create({
   baseURL,

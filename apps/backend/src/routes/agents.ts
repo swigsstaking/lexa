@@ -397,12 +397,57 @@ const LexaAskSchema = z.object({
   year: z.number().int().optional(),
 });
 
-/** POST /agents/lexa/ask — agent générique avec context injection comptable */
+/** POST /agents/lexa/ask — agent générique avec context injection comptable
+ *  ?stream=true → SSE (text/event-stream), tokens streamés au fur et à mesure
+ *  Sans ?stream   → JSON classique (comportement non-streaming préservé)
+ */
 agentsRouter.post("/lexa/ask", requireAuth, async (req, res) => {
   const parsed = LexaAskSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
   }
+
+  const wantStream =
+    req.query.stream === "true" ||
+    req.query.stream === "1" ||
+    req.headers.accept?.includes("text/event-stream");
+
+  if (wantStream) {
+    // ── Mode streaming SSE ──────────────────────────────────────────────────
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no"); // Désactive le buffering Nginx
+    res.flushHeaders();
+
+    try {
+      for await (const event of lexaAgent.askStream(parsed.data)) {
+        if (event.type === "delta") {
+          res.write(`data: ${JSON.stringify({ delta: event.delta })}\n\n`);
+        } else if (event.type === "done") {
+          res.write(
+            `data: ${JSON.stringify({
+              done: true,
+              citations: event.citations,
+              durationMs: event.durationMs,
+              model: event.model,
+            })}\n\n`,
+          );
+        } else if (event.type === "error") {
+          res.write(`data: ${JSON.stringify({ error: event.message })}\n\n`);
+        }
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      res.write(`data: ${JSON.stringify({ error: msg })}\n\n`);
+    }
+
+    res.write("data: [DONE]\n\n");
+    res.end();
+    return;
+  }
+
+  // ── Mode non-streaming (fallback, compat existante) ──────────────────────
   try {
     const result = await enqueueLlmCall(req.tenantId, "lexa", parsed.data);
     res.json(result);

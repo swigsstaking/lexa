@@ -70,7 +70,7 @@ const LLM_TIMEOUT_MS = 90_000;
 
 // ——— Hook partagé chat IA ———
 function useChatEngine(agent: AgentId, tenantId: string | null, year?: number) {
-  const { messages, loading, addMessage, setLoading, clear } = useChatStore();
+  const { messages, loading, addMessage, setLoading, updateLastMessage, clear } = useChatStore();
   const abortRef = useRef<AbortController | null>(null);
   const pendingQ = useRef('');
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +86,56 @@ function useChatEngine(agent: AgentId, tenantId: string | null, year?: number) {
     abortRef.current = controller;
     const timeoutId = setTimeout(() => controller.abort('timeout'), LLM_TIMEOUT_MS);
 
+    // ── Mode streaming SSE pour l'agent Lexa (reasoning) ──────────────────
+    if (agent === 'reasoning' && tenantId) {
+      const msgId = `a-${Date.now()}`;
+      // Ajouter un message vide pour accumuler le streaming
+      addMessage({ id: msgId, role: 'agent', agent, content: '', createdAt: Date.now() });
+
+      try {
+        let fullText = '';
+        let finalCitations: AgentAnswer['citations'] | undefined;
+        let finalDurationMs = 0;
+
+        for await (const event of lexa.lexaAskStream(q, tenantId, year)) {
+          if (controller.signal.aborted) break;
+
+          if (event.type === 'delta') {
+            fullText += event.delta;
+            updateLastMessage(msgId, { content: fullText });
+          } else if (event.type === 'done') {
+            finalCitations = event.citations;
+            finalDurationMs = event.durationMs;
+            updateLastMessage(msgId, {
+              content: fullText,
+              answer: {
+                answer: fullText,
+                citations: finalCitations,
+                durationMs: finalDurationMs,
+              },
+            });
+          } else if (event.type === 'error') {
+            setError(`Erreur streaming : ${event.message}`);
+            // Retirer le message vide en cas d'erreur
+            updateLastMessage(msgId, { content: `⚠ ${event.message}` });
+          }
+        }
+      } catch (e) {
+        const err = e as Error & { response?: { status?: number } };
+        if (err.name === 'AbortError' || err.message === 'AbortError') {
+          setError("L'agent met plus de temps que d'habitude. Réessayez.");
+        } else {
+          setError(`Erreur : ${err.message || 'inconnue'}`);
+        }
+      } finally {
+        clearTimeout(timeoutId);
+        setLoading(false);
+        abortRef.current = null;
+      }
+      return;
+    }
+
+    // ── Mode non-streaming (tva, classifier, ragAsk) ────────────────────────
     try {
       let answer: AgentAnswer;
       const fetchPromise = (async () => {
@@ -93,9 +143,6 @@ function useChatEngine(agent: AgentId, tenantId: string | null, year?: number) {
         if (agent === 'classifier') {
           const [desc, amt] = q.split('|').map((s) => s.trim());
           return lexa.classify(desc ?? q, parseFloat(amt ?? '0') || 0);
-        }
-        if (agent === 'reasoning' && tenantId) {
-          return lexa.lexaAsk(q, tenantId, year);
         }
         return lexa.ragAsk(q);
       })();
@@ -130,7 +177,7 @@ function useChatEngine(agent: AgentId, tenantId: string | null, year?: number) {
       setLoading(false);
       abortRef.current = null;
     }
-  }, [agent, tenantId, year, loading, addMessage, setLoading]);
+  }, [agent, tenantId, year, loading, addMessage, setLoading, updateLastMessage]);
 
   const retry = useCallback(() => {
     const q = pendingQ.current;

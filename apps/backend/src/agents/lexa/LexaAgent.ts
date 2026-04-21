@@ -1,7 +1,7 @@
 import { embedder } from "../../rag/EmbedderClient.js";
 import { qdrant, type QdrantHit } from "../../rag/QdrantClient.js";
 import { ollama } from "../../llm/OllamaClient.js";
-import { vllm } from "../../llm/VllmClient.js";
+import { vllm, type VllmStreamChunk } from "../../llm/VllmClient.js";
 import { AGENT_PROMPTS } from "../../llm/agent-prompts.js";
 import { query } from "../../db/postgres.js";
 
@@ -224,6 +224,104 @@ RÉPONSE:`;
 
     return {
       answer: response.trim(),
+      citations,
+      durationMs: Date.now() - started,
+      model: this.model,
+    };
+  }
+
+  /**
+   * Version streaming — yield chaque chunk de token vLLM.
+   * Retourne aussi les citations et metadata en dernier événement "done".
+   */
+  async *askStream(query_: LexaQuery): AsyncGenerator<
+    | { type: "delta"; delta: string }
+    | { type: "done"; citations: LexaAnswer["citations"]; durationMs: number; model: string }
+    | { type: "error"; message: string }
+  > {
+    const started = Date.now();
+    const year = query_.year ?? new Date().getFullYear();
+
+    let hits: QdrantHit[] = [];
+    try {
+      const [{ stats, topAccounts, draftState }, qVec] = await Promise.all([
+        fetchLedgerContext(query_.tenantId, year),
+        embedder.embedOne(query_.question),
+      ]);
+
+      hits = await qdrant.search({ vector: qVec, limit: 5 });
+      const contextLines = hits.map((h: QdrantHit, i: number) => {
+        const p = h.payload;
+        const src = p.rs ? `[${p.law} (RS ${p.rs}) ${p.article}]` : `[${p.law} ${p.article}]`;
+        return `${i + 1}. ${src} ${p.heading ?? ""}\n${p.text.slice(0, 600)}`;
+      });
+      const ragContext = contextLines.join("\n\n---\n\n");
+
+      const accountingContext = buildAccountingContext(
+        query_.tenantId,
+        year,
+        stats,
+        topAccounts,
+        draftState,
+      );
+
+      const prompt = `${accountingContext}
+
+SOURCES JURIDIQUES PERTINENTES:
+${ragContext || "Aucune source RAG pertinente trouvée."}
+
+QUESTION: ${query_.question}
+
+Réponds de manière concise et précise. Si la question porte sur des chiffres comptables, utilise uniquement les données du contexte comptable ci-dessus. Si elle porte sur une règle fiscale, cite les articles pertinents.
+
+RÉPONSE:`;
+
+      if (this.useVllm) {
+        try {
+          for await (const chunk of vllm.generateStream({
+            model: this.vllmModel,
+            systemPrompt: this.systemPrompt,
+            prompt,
+            temperature: 0.2,
+            numPredict: 800,
+            think: false,
+          })) {
+            if (!chunk.done && chunk.delta) {
+              yield { type: "delta", delta: chunk.delta };
+            }
+          }
+        } catch (err) {
+          console.warn("[lexa] vLLM stream failed, pas de fallback Ollama en mode stream:", (err as Error).message);
+          yield { type: "error", message: "vLLM stream indisponible — réessayez sans streaming." };
+          return;
+        }
+      } else {
+        // Ollama ne supporte pas le streaming dans cette implémentation — fallback non-streaming
+        const { response: ollamaResponse } = await ollama.generate({
+          model: this.model,
+          prompt,
+          temperature: 0.2,
+          numCtx: 16384,
+          numPredict: 800,
+        });
+        // Envoyer en un seul chunk
+        yield { type: "delta", delta: ollamaResponse };
+      }
+    } catch (err) {
+      yield { type: "error", message: (err as Error).message ?? "Erreur inconnue" };
+      return;
+    }
+
+    const citations = hits.map((h: QdrantHit) => ({
+      law: h.payload.law,
+      article: h.payload.article,
+      heading: h.payload.heading,
+      score: h.score,
+      url: h.payload.url,
+    }));
+
+    yield {
+      type: "done",
       citations,
       durationMs: Date.now() - started,
       model: this.model,

@@ -1,4 +1,4 @@
-import { api } from './client';
+import { api, getBaseURL } from './client';
 import type { AuthUser } from '@/stores/authStore';
 import type {
   AgentAnswer,
@@ -89,6 +89,100 @@ export const lexa = {
 
   lexaAsk: (question: string, tenantId: string, year?: number) =>
     api.post<AgentAnswer>('/agents/lexa/ask', { question, tenantId, year }).then((r) => r.data),
+
+  /**
+   * Streaming SSE — utilise fetch natif (axios ne supporte pas ReadableStream).
+   * Retourne un AsyncGenerator qui yield les événements SSE.
+   *
+   * Usage :
+   *   for await (const ev of lexa.lexaAskStream(q, tenantId)) {
+   *     if (ev.type === 'delta') appendText(ev.delta);
+   *     if (ev.type === 'done') setCitations(ev.citations);
+   *     if (ev.type === 'error') showError(ev.message);
+   *   }
+   */
+  async *lexaAskStream(
+    question: string,
+    tenantId: string,
+    year?: number,
+  ): AsyncGenerator<
+    | { type: 'delta'; delta: string }
+    | { type: 'done'; citations: AgentAnswer['citations']; durationMs: number; model: string }
+    | { type: 'error'; message: string }
+  > {
+    const { getAuthToken } = await import('@/stores/authStore');
+    const { useCompaniesStore } = await import('@/stores/companiesStore');
+    const token = getAuthToken();
+    const activeTenantId = useCompaniesStore.getState().activeCompanyId;
+
+    const response = await fetch(`${getBaseURL()}/agents/lexa/ask?stream=true`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(activeTenantId ? { 'X-Tenant-Id': activeTenantId } : {}),
+      },
+      body: JSON.stringify({ question, tenantId, year }),
+    });
+
+    if (!response.ok || !response.body) {
+      const errText = await response.text().catch(() => 'unknown');
+      yield { type: 'error', message: `HTTP ${response.status}: ${errText}` };
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith('data:')) continue;
+
+          const data = trimmed.slice(5).trim();
+          if (data === '[DONE]') return;
+
+          try {
+            const parsed = JSON.parse(data) as {
+              delta?: string;
+              done?: boolean;
+              citations?: AgentAnswer['citations'];
+              durationMs?: number;
+              model?: string;
+              error?: string;
+            };
+
+            if (parsed.error) {
+              yield { type: 'error', message: parsed.error };
+            } else if (parsed.done) {
+              yield {
+                type: 'done',
+                citations: parsed.citations,
+                durationMs: parsed.durationMs ?? 0,
+                model: parsed.model ?? '',
+              };
+            } else if (parsed.delta !== undefined) {
+              yield { type: 'delta', delta: parsed.delta };
+            }
+          } catch {
+            // Ignorer les lignes SSE malformées
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  },
 
   tvaAsk: (question: string, context?: { turnover?: number; method?: string; sector?: string }) =>
     api.post<AgentAnswer>('/agents/tva/ask', { question, context }).then((r) => r.data),
