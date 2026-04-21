@@ -60,5 +60,5 @@ CREATE POLICY pp_crypto_snapshots_tenant_isolation ON pp_crypto_snapshots
 --   SELECT * FROM pp_crypto_wallets;   -- doit retourner seulement les wallets du tenant
 --   SELECT * FROM pp_crypto_snapshots; -- idem
 
-INSERT INTO schema_migrations (version) VALUES ('023_pp_crypto')
+INSERT INTO schema_migrations (version) VALUES ('024_pp_crypto')
   ON CONFLICT (version) DO NOTHING;
