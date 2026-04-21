@@ -333,10 +333,14 @@ export function PpWorkspace() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fallback sur PP_DATA si l'API ne retourne pas de données (ou pendant le loading initial)
+  // Merge API ↔ mock par clé `k` : préserve les 4 buckets attendus, remplace ceux dispos en API.
+  // L'API peut ne renvoyer qu'un sous-ensemble (ex: seul "Obligations fiscales" est calculé en V1.2).
   const apiBuckets = apiData?.buckets ?? [];
   const hasRealData = apiBuckets.length > 0;
-  const activeBuckets: PpBucket[] = hasRealData ? apiBuckets : PP_DATA.buckets;
+  const activeBuckets: PpBucket[] = PP_DATA.buckets.map((mockBucket) => {
+    const apiBucket = apiBuckets.find((b) => b.k === mockBucket.k);
+    return apiBucket && Array.isArray(apiBucket.items) ? apiBucket : mockBucket;
+  });
   const d = { ...PP_DATA, buckets: activeBuckets };
 
   // Préremplissage du draft taxpayer depuis les données disponibles avant navigation
