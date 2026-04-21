@@ -146,6 +146,21 @@
         "title": "Préparer ma déclaration",
         "desc": "Wizard guidé pour compléter votre déclaration fiscale",
         "badge": "10–20 min"
+      },
+      "pp_import": {
+        "title": "Importer mes documents",
+        "desc": "Certificats de salaire, attestations, frais — OCR automatique",
+        "badge": "~30 sec / doc"
+      },
+      "pp_crypto": {
+        "title": "Ajouter mes wallets crypto",
+        "desc": "ETH, BTC, SOL — snapshot automatique au 31.12 pour le fisc",
+        "badge": "~1 min"
+      },
+      "pp_tax": {
+        "title": "Démarrer ma déclaration",
+        "desc": "Wizard guidé canton par canton pour votre déclaration PP",
+        "badge": "10–20 min"
       }
     }
   },
@@ -159,7 +174,9 @@
     "services_checking": "Vérification…",
     "empty": {
       "title": "Votre grand livre est vide",
-      "subtitle": "Commencez par importer vos premières données"
+      "subtitle": "Commencez par importer vos premières données",
+      "pp_title": "Bienvenue dans votre espace fiscal",
+      "pp_subtitle": "Importez vos documents, ajoutez vos cryptos ou démarrez votre déclaration"
     }
   },
   "ledger": {

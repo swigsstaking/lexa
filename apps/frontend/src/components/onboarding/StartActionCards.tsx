@@ -1,13 +1,16 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Landmark, FileText, FileSignature } from 'lucide-react';
+import { Landmark, FileText, FileSignature, Upload, Wallet } from 'lucide-react';
 import { useActiveCompany } from '@/stores/companiesStore';
 
-type ActionKey = 'camt053' | 'ocr' | 'tax';
+type ActionKey = 'camt053' | 'ocr' | 'tax' | 'pp_import' | 'pp_crypto' | 'pp_tax';
 
 interface StartActionCardsProps {
   onSelect?: (key: ActionKey) => void;
 }
+
+// Formes juridiques considérées PM (cohérent avec WorkspaceV2.tsx PM_FORMS)
+const PM_FORMS = ['sa', 'sca', 'sarl', 'cooperative', 'sa_etrangere', 'snc', 'senc'];
 
 export function StartActionCards({ onSelect }: StartActionCardsProps) {
   const { t } = useTranslation();
@@ -15,12 +18,11 @@ export function StartActionCards({ onSelect }: StartActionCardsProps) {
   const company = useActiveCompany();
 
   const year = new Date().getFullYear();
+  const legalForm = company?.legalForm ?? 'raison_individuelle';
+  const isPM = PM_FORMS.includes(legalForm);
 
   function getTaxPath(): string {
-    const legalForm = company?.legalForm ?? 'raison_individuelle';
     const canton = (company?.canton ?? 'VS').toUpperCase();
-
-    const isPM = legalForm === 'sarl' || legalForm === 'sa' || legalForm === 'cooperative';
 
     if (isPM) {
       const pmCantons = ['VS', 'GE', 'VD', 'FR', 'NE', 'JU', 'BJ'];
@@ -47,18 +49,18 @@ export function StartActionCards({ onSelect }: StartActionCardsProps) {
       navigate('/documents', { state: { focus: 'camt053' } });
     } else if (key === 'ocr') {
       navigate('/documents', { state: { focus: 'ocr' } });
+    } else if (key === 'pp_import') {
+      // Re-navigate vers /workspace avec query param écouté par PpWorkspace pour ouvrir le modal
+      navigate('/workspace?openImport=1');
+    } else if (key === 'pp_crypto') {
+      navigate('/workspace?openCrypto=1');
     } else {
+      // 'tax' (PM) ou 'pp_tax' (PP) → wizard correspondant
       navigate(getTaxPath());
     }
   }
 
-  const cards: Array<{
-    key: ActionKey;
-    Icon: typeof Landmark;
-    title: string;
-    desc: string;
-    badge: string;
-  }> = [
+  const pmCards: Array<{ key: ActionKey; Icon: typeof Landmark; title: string; desc: string; badge: string }> = [
     {
       key: 'camt053',
       Icon: Landmark,
@@ -81,6 +83,32 @@ export function StartActionCards({ onSelect }: StartActionCardsProps) {
       badge: t('welcome.cta.tax.badge'),
     },
   ];
+
+  const ppCards: Array<{ key: ActionKey; Icon: typeof Landmark; title: string; desc: string; badge: string }> = [
+    {
+      key: 'pp_import',
+      Icon: Upload,
+      title: t('welcome.cta.pp_import.title'),
+      desc: t('welcome.cta.pp_import.desc'),
+      badge: t('welcome.cta.pp_import.badge'),
+    },
+    {
+      key: 'pp_crypto',
+      Icon: Wallet,
+      title: t('welcome.cta.pp_crypto.title'),
+      desc: t('welcome.cta.pp_crypto.desc'),
+      badge: t('welcome.cta.pp_crypto.badge'),
+    },
+    {
+      key: 'pp_tax',
+      Icon: FileSignature,
+      title: t('welcome.cta.pp_tax.title'),
+      desc: t('welcome.cta.pp_tax.desc'),
+      badge: t('welcome.cta.pp_tax.badge'),
+    },
+  ];
+
+  const cards = isPM ? pmCards : ppCards;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

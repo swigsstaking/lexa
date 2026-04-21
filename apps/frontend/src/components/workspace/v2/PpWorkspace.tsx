@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -326,6 +326,22 @@ export function PpWorkspace() {
   const [importOpen, setImportOpen] = useState(false);
   const [cryptoFormOpen, setCryptoFormOpen] = useState(false);
   const navigate = useNavigate();
+
+  // Auto-ouverture via query params (déclenché depuis StartActionCards onboarding PP)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('openImport') === '1') {
+      setImportOpen(true);
+      params.delete('openImport');
+      const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+      window.history.replaceState(null, '', newUrl);
+    } else if (params.get('openCrypto') === '1') {
+      setCryptoFormOpen(true);
+      params.delete('openCrypto');
+      const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+      window.history.replaceState(null, '', newUrl);
+    }
+  }, []);
   const isMobile = useIsMobile();
   // BUG-6 RGPD fix : lier l'affichage au tenant actif pour éviter cache stale inter-tenants
   const activeCompany = useActiveCompany();
