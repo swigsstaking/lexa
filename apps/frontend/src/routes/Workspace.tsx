@@ -199,8 +199,6 @@ export function Workspace() {
   const canton = company?.canton ?? 'VS';
   const year = new Date().getFullYear();
 
-  // Détection PM vs PP — cohérent avec WorkspaceV2.tsx (PM_FORMS) pour empty state adapté
-  const isPmCompany = !!company?.legalForm && ['sa', 'sca', 'sarl', 'cooperative', 'sa_etrangere', 'snc', 'senc'].includes(company.legalForm);
 
   const taxpayerPath =
     canton === 'GE'
@@ -547,10 +545,10 @@ export function Workspace() {
                 <>
                   <Sparkles className="w-8 h-8 text-accent mx-auto mb-4" />
                   <h2 className="text-xl font-semibold text-ink mb-2">
-                    {t(isPmCompany ? 'workspace.empty.title' : 'workspace.empty.pp_title')}
+                    {t('workspace.empty.pp_title')}
                   </h2>
                   <p className="text-sm text-muted mb-6">
-                    {t(isPmCompany ? 'workspace.empty.subtitle' : 'workspace.empty.pp_subtitle')}
+                    {t('workspace.empty.pp_subtitle')}
                   </p>
                   <StartActionCards />
                 </>

@@ -109,14 +109,12 @@ def call_vllm_streaming(
         "max_tokens": max_tokens,
         "temperature": temperature,
         "stream": True,
-        # NOTE: enable_thinking non défini = comportement natif du modèle
-        # Les modèles Qwen3 avec --reasoning-parser qwen3 émettent :
-        #   - delta.reasoning_content : chaîne de pensée via parser (ne pas évaluer)
-        #   - delta.content : réponse finale (évaluer)
-        # MAIS les Qwen3.5-MoE peuvent aussi émettre <think>...</think> dans delta.content.
-        # Fix3 : strip des blocs thinking AVANT le scoring.
-        # TTFT total = premier token (reasoning ou content) — réactivité perçue
-        # TTFT response = premier token de réponse finale (post-thinking) — latence utile
+        # Désactive explicitement le thinking mode pour éviter que le modèle émette
+        # son raisonnement ("Thinking Process: ...") en clair dans delta.content.
+        # Sans ce flag, Qwen3.5-MoE avec --reasoning-parser qwen3 écrit son raisonnement
+        # en texte libre AVANT la réponse → scorer rate les mots-clés.
+        # Observation baseline : 1.7% accuracy avec thinking, >80% attendu sans.
+        "chat_template_kwargs": {"enable_thinking": False},
     }
 
     t_start = time.perf_counter()
