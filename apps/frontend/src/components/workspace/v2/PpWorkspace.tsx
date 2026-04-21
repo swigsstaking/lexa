@@ -9,6 +9,9 @@ import { lexa } from '@/api/lexa';
 import type { PpTone } from '@/api/lexa';
 import { useActiveCompany } from '@/stores/companiesStore';
 import { useAuthStore } from '@/stores/authStore';
+import { PpImportModal } from './PpImportModal';
+import { PpCryptoSwimlane } from './PpCryptoSwimlane';
+import { PpCryptoWalletForm } from './PpCryptoWalletForm';
 
 type Tone = PpTone;
 
@@ -320,6 +323,8 @@ export function PpWorkspace() {
   const [selected, setSelected] = useState<{ b: number; i: number } | null>(null);
   const [drawerItem, setDrawerItem] = useState<PpItem | null>(null);
   const [prefilling, setPrefilling] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [cryptoFormOpen, setCryptoFormOpen] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   // BUG-6 RGPD fix : lier l'affichage au tenant actif pour éviter cache stale inter-tenants
@@ -487,8 +492,31 @@ export function PpWorkspace() {
 
             {/* Identité — nom du tenant actif pour éviter affichage inter-tenants (BUG-6 RGPD) */}
             <div>
-              <div style={{ fontWeight: 600, fontSize: isMobile ? 15 : 18, letterSpacing: '-0.02em', color: 'rgb(var(--ink))' }}>
-                {activeCompany?.name ?? d.name}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ fontWeight: 600, fontSize: isMobile ? 15 : 18, letterSpacing: '-0.02em', color: 'rgb(var(--ink))' }}>
+                  {activeCompany?.name ?? d.name}
+                </div>
+                <button
+                  onClick={() => setImportOpen(true)}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: 6,
+                    border: '1px solid rgb(var(--border))',
+                    background: 'rgb(var(--elevated))',
+                    cursor: 'pointer',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: 'rgb(var(--ink))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  <span style={{ fontSize: 12 }}>↓</span>
+                  Importer données
+                </button>
               </div>
               <div style={{ color: 'rgb(var(--muted))', fontSize: 12 }}>
                 {d.sub}
@@ -683,6 +711,8 @@ export function PpWorkspace() {
                   </div>
                 );
               })}
+              {/* Swimlane Crypto — après les 4 buckets existants */}
+              <PpCryptoSwimlane year={year} />
             </div>
 
             {/* Colonne droite : échéances + insight */}
@@ -780,6 +810,25 @@ export function PpWorkspace() {
 
       {/* Drawer détail PP item */}
       <PpDetailDrawer item={drawerItem} onClose={() => setDrawerItem(null)} hasRealData={hasRealData} />
+
+      {/* Modal import universel PP */}
+      {importOpen && (
+        <PpImportModal
+          onClose={() => setImportOpen(false)}
+          onOpenCryptoForm={() => {
+            setImportOpen(false);
+            setCryptoFormOpen(true);
+          }}
+        />
+      )}
+
+      {/* Formulaire ajout wallet crypto (accessible depuis le modal ou directement) */}
+      {cryptoFormOpen && (
+        <PpCryptoWalletForm
+          onClose={() => setCryptoFormOpen(false)}
+          onAdded={() => setCryptoFormOpen(false)}
+        />
+      )}
     </div>
   );
 }

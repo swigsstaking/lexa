@@ -748,6 +748,63 @@ export const lexa = {
     api
       .get<PpSummary>('/pp/summary', { params: { year } })
       .then((r) => r.data),
+
+  // ── PP Import (V1.3) ─────────────────────────────────────────────────────
+
+  uploadPpImport: (file: File, category: string) => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('category', category);
+    return api
+      .post<{ id: string; status: string; category: string; estimatedSeconds: number }>(
+        '/pp/import/upload',
+        form,
+        { headers: { 'Content-Type': undefined } },
+      )
+      .then((r) => r.data);
+  },
+
+  getPpImport: (id: string) =>
+    api.get<PpImportRow>(`/pp/import/${id}`).then((r) => r.data),
+
+  listPpImports: (statuses?: string[]) =>
+    api
+      .get<{ items: PpImportRow[]; total: number }>('/pp/import', {
+        params: statuses ? { status: statuses.join(',') } : undefined,
+      })
+      .then((r) => r.data),
+
+  validatePpImport: (id: string, data: Record<string, unknown>) =>
+    api
+      .post<{ id: string; status: string; wizardStateUpdated: boolean }>(
+        `/pp/import/${id}/validate`,
+        { validatedData: data },
+      )
+      .then((r) => r.data),
+
+  // ── Crypto wallets (V1.3) ─────────────────────────────────────────────────
+
+  addCryptoWallet: (input: { chain: 'eth' | 'btc' | 'sol'; address: string; label: string }) =>
+    api.post<PpCryptoWallet>('/pp/crypto/wallet', input).then((r) => r.data),
+
+  listCryptoWallets: () =>
+    api.get<{ wallets: PpCryptoWallet[] }>('/pp/crypto/wallet').then((r) => r.data.wallets),
+
+  deleteCryptoWallet: (id: string) =>
+    api.delete<void>(`/pp/crypto/wallet/${id}`).then((r) => r.data),
+
+  refreshCryptoSnapshot: (walletId: string, year: number) =>
+    api
+      .post<{ jobId: string; estimatedSeconds: number }>('/pp/crypto/snapshot/refresh', {
+        walletId,
+        year,
+      })
+      .then((r) => r.data),
+
+  getCryptoSnapshot: (year: number) =>
+    api
+      .get<PpCryptoSnapshot>('/pp/crypto/snapshot', { params: { year } })
+      .then((r) => r.data),
 };
 
 export type TaxpayerDraft = {
@@ -1027,4 +1084,62 @@ export type PpBucket = {
 export type PpSummary = {
   buckets: PpBucket[];
   fiscalYear: number;
+};
+
+// ── Types PP Import (V1.3) ───────────────────────────────────────────────────
+
+export type PpImportStatus =
+  | 'pending'
+  | 'processing'
+  | 'extracted'
+  | 'validated'
+  | 'committed'
+  | 'failed';
+
+export type PpImportCategory =
+  | 'auto'
+  | 'salary'
+  | 'wealth'
+  | 'investment'
+  | 'expense'
+  | 'insurance'
+  | 'crypto';
+
+export type PpImportRow = {
+  id: string;
+  category: PpImportCategory;
+  sourceType: 'upload' | 'crypto_wallet' | 'manual';
+  status: PpImportStatus;
+  confidence: number | null;
+  rawExtraction: Record<string, unknown> | null;
+  validatedData: Record<string, unknown> | null;
+  wizardStepTarget: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PpCryptoWallet = {
+  id: string;
+  chain: 'eth' | 'btc' | 'sol';
+  address: string;
+  label: string | null;
+  lastSnapshot: PpCryptoSnapshotItem | null;
+  createdAt: string;
+};
+
+export type PpCryptoSnapshotItem = {
+  walletId: string;
+  chain: 'eth' | 'btc' | 'sol';
+  address: string;
+  balanceNative: string;
+  balanceChf: number;
+  priceChfAt3112: number;
+  snapshottedAt: string;
+};
+
+export type PpCryptoSnapshot = {
+  year: number;
+  snapshots: PpCryptoSnapshotItem[];
+  totalChf: number;
 };
