@@ -7,7 +7,7 @@
  *
  * Exécution (depuis apps/backend/) :
  *   npx tsx src/scripts/ingest-oifd-oltva.ts
- *   QDRANT_URL=http://192.168.110.103:6333 EMBEDDER_URL=http://192.168.110.103:8001 npx tsx src/scripts/ingest-oifd-oltva.ts
+ *   QDRANT_URL=http://192.168.110.103:6333 EMBEDDER_URL=http://192.168.110.103:8082 npx tsx src/scripts/ingest-oifd-oltva.ts
  *
  * Stratégie :
  *   - Supprime d'abord les points existants (idempotent)

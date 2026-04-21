@@ -16,7 +16,7 @@
  *
  * Exécution (depuis apps/backend/) :
  *   npx tsx src/scripts/ingest-afc-circulaires-2.ts
- *   QDRANT_URL=http://192.168.110.103:6333 EMBEDDER_URL=http://192.168.110.103:8001 npx tsx src/scripts/ingest-afc-circulaires-2.ts
+ *   QDRANT_URL=http://192.168.110.103:6333 EMBEDDER_URL=http://192.168.110.103:8082 npx tsx src/scripts/ingest-afc-circulaires-2.ts
  *
  * Stratégie :
  *   - 3-4 chunks par circulaire avec résumés denses (~200-400 tokens)

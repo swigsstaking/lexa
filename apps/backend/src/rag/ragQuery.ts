@@ -3,6 +3,7 @@ import { qdrant, type QdrantHit } from "./QdrantClient.js";
 import { ollama } from "../llm/OllamaClient.js";
 import { vllm } from "../llm/VllmClient.js";
 import { config } from "../config/index.js";
+import { SYSTEM_PROMPT_REASONING } from "../llm/prompts.js";
 
 export type RagAnswer = {
   answer: string;
@@ -17,13 +18,6 @@ export type RagAnswer = {
   durationMs: number;
 };
 
-/** System prompt Reasoning extrait en constante pour réutilisation chat-style (vLLM) */
-const SYSTEM_PROMPT_REASONING = `Tu es un assistant comptable suisse specialise. Tu reponds UNIQUEMENT avec les informations du contexte juridique fourni.
-Instructions :
-1. Reponds de maniere concise et factuelle.
-2. Cite OBLIGATOIREMENT les articles de loi utilises (format: Art. XX LTVA ou Art. XX LIFD).
-3. Si les informations du contexte sont insuffisantes, dis-le explicitement.
-4. Termine par un avertissement: "Information a titre indicatif - verifiez avec votre fiduciaire."`;
 
 /**
  * Pipeline RAG canonique pour Lexa:

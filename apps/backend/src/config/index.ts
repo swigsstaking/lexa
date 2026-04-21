@@ -14,7 +14,7 @@ const ConfigSchema = z.object({
   SPARK_HOST: z.string().default("192.168.110.103"),
   OLLAMA_URL: z.string().url().default("http://192.168.110.103:11434"),
   QDRANT_URL: z.string().url().default("http://192.168.110.103:6333"),
-  EMBEDDER_URL: z.string().url().default("http://192.168.110.103:8001"),
+  EMBEDDER_URL: z.string().url().default("http://192.168.110.103:8082"),
 
   MODEL_CLASSIFIER: z.string().default("comptable-suisse-fast"),
   MODEL_REASONING: z.string().default("comptable-suisse"),

@@ -40,6 +40,7 @@ import type { ClassificationResult } from "../agents/classifier/ClassifierAgent.
 import { computeFingerprint, lookupByFingerprint, enrichEventMetadata } from "../services/TransactionFingerprint.js";
 import { isProSyncEnabled } from "../services/TenantSettings.js";
 import { createProDocument } from "../services/DocumentsService.js";
+import { config } from "../config/index.js";
 
 export const bridgeRouter = Router();
 
@@ -348,7 +349,7 @@ function classifyAsync(
             payload: {
               transactionStreamId: streamId,
               agent: "classifier",
-              model: "lexa-classifier",
+              model: config.MODEL_CLASSIFIER,
               confidence: cl.confidence,
               debitAccount: cl.debitAccount,
               creditAccount: cl.creditAccount,
@@ -374,7 +375,7 @@ function classifyAsync(
             classifiedEvent.id,
             tenantId,
             "classifier",
-            "lexa-classifier",
+            config.MODEL_CLASSIFIER,
             cl.confidence,
             cl.reasoning,
             JSON.stringify(cl.citations),
