@@ -498,25 +498,44 @@ export function PpWorkspace() {
                 </div>
                 <button
                   onClick={() => setImportOpen(true)}
+                  className="pp-import-cta"
+                  title="Importer un document (raccourci modal : W/B/P/F/A/C)"
                   style={{
-                    padding: '4px 10px',
-                    borderRadius: 6,
-                    border: '1px solid rgb(var(--border))',
-                    background: 'rgb(var(--elevated))',
+                    padding: '5px 12px',
+                    borderRadius: 999,
+                    border: 'none',
+                    background: 'linear-gradient(135deg, var(--lexa) 0%, var(--lexa-deep) 100%)',
                     cursor: 'pointer',
                     fontSize: 11,
                     fontWeight: 600,
-                    color: 'rgb(var(--ink))',
-                    display: 'flex',
+                    color: 'var(--v2-bg)',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 4,
+                    gap: 6,
                     whiteSpace: 'nowrap',
                     flexShrink: 0,
+                    boxShadow: '0 1px 2px rgba(212, 52, 44, 0.18), 0 0 0 0 rgba(212, 52, 44, 0.0)',
+                    transition: 'transform 0.12s ease, box-shadow 0.18s ease',
+                    letterSpacing: '0.01em',
                   }}
                 >
-                  <span style={{ fontSize: 12 }}>↓</span>
-                  Importer données
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M12 3v12" />
+                    <path d="m7 8 5-5 5 5" />
+                    <path d="M5 21h14" />
+                  </svg>
+                  Importer
                 </button>
+                <style>{`
+                  .pp-import-cta:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 3px 10px rgba(212, 52, 44, 0.28), 0 0 0 3px rgba(212, 52, 44, 0.12);
+                  }
+                  .pp-import-cta:active {
+                    transform: translateY(0);
+                    box-shadow: 0 1px 2px rgba(212, 52, 44, 0.18);
+                  }
+                `}</style>
               </div>
               <div style={{ color: 'rgb(var(--muted))', fontSize: 12 }}>
                 {d.sub}

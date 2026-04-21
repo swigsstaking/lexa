@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useUploadPpImport } from '@/api/ppImport';
 import { PpImportPanel } from './PpImportPanel';
@@ -7,22 +7,38 @@ type ImportCategory = 'auto' | 'salary' | 'wealth' | 'investment' | 'expense' | 
 
 interface CategoryCard {
   id: ImportCategory;
+  shortcut: string; // touche clavier — focus la card
   icon: string;
   label: string;
   sub: string;
 }
 
 const CATEGORIES: CategoryCard[] = [
-  { id: 'salary',     icon: 'W', label: 'Salaire',    sub: 'Swissdec' },
-  { id: 'wealth',     icon: 'B', label: 'Fortune',    sub: 'Banques' },
-  { id: 'investment', icon: 'P', label: 'Placements', sub: 'Titres, fonds' },
-  { id: 'expense',    icon: 'F', label: 'Frais',      sub: 'Déductibles' },
-  { id: 'insurance',  icon: 'A', label: 'Assurances', sub: '3a / maladie' },
-  { id: 'crypto',     icon: 'C', label: 'Crypto',     sub: 'Wallet' },
+  { id: 'salary',     shortcut: 'W', icon: 'W', label: 'Salaire',    sub: 'Swissdec' },
+  { id: 'wealth',     shortcut: 'B', icon: 'B', label: 'Fortune',    sub: 'Banques' },
+  { id: 'investment', shortcut: 'P', icon: 'P', label: 'Placements', sub: 'Titres, fonds' },
+  { id: 'expense',    shortcut: 'F', icon: 'F', label: 'Frais',      sub: 'Déductibles' },
+  { id: 'insurance',  shortcut: 'A', icon: 'A', label: 'Assurances', sub: '3a / maladie' },
+  { id: 'crypto',     shortcut: 'C', icon: 'C', label: 'Crypto',     sub: 'Wallet' },
 ];
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const ACCEPTED_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+
+const kbdStyle: React.CSSProperties = {
+  display: 'inline-block',
+  padding: '1px 5px',
+  borderRadius: 4,
+  background: 'rgb(var(--elevated, 243 243 238))',
+  border: '1px solid rgb(var(--border, 229 229 222))',
+  fontFamily: '"JetBrains Mono", monospace',
+  fontSize: 9,
+  fontWeight: 600,
+  color: 'rgb(var(--muted, 107 107 102))',
+  lineHeight: 1.4,
+  minWidth: 14,
+  textAlign: 'center',
+};
 
 interface Props {
   onClose: () => void;
@@ -35,6 +51,7 @@ export function PpImportModal({ onClose, onOpenCryptoForm }: Props) {
   const [toast, setToast] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement | null>(null);
 
   const uploadMutation = useUploadPpImport();
 
@@ -107,6 +124,32 @@ export function PpImportModal({ onClose, onOpenCryptoForm }: Props) {
     [onOpenCryptoForm],
   );
 
+  // Raccourcis clavier : ESC ferme, W/B/P/F/A/C sélectionne la catégorie correspondante
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      // Ignore si user tape dans un input/textarea (ne pas intercepter)
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      // Modificateurs (Cmd/Ctrl/Alt) → ne pas intercepter les raccourcis natifs
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      const key = e.key.toUpperCase();
+      const cat = CATEGORIES.find((c) => c.shortcut === key);
+      if (cat) {
+        e.preventDefault();
+        handleCategoryClick(cat.id);
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose, handleCategoryClick]);
+
   return createPortal(
     <>
       <div
@@ -120,7 +163,11 @@ export function PpImportModal({ onClose, onOpenCryptoForm }: Props) {
         }}
       />
       <div
+        ref={modalRef}
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pp-import-title"
         style={{
           position: 'fixed',
           top: '50%',
@@ -148,11 +195,11 @@ export function PpImportModal({ onClose, onOpenCryptoForm }: Props) {
           }}
         >
           <div>
-            <div style={{ fontWeight: 600, fontSize: 16, letterSpacing: '-0.01em', color: 'rgb(var(--ink, 10 10 10))' }}>
+            <div id="pp-import-title" style={{ fontWeight: 600, fontSize: 16, letterSpacing: '-0.01em', color: 'rgb(var(--ink, 10 10 10))' }}>
               Importer / Saisir vos données fiscales
             </div>
             <div style={{ fontSize: 11, color: 'rgb(var(--muted, 107 107 102))', marginTop: 2 }}>
-              PDF, JPG, PNG — max 10 MB — détection automatique du type
+              PDF, JPG, PNG — max 10 MB — <kbd style={kbdStyle}>Esc</kbd> ferme · <kbd style={kbdStyle}>W</kbd>/<kbd style={kbdStyle}>B</kbd>/<kbd style={kbdStyle}>P</kbd>/<kbd style={kbdStyle}>F</kbd>/<kbd style={kbdStyle}>A</kbd>/<kbd style={kbdStyle}>C</kbd> sélectionne
             </div>
           </div>
           <button
@@ -280,6 +327,7 @@ export function PpImportModal({ onClose, onOpenCryptoForm }: Props) {
                   </span>
                   <span style={{ fontSize: 11, fontWeight: 600 }}>{cat.label}</span>
                   <span style={{ fontSize: 10, color: 'rgb(var(--subtle, 154 154 147))' }}>{cat.sub}</span>
+                  <kbd style={{ ...kbdStyle, marginTop: 2 }}>{cat.shortcut}</kbd>
                 </button>
               );
             })}
