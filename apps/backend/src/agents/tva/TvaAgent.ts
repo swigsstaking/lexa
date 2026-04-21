@@ -1,6 +1,8 @@
 import { embedder } from "../../rag/EmbedderClient.js";
 import { qdrant, type QdrantHit } from "../../rag/QdrantClient.js";
 import { ollama } from "../../llm/OllamaClient.js";
+import { vllm } from "../../llm/VllmClient.js";
+import { AGENT_PROMPTS } from "../../llm/agent-prompts.js";
 
 export type TvaQuery = {
   question: string;
@@ -33,6 +35,9 @@ export type TvaAnswer = {
  */
 export class TvaAgent {
   private readonly model = "lexa-tva";
+  private readonly useVllm = process.env.USE_VLLM_TVA === "true";
+  private readonly vllmModel = process.env.VLLM_MODEL ?? "apolo13x/Qwen3.5-35B-A3B-NVFP4";
+  private readonly systemPrompt = AGENT_PROMPTS["lexa-tva"]?.system ?? "";
 
   async ask(query: TvaQuery): Promise<TvaAnswer> {
     const started = Date.now();
@@ -65,13 +70,40 @@ Reponds de maniere concise, cite les articles et les Info TVA utilises, et termi
 
 REPONSE:`;
 
-    const { response } = await ollama.generate({
-      model: this.model,
-      prompt,
-      temperature: 0.15,
-      numCtx: 16384,
-      numPredict: 600,
-    });
+    let response: string;
+    if (this.useVllm) {
+      try {
+        const result = await vllm.generate({
+          model: this.vllmModel,
+          systemPrompt: this.systemPrompt,
+          prompt,
+          temperature: 0.15,
+          numPredict: 800,
+          think: false,
+        });
+        response = result.response;
+        console.log(`[tva] vLLM ${this.vllmModel} — ${result.totalDurationMs}ms, ${result.evalCount} tokens`);
+      } catch (err) {
+        console.warn("[tva] vLLM failed, falling back to Ollama:", (err as Error).message);
+        const { response: ollamaResponse } = await ollama.generate({
+          model: this.model,
+          prompt,
+          temperature: 0.15,
+          numCtx: 16384,
+          numPredict: 600,
+        });
+        response = ollamaResponse;
+      }
+    } else {
+      const { response: ollamaResponse } = await ollama.generate({
+        model: this.model,
+        prompt,
+        temperature: 0.15,
+        numCtx: 16384,
+        numPredict: 600,
+      });
+      response = ollamaResponse;
+    }
 
     const citations = rankedHits.map((h) => ({
       law: h.payload.law,

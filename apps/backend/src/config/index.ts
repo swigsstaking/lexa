@@ -70,6 +70,22 @@ const ConfigSchema = z.object({
   REDIS_PORT: z.coerce.number().int().positive().default(6379),
   LLM_QUEUE_TIMEOUT_MS: z.coerce.number().int().positive().default(180000),
 
+  // vLLM feature flags — 12 agents migrés (activation manuelle par agent, défaut false)
+  // Modèle partagé (override par agent via VLLM_<AGENT>_MODEL si besoin)
+  VLLM_MODEL: z.string().default("apolo13x/Qwen3.5-35B-A3B-NVFP4"),
+  USE_VLLM_LEXA: z.string().transform((v) => v === "true").default("false"),
+  USE_VLLM_TVA: z.string().transform((v) => v === "true").default("false"),
+  USE_VLLM_CLOTURE: z.string().transform((v) => v === "true").default("false"),
+  USE_VLLM_CONSEILLER: z.string().transform((v) => v === "true").default("false"),
+  USE_VLLM_FISCAL_PP_VS: z.string().transform((v) => v === "true").default("false"),
+  USE_VLLM_FISCAL_PP_GE: z.string().transform((v) => v === "true").default("false"),
+  USE_VLLM_FISCAL_PP_VD: z.string().transform((v) => v === "true").default("false"),
+  USE_VLLM_FISCAL_PP_FR: z.string().transform((v) => v === "true").default("false"),
+  USE_VLLM_FISCAL_PP_NE: z.string().transform((v) => v === "true").default("false"),
+  USE_VLLM_FISCAL_PP_JU: z.string().transform((v) => v === "true").default("false"),
+  USE_VLLM_FISCAL_PP_BJ: z.string().transform((v) => v === "true").default("false"),
+  USE_VLLM_FISCAL_PM: z.string().transform((v) => v === "true").default("false"),
+
   // Crypto module — PP wallets + snapshots annuels (V1.3)
   CMC_API_KEY: z.string().default(""),           // CoinMarketCap key (pro-api.coinmarketcap.com)
   ETHERSCAN_API_KEY: z.string().default(""),     // Etherscan free tier key (etherscan.io/apis)

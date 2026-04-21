@@ -13,6 +13,8 @@
 import { embedder } from "../../rag/EmbedderClient.js";
 import { qdrant, type QdrantHit } from "../../rag/QdrantClient.js";
 import { ollama } from "../../llm/OllamaClient.js";
+import { vllm } from "../../llm/VllmClient.js";
+import { AGENT_PROMPTS } from "../../llm/agent-prompts.js";
 
 /**
  * REGLES STRICTES — Plafonds 3a OPP3 (à respecter absolument)
@@ -75,6 +77,9 @@ export type ConseillerAnswer = {
  */
 export class ConseillerAgent {
   private readonly model = "lexa-conseiller";
+  private readonly useVllm = process.env.USE_VLLM_CONSEILLER === "true";
+  private readonly vllmModel = process.env.VLLM_MODEL ?? "apolo13x/Qwen3.5-35B-A3B-NVFP4";
+  private readonly systemPrompt = AGENT_PROMPTS["lexa-conseiller"]?.system ?? "";
 
   async ask(query: ConseillerQuery): Promise<ConseillerAnswer> {
     const started = Date.now();
@@ -110,11 +115,36 @@ Disclaimer final obligatoire : "Conseil indicatif, verifiez avec votre fiduciair
 
 REPONSE CONSEILLER:`;
 
-    const { response } = await ollama.generate({
-      model: this.model,
-      prompt,
-      temperature: 0.2,
-    });
+    let response: string;
+    if (this.useVllm) {
+      try {
+        const result = await vllm.generate({
+          model: this.vllmModel,
+          systemPrompt: this.systemPrompt,
+          prompt,
+          temperature: 0.2,
+          numPredict: 1000,
+          think: false,
+        });
+        response = result.response;
+        console.log(`[conseiller] vLLM ${this.vllmModel} — ${result.totalDurationMs}ms, ${result.evalCount} tokens`);
+      } catch (err) {
+        console.warn("[conseiller] vLLM failed, falling back to Ollama:", (err as Error).message);
+        const { response: ollamaResponse } = await ollama.generate({
+          model: this.model,
+          prompt,
+          temperature: 0.2,
+        });
+        response = ollamaResponse;
+      }
+    } else {
+      const { response: ollamaResponse } = await ollama.generate({
+        model: this.model,
+        prompt,
+        temperature: 0.2,
+      });
+      response = ollamaResponse;
+    }
 
     // 5. Extract citations
     const citations = rankedHits.map((h) => ({
@@ -202,12 +232,22 @@ Max 400 mots. En français. Cite les articles de loi pertinents (LTVA art. 71, L
 Si aucune alerte urgente, le dire positivement. Si des transactions sont en attente, encourager la classification.`;
 
     try {
+      const llmCall = this.useVllm
+        ? vllm.generate({
+            model: this.vllmModel,
+            systemPrompt: this.systemPrompt,
+            prompt,
+            temperature: 0.3,
+            numPredict: 1000,
+            think: false,
+          }).then((r) => ({ response: r.response }))
+        : ollama.generate({
+            model: this.model,
+            prompt,
+            temperature: 0.3,
+          });
       const result = await Promise.race([
-        ollama.generate({
-          model: this.model,
-          prompt,
-          temperature: 0.3,
-        }),
+        llmCall,
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error("LLM timeout after 45s")), 45_000),
         ),

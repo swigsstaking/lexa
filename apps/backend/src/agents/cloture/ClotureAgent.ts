@@ -1,6 +1,8 @@
 import { embedder } from "../../rag/EmbedderClient.js";
 import { qdrant, type QdrantHit } from "../../rag/QdrantClient.js";
 import { ollama } from "../../llm/OllamaClient.js";
+import { vllm } from "../../llm/VllmClient.js";
+import { AGENT_PROMPTS } from "../../llm/agent-prompts.js";
 
 export type ClotureQuery = {
   question: string;
@@ -44,6 +46,9 @@ export type ClotureAnswer = {
  */
 export class ClotureAgent {
   private readonly model = "lexa-cloture";
+  private readonly useVllm = process.env.USE_VLLM_CLOTURE === "true";
+  private readonly vllmModel = process.env.VLLM_MODEL ?? "apolo13x/Qwen3.5-35B-A3B-NVFP4";
+  private readonly systemPrompt = AGENT_PROMPTS["lexa-cloture"]?.system ?? "";
 
   async ask(query: ClotureQuery): Promise<ClotureAnswer> {
     const started = Date.now();
@@ -75,13 +80,40 @@ Reponds de maniere concise en citant les articles CO (art.957-963b) pertinents. 
 
 REPONSE:`;
 
-    const { response } = await ollama.generate({
-      model: this.model,
-      prompt,
-      temperature: 0.1,
-      numCtx: 32768,
-      numPredict: 800,
-    });
+    let response: string;
+    if (this.useVllm) {
+      try {
+        const result = await vllm.generate({
+          model: this.vllmModel,
+          systemPrompt: this.systemPrompt,
+          prompt,
+          temperature: 0.1,
+          numPredict: 800,
+          think: false,
+        });
+        response = result.response;
+        console.log(`[cloture] vLLM ${this.vllmModel} — ${result.totalDurationMs}ms, ${result.evalCount} tokens`);
+      } catch (err) {
+        console.warn("[cloture] vLLM failed, falling back to Ollama:", (err as Error).message);
+        const { response: ollamaResponse } = await ollama.generate({
+          model: this.model,
+          prompt,
+          temperature: 0.1,
+          numCtx: 32768,
+          numPredict: 800,
+        });
+        response = ollamaResponse;
+      }
+    } else {
+      const { response: ollamaResponse } = await ollama.generate({
+        model: this.model,
+        prompt,
+        temperature: 0.1,
+        numCtx: 32768,
+        numPredict: 800,
+      });
+      response = ollamaResponse;
+    }
 
     const citations = rankedHits.map((h) => ({
       law: h.payload.law,

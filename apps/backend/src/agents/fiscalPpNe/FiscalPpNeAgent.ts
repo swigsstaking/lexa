@@ -1,6 +1,8 @@
 import { embedder } from "../../rag/EmbedderClient.js";
 import { qdrant, type QdrantHit } from "../../rag/QdrantClient.js";
 import { ollama } from "../../llm/OllamaClient.js";
+import { vllm } from "../../llm/VllmClient.js";
+import { AGENT_PROMPTS } from "../../llm/agent-prompts.js";
 
 export type FiscalPpNeQuery = {
   question: string;
@@ -36,6 +38,9 @@ export type FiscalPpNeAnswer = {
  */
 export class FiscalPpNeAgent {
   private readonly model = "lexa-fiscal-pp-ne";
+  private readonly useVllm = process.env.USE_VLLM_FISCAL_PP_NE === "true";
+  private readonly vllmModel = process.env.VLLM_MODEL ?? "apolo13x/Qwen3.5-35B-A3B-NVFP4";
+  private readonly systemPrompt = AGENT_PROMPTS["lexa-fiscal-pp-ne"]?.system ?? "";
 
   async ask(query: FiscalPpNeQuery): Promise<FiscalPpNeAnswer> {
     const started = Date.now();
@@ -67,13 +72,40 @@ Reponds de maniere concise en citant les articles LCdir / RGI / ORD-FP (RSN) et 
 
 REPONSE:`;
 
-    const { response } = await ollama.generate({
-      model: this.model,
-      prompt,
-      temperature: 0.15,
-      numCtx: 16384,
-      numPredict: 600,
-    });
+    let response: string;
+    if (this.useVllm) {
+      try {
+        const result = await vllm.generate({
+          model: this.vllmModel,
+          systemPrompt: this.systemPrompt,
+          prompt,
+          temperature: 0.15,
+          numPredict: 800,
+          think: false,
+        });
+        response = result.response;
+        console.log(`[fiscal-pp-ne] vLLM ${this.vllmModel} — ${result.totalDurationMs}ms, ${result.evalCount} tokens`);
+      } catch (err) {
+        console.warn("[fiscal-pp-ne] vLLM failed, falling back to Ollama:", (err as Error).message);
+        const { response: ollamaResponse } = await ollama.generate({
+          model: this.model,
+          prompt,
+          temperature: 0.15,
+          numCtx: 16384,
+          numPredict: 600,
+        });
+        response = ollamaResponse;
+      }
+    } else {
+      const { response: ollamaResponse } = await ollama.generate({
+        model: this.model,
+        prompt,
+        temperature: 0.15,
+        numCtx: 16384,
+        numPredict: 600,
+      });
+      response = ollamaResponse;
+    }
 
     const citations = rankedHits.map((h) => ({
       law: h.payload.law,

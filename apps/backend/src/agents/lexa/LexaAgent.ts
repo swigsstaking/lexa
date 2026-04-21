@@ -1,6 +1,8 @@
 import { embedder } from "../../rag/EmbedderClient.js";
 import { qdrant, type QdrantHit } from "../../rag/QdrantClient.js";
 import { ollama } from "../../llm/OllamaClient.js";
+import { vllm } from "../../llm/VllmClient.js";
+import { AGENT_PROMPTS } from "../../llm/agent-prompts.js";
 import { query } from "../../db/postgres.js";
 
 export type LexaQuery = {
@@ -137,6 +139,9 @@ ${draftLines}`;
 
 export class LexaAgent {
   private readonly model = "lexa-reasoning";
+  private readonly useVllm = process.env.USE_VLLM_LEXA === "true";
+  private readonly vllmModel = process.env.VLLM_MODEL ?? "apolo13x/Qwen3.5-35B-A3B-NVFP4";
+  private readonly systemPrompt = AGENT_PROMPTS["lexa-reasoning"]?.system ?? "";
 
   async ask(query_: LexaQuery): Promise<LexaAnswer> {
     const started = Date.now();
@@ -174,13 +179,40 @@ Réponds de manière concise et précise. Si la question porte sur des chiffres 
 
 RÉPONSE:`;
 
-    const { response } = await ollama.generate({
-      model: this.model,
-      prompt,
-      temperature: 0.2,
-      numCtx: 16384,
-      numPredict: 800,
-    });
+    let response: string;
+    if (this.useVllm) {
+      try {
+        const result = await vllm.generate({
+          model: this.vllmModel,
+          systemPrompt: this.systemPrompt,
+          prompt,
+          temperature: 0.2,
+          numPredict: 800,
+          think: false,
+        });
+        response = result.response;
+        console.log(`[lexa] vLLM ${this.vllmModel} — ${result.totalDurationMs}ms, ${result.evalCount} tokens`);
+      } catch (err) {
+        console.warn("[lexa] vLLM failed, falling back to Ollama:", (err as Error).message);
+        const { response: ollamaResponse } = await ollama.generate({
+          model: this.model,
+          prompt,
+          temperature: 0.2,
+          numCtx: 16384,
+          numPredict: 800,
+        });
+        response = ollamaResponse;
+      }
+    } else {
+      const { response: ollamaResponse } = await ollama.generate({
+        model: this.model,
+        prompt,
+        temperature: 0.2,
+        numCtx: 16384,
+        numPredict: 800,
+      });
+      response = ollamaResponse;
+    }
 
     const citations = hits.map((h: QdrantHit) => ({
       law: h.payload.law,
