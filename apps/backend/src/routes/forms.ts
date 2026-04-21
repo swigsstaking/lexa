@@ -606,7 +606,7 @@ formsRouter.post("/pm-declaration-vs", requireAuth, async (req, res) => {
  * Permet au frontend de toujours afficher les mêmes montants que le PDF.
  */
 const previewTaxEstimateSchema = z.object({
-  canton: z.enum(["VS", "GE", "VD", "FR"]),
+  canton: z.enum(["VS", "GE", "VD", "FR", "NE", "JU", "BJ"]),
   year: z.number().int().min(2024).max(2030).optional().default(2026),
   revenuImposable: z.number().min(0),
   civilStatus: z.enum(["single", "married"]).optional().default("single"),

@@ -34,13 +34,16 @@ import { Step5PreviewVs } from '@/components/company/vs/Step5PreviewVs';
 import { PmWizardSummaryVs } from '@/components/company/vs/PmWizardSummaryVs';
 import { Step6GenerateCanton } from '@/components/company/shared/Step6GenerateCanton';
 
-export type PmCanton = 'VS' | 'GE' | 'VD' | 'FR';
+export type PmCanton = 'VS' | 'GE' | 'VD' | 'FR' | 'NE' | 'JU' | 'BJ';
 
 const CANTON_LABELS: Record<PmCanton, string> = {
   VS: 'Valais',
   GE: 'Genève',
   VD: 'Vaud',
   FR: 'Fribourg',
+  NE: 'Neuchâtel',
+  JU: 'Jura',
+  BJ: 'Jura bernois',
 };
 
 const STEPS = [
@@ -239,7 +242,12 @@ export function PmWizardCanton({ canton }: Props) {
           <span className="text-sm font-semibold">Lexa</span>
           <span className="w-px h-5 bg-border" />
           <span className="text-sm text-muted">
-            Déclaration PM — Canton {canton === 'VS' ? 'du Valais' : `de ${CANTON_LABELS[canton]}`} — {year}
+            Déclaration PM — Canton {
+              canton === 'VS' ? 'du Valais'
+              : canton === 'JU' ? 'du Jura'
+              : canton === 'BJ' ? 'du Jura bernois'
+              : `de ${CANTON_LABELS[canton]}`
+            } — {year}
           </span>
         </div>
         <div className="flex items-center gap-3">

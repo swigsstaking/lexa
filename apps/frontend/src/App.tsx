@@ -249,6 +249,31 @@ export default function App() {
             </RequireAuth>
           }
         />
+        {/* PM wizard — Neuchâtel, Jura, Jura bernois (session 35) */}
+        <Route
+          path="/pm/ne/:year"
+          element={
+            <RequireAuth>
+              <PmWizardCanton canton="NE" />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/pm/ju/:year"
+          element={
+            <RequireAuth>
+              <PmWizardCanton canton="JU" />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/pm/bj/:year"
+          element={
+            <RequireAuth>
+              <PmWizardCanton canton="BJ" />
+            </RequireAuth>
+          }
+        />
         {/* Clôture continue — Session 29 */}
         <Route
           path="/close/:year"

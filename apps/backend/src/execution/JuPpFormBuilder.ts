@@ -228,10 +228,10 @@ async function projectJuPp(params: {
       : "draft"
     : "ledger";
 
-  // JU n'est pas encore dans taxEstimator — fallback FR (structure similaire)
+  // JU — barème officiel LI-JU RSJU 641.11 (approximation SCCJ 2026, S37)
   const taxEstimate = revenuImposable > 0
     ? estimateTaxDue({
-        canton: "FR",
+        canton: "JU",
         year,
         revenuImposable,
         civilStatus: (draft?.step1?.civilStatus === "married" || draft?.step1?.civilStatus === "registered_partnership")

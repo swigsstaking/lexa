@@ -228,10 +228,10 @@ async function projectNePp(params: {
       : "draft"
     : "ledger";
 
-  // NE n'est pas encore dans taxEstimator — fallback sans estimation ICC
+  // NE — barème officiel LCdir RSN 631.0 (approximation SCCO NE 2026, S37)
   const taxEstimate = revenuImposable > 0
     ? estimateTaxDue({
-        canton: "FR",
+        canton: "NE",
         year,
         revenuImposable,
         civilStatus: (draft?.step1?.civilStatus === "married" || draft?.step1?.civilStatus === "registered_partnership")

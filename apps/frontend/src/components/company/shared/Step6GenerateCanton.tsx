@@ -27,6 +27,9 @@ const CANTON_AUTHORITY: Record<PmCanton, string> = {
   GE: 'Administration fiscale cantonale de Genève (AFC-GE)',
   VD: 'Administration cantonale des impôts VD (ACI VD)',
   FR: 'Service cantonal des contributions FR (SCC FR)',
+  NE: 'Service cantonal des contributions NE (SCC NE)',
+  JU: 'Service des contributions du Canton du Jura (SCCJ)',
+  BJ: 'Administration fiscale du canton de Berne — section francophone (ADB)',
 };
 
 const CANTON_LABEL: Record<PmCanton, string> = {
@@ -34,6 +37,9 @@ const CANTON_LABEL: Record<PmCanton, string> = {
   GE: 'Genève',
   VD: 'Vaud',
   FR: 'Fribourg',
+  NE: 'Neuchâtel',
+  JU: 'Jura',
+  BJ: 'Jura bernois',
 };
 
 function downloadPdf(base64: string, filename: string) {

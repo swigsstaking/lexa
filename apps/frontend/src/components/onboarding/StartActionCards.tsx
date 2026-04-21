@@ -23,7 +23,7 @@ export function StartActionCards({ onSelect }: StartActionCardsProps) {
     const isPM = legalForm === 'sarl' || legalForm === 'sa' || legalForm === 'cooperative';
 
     if (isPM) {
-      const pmCantons = ['VS', 'GE', 'VD', 'FR'];
+      const pmCantons = ['VS', 'GE', 'VD', 'FR', 'NE', 'JU', 'BJ'];
       const c = pmCantons.includes(canton) ? canton.toLowerCase() : 'vs';
       return `/pm/${c}/${year}`;
     }

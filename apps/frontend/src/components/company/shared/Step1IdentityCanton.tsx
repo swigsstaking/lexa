@@ -6,6 +6,9 @@
  */
 import type { CompanyDraftState } from '@/api/lexa';
 import type { PmCanton } from '@/routes/company/PmWizardCanton';
+import { COMMUNES_NE } from '@/data/communes-ne';
+import { COMMUNES_JU } from '@/data/communes-ju';
+import { COMMUNES_BJ } from '@/data/communes-bj';
 
 const LEGAL_FORMS = [
   { value: 'sarl', label: 'Sàrl — Société à responsabilité limitée' },
@@ -57,6 +60,9 @@ const COMMUNES_BY_CANTON: Record<PmCanton, string[]> = {
   GE: COMMUNES_GE,
   VD: COMMUNES_VD,
   FR: COMMUNES_FR,
+  NE: COMMUNES_NE,
+  JU: COMMUNES_JU,
+  BJ: COMMUNES_BJ,
 };
 
 const CANTON_NAMES: Record<PmCanton, string> = {
@@ -64,6 +70,9 @@ const CANTON_NAMES: Record<PmCanton, string> = {
   GE: 'Genève',
   VD: 'Vaud',
   FR: 'Fribourg',
+  NE: 'Neuchâtel',
+  JU: 'Jura',
+  BJ: 'Jura bernois',
 };
 
 // Préposition correcte selon le canton (du/de)
@@ -72,6 +81,9 @@ const CANTON_PREPOSITIONS: Record<PmCanton, string> = {
   GE: 'de Genève',
   VD: 'de Vaud',
   FR: 'de Fribourg',
+  NE: 'de Neuchâtel',
+  JU: 'du Jura',
+  BJ: 'du Jura bernois',
 };
 
 interface Props {

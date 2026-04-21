@@ -1,17 +1,21 @@
 /**
  * Lexa — Simulateur fiscal V1
- * Session 22 (Lane A) — mis à jour Session 33 (barèmes officiels)
+ * Session 22 (Lane A) — mis à jour Session 33 (barèmes officiels) + Session 37 (NE/JU/BJ)
  *
- * Estimation de l'impôt dû pour les cantons VS, GE, VD, FR.
+ * Estimation de l'impôt dû pour les cantons VS, GE, VD, FR, NE, JU, BJ.
  * Priority : barèmes officiels YAML (TaxScaleLoader) — fallback sur approximations tabulées V1.
  *
  * Session 33 : 6 TODOs barèmes cantonaux résolus — barèmes officiels 2026 intégrés.
+ * Session 37 : Ajout barèmes NE (RSN 631.0), JU (RSJU 641.11), BJ (RSB 661.11).
  * TODOs maintenus :
  *   - IFD : barème official AFC exact (indexation 2026 à confirmer)
  *   - VS PP : tranches > 152k tronquées dans chunk ingéré (taux 14% utilisé comme max)
  *   - GE PP : tarif marié (art. 41 al. 2 LIPP) non ingéré — fallback barème approximatif
  *   - VD PP : coefficient annuel 2026 exact à confirmer sur vd.ch/aci
  *   - FR PP : barème tabulaire SCC-FR 2026 à scraper (délégué au SCC par LICD)
+ *   - NE PP : barème officiel SCCO NE 2026 à confirmer (approximation S37)
+ *   - JU PP : barème officiel SCCJ 2026 à confirmer (approximation S37)
+ *   - BJ PP : barème officiel ADB-BE 2026 à confirmer (approximation S37)
  */
 
 import {
@@ -212,7 +216,89 @@ const ICC_FR_BRACKETS_MARRIED = [
   { max: Infinity, rate: 12.0 },
 ];
 
+// ── Barèmes cantonaux NE/JU/BJ fallback (approximations Session 37) ──────────
+// NE — Neuchâtel : taux de base × coefficient global ~1.76 (canton 111% + commune ~65%)
+// Source : LCdir-NE RSN 631.0 Art. 40 — approximation SCCO NE 2026
+const ICC_NE_BRACKETS_SINGLE = [
+  { max: 12800, rate: 0 },
+  { max: 20000, rate: 2.64 },
+  { max: 30000, rate: 4.40 },
+  { max: 45000, rate: 6.16 },
+  { max: 65000, rate: 8.80 },
+  { max: 90000, rate: 11.00 },
+  { max: 130000, rate: 13.20 },
+  { max: 200000, rate: 15.40 },
+  { max: 300000, rate: 17.60 },
+  { max: Infinity, rate: 22.00 },
+];
+
+const ICC_NE_BRACKETS_MARRIED = [
+  { max: 25600, rate: 0 },
+  { max: 36000, rate: 2.20 },
+  { max: 50000, rate: 3.96 },
+  { max: 70000, rate: 5.72 },
+  { max: 95000, rate: 8.36 },
+  { max: 130000, rate: 10.56 },
+  { max: 180000, rate: 12.76 },
+  { max: Infinity, rate: 16.50 },
+];
+
+// JU — Jura : taux de base × coefficient cantonal 2.40 (240%)
+// Source : LI-JU RSJU 641.11 Art. 40 — approximation SCCJ 2026
+const ICC_JU_BRACKETS_SINGLE = [
+  { max: 11200, rate: 0 },
+  { max: 20000, rate: 2.40 },
+  { max: 30000, rate: 4.80 },
+  { max: 45000, rate: 7.20 },
+  { max: 65000, rate: 10.80 },
+  { max: 90000, rate: 14.40 },
+  { max: 130000, rate: 19.20 },
+  { max: 200000, rate: 24.00 },
+  { max: 350000, rate: 28.80 },
+  { max: Infinity, rate: 31.20 },
+];
+
+const ICC_JU_BRACKETS_MARRIED = [
+  { max: 22400, rate: 0 },
+  { max: 34000, rate: 2.16 },
+  { max: 50000, rate: 4.32 },
+  { max: 72000, rate: 7.20 },
+  { max: 100000, rate: 12.00 },
+  { max: 150000, rate: 17.28 },
+  { max: 250000, rate: 21.60 },
+  { max: Infinity, rate: 26.40 },
+];
+
+// BJ — Jura bernois (tarif BE) : taux de base × coefficient cantonal 3.04 (304%)
+// Source : LIMP-BE RSB 661.11 Art. 42 — approximation ADB 2026
+const ICC_BJ_BRACKETS_SINGLE = [
+  { max: 15000, rate: 0 },
+  { max: 22000, rate: 3.04 },
+  { max: 33000, rate: 6.08 },
+  { max: 48000, rate: 9.12 },
+  { max: 70000, rate: 13.68 },
+  { max: 100000, rate: 18.24 },
+  { max: 150000, rate: 24.32 },
+  { max: 250000, rate: 30.40 },
+  { max: 400000, rate: 36.48 },
+  { max: Infinity, rate: 40.13 },
+];
+
+const ICC_BJ_BRACKETS_MARRIED = [
+  { max: 30000, rate: 0 },
+  { max: 44000, rate: 2.74 },
+  { max: 65000, rate: 5.47 },
+  { max: 95000, rate: 9.12 },
+  { max: 135000, rate: 15.20 },
+  { max: 200000, rate: 21.89 },
+  { max: 350000, rate: 27.36 },
+  { max: Infinity, rate: 34.22 },
+];
+
 // ── Estimation ICC PP ──────────────────────────────────────────────────────────
+
+/** Cantons supportés pour l'estimation fiscale PP */
+export type SupportedCanton = "VS" | "GE" | "VD" | "FR" | "NE" | "JU" | "BJ";
 
 /**
  * Estimation ICC 2026 (impôt cantonal + communal combiné).
@@ -223,7 +309,7 @@ const ICC_FR_BRACKETS_MARRIED = [
  */
 export function estimateIccWithSource(
   revenuImposable: number,
-  canton: "VS" | "GE" | "VD" | "FR",
+  canton: SupportedCanton,
   civilStatus: "single" | "married" = "single",
   year: number = 2026,
 ): { icc: number; source: "official-scale" | "approximation" } {
@@ -236,7 +322,7 @@ export function estimateIccWithSource(
     }
   }
 
-  // Fallback approximation V1
+  // Fallback approximation V1/S37
   const isSingle = civilStatus === "single";
   let icc: number;
   switch (canton) {
@@ -252,6 +338,15 @@ export function estimateIccWithSource(
     case "FR":
       icc = progressiveTax(revenuImposable, isSingle ? ICC_FR_BRACKETS_SINGLE : ICC_FR_BRACKETS_MARRIED);
       break;
+    case "NE":
+      icc = progressiveTax(revenuImposable, isSingle ? ICC_NE_BRACKETS_SINGLE : ICC_NE_BRACKETS_MARRIED);
+      break;
+    case "JU":
+      icc = progressiveTax(revenuImposable, isSingle ? ICC_JU_BRACKETS_SINGLE : ICC_JU_BRACKETS_MARRIED);
+      break;
+    case "BJ":
+      icc = progressiveTax(revenuImposable, isSingle ? ICC_BJ_BRACKETS_SINGLE : ICC_BJ_BRACKETS_MARRIED);
+      break;
     default:
       throw new Error(`Canton non supporté pour l'estimation fiscale: ${canton}`);
   }
@@ -263,7 +358,7 @@ export function estimateIccWithSource(
  */
 export function estimateIcc(
   revenuImposable: number,
-  canton: "VS" | "GE" | "VD" | "FR",
+  canton: SupportedCanton,
   civilStatus: "single" | "married",
 ): number {
   return estimateIccWithSource(revenuImposable, canton, civilStatus).icc;
@@ -275,7 +370,7 @@ export function estimateIcc(
  * @returns TaxEstimate avec ICC, IFD, total, taux effectif, source barème et disclaimer
  */
 export function estimateTaxDue(params: {
-  canton: "VS" | "GE" | "VD" | "FR";
+  canton: SupportedCanton;
   year: number;
   revenuImposable: number;
   civilStatus?: "single" | "married";

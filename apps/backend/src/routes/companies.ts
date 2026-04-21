@@ -326,10 +326,13 @@ function makeSubmitRoute(canton: Canton) {
 companiesRouter.post("/draft/:year/submit-ge", makeSubmitRoute("GE"));
 companiesRouter.post("/draft/:year/submit-vd", makeSubmitRoute("VD"));
 companiesRouter.post("/draft/:year/submit-fr", makeSubmitRoute("FR"));
+companiesRouter.post("/draft/:year/submit-ne", makeSubmitRoute("NE"));
+companiesRouter.post("/draft/:year/submit-ju", makeSubmitRoute("JU"));
+companiesRouter.post("/draft/:year/submit-bj", makeSubmitRoute("BJ"));
 
 // ── GET /companies/draft/:year/export-xml?canton=VS — export XML eCH-0229 PM ──
 
-const VALID_CANTONS_XML = ["VS", "GE", "VD", "FR"] as const;
+const VALID_CANTONS_XML = ["VS", "GE", "VD", "FR", "NE", "JU", "BJ"] as const;
 
 /**
  * GET /companies/draft/:year/export-xml?canton=VS

@@ -36,7 +36,7 @@ export type PmDraft = {
   financials: PmFinancials;
 };
 
-export type Canton = "VS" | "GE" | "VD" | "FR";
+export type Canton = "VS" | "GE" | "VD" | "FR" | "NE" | "JU" | "BJ";
 
 export type PmDeclarationVs = {
   formId: string;
@@ -80,6 +80,9 @@ export function buildPmDeclaration(
     GE: "Administration fiscale cantonale de Genève (AFC-GE)",
     VD: "Administration cantonale des impôts VD (ACI VD)",
     FR: "Service cantonal des contributions FR (SCC FR)",
+    NE: "Service cantonal des contributions NE (SCC NE)",
+    JU: "Service des contributions du Canton du Jura (SCCJ)",
+    BJ: "Administration fiscale du canton de Berne — section francophone (ADB)",
   };
 
   const cantonLabelMap: Record<Canton, string> = {
@@ -87,6 +90,9 @@ export function buildPmDeclaration(
     GE: "Genève",
     VD: "Vaud",
     FR: "Fribourg",
+    NE: "Neuchâtel",
+    JU: "Jura",
+    BJ: "Jura bernois (Berne)",
   };
 
   const legalSourceMap: Record<Canton, string> = {
@@ -94,6 +100,9 @@ export function buildPmDeclaration(
     GE: "LIPM GE (RSG D 3 09) — impôt proportionnel sur bénéfice PM",
     VD: "LI VD (BLV 642.11) — barème PM + coefficient communal",
     FR: "LICD FR (BDLF 631.1) — section PM",
+    NE: "LIPM-NE (RSN 631.0) — impôt sur le bénéfice et le capital PM",
+    JU: "LICD-JU (RSJU 641.11) — impôt sur le bénéfice et le capital PM",
+    BJ: "LICD-BE (RSB 661.11) — impôt sur le bénéfice et le capital PM (Berne)",
   };
 
   return {

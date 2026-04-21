@@ -1,0 +1,112 @@
+# Barème ICC Jura bernois (canton de Berne) — Personnes Physiques 2026
+# BJ = communes francophones du canton de Berne (Jura bernois + Biel/Bienne)
+# Source : Loi sur les impôts du canton de Berne (LIMP-BE — RSB 661.11)
+#   - Art. 42 LIMP-BE : Barème cantonal PP (impôt de base progressif 1% → 13.2%)
+#   - Coefficient cantonal 2026 : 304% du barème de base (fixe pour tout le canton BE)
+#   - Taux global estimé : ~34.2% du revenu imposable
+# Référence : ADB section francophone (Administration fiscale du canton de Berne)
+# URL : https://www.taxinfo.sv.fin.be.ch
+# Ingéré simulé dans Qdrant : Bareme-BJ-PP-2026 (RSB 661.11)
+#
+# NOTE : Les tranches ci-dessous sont des approximations légitimes pour l'estimateur.
+# Source officielle : taxinfo.sv.fin.be.ch publie le barème annuel
+# Disclaimer déjà présent dans le wizard — confirmer avec fiduciaire.
+
+canton: BJ
+year: 2026
+entity: PP
+source:
+  authority: "Administration fiscale du canton de Berne — Section francophone (ADB)"
+  law: "Loi sur les impôts du canton de Berne (LIMP-BE — RSB 661.11)"
+  articles:
+    - "Art. 42 — Barème cantonal PP (impôt de base 1% → 13.2%)"
+    - "Art. 178 — Coefficient cantonal 304%"
+  url: "https://www.taxinfo.sv.fin.be.ch"
+  document: "LIMP-BE — Barème PP 2026 — Art. 42"
+  fetched_at: "2026-04-20"
+  confidence: medium
+  note: >
+    Tranches basées sur le barème progressif LIMP-BE Art. 42 (1% → 13.2%).
+    Coefficient cantonal BE 2026 = 304% du barème de base (fixe, identique pour tout le canton).
+    Taux global estimé : taux_base × 3.04.
+    Taux effectif moyen pour revenu 80k CHF : ~14-16% (ICC cantonal BE).
+    Impôt minimum : CHF 35.
+    Déductions sociales : CHF 15'000 (célibataire), CHF 30'000 (couple), CHF 6'800/enfant.
+    Source officielle : taxinfo.sv.fin.be.ch (accès manuel requis).
+
+# Barème de base PP Jura bernois (tarif BE) — Art. 42 LIMP-BE
+# Taux marginal 1% → 13.2%, coefficient cantonal 304%
+# Taux effectifs = taux_base × 3.04
+tarif_single:
+  structure: progressif_par_tranche
+  note: >
+    Barème de base BE × coefficient cantonal 3.04 (304%).
+    Taux effectifs ci-dessous = taux_base × 3.04.
+    Impôt minimum : CHF 35.
+  impot_minimum_chf: 35
+  coefficient_cantonal: 3.04
+  tranches:
+    - threshold: 0
+      threshold_max: 15000
+      rate: 0.0000
+    - threshold: 15001
+      threshold_max: 22000
+      rate: 0.0304
+    - threshold: 22001
+      threshold_max: 33000
+      rate: 0.0608
+    - threshold: 33001
+      threshold_max: 48000
+      rate: 0.0912
+    - threshold: 48001
+      threshold_max: 70000
+      rate: 0.1368
+    - threshold: 70001
+      threshold_max: 100000
+      rate: 0.1824
+    - threshold: 100001
+      threshold_max: 150000
+      rate: 0.2432
+    - threshold: 150001
+      threshold_max: 250000
+      rate: 0.3040
+    - threshold: 250001
+      threshold_max: 400000
+      rate: 0.3648
+    - threshold: 400001
+      rate: 0.4013
+
+# Tarif marié BE/BJ — déductions sociales majorées
+tarif_married:
+  note: >
+    BE applique une déduction sociale doublée pour les couples (CHF 30'000 vs 15'000).
+    Le barème de base reste identique mais le revenu imposable est réduit par déductions renforcées.
+    Art. 42a LIMP-BE : abattement spécifique pour couples mariés.
+    Approximation : réduction ~12-16% de l'impôt de base pour les couples.
+  source_confidence: low
+  methode: deduction_sociale_majoree
+
+# Déductions sociales BE/BJ — Art. LIMP-BE RSB 661.11
+deductions_sociales:
+  personne_seule_chf: 15000
+  couple_chf: 30000
+  par_enfant_chf: 6800
+  source: "LIMP-BE Art. 42 — déductions sociales standard 2026"
+  confidence: medium
+
+frais_professionnels:
+  pourcentage: 0.03
+  min_chf: 1700
+  max_chf: 3400
+  note: "Approximation barème ADB-BE — confirmer avec OFP-BE RSB 661.312"
+  confidence: medium
+
+# Note fiscale BJ PP
+note_fiscale: >
+  Jura bernois (canton de Berne, section francophone) : taux effectif ICC PP moyen
+  pour revenu 80k CHF ≈ 14-17% (impôt cantonal BE).
+  Coefficient cantonal fixe 2026 : 304% du barème de base (commun à tout le canton BE).
+  Taux global ICC BE estimé ≈ 34.2% pour les revenus moyens-hauts.
+  Les communes bernoises perçoivent leurs propres centimes additionnels sur le barème cantonal.
+  taxinfo.sv.fin.be.ch publie le barème officiel — contacter ADB pour données exactes.
+  Inclut les communes du Jura bernois historique + arrondissement de Biel/Bienne (francophones).

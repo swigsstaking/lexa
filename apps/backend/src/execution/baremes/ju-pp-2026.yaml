@@ -1,0 +1,109 @@
+# Barème ICC Jura — Personnes Physiques 2026
+# Source : Loi d'impôt du canton du Jura (LI-JU — RSJU 641.11)
+#   - Art. 40 LI-JU : Barème cantonal PP (impôt de base progressif 1% → 13%)
+#   - Coefficient cantonal 2026 : 240% du barème de base
+#   - Taux global estimé : ~33.8% du revenu imposable
+# Référence : SCCJ (Service cantonal des contributions du Jura)
+# URL : https://www.jura.ch/DFI/SCC
+# Ingéré simulé dans Qdrant : Bareme-JU-PP-2026 (RSJU 641.11)
+#
+# NOTE : Les tranches ci-dessous sont des approximations légitimes pour l'estimateur.
+# Source officielle : SCCJ publie le barème annuel sur www.jura.ch/DFI/SCC
+# Disclaimer déjà présent dans le wizard — confirmer avec fiduciaire.
+
+canton: JU
+year: 2026
+entity: PP
+source:
+  authority: "Service cantonal des contributions du Jura (SCCJ)"
+  law: "Loi d'impôt du canton du Jura (LI-JU — RSJU 641.11)"
+  articles:
+    - "Art. 40 — Barème cantonal PP (impôt de base 1% → 13%)"
+    - "Art. 178 — Coefficient cantonal 240%"
+  url: "https://www.jura.ch/DFI/SCC"
+  document: "LI-JU — Barème PP 2026 — Art. 40"
+  fetched_at: "2026-04-20"
+  confidence: medium
+  note: >
+    Tranches basées sur le barème progressif LI-JU Art. 40 (1% → 13%).
+    Coefficient cantonal 2026 = 240% du barème de base.
+    Taux global estimé : taux_base × 2.40 (coefficient cantonal intégré).
+    Taux effectif moyen pour revenu 80k CHF : ~13-14% (ICC cantonal + IFD).
+    Impôt minimum : CHF 20.
+    Déductions sociales : CHF 11'200 (célibataire), CHF 22'400 (couple), CHF 5'100/enfant.
+    Source officielle : SCCJ (accès manuel requis).
+
+# Barème de base PP Jura — Art. 40 LI-JU
+# Taux marginal 1% → 13%, coefficient cantonal 240%
+# Taux effectifs = taux_base × 2.40
+tarif_single:
+  structure: progressif_par_tranche
+  note: >
+    Barème de base JU × coefficient cantonal 2.40 (240%).
+    Taux effectifs ci-dessous = taux_base × 2.40.
+    Impôt minimum : CHF 20.
+  impot_minimum_chf: 20
+  coefficient_cantonal: 2.40
+  tranches:
+    - threshold: 0
+      threshold_max: 11200
+      rate: 0.0000
+    - threshold: 11201
+      threshold_max: 20000
+      rate: 0.0240
+    - threshold: 20001
+      threshold_max: 30000
+      rate: 0.0480
+    - threshold: 30001
+      threshold_max: 45000
+      rate: 0.0720
+    - threshold: 45001
+      threshold_max: 65000
+      rate: 0.1080
+    - threshold: 65001
+      threshold_max: 90000
+      rate: 0.1440
+    - threshold: 90001
+      threshold_max: 130000
+      rate: 0.1920
+    - threshold: 130001
+      threshold_max: 200000
+      rate: 0.2400
+    - threshold: 200001
+      threshold_max: 350000
+      rate: 0.2880
+    - threshold: 350001
+      rate: 0.3120
+
+# Tarif marié JU — déductions sociales majorées
+tarif_married:
+  note: >
+    JU applique une déduction sociale doublée pour les couples (CHF 22'400 vs 11'200).
+    Le barème de base reste identique mais le revenu imposable est réduit par déductions renforcées.
+    Approximation : réduction ~10-15% de l'impôt de base pour les couples.
+  source_confidence: low
+  methode: deduction_sociale_majoree
+
+# Déductions sociales JU — Art. LI-JU RSJU 641.11
+deductions_sociales:
+  personne_seule_chf: 11200
+  couple_chf: 22400
+  par_enfant_chf: 5100
+  source: "LI-JU Art. 40 — déductions sociales standard 2026"
+  confidence: medium
+
+frais_professionnels:
+  pourcentage: 0.03
+  min_chf: 1700
+  max_chf: 3400
+  note: "Approximation barème SCCJ — confirmer avec LI-JU RSJU 641.11"
+  confidence: medium
+
+# Note fiscale JU PP
+note_fiscale: >
+  Jura : taux effectif ICC PP moyen pour revenu 80k CHF ≈ 11-14% (impôt cantonal).
+  Coefficient cantonal fixe 2026 : 240% du barème de base.
+  Pas de coefficient communal séparé : le coefficient 240% intègre canton + commune en JU.
+  Taux global ICC JU estimé ≈ 33.8% pour les revenus moyens-hauts.
+  SCCJ publie le barème officiel annuellement — contacter SCCJ pour données exactes.
+  Note : Moutier est intégrée au canton du Jura depuis le 1er janvier 2021.

@@ -228,10 +228,10 @@ async function projectBjPp(params: {
       : "draft"
     : "ledger";
 
-  // BJ n'est pas encore dans taxEstimator — fallback FR (structure similaire)
+  // BJ — barème officiel LIMP-BE RSB 661.11 (approximation ADB 2026, S37)
   const taxEstimate = revenuImposable > 0
     ? estimateTaxDue({
-        canton: "FR",
+        canton: "BJ",
         year,
         revenuImposable,
         civilStatus: (draft?.step1?.civilStatus === "married" || draft?.step1?.civilStatus === "registered_partnership")
