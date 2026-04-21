@@ -25,6 +25,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+# ── Strip thinking blocks (Qwen3.5-MoE émettent <think>...</think> dans delta.content)
+THINK_RE = re.compile(r'<think>.*?</think>', re.DOTALL | re.IGNORECASE)
+
 # ── Dépendances optionnelles (installées dans le venv DGX) ───────────────────
 try:
     import requests
@@ -108,16 +111,22 @@ def call_vllm_streaming(
         "stream": True,
         # NOTE: enable_thinking non défini = comportement natif du modèle
         # Les modèles Qwen3 avec --reasoning-parser qwen3 émettent :
-        #   - delta.reasoning : chaîne de pensée (ne pas évaluer)
+        #   - delta.reasoning_content : chaîne de pensée via parser (ne pas évaluer)
         #   - delta.content : réponse finale (évaluer)
-        # TTFT mesuré dès le premier token (reasoning ou content) pour refléter
-        # la réactivité perçue par l'utilisateur.
+        # MAIS les Qwen3.5-MoE peuvent aussi émettre <think>...</think> dans delta.content.
+        # Fix3 : strip des blocs thinking AVANT le scoring.
+        # TTFT total = premier token (reasoning ou content) — réactivité perçue
+        # TTFT response = premier token de réponse finale (post-thinking) — latence utile
     }
 
     t_start = time.perf_counter()
-    ttft_ms = None
+    ttft_ms = None          # Fix2: TTFT total (premier token, tous types confondus)
+    ttft_response_ms = None # Fix2: TTFT réponse finale (premier token post-thinking)
     text = ""
     tokens_generated = 0
+
+    # Fix2: état pour détecter les bornes <think>/</think> dans delta.content
+    in_think_block = False
 
     try:
         with requests.post(url, json=payload, stream=True, timeout=timeout) as resp:
@@ -140,24 +149,49 @@ def call_vllm_streaming(
                 content = delta.get("content", "")
                 reasoning = delta.get("reasoning_content", "")
 
-                # Mesurer TTFT dès le premier token (thinking ou content)
+                # Mesurer TTFT dès le premier token (thinking ou content) — latence brute
                 if (content or reasoning) and ttft_ms is None:
                     ttft_ms = (time.perf_counter() - t_start) * 1000
 
-                # N'évaluer que delta.content (la réponse finale, pas le reasoning)
+                # N'accumuler que delta.content (la réponse finale, pas le reasoning_content)
                 if content:
                     text += content
                     tokens_generated += 1  # approximation 1 token ≈ 1 chunk SSE
+
+                    # Fix2: suivi état thinking dans delta.content pour TTFT response
+                    # Détecter ouverture/fermeture du bloc thinking
+                    if "<think>" in content.lower():
+                        in_think_block = True
+                    if "</think>" in content.lower():
+                        in_think_block = False
+                        # Le prochain token de contenu sera la réponse finale
+                    elif not in_think_block and ttft_response_ms is None:
+                        # Pas dans un bloc thinking ET pas de thinking détecté : c'est du contenu réel
+                        # Vérifier qu'on n'est pas au début d'un bloc thinking potentiel
+                        if not content.lower().strip().startswith("<think"):
+                            ttft_response_ms = (time.perf_counter() - t_start) * 1000
+
                 elif reasoning:
                     tokens_generated += 1  # compter les tokens reasoning pour tok/s
+
+        # Fix2: si ttft_response_ms jamais fixé (pas de thinking), = ttft total
+        if ttft_response_ms is None:
+            ttft_response_ms = ttft_ms
 
         total_ms = (time.perf_counter() - t_start) * 1000
         generation_ms = total_ms - (ttft_ms or 0)
         tokens_per_sec = (tokens_generated / generation_ms * 1000) if generation_ms > 0 else 0
 
+        # Fix1: strip des blocs thinking AVANT scoring
+        final_text = THINK_RE.sub('', text).strip()
+
         return {
-            "text": text,
+            "text": final_text,           # Fix4: text = post-strip (utilisé pour scoring)
+            "raw_text": text,             # Fix4: texte original avec balises thinking
+            "final_text": final_text,     # Fix4: alias explicite post-strip
             "ttft_ms": round(ttft_ms or 0, 1),
+            "ttft_total_ms": round(ttft_ms or 0, 1),             # Fix4: TTFT brut
+            "ttft_response_ms": round(ttft_response_ms or 0, 1), # Fix4: TTFT réponse
             "total_ms": round(total_ms, 1),
             "tokens_generated": tokens_generated,
             "tokens_per_sec": round(tokens_per_sec, 1),
@@ -166,7 +200,11 @@ def call_vllm_streaming(
     except Exception as exc:
         return {
             "text": "",
+            "raw_text": "",
+            "final_text": "",
             "ttft_ms": 0,
+            "ttft_total_ms": 0,
+            "ttft_response_ms": 0,
             "total_ms": round((time.perf_counter() - t_start) * 1000, 1),
             "tokens_generated": 0,
             "tokens_per_sec": 0,
@@ -639,8 +677,8 @@ def run_benchmark(args: argparse.Namespace) -> int:
             })
             continue
 
-        # Évaluation automatique
-        eval_result = evaluate_case(case, result["text"])
+        # Évaluation automatique — Fix1: scoring sur final_text (post-strip thinking)
+        eval_result = evaluate_case(case, result["text"])  # result["text"] = final_text déjà
 
         # LLM-as-judge (si activé et cas avec judge_criteria)
         judge_result = None
@@ -653,13 +691,17 @@ def run_benchmark(args: argparse.Namespace) -> int:
             )
 
         pass_str = "✅" if eval_result["pass"] else "❌"
-        print(f"{pass_str} score={eval_result['score']:.2f} | TTFT={result['ttft_ms']:.0f}ms | {result['tokens_per_sec']:.1f}tok/s")
+        ttft_resp = result.get("ttft_response_ms", result["ttft_ms"])
+        print(f"{pass_str} score={eval_result['score']:.2f} | TTFT={result['ttft_ms']:.0f}ms ttft_resp={ttft_resp:.0f}ms | {result['tokens_per_sec']:.1f}tok/s")
 
+        # Fix4: inclure raw_text, final_text, ttft_total_ms, ttft_response_ms dans le JSON
         results.append({
             "id": case_id,
             "category": category,
             "perf": {
                 "ttft_ms": result["ttft_ms"],
+                "ttft_total_ms": result.get("ttft_total_ms", result["ttft_ms"]),
+                "ttft_response_ms": result.get("ttft_response_ms", result["ttft_ms"]),
                 "total_ms": result["total_ms"],
                 "tokens_generated": result["tokens_generated"],
                 "tokens_per_sec": result["tokens_per_sec"],
@@ -668,6 +710,8 @@ def run_benchmark(args: argparse.Namespace) -> int:
             },
             "eval": eval_result,
             "judge": judge_result,
+            "raw_text": result.get("raw_text", ""),
+            "final_text": result.get("final_text", result["text"]),
             "response_preview": result["text"][:300],
         })
 
@@ -688,7 +732,11 @@ def run_benchmark(args: argparse.Namespace) -> int:
     )
 
     # Sauvegarder
-    report_path = REPORTS_DIR / f"report_{model_slug}_{run_date[:10]}.md"
+    if args.output:
+        report_path = Path(args.output)
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        report_path = REPORTS_DIR / f"report_{model_slug}_{run_date[:10]}.md"
     results_path = REPORTS_DIR / f"results_{model_slug}_{run_date[:10]}.json"
 
     with open(report_path, "w", encoding="utf-8") as f:
@@ -785,6 +833,8 @@ Exemples:
                         help="Timeout par requête en secondes (défaut: 120)")
     parser.add_argument("--delay", type=float, default=0.5,
                         help="Délai en secondes entre les requêtes (défaut: 0.5)")
+    parser.add_argument("--output", default=None,
+                        help="Chemin de sortie pour le rapport markdown (optionnel, override le nom auto)")
 
     args = parser.parse_args()
 
