@@ -18,6 +18,7 @@ import {
   ChevronDown,
   Settings,
   Plus,
+  LayoutGrid,
 } from 'lucide-react';
 import { lexa } from '@/api/lexa';
 import { useActiveCompany, useCompaniesStore } from '@/stores/companiesStore';
@@ -32,7 +33,6 @@ import { FiscalTimeline } from '@/components/timeline/FiscalTimeline';
 import { NavDropdown } from '@/components/Nav/NavDropdown';
 import { MobileMenu } from '@/components/Nav/MobileMenu';
 import { StartActionCards } from '@/components/onboarding/StartActionCards';
-import { MobileLedgerList } from '@/components/workspace/MobileLedgerList';
 import { WorkspaceV2 } from '@/components/workspace/WorkspaceV2';
 
 export function Workspace() {
@@ -443,6 +443,19 @@ export function Workspace() {
               <Calculator className="w-3.5 h-3.5" />
               <span className="hidden md:inline">Grand livre</span>
             </button>
+            {/* Portefeuille fiduciaire — visible seulement si multi-clients */}
+            {hasMultipleClients && (
+              <button
+                type="button"
+                onClick={() => navigate('/fiduciaire')}
+                title="Vue portefeuille fiduciaire"
+                className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-80"
+                style={{ color: 'var(--chrome-ink-2)' }}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Portefeuille</span>
+              </button>
+            )}
           </nav>
 
           {/* Bouton Paramètres (roue crantée) */}
@@ -476,15 +489,8 @@ export function Workspace() {
 
       {/* Canvas hero */}
       <main className="flex-1 relative min-h-0 overflow-hidden">
-        {/* Mobile : vraie vue grand livre liste groupée par classe Kafer */}
-        {hasEntries && (
-          <div className="md:hidden absolute inset-0 flex flex-col overflow-hidden">
-            <MobileLedgerList hasEntries={hasEntries} />
-          </div>
-        )}
-
-        {/* WorkspaceV2 — desktop seulement, seule version disponible */}
-        <div className="hidden md:block absolute inset-0">
+        {/* WorkspaceV2 — visible sur tous les breakpoints (mobile-friendly depuis V1.1) */}
+        <div className="absolute inset-0">
           <WorkspaceV2 />
         </div>
 

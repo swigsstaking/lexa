@@ -219,3 +219,32 @@ export interface LedgerHealth {
   gaps: LedgerGap[];
   co_959c_ready: boolean;
 }
+
+// ── Fiduciaire portfolio (vue cross-tenants) ──────────────────────────────
+
+export interface PortfolioLedgerHealth {
+  balanced: boolean;
+  txCount: number;
+  totalDebit: number;
+}
+
+export interface PortfolioDeadline {
+  label: string;
+  dueDate: string;
+  daysLeft: number;
+}
+
+export interface PortfolioClient {
+  tenantId: string;
+  name: string;
+  legalForm: string;
+  canton: string | null;
+  lastActivity: string | null;
+  ledgerHealth: PortfolioLedgerHealth;
+  nextDeadline: PortfolioDeadline | null;
+  alerts: string[];
+}
+
+export interface FiduciairePortfolio {
+  clients: PortfolioClient[];
+}

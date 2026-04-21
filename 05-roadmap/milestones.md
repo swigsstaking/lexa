@@ -16,7 +16,7 @@ Grâce au prototype existant sur le DGX Spark (`~/ollama-compta/` avec Qdrant + 
 - Clôture continue CO
 - Déclarations fiscales PP et PM pour les 7 cantons SR
 - Mode fiduciaire multi-clients
-- Interface canvas révolutionnaire
+- Interface grand livre visuel + Linear-like (dense, exploratoire)
 
 ---
 

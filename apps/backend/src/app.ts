@@ -26,6 +26,7 @@ import { startBriefingScheduler } from "./services/BriefingScheduler.js";
 import { startImapListener } from "./services/ImapListener.js";
 import { settingsRouter } from "./routes/settings.js";
 import { bridgeRouter } from "./routes/bridge.js";
+import { ppRouter } from "./routes/pp.js";
 
 const app = express();
 
@@ -65,7 +66,7 @@ app.use(tenantMiddleware);
 // Fix BUG-P1-01 : empêche la fuite de session via 304 Not Modified
 // après logout+login d'un autre compte.
 app.use((req, res, next) => {
-  if (/^\/(fiduciary|taxpayers|companies|audit|documents|ledger|forms|agents|rag|simulate|jobs)/.test(req.path)) {
+  if (/^\/(fiduciary|taxpayers|companies|audit|documents|ledger|forms|agents|rag|simulate|jobs|pp)/.test(req.path)) {
     noCache(req, res, next);
   } else {
     next();
@@ -99,6 +100,7 @@ app.use("/fiduciary", fiduciaryRouter); // requireAuth géré dans le routeur
 app.use("/jobs", jobsRouter); // LLM queue job status (session 37)
 app.use("/conseiller", conseillerRouter); // Briefings quotidiens (session briefing)
 app.use("/settings", requireAuth, settingsRouter); // Paramètres tenant (email forward...)
+app.use("/pp", requireAuth, ppRouter);
 
 // 404
 app.use((_req, res) => {

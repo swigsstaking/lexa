@@ -10,6 +10,7 @@ import { AccountTile } from './AccountTile';
 import { LexaInsight } from './LexaInsight';
 import { fmtMoney, fmtCompact } from './fmtMoney';
 import type { AccountClass } from './soldeDirection';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 // ——— Flow entre comptes (calculé naïvement depuis totalDebit/totalCredit) ———
 interface Flow {
@@ -118,6 +119,7 @@ interface PmKpisProps {
 }
 
 function PmKpis({ accounts, visibility }: PmKpisProps) {
+  const isMobile = useIsMobile();
   const tresorerie = accounts
     .filter((a) => a.class === 'A' && a.code.startsWith('10'))
     .reduce((s, a) => s + Math.abs(a.balance), 0);
@@ -151,7 +153,7 @@ function PmKpis({ accounts, visibility }: PmKpisProps) {
         maxWidth: 1400,
         margin: '0 auto 16px',
         display: 'grid',
-        gridTemplateColumns: `repeat(${items.length}, 1fr)`,
+        gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : `repeat(${items.length}, 1fr)`,
         gap: 1,
         background: 'var(--line-1)',
         border: '1px solid var(--line-1)',
@@ -232,6 +234,7 @@ export function PmColumnsA({
   const scrollRef = useRef<HTMLDivElement>(null);
   const gridRef   = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const byClass = useMemo(() => {
     const g: Record<AccountClass, V2Account[]> = { P: [], A: [], L: [], C: [] };
@@ -291,7 +294,7 @@ export function PmColumnsA({
         ref={scrollRef}
         style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}
       >
-        <div style={{ padding: '68px 24px 24px', minHeight: '100%' }}>
+        <div style={{ padding: isMobile ? '60px 12px 16px' : '68px 24px 24px', minHeight: '100%' }}>
           <PmKpis accounts={accounts} visibility={kpiVisibility} />
 
           <div
@@ -300,8 +303,8 @@ export function PmColumnsA({
               maxWidth: 1400,
               margin: '0 auto',
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: 28,
+              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+              gap: isMobile ? 12 : 28,
               position: 'relative',
             }}
           >

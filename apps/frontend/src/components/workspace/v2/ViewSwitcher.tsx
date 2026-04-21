@@ -16,7 +16,7 @@ export function ViewSwitcher({ options, active, onChange }: ViewSwitcherProps) {
   return (
     <div
       style={{
-        display: 'inline-flex',
+        display: 'flex',
         gap: 2,
         padding: 3,
         background: 'var(--chrome-bg)',
@@ -24,6 +24,8 @@ export function ViewSwitcher({ options, active, onChange }: ViewSwitcherProps) {
         WebkitBackdropFilter: 'blur(8px)',
         border: '1px solid var(--chrome-line)',
         borderRadius: 10,
+        overflowX: 'auto',
+        flexShrink: 0,
       }}
     >
       {options.map((o) => {
@@ -42,6 +44,9 @@ export function ViewSwitcher({ options, active, onChange }: ViewSwitcherProps) {
               background: isActive ? 'var(--chrome-bg-2)' : 'transparent',
               color: isActive ? 'var(--chrome-ink-1)' : 'var(--chrome-ink-3)',
               transition: 'background 120ms, color 120ms',
+              flexShrink: 0,
+              minHeight: 44,
+              whiteSpace: 'nowrap',
             }}
           >
             {o.label}

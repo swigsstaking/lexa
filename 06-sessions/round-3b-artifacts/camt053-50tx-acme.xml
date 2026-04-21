@@ -1,0 +1,775 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fixture CAMT.053.001.04 — Acme Test SA (Round 3B QA)
+  Compte : CH5600762011623852957 (UBS fictif)
+  50 transactions : salaires, factures clients, charges, TVA, amortissements
+  Exercice : 2025 (janvier à décembre)
+-->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.04"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <BkToCstmrStmt>
+    <GrpHdr>
+      <MsgId>LEXA-ACME-2025-R3B-001</MsgId>
+      <CreDtTm>2026-01-10T10:00:00Z</CreDtTm>
+    </GrpHdr>
+    <Stmt>
+      <Id>STMT-ACME-2025</Id>
+      <CreDtTm>2026-01-10T10:00:00Z</CreDtTm>
+      <FrToDt>
+        <FrDtTm>2025-01-01T00:00:00Z</FrDtTm>
+        <ToDtTm>2025-12-31T23:59:59Z</ToDtTm>
+      </FrToDt>
+      <Acct>
+        <Id>
+          <IBAN>CH5600762011623852957</IBAN>
+        </Id>
+        <Ccy>CHF</Ccy>
+        <Ownr>
+          <Nm>Acme Test SA</Nm>
+        </Ownr>
+        <Svcr>
+          <FinInstnId>
+            <BIC>UBSWCHZH80A</BIC>
+            <Nm>UBS Switzerland AG</Nm>
+          </FinInstnId>
+        </Svcr>
+      </Acct>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>OPBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="CHF">150000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2025-01-01</Dt></Dt>
+      </Bal>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="CHF">298450.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2025-12-31</Dt></Dt>
+      </Bal>
+
+      <!-- ===== SALAIRES (12 tx DBIT -8000 chaque mois) ===== -->
+      <Ntry>
+        <Amt Ccy="CHF">8000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-01-25</Dt></BookgDt>
+        <ValDt><Dt>2025-01-25</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>SAL-2025-01</AcctSvcrRef><EndToEndId>SALAIRE-JAN-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Employés Acme Test SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Salaires janvier 2025 — 1 employé</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">8000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-02-25</Dt></BookgDt>
+        <ValDt><Dt>2025-02-25</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>SAL-2025-02</AcctSvcrRef><EndToEndId>SALAIRE-FEV-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Employés Acme Test SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Salaires février 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">8000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-03-25</Dt></BookgDt>
+        <ValDt><Dt>2025-03-25</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>SAL-2025-03</AcctSvcrRef><EndToEndId>SALAIRE-MAR-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Employés Acme Test SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Salaires mars 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">8000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-04-25</Dt></BookgDt>
+        <ValDt><Dt>2025-04-25</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>SAL-2025-04</AcctSvcrRef><EndToEndId>SALAIRE-APR-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Employés Acme Test SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Salaires avril 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">8000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-05-25</Dt></BookgDt>
+        <ValDt><Dt>2025-05-25</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>SAL-2025-05</AcctSvcrRef><EndToEndId>SALAIRE-MAI-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Employés Acme Test SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Salaires mai 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">8000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-06-25</Dt></BookgDt>
+        <ValDt><Dt>2025-06-25</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>SAL-2025-06</AcctSvcrRef><EndToEndId>SALAIRE-JUN-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Employés Acme Test SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Salaires juin 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">8000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-07-25</Dt></BookgDt>
+        <ValDt><Dt>2025-07-25</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>SAL-2025-07</AcctSvcrRef><EndToEndId>SALAIRE-JUL-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Employés Acme Test SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Salaires juillet 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">8000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-08-25</Dt></BookgDt>
+        <ValDt><Dt>2025-08-25</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>SAL-2025-08</AcctSvcrRef><EndToEndId>SALAIRE-AOU-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Employés Acme Test SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Salaires août 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">8000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-09-25</Dt></BookgDt>
+        <ValDt><Dt>2025-09-25</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>SAL-2025-09</AcctSvcrRef><EndToEndId>SALAIRE-SEP-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Employés Acme Test SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Salaires septembre 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">8000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-10-25</Dt></BookgDt>
+        <ValDt><Dt>2025-10-25</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>SAL-2025-10</AcctSvcrRef><EndToEndId>SALAIRE-OCT-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Employés Acme Test SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Salaires octobre 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">8000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-11-25</Dt></BookgDt>
+        <ValDt><Dt>2025-11-25</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>SAL-2025-11</AcctSvcrRef><EndToEndId>SALAIRE-NOV-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Employés Acme Test SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Salaires novembre 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">8000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-12-25</Dt></BookgDt>
+        <ValDt><Dt>2025-12-25</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>SAL-2025-12</AcctSvcrRef><EndToEndId>SALAIRE-DEC-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Employés Acme Test SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Salaires décembre 2025 + 13e mois</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <!-- ===== FACTURES CLIENTS (15 tx CRDT) ===== -->
+      <Ntry>
+        <Amt Ccy="CHF">25000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-01-15</Dt></BookgDt>
+        <ValDt><Dt>2025-01-15</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>CLI-2025-0101</AcctSvcrRef><EndToEndId>FAC-2025-101</EndToEndId></Refs>
+          <RltdPties><Dbtr><Nm>Nestlé Suisse SA</Nm></Dbtr></RltdPties>
+          <RmtInf><Ustrd>Facture 101 Consulting Q4-2024</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">18500.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-02-10</Dt></BookgDt>
+        <ValDt><Dt>2025-02-10</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>CLI-2025-0102</AcctSvcrRef><EndToEndId>FAC-2025-102</EndToEndId></Refs>
+          <RltdPties><Dbtr><Nm>Migros SA</Nm></Dbtr></RltdPties>
+          <RmtInf><Ustrd>Facture 102 Développement logiciel jan 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">12000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-02-28</Dt></BookgDt>
+        <ValDt><Dt>2025-02-28</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>CLI-2025-0103</AcctSvcrRef><EndToEndId>FAC-2025-103</EndToEndId></Refs>
+          <RltdPties><Dbtr><Nm>Coop Genève</Nm></Dbtr></RltdPties>
+          <RmtInf><Ustrd>Facture 103 Audit SI février 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">22000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-03-20</Dt></BookgDt>
+        <ValDt><Dt>2025-03-20</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>CLI-2025-0104</AcctSvcrRef><EndToEndId>FAC-2025-104</EndToEndId></Refs>
+          <RltdPties><Dbtr><Nm>UBS SA</Nm></Dbtr></RltdPties>
+          <RmtInf><Ustrd>Facture 104 Transformation digitale Q1-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">9500.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-04-05</Dt></BookgDt>
+        <ValDt><Dt>2025-04-05</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>CLI-2025-0105</AcctSvcrRef><EndToEndId>FAC-2025-105</EndToEndId></Refs>
+          <RltdPties><Dbtr><Nm>SBB AG</Nm></Dbtr></RltdPties>
+          <RmtInf><Ustrd>Facture 105 Support technique mars 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">16800.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-04-25</Dt></BookgDt>
+        <ValDt><Dt>2025-04-25</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>CLI-2025-0106</AcctSvcrRef><EndToEndId>FAC-2025-106</EndToEndId></Refs>
+          <RltdPties><Dbtr><Nm>Swisscom AG</Nm></Dbtr></RltdPties>
+          <RmtInf><Ustrd>Facture 106 Architecture cloud avril 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">20000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-05-15</Dt></BookgDt>
+        <ValDt><Dt>2025-05-15</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>CLI-2025-0107</AcctSvcrRef><EndToEndId>FAC-2025-107</EndToEndId></Refs>
+          <RltdPties><Dbtr><Nm>Credit Suisse (liquidé)</Nm></Dbtr></RltdPties>
+          <RmtInf><Ustrd>Facture 107 Migration données Q2-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">7200.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-06-10</Dt></BookgDt>
+        <ValDt><Dt>2025-06-10</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>CLI-2025-0108</AcctSvcrRef><EndToEndId>FAC-2025-108</EndToEndId></Refs>
+          <RltdPties><Dbtr><Nm>Canton de Genève</Nm></Dbtr></RltdPties>
+          <RmtInf><Ustrd>Facture 108 Consulting RH juin 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">14500.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-07-20</Dt></BookgDt>
+        <ValDt><Dt>2025-07-20</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>CLI-2025-0109</AcctSvcrRef><EndToEndId>FAC-2025-109</EndToEndId></Refs>
+          <RltdPties><Dbtr><Nm>Zurich Insurance Group</Nm></Dbtr></RltdPties>
+          <RmtInf><Ustrd>Facture 109 Analyse risques Q3-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">11000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-08-05</Dt></BookgDt>
+        <ValDt><Dt>2025-08-05</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>CLI-2025-0110</AcctSvcrRef><EndToEndId>FAC-2025-110</EndToEndId></Refs>
+          <RltdPties><Dbtr><Nm>Lonza Group AG</Nm></Dbtr></RltdPties>
+          <RmtInf><Ustrd>Facture 110 Formation équipes août 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">19000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-09-12</Dt></BookgDt>
+        <ValDt><Dt>2025-09-12</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>CLI-2025-0111</AcctSvcrRef><EndToEndId>FAC-2025-111</EndToEndId></Refs>
+          <RltdPties><Dbtr><Nm>Novartis AG</Nm></Dbtr></RltdPties>
+          <RmtInf><Ustrd>Facture 111 Intégration ERP sep 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">5000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-10-08</Dt></BookgDt>
+        <ValDt><Dt>2025-10-08</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>CLI-2025-0112</AcctSvcrRef><EndToEndId>FAC-2025-112</EndToEndId></Refs>
+          <RltdPties><Dbtr><Nm>Helvetia Assurances</Nm></Dbtr></RltdPties>
+          <RmtInf><Ustrd>Facture 112 Conseil stratégique oct 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">23500.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-10-30</Dt></BookgDt>
+        <ValDt><Dt>2025-10-30</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>CLI-2025-0113</AcctSvcrRef><EndToEndId>FAC-2025-113</EndToEndId></Refs>
+          <RltdPties><Dbtr><Nm>ABB Ltd</Nm></Dbtr></RltdPties>
+          <RmtInf><Ustrd>Facture 113 Automatisation processus Q4-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">8800.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-11-18</Dt></BookgDt>
+        <ValDt><Dt>2025-11-18</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>CLI-2025-0114</AcctSvcrRef><EndToEndId>FAC-2025-114</EndToEndId></Refs>
+          <RltdPties><Dbtr><Nm>Roche Holding AG</Nm></Dbtr></RltdPties>
+          <RmtInf><Ustrd>Facture 114 Webinar sécurité nov 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">15000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-12-10</Dt></BookgDt>
+        <ValDt><Dt>2025-12-10</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>CLI-2025-0115</AcctSvcrRef><EndToEndId>FAC-2025-115</EndToEndId></Refs>
+          <RltdPties><Dbtr><Nm>Nestlé Suisse SA</Nm></Dbtr></RltdPties>
+          <RmtInf><Ustrd>Facture 115 Bilan annuel 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <!-- ===== CHARGES FOURNISSEURS (10 tx DBIT) ===== -->
+      <Ntry>
+        <Amt Ccy="CHF">3500.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-01-10</Dt></BookgDt>
+        <ValDt><Dt>2025-01-10</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>FOUR-2025-0101</AcctSvcrRef><EndToEndId>ACH-FOUR-101</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Swisscom Business Solutions AG</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Abonnement téléphonie + internet jan 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">1200.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-02-05</Dt></BookgDt>
+        <ValDt><Dt>2025-02-05</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>FOUR-2025-0102</AcctSvcrRef><EndToEndId>ACH-FOUR-102</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Microsoft Suisse Sàrl</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Licences Microsoft 365 Q1-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">850.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-03-15</Dt></BookgDt>
+        <ValDt><Dt>2025-03-15</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>FOUR-2025-0103</AcctSvcrRef><EndToEndId>ACH-FOUR-103</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>SuisseGaz SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Facture énergie Q1-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">4200.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-04-02</Dt></BookgDt>
+        <ValDt><Dt>2025-04-02</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>FOUR-2025-0104</AcctSvcrRef><EndToEndId>ACH-FOUR-104</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Cabinet Fiduciaire Dupont SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Honoraires comptabilité Q1-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">680.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-05-20</Dt></BookgDt>
+        <ValDt><Dt>2025-05-20</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>FOUR-2025-0105</AcctSvcrRef><EndToEndId>ACH-FOUR-105</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>La Poste Suisse AG</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Frais postaux mai 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">2100.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-06-30</Dt></BookgDt>
+        <ValDt><Dt>2025-06-30</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>FOUR-2025-0106</AcctSvcrRef><EndToEndId>ACH-FOUR-106</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Amazon Web Services EMEA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Infrastructure cloud AWS H1-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">5500.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-07-15</Dt></BookgDt>
+        <ValDt><Dt>2025-07-15</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>FOUR-2025-0107</AcctSvcrRef><EndToEndId>ACH-FOUR-107</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Genevoise d'Assurance SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Prime assurance RC professionnelle 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">920.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-09-05</Dt></BookgDt>
+        <ValDt><Dt>2025-09-05</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>FOUR-2025-0108</AcctSvcrRef><EndToEndId>ACH-FOUR-108</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Printshop Genève SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Matériel marketing Q3-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">3800.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-10-20</Dt></BookgDt>
+        <ValDt><Dt>2025-10-20</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>FOUR-2025-0109</AcctSvcrRef><EndToEndId>ACH-FOUR-109</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Cabinet Fiduciaire Dupont SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Honoraires comptabilité Q3-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">1450.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-12-05</Dt></BookgDt>
+        <ValDt><Dt>2025-12-05</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>FOUR-2025-0110</AcctSvcrRef><EndToEndId>ACH-FOUR-110</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>SuisseGaz SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Facture énergie Q4-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <!-- ===== LOYER (4 tx DBIT trimestriel) ===== -->
+      <Ntry>
+        <Amt Ccy="CHF">6000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-01-01</Dt></BookgDt>
+        <ValDt><Dt>2025-01-01</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>LOYER-2025-Q1</AcctSvcrRef><EndToEndId>LOYER-Q1-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Régie Immobilière Genève SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Loyer bureaux rue du Rhône Q1-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">6000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-04-01</Dt></BookgDt>
+        <ValDt><Dt>2025-04-01</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>LOYER-2025-Q2</AcctSvcrRef><EndToEndId>LOYER-Q2-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Régie Immobilière Genève SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Loyer bureaux rue du Rhône Q2-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">6000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-07-01</Dt></BookgDt>
+        <ValDt><Dt>2025-07-01</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>LOYER-2025-Q3</AcctSvcrRef><EndToEndId>LOYER-Q3-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Régie Immobilière Genève SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Loyer bureaux rue du Rhône Q3-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">6000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-10-01</Dt></BookgDt>
+        <ValDt><Dt>2025-10-01</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>LOYER-2025-Q4</AcctSvcrRef><EndToEndId>LOYER-Q4-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Régie Immobilière Genève SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Loyer bureaux rue du Rhône Q4-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <!-- ===== TVA AFC (4 tx DBIT trimestrielle) ===== -->
+      <Ntry>
+        <Amt Ccy="CHF">3890.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-02-28</Dt></BookgDt>
+        <ValDt><Dt>2025-02-28</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>TVA-2025-Q1</AcctSvcrRef><EndToEndId>TVA-AFC-Q1-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Administration fédérale des contributions AFC</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>TVA décompte Q4-2024 — CHE-123.456.789</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">4120.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-05-31</Dt></BookgDt>
+        <ValDt><Dt>2025-05-31</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>TVA-2025-Q2</AcctSvcrRef><EndToEndId>TVA-AFC-Q2-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Administration fédérale des contributions AFC</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>TVA décompte Q1-2025 — CHE-123.456.789</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">3750.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-08-31</Dt></BookgDt>
+        <ValDt><Dt>2025-08-31</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>TVA-2025-Q3</AcctSvcrRef><EndToEndId>TVA-AFC-Q3-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Administration fédérale des contributions AFC</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>TVA décompte Q2-2025 — CHE-123.456.789</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">5200.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-11-30</Dt></BookgDt>
+        <ValDt><Dt>2025-11-30</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>TVA-2025-Q4</AcctSvcrRef><EndToEndId>TVA-AFC-Q4-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Administration fédérale des contributions AFC</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>TVA décompte Q3-2025 — CHE-123.456.789</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <!-- ===== AMORTISSEMENTS / INVESTISSEMENTS (4 tx DBIT) ===== -->
+      <Ntry>
+        <Amt Ccy="CHF">8500.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-01-20</Dt></BookgDt>
+        <ValDt><Dt>2025-01-20</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>INV-2025-0101</AcctSvcrRef><EndToEndId>INVEST-LAPTOP-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Apple Switzerland GmbH</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Achat MacBook Pro M3 — immobilisation informatique</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">12000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-03-01</Dt></BookgDt>
+        <ValDt><Dt>2025-03-01</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>INV-2025-0102</AcctSvcrRef><EndToEndId>INVEST-MEUBLES-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>USM Haller SA</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Mobilier bureau — immobilisation corporelle</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">6000.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-06-15</Dt></BookgDt>
+        <ValDt><Dt>2025-06-15</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>INV-2025-0103</AcctSvcrRef><EndToEndId>INVEST-SERVEUR-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Digitec AG</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Serveur NAS Synology — immobilisation informatique</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">3200.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-11-10</Dt></BookgDt>
+        <ValDt><Dt>2025-11-10</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>INV-2025-0104</AcctSvcrRef><EndToEndId>INVEST-LOGICIEL-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Adobe Systems Software Ireland Ltd</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Licence Adobe Creative Cloud annuelle — immobilisation incorporelle</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <!-- ===== CHARGES SOCIALES (3 tx DBIT) ===== -->
+      <Ntry>
+        <Amt Ccy="CHF">4800.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-01-31</Dt></BookgDt>
+        <ValDt><Dt>2025-01-31</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>AVSC-2025-Q1</AcctSvcrRef><EndToEndId>AVS-AI-APG-Q1-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Caisse cantonale genevoise de compensation</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>AVS/AI/APG employeur Q1-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">4800.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-07-31</Dt></BookgDt>
+        <ValDt><Dt>2025-07-31</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>AVSC-2025-Q3</AcctSvcrRef><EndToEndId>AVS-AI-APG-Q3-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Caisse cantonale genevoise de compensation</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>AVS/AI/APG employeur Q3-2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">2400.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-12-15</Dt></BookgDt>
+        <ValDt><Dt>2025-12-15</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>LPP-2025-Q4</AcctSvcrRef><EndToEndId>LPP-PREVOYANCE-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Fondation collective LPP BCV</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Cotisations LPP employeur 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <!-- ===== DIVERS CHARGES (3 tx DBIT) ===== -->
+      <Ntry>
+        <Amt Ccy="CHF">750.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-03-10</Dt></BookgDt>
+        <ValDt><Dt>2025-03-10</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>MISC-2025-0101</AcctSvcrRef><EndToEndId>MISC-FORMATION-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>CAS Formation Continue UNIGE</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Formation management de projet mars 2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">1800.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-08-20</Dt></BookgDt>
+        <ValDt><Dt>2025-08-20</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>MISC-2025-0102</AcctSvcrRef><EndToEndId>MISC-DEPLACEMENT-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Swiss International Air Lines AG</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Frais déplacement client Zurich — billets avion</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+      <Ntry>
+        <Amt Ccy="CHF">320.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2025-11-05</Dt></BookgDt>
+        <ValDt><Dt>2025-11-05</Dt></ValDt>
+        <NtryDtls><TxDtls>
+          <Refs><AcctSvcrRef>MISC-2025-0103</AcctSvcrRef><EndToEndId>MISC-REPAS-2025</EndToEndId></Refs>
+          <RltdPties><Cdtr><Nm>Restaurant Le Jardin Genève</Nm></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Repas d'affaires client Nestlé 05.11.2025</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>

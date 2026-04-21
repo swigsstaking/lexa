@@ -311,6 +311,7 @@ export function PmWizardVs() {
             {currentStep < 6 && (
               <div className="flex items-center justify-between pt-4 border-t border-border">
                 <button
+                  type="button"
                   onClick={handlePrev}
                   disabled={currentStep === 1}
                   className="btn-secondary"
@@ -318,7 +319,7 @@ export function PmWizardVs() {
                   <ArrowLeft className="w-4 h-4" />
                   Précédent
                 </button>
-                <button onClick={handleNext} className="btn-primary">
+                <button type="button" onClick={handleNext} className="btn-primary">
                   Suivant
                   <ArrowRight className="w-4 h-4" />
                 </button>

@@ -7,6 +7,7 @@ import type {
   Company,
   CompanyLookupResult,
   CreateCompanyInput,
+  FiduciairePortfolio,
   HealthStatus,
   IncomeStatement,
   LedgerBalance,
@@ -85,6 +86,9 @@ export const lexa = {
 
   ragAsk: (question: string) =>
     api.post<AgentAnswer>('/rag/ask', { question }).then((r) => r.data),
+
+  lexaAsk: (question: string, tenantId: string, year?: number) =>
+    api.post<AgentAnswer>('/agents/lexa/ask', { question, tenantId, year }).then((r) => r.data),
 
   tvaAsk: (question: string, context?: { turnover?: number; method?: string; sector?: string }) =>
     api.post<AgentAnswer>('/agents/tva/ask', { question, context }).then((r) => r.data),
@@ -520,6 +524,11 @@ export const lexa = {
       .get<{ clients: Array<{ tenantId: string; role: string; tenantName: string | null; addedAt: string }> }>('/fiduciary/clients')
       .then((r) => r.data.clients),
 
+  getPortfolio: () =>
+    api
+      .get<FiduciairePortfolio>('/fiduciary/portfolio')
+      .then((r) => r.data),
+
   switchTenant: (tenantId: string) =>
     api
       .post<{ token: string; activeTenantId: string }>('/auth/switch-tenant', { tenantId })
@@ -716,6 +725,13 @@ export const lexa = {
           reasoning?: string;
         }>;
       }>(`/ledger/entries/${streamId}/history`)
+      .then((r) => r.data),
+
+  // ── PP (Personne Physique) — workspace données réelles ───────────────────
+
+  getPpSummary: (year: number) =>
+    api
+      .get<PpSummary>('/pp/summary', { params: { year } })
       .then((r) => r.data),
 };
 
@@ -974,4 +990,26 @@ export type PmSubmitResponse = {
   };
   taxEstimate: PmTaxEstimate;
   citations: Array<{ law: string; article: string; text: string }>;
+};
+
+// ── Types PP — Personne Physique workspace ───────────────────────────────────
+
+export type PpTone = 'pos' | 'neg' | 'tax' | 'asset';
+
+export type PpItem = {
+  code: string;
+  name: string;
+  amount: number;
+  count: number;
+  tone: PpTone;
+};
+
+export type PpBucket = {
+  k: string;
+  items: PpItem[];
+};
+
+export type PpSummary = {
+  buckets: PpBucket[];
+  fiscalYear: number;
 };

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<taxDeclarationPM xmlns="http://www.ech.ch/xmlns/eCH-0229/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.ech.ch/xmlns/eCH-0229/1 eCH-0229-1-0.xsd">
+  <header>
+    <taxPeriod>2025</taxPeriod>
+    <canton>GE</canton>
+    <source>0</source>
+    <sourceDescription>Lexa - Comptabilité IA Suisse</sourceDescription>
+  </header>
+  <legalEntityData>
+    <legalName>Acme Test SA</legalName>
+    <legalForm>SA</legalForm>
+    <ideNumber>CHE-123.456.789</ideNumber>
+    <siegeCommune>Genève</siegeCommune>
+  </legalEntityData>
+  <benefitDeclaration>
+    <beneficeComptable>
+      <cantonalTax>125000</cantonalTax>
+      <federalTax>125000</federalTax>
+    </beneficeComptable>
+    <beneficeImposable>
+      <cantonalTax>125000</cantonalTax>
+      <federalTax>125000</federalTax>
+    </beneficeImposable>
+  </benefitDeclaration>
+  <capitalDeclaration>
+    <capitalSocial>0</capitalSocial>
+    <reservesLegales>25000</reservesLegales>
+    <reservesLibres>0</reservesLibres>
+    <reportBenefice>0</reportBenefice>
+    <capitalImposable>
+      <cantonalTax>25000</cantonalTax>
+      <federalTax>25000</federalTax>
+    </capitalImposable>
+  </capitalDeclaration>
+</taxDeclarationPM>

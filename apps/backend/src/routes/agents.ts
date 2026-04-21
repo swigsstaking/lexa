@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { lexaAgent } from "../agents/lexa/LexaAgent.js";
 import { tvaAgent } from "../agents/tva/TvaAgent.js";
 import { fiscalPpVsAgent } from "../agents/fiscalPpVs/FiscalPpVsAgent.js";
 import { fiscalPpGeAgent } from "../agents/fiscalPpGe/FiscalPpGeAgent.js";
@@ -18,6 +19,7 @@ import { handleLlmError } from "./_llmErrorHandler.js";
 
 // ── Register all agent handlers (no circular imports — agents imported here) ──
 
+registerLlmHandler("lexa", (p) => lexaAgent.ask(p as Parameters<typeof lexaAgent.ask>[0]));
 registerLlmHandler("tva", (p) => tvaAgent.ask(p as Parameters<typeof tvaAgent.ask>[0]));
 registerLlmHandler("fiscal-pp-vs", (p) => fiscalPpVsAgent.ask(p as Parameters<typeof fiscalPpVsAgent.ask>[0]));
 registerLlmHandler("fiscal-pp-ge", (p) => fiscalPpGeAgent.ask(p as Parameters<typeof fiscalPpGeAgent.ask>[0]));
@@ -389,6 +391,26 @@ agentsRouter.post("/conseiller/ask", requireAuth, async (req, res) => {
   }
 });
 
+const LexaAskSchema = z.object({
+  question: z.string().min(3).max(2000),
+  tenantId: z.string().uuid(),
+  year: z.number().int().optional(),
+});
+
+/** POST /agents/lexa/ask — agent générique avec context injection comptable */
+agentsRouter.post("/lexa/ask", requireAuth, async (req, res) => {
+  const parsed = LexaAskSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
+  }
+  try {
+    const result = await enqueueLlmCall(req.tenantId, "lexa", parsed.data);
+    res.json(result);
+  } catch (err) {
+    handleLlmError(err, res, "Lexa");
+  }
+});
+
 /** GET /agents — list of available agents */
 agentsRouter.get("/", (_req, res) => {
   res.json({
@@ -404,6 +426,12 @@ agentsRouter.get("/", (_req, res) => {
         endpoint: "POST /rag/ask",
         model: "lexa-reasoning",
         description: "Repond a une question juridique/fiscale generale avec citations legales",
+      },
+      {
+        id: "lexa",
+        endpoint: "POST /agents/lexa/ask",
+        model: "lexa-reasoning",
+        description: "Agent générique avec context injection comptable — repond aux questions sur le grand livre + règles fiscales",
       },
       {
         id: "tva",

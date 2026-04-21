@@ -5,6 +5,7 @@ import { LexaInsight } from './LexaInsight';
 import { fmtMoney, fmtCompact } from './fmtMoney';
 import { soldeDirection } from './soldeDirection';
 import type { AccountClass } from './soldeDirection';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 const TYPE_LABELS: Record<AccountClass, string> = {
   P: 'Produits',
@@ -90,6 +91,7 @@ type FilterKey = 'all' | AccountClass;
 export function PmLedger({ accounts, focusCode, setFocusCode, onOpenCmdK, onOpenDrawer }: PmLedgerProps) {
   const [filter, setFilter] = useState<FilterKey>('all');
   const [query, setQuery] = useState('');
+  const isMobile = useIsMobile();
 
   const filtered = useMemo(() => {
     return accounts.filter((a) => {
@@ -123,19 +125,21 @@ export function PmLedger({ accounts, focusCode, setFocusCode, onOpenCmdK, onOpen
   return (
     <div className="v2-canvas" style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
-        <div style={{ padding: '68px 24px 24px', minHeight: '100%' }}>
+        <div style={{ padding: isMobile ? '60px 12px 16px' : '68px 24px 24px', minHeight: '100%' }}>
           <div
             style={{
               maxWidth: 1400,
               margin: '0 auto',
-              display: 'grid',
-              gridTemplateColumns: '1fr 380px',
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
               gap: 16,
             }}
           >
             {/* Liste gauche */}
             <div
               style={{
+                flex: 1,
+                minWidth: 0,
                 background: 'var(--v2-surface)',
                 border: '1px solid rgb(var(--border))',
                 borderRadius: 12,
@@ -214,7 +218,7 @@ export function PmLedger({ accounts, focusCode, setFocusCode, onOpenCmdK, onOpen
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '60px 1fr 100px 80px 110px 110px 60px',
+                  gridTemplateColumns: isMobile ? '56px 1fr 90px' : '60px 1fr 100px 80px 110px 110px 60px',
                   gap: 10,
                   padding: '10px 16px',
                   fontSize: 10,
@@ -228,15 +232,15 @@ export function PmLedger({ accounts, focusCode, setFocusCode, onOpenCmdK, onOpen
               >
                 <span>Code</span>
                 <span>Intitulé</span>
-                <span>Type</span>
-                <span>Sens</span>
-                <span style={{ textAlign: 'right' }}>Débit</span>
-                <span style={{ textAlign: 'right' }}>Crédit</span>
-                <span style={{ textAlign: 'right' }}>Mvts</span>
+                {!isMobile && <span>Type</span>}
+                {!isMobile && <span>Sens</span>}
+                {!isMobile && <span style={{ textAlign: 'right' }}>Débit</span>}
+                {!isMobile && <span style={{ textAlign: 'right' }}>Crédit</span>}
+                <span style={{ textAlign: 'right' }}>Solde</span>
               </div>
 
               {/* Lignes */}
-              <div style={{ maxHeight: 540, overflowY: 'auto' }}>
+              <div style={{ maxHeight: isMobile ? undefined : 540, overflowY: isMobile ? undefined : 'auto' }}>
                 {filtered.map((a) => {
                   const isActive = sel?.code === a.code;
                   const dir = soldeDirection(a.class, a.balance);
@@ -249,9 +253,10 @@ export function PmLedger({ accounts, focusCode, setFocusCode, onOpenCmdK, onOpen
                       }}
                       style={{
                         display: 'grid',
-                        gridTemplateColumns: '60px 1fr 100px 80px 110px 110px 60px',
+                        gridTemplateColumns: isMobile ? '56px 1fr 90px' : '60px 1fr 100px 80px 110px 110px 60px',
                         gap: 10,
-                        padding: '11px 16px',
+                        padding: isMobile ? '12px 12px' : '11px 16px',
+                        minHeight: 44,
                         alignItems: 'center',
                         borderBottom: '1px solid rgb(var(--border))',
                         background: isActive ? 'rgb(var(--elevated))' : 'transparent',
@@ -274,49 +279,71 @@ export function PmLedger({ accounts, focusCode, setFocusCode, onOpenCmdK, onOpen
                       <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 11, color: 'rgb(var(--muted))', fontWeight: 500 }}>
                         {a.code}
                       </span>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: 'rgb(var(--ink))' }}>{a.name}</span>
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 600,
-                          padding: '2px 7px',
-                          borderRadius: 3,
-                          letterSpacing: '0.04em',
-                          textTransform: 'uppercase',
-                          justifySelf: 'start',
-                          ...CLASS_BADGE[a.class],
-                        }}
-                      >
-                        {TYPE_LABELS[a.class]}
-                      </span>
-                      <DebitCreditBadge cls={a.class} balance={a.balance} />
-                      <span
-                        style={{
-                          fontFamily: '"JetBrains Mono", monospace',
-                          fontSize: 12,
-                          textAlign: 'right',
-                          fontVariantNumeric: 'tabular-nums',
-                          fontWeight: 500,
-                          color: dir.side === 'D' ? 'rgb(var(--ink))' : 'rgb(var(--subtle))',
-                        }}
-                      >
-                        {dir.side === 'D' ? fmtMoney(dir.abs) : <span style={{ opacity: 0.3 }}>—</span>}
-                      </span>
-                      <span
-                        style={{
-                          fontFamily: '"JetBrains Mono", monospace',
-                          fontSize: 12,
-                          textAlign: 'right',
-                          fontVariantNumeric: 'tabular-nums',
-                          fontWeight: 500,
-                          color: dir.side === 'C' ? 'rgb(var(--ink))' : 'rgb(var(--subtle))',
-                        }}
-                      >
-                        {dir.side === 'C' ? fmtMoney(dir.abs) : <span style={{ opacity: 0.3 }}>—</span>}
-                      </span>
-                      <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 11, color: 'rgb(var(--subtle))', textAlign: 'right' }}>
-                        {a.movements}
-                      </span>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: 'rgb(var(--ink))', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</span>
+                      {isMobile ? (
+                        <span
+                          style={{
+                            fontFamily: '"JetBrains Mono", monospace',
+                            fontSize: 12,
+                            textAlign: 'right',
+                            fontVariantNumeric: 'tabular-nums',
+                            fontWeight: 500,
+                            color: 'rgb(var(--ink))',
+                          }}
+                        >
+                          {fmtMoney(Math.abs(a.balance))}
+                        </span>
+                      ) : null}
+                      {!isMobile && (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 600,
+                            padding: '2px 7px',
+                            borderRadius: 3,
+                            letterSpacing: '0.04em',
+                            textTransform: 'uppercase',
+                            justifySelf: 'start',
+                            ...CLASS_BADGE[a.class],
+                          }}
+                        >
+                          {TYPE_LABELS[a.class]}
+                        </span>
+                      )}
+                      {!isMobile && <DebitCreditBadge cls={a.class} balance={a.balance} />}
+                      {!isMobile && (
+                        <span
+                          style={{
+                            fontFamily: '"JetBrains Mono", monospace',
+                            fontSize: 12,
+                            textAlign: 'right',
+                            fontVariantNumeric: 'tabular-nums',
+                            fontWeight: 500,
+                            color: dir.side === 'D' ? 'rgb(var(--ink))' : 'rgb(var(--subtle))',
+                          }}
+                        >
+                          {dir.side === 'D' ? fmtMoney(dir.abs) : <span style={{ opacity: 0.3 }}>—</span>}
+                        </span>
+                      )}
+                      {!isMobile && (
+                        <span
+                          style={{
+                            fontFamily: '"JetBrains Mono", monospace',
+                            fontSize: 12,
+                            textAlign: 'right',
+                            fontVariantNumeric: 'tabular-nums',
+                            fontWeight: 500,
+                            color: dir.side === 'C' ? 'rgb(var(--ink))' : 'rgb(var(--subtle))',
+                          }}
+                        >
+                          {dir.side === 'C' ? fmtMoney(dir.abs) : <span style={{ opacity: 0.3 }}>—</span>}
+                        </span>
+                      )}
+                      {!isMobile && (
+                        <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 11, color: 'rgb(var(--subtle))', textAlign: 'right' }}>
+                          {a.movements}
+                        </span>
+                      )}
                     </div>
                   );
                 })}
@@ -324,7 +351,18 @@ export function PmLedger({ accounts, focusCode, setFocusCode, onOpenCmdK, onOpen
             </div>
 
             {/* Panneau détail droit */}
-            <div style={{ position: 'sticky', top: 24, height: 'fit-content', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div
+              style={{
+                position: isMobile ? 'static' : 'sticky',
+                top: isMobile ? undefined : 24,
+                height: 'fit-content',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                flexShrink: 0,
+                width: isMobile ? '100%' : 380,
+              }}
+            >
               {sel && (
                 <div
                   style={{

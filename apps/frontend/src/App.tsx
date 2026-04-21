@@ -16,6 +16,9 @@ import { cantonFR } from '@/config/cantons/fr';
 import { useAuthStore } from '@/stores/authStore';
 
 // Lazy-loaded heavy routes (code splitting S36)
+const Fiduciaire = lazy(() =>
+  import('@/routes/Fiduciaire').then((m) => ({ default: m.Fiduciaire }))
+);
 const TaxpayerWizardCanton = lazy(() =>
   import('@/routes/taxpayer/TaxpayerWizardCanton').then((m) => ({
     default: m.TaxpayerWizardCanton,
@@ -297,6 +300,15 @@ export default function App() {
           element={
             <RequireAuth>
               <AddAccount />
+            </RequireAuth>
+          }
+        />
+        {/* Portefeuille fiduciaire — vue cross-tenants */}
+        <Route
+          path="/fiduciaire"
+          element={
+            <RequireAuth>
+              <Fiduciaire />
             </RequireAuth>
           }
         />

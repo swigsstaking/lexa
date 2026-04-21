@@ -10,6 +10,7 @@ import { AccountTile } from './AccountTile';
 import { LexaInsight } from './LexaInsight';
 import { fmtMoney, fmtCompact } from './fmtMoney';
 import type { AccountClass } from './soldeDirection';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 interface Flow {
   from: string;
@@ -135,6 +136,7 @@ export function PmColumnsB({
   const scrollRef = useRef<HTMLDivElement>(null);
   const gridRef   = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const byClass = useMemo(() => {
     const g: Record<AccountClass, V2Account[]> = { P: [], A: [], L: [], C: [] };
@@ -195,20 +197,20 @@ export function PmColumnsB({
   return (
     <div className="v2-canvas" style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div ref={scrollRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
-        <div style={{ padding: '68px 24px 24px', minHeight: '100%' }}>
+        <div style={{ padding: isMobile ? '60px 12px 16px' : '68px 24px 24px', minHeight: '100%' }}>
           <div
             ref={gridRef}
             style={{
               maxWidth: 1400,
               margin: '0 auto',
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: 36,
+              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+              gap: isMobile ? 12 : 36,
               position: 'relative',
             }}
           >
-            {/* Rails verticaux entre colonnes */}
-            {[1, 2, 3].map((i) => (
+            {/* Rails verticaux entre colonnes — desktop seulement (4 colonnes) */}
+            {!isMobile && [1, 2, 3].map((i) => (
               <div
                 key={'rail' + i}
                 style={{

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { lexa } from '@/api/lexa';
 import { useChatStore, type AgentId } from '@/stores/chatStore';
+import { useAuthStore } from '@/stores/authStore';
 import type { AgentAnswer } from '@/api/types';
 
 // ——— Types ———
@@ -68,7 +69,7 @@ const AGENTS: { id: AgentId; label: string }[] = [
 const LLM_TIMEOUT_MS = 90_000;
 
 // ——— Hook partagé chat IA ———
-function useChatEngine(agent: AgentId) {
+function useChatEngine(agent: AgentId, tenantId: string | null, year?: number) {
   const { messages, loading, addMessage, setLoading, clear } = useChatStore();
   const abortRef = useRef<AbortController | null>(null);
   const pendingQ = useRef('');
@@ -92,6 +93,9 @@ function useChatEngine(agent: AgentId) {
         if (agent === 'classifier') {
           const [desc, amt] = q.split('|').map((s) => s.trim());
           return lexa.classify(desc ?? q, parseFloat(amt ?? '0') || 0);
+        }
+        if (agent === 'reasoning' && tenantId) {
+          return lexa.lexaAsk(q, tenantId, year);
         }
         return lexa.ragAsk(q);
       })();
@@ -126,7 +130,7 @@ function useChatEngine(agent: AgentId) {
       setLoading(false);
       abortRef.current = null;
     }
-  }, [agent, loading, addMessage, setLoading]);
+  }, [agent, tenantId, year, loading, addMessage, setLoading]);
 
   const retry = useCallback(() => {
     const q = pendingQ.current;
@@ -152,12 +156,19 @@ export function LexaCmdK({
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const activeTenantId = useAuthStore((s) => s.activeTenantId);
+  const currentYear = new Date().getFullYear();
+
   // Utilise le store partagé pour les messages
   const storeAgent = useChatStore((s) => s.agent);
   const setStoreAgent = useChatStore((s) => s.setAgent);
 
   const effectiveAgent: AgentId = chatMode ? agent : storeAgent;
-  const { messages, loading, error, sendQuestion, retry, clear } = useChatEngine(effectiveAgent);
+  const { messages, loading, error, sendQuestion, retry, clear } = useChatEngine(
+    effectiveAgent,
+    activeTenantId,
+    currentYear,
+  );
 
   // Focus input quand ouvert
   useEffect(() => {

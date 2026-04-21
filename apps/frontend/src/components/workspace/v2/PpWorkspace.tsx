@@ -1,29 +1,29 @@
 import { useState, useCallback } from 'react';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { LexaInsight } from './LexaInsight';
 import { fmtMoney } from './fmtMoney';
 import { createPortal } from 'react-dom';
 import { lexa } from '@/api/lexa';
+import type { PpTone } from '@/api/lexa';
 import { useActiveCompany } from '@/stores/companiesStore';
 import { useAuthStore } from '@/stores/authStore';
 
-// ——— Mock data PP (personne physique salariée) ———
-// Utilisé tant que la structure PP n'existe pas côté Lexa DB.
+type Tone = PpTone;
 
-type Tone = 'pos' | 'neg' | 'tax' | 'asset';
-
-interface PpItem {
+type PpItem = {
   code: string;
   name: string;
   amount: number;
   count: number;
   tone: Tone;
-}
+};
 
-interface PpBucket {
+type PpBucket = {
   k: string;
   items: PpItem[];
-}
+};
 
 const PP_DATA = {
   name: 'Personne physique',
@@ -140,9 +140,10 @@ const MOCK_TX: Record<string, Array<{ date: string; desc: string; amount: number
 interface PpDetailDrawerProps {
   item: PpItem | null;
   onClose: () => void;
+  hasRealData?: boolean;
 }
 
-function PpDetailDrawer({ item, onClose }: PpDetailDrawerProps) {
+function PpDetailDrawer({ item, onClose, hasRealData = false }: PpDetailDrawerProps) {
   if (!item) return null;
   const txs = MOCK_TX[item.code] ?? [];
   const fmtChf = (n: number) =>
@@ -288,19 +289,21 @@ function PpDetailDrawer({ item, onClose }: PpDetailDrawerProps) {
           </div>
         </div>
 
-        {/* Footer */}
-        <div
-          style={{
-            padding: '12px 20px',
-            borderTop: '1px solid rgb(var(--border, 229 229 222))',
-            background: 'rgb(var(--elevated, 243 243 238))',
-            fontSize: 11,
-            color: 'rgb(var(--muted, 107 107 102))',
-            flexShrink: 0,
-          }}
-        >
-          Données de démonstration · les transactions réelles PP seront disponibles en V1.2
-        </div>
+        {/* Footer — masqué si données réelles chargées */}
+        {!hasRealData && (
+          <div
+            style={{
+              padding: '12px 20px',
+              borderTop: '1px solid rgb(var(--border, 229 229 222))',
+              background: 'rgb(var(--elevated, 243 243 238))',
+              fontSize: 11,
+              color: 'rgb(var(--muted, 107 107 102))',
+              flexShrink: 0,
+            }}
+          >
+            Données de démonstration · les transactions réelles PP seront disponibles en V1.2
+          </div>
+        )}
       </div>
       <style>{`
         @keyframes ppDrawerIn {
@@ -318,11 +321,23 @@ export function PpWorkspace() {
   const [drawerItem, setDrawerItem] = useState<PpItem | null>(null);
   const [prefilling, setPrefilling] = useState(false);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   // BUG-6 RGPD fix : lier l'affichage au tenant actif pour éviter cache stale inter-tenants
   const activeCompany = useActiveCompany();
   const activeTenantId = useAuthStore((s) => s.activeTenantId);
-  const d = PP_DATA;
   const year = new Date().getFullYear();
+
+  const { data: apiData, isLoading } = useQuery({
+    queryKey: ['pp-summary', activeTenantId, year],
+    queryFn: () => lexa.getPpSummary(year),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fallback sur PP_DATA si l'API ne retourne pas de données (ou pendant le loading initial)
+  const apiBuckets = apiData?.buckets ?? [];
+  const hasRealData = apiBuckets.length > 0;
+  const activeBuckets: PpBucket[] = hasRealData ? apiBuckets : PP_DATA.buckets;
+  const d = { ...PP_DATA, buckets: activeBuckets };
 
   // Préremplissage du draft taxpayer depuis les données disponibles avant navigation
   const handleNavigateTaxpayer = useCallback(async () => {
@@ -358,11 +373,13 @@ export function PpWorkspace() {
       fields.push({ field: 'step2.isSalarie', value: true });
       fields.push({ field: 'step2.salaireBrut', value: totalSalBrut });
 
-      // Déductions — 3e pilier et LPP
+      // Déductions — 3e pilier, LPP et primes assurance maladie
       const pilier3a = d.buckets[2].items.find((x) => x.code === 'E01')?.amount ?? 0;
       const rachatsLpp = d.buckets[2].items.find((x) => x.code === 'E03')?.amount ?? 0;
+      const primesAssurance = d.buckets[1].items.find((x) => x.code === 'V02')?.amount ?? 0;
       if (pilier3a)  fields.push({ field: 'step4.pilier3a', value: pilier3a });
       if (rachatsLpp) fields.push({ field: 'step4.rachatsLpp', value: rachatsLpp });
+      if (primesAssurance) fields.push({ field: 'step4.primesAssurance', value: primesAssurance });
 
       // 3. Patcher le draft pour chaque champ (en séquence pour éviter les conflits)
       for (const f of fields) {
@@ -386,10 +403,48 @@ export function PpWorkspace() {
   const totalObl = d.buckets[3].items.reduce((s, x) => s + x.amount, 0);
   const dispo    = totalSal - totalVP - totalEp - totalObl;
 
+  if (isLoading) {
+    return (
+      <div
+        className="v2-canvas"
+        style={{
+          position: 'relative',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 12,
+        }}
+      >
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            style={{
+              width: '80%',
+              maxWidth: 800,
+              height: 72,
+              borderRadius: 12,
+              background: 'rgb(var(--elevated, 243 243 238))',
+              animation: 'ppSkeletonPulse 1.4s ease-in-out infinite',
+              animationDelay: `${i * 0.15}s`,
+            }}
+          />
+        ))}
+        <style>{`
+          @keyframes ppSkeletonPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
     <div className="v2-canvas" style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
-        <div style={{ padding: '24px', minHeight: '100%' }}>
+        <div style={{ padding: isMobile ? '12px' : '24px', minHeight: '100%' }}>
 
           {/* Profile hero */}
           <div
@@ -399,73 +454,96 @@ export function PpWorkspace() {
               background: 'rgb(var(--surface))',
               border: '1px solid rgb(var(--border))',
               borderRadius: 14,
-              padding: 20,
-              display: 'grid',
-              gridTemplateColumns: 'auto 1fr auto auto auto auto',
-              gap: 24,
-              alignItems: 'center',
+              padding: isMobile ? 16 : 20,
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: isMobile ? 12 : 24,
+              alignItems: isMobile ? 'flex-start' : 'center',
             }}
           >
-            {/* Avatar — lettre du nom tenant actif (BUG-6 RGPD) */}
+            {/* Ligne avatar + identité (toujours ensemble) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+              {/* Avatar — lettre du nom tenant actif (BUG-6 RGPD) */}
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: 'linear-gradient(135deg, var(--lexa) 0%, var(--lexa-deep) 100%)',
+                  color: 'var(--v2-bg)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontWeight: 600,
+                  fontSize: isMobile ? 18 : 22,
+                  letterSpacing: '-0.02em',
+                  flexShrink: 0,
+                }}
+              >
+                {(activeCompany?.name ?? d.name).charAt(0).toUpperCase()}
+              </div>
+
+              {/* Identité — nom du tenant actif pour éviter affichage inter-tenants (BUG-6 RGPD) */}
+              <div>
+                <div style={{ fontWeight: 600, fontSize: isMobile ? 15 : 18, letterSpacing: '-0.02em', color: 'rgb(var(--ink))' }}>
+                  {activeCompany?.name ?? d.name}
+                </div>
+                <div style={{ color: 'rgb(var(--muted))', fontSize: 12 }}>
+                  {d.sub}
+                  {activeTenantId && (
+                    <span style={{ marginLeft: 8, opacity: 0.5, fontSize: 10, fontFamily: '"JetBrains Mono", monospace' }}>
+                      · {activeTenantId.slice(0, 8)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* KPIs — flex-wrap 2×N sur mobile, inline sur desktop */}
             <div
               style={{
-                width: 56,
-                height: 56,
-                borderRadius: 14,
-                background: 'linear-gradient(135deg, var(--lexa) 0%, var(--lexa-deep) 100%)',
-                color: 'var(--v2-bg)',
-                display: 'grid',
-                placeItems: 'center',
-                fontWeight: 600,
-                fontSize: 22,
-                letterSpacing: '-0.02em',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: isMobile ? 10 : 0,
+                flex: isMobile ? undefined : 1,
+                justifyContent: isMobile ? 'flex-start' : 'flex-end',
               }}
             >
-              {(activeCompany?.name ?? d.name).charAt(0).toUpperCase()}
-            </div>
-
-            {/* Identité — nom du tenant actif pour éviter affichage inter-tenants (BUG-6 RGPD) */}
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 18, letterSpacing: '-0.02em', color: 'rgb(var(--ink))' }}>
-                {activeCompany?.name ?? d.name}
-              </div>
-              <div style={{ color: 'rgb(var(--muted))', fontSize: 12 }}>
-                {d.sub}
-                {activeTenantId && (
-                  <span style={{ marginLeft: 8, opacity: 0.5, fontSize: 10, fontFamily: '"JetBrains Mono", monospace' }}>
-                    · {activeTenantId.slice(0, 8)}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* KPIs inline */}
-            {[
-              { k: 'Salaire',    v: totalSal, color: TONE_COLOR.pos },
-              { k: 'Vie privée', v: totalVP,  color: TONE_COLOR.neg },
-              { k: 'Épargne',    v: totalEp,  color: TONE_COLOR.asset },
-              { k: 'Impôts',     v: totalObl, color: TONE_COLOR.tax },
-              { k: 'Disponible', v: dispo,    color: 'rgb(var(--ink))', strong: true },
-            ].map((k, i) => (
-              <div key={i} style={{ borderLeft: '1px solid rgb(var(--border))', paddingLeft: 16 }}>
-                <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgb(var(--subtle))', fontWeight: 600 }}>
-                  {k.k}
-                </div>
+              {[
+                { k: 'Salaire',    v: totalSal, color: TONE_COLOR.pos },
+                { k: 'Vie privée', v: totalVP,  color: TONE_COLOR.neg },
+                { k: 'Épargne',    v: totalEp,  color: TONE_COLOR.asset },
+                { k: 'Impôts',     v: totalObl, color: TONE_COLOR.tax },
+                { k: 'Disponible', v: dispo,    color: 'rgb(var(--ink))', strong: true },
+              ].map((k, i) => (
                 <div
+                  key={i}
                   style={{
-                    fontFamily: '"JetBrains Mono", monospace',
-                    fontSize: (k as { strong?: boolean }).strong ? 20 : 16,
-                    fontWeight: 500,
-                    color: k.color,
-                    fontVariantNumeric: 'tabular-nums',
-                    marginTop: 2,
+                    borderLeft: isMobile ? 'none' : '1px solid rgb(var(--border))',
+                    borderTop: isMobile ? '1px solid rgb(var(--border))' : 'none',
+                    paddingLeft: isMobile ? 0 : 16,
+                    paddingTop: isMobile ? 8 : 0,
+                    minWidth: isMobile ? 'calc(50% - 5px)' : undefined,
                   }}
                 >
-                  {fmtMoney(k.v)}{' '}
-                  <span style={{ fontSize: 10, color: 'rgb(var(--subtle))', fontWeight: 400 }}>CHF</span>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgb(var(--subtle))', fontWeight: 600 }}>
+                    {k.k}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: '"JetBrains Mono", monospace',
+                      fontSize: (k as { strong?: boolean }).strong ? (isMobile ? 16 : 20) : (isMobile ? 14 : 16),
+                      fontWeight: 500,
+                      color: k.color,
+                      fontVariantNumeric: 'tabular-nums',
+                      marginTop: 2,
+                    }}
+                  >
+                    {fmtMoney(k.v)}{' '}
+                    <span style={{ fontSize: 10, color: 'rgb(var(--subtle))', fontWeight: 400 }}>CHF</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           {/* Grille principale */}
@@ -473,8 +551,8 @@ export function PpWorkspace() {
             style={{
               maxWidth: 1240,
               margin: '0 auto',
-              display: 'grid',
-              gridTemplateColumns: '1fr 360px',
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
               gap: 16,
             }}
           >
@@ -531,10 +609,13 @@ export function PpWorkspace() {
                             }}
                             style={{
                               display: 'grid',
-                              gridTemplateColumns: '80px 180px 1fr 120px 60px',
-                              gap: 14,
+                              gridTemplateColumns: isMobile
+                                ? '48px 1fr 80px'
+                                : '80px 180px 1fr 120px 60px',
+                              gap: isMobile ? 10 : 14,
                               alignItems: 'center',
-                              padding: '10px 16px',
+                              padding: isMobile ? '12px 12px' : '10px 16px',
+                              minHeight: 44,
                               borderBottom: ii === b.items.length - 1 ? 'none' : '1px solid rgb(var(--border))',
                               background: isSel ? 'rgb(var(--elevated))' : 'transparent',
                               cursor: 'pointer',
@@ -556,34 +637,36 @@ export function PpWorkspace() {
                             <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 10, color: 'rgb(var(--subtle))' }}>
                               {it.code}
                             </span>
-                            <span style={{ fontSize: 13, fontWeight: 500, color: 'rgb(var(--ink))' }}>
+                            <span style={{ fontSize: 13, fontWeight: 500, color: 'rgb(var(--ink))', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {it.name}
                             </span>
-                            {/* Barre de proportion */}
-                            <div
-                              style={{
-                                height: 6,
-                                background: 'rgb(var(--elevated))',
-                                borderRadius: 3,
-                                position: 'relative',
-                                overflow: 'hidden',
-                              }}
-                            >
+                            {/* Barre de proportion — masquée sur mobile */}
+                            {!isMobile && (
                               <div
                                 style={{
-                                  position: 'absolute',
-                                  inset: 0,
-                                  width: `${pct}%`,
-                                  background: TONE_COLOR[it.tone],
-                                  opacity: 0.7,
+                                  height: 6,
+                                  background: 'rgb(var(--elevated))',
                                   borderRadius: 3,
+                                  position: 'relative',
+                                  overflow: 'hidden',
                                 }}
-                              />
-                            </div>
+                              >
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    inset: 0,
+                                    width: `${pct}%`,
+                                    background: TONE_COLOR[it.tone],
+                                    opacity: 0.7,
+                                    borderRadius: 3,
+                                  }}
+                                />
+                              </div>
+                            )}
                             <span
                               style={{
                                 fontFamily: '"JetBrains Mono", monospace',
-                                fontSize: 13,
+                                fontSize: isMobile ? 12 : 13,
                                 fontVariantNumeric: 'tabular-nums',
                                 fontWeight: 500,
                                 textAlign: 'right',
@@ -592,9 +675,12 @@ export function PpWorkspace() {
                             >
                               {fmtMoney(it.amount)}
                             </span>
-                            <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 10, color: 'rgb(var(--subtle))', textAlign: 'right' }}>
-                              {it.count}×
-                            </span>
+                            {/* Count — masqué sur mobile */}
+                            {!isMobile && (
+                              <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 10, color: 'rgb(var(--subtle))', textAlign: 'right' }}>
+                                {it.count}×
+                              </span>
+                            )}
                           </div>
                         );
                       })}
@@ -605,7 +691,17 @@ export function PpWorkspace() {
             </div>
 
             {/* Colonne droite : échéances + insight */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, position: 'sticky', top: 24 }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                position: isMobile ? 'static' : 'sticky',
+                top: isMobile ? undefined : 24,
+                flexShrink: 0,
+                width: isMobile ? '100%' : 360,
+              }}
+            >
               {/* Échéances — dark card (style prototype chrome-bg) */}
               <div
                 style={{
@@ -688,7 +784,7 @@ export function PpWorkspace() {
       </div>
 
       {/* Drawer détail PP item */}
-      <PpDetailDrawer item={drawerItem} onClose={() => setDrawerItem(null)} />
+      <PpDetailDrawer item={drawerItem} onClose={() => setDrawerItem(null)} hasRealData={hasRealData} />
     </div>
   );
 }
