@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { query } from "../db/postgres.js";
+import { kaferLabel } from "../reference/kafer-labels.js";
 import {
   projectBalanceSheet,
   projectIncomeStatement,
@@ -110,6 +111,7 @@ ledgerRouter.get("/account/:account", async (req, res) => {
 
   const summaryAccounts = balanceResult.rows.map((r) => ({
     account: r.account,
+    name: kaferLabel(r.account),
     debitCount: Number(r.debit_count),
     creditCount: Number(r.credit_count),
     totalDebit: Number(r.total_debit),
@@ -156,6 +158,7 @@ ledgerRouter.get("/balance", async (req, res) => {
 
   const accounts = result.rows.map((r) => ({
     account: r.account,
+    name: kaferLabel(r.account),
     debitCount: Number(r.debit_count),
     creditCount: Number(r.credit_count),
     totalDebit: Number(r.total_debit),
