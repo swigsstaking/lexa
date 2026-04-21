@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fixture synthétique — Lohnausweis Swissdec ELM 5.0 (2025)
+  Namespace basé sur la spec ELM 5.0 / SalaryDeclaration v20050902
+  Utilisé uniquement pour les tests unitaires Lexa.
+-->
+<SalaryDeclaration
+  xmlns="http://www.swissdec.ch/schema/sd/20050902/SalaryDeclaration"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  schemaVersion="5.0">
+
+  <GeneralSalaryDeclarationDescription>
+    <AccountingYear>2025</AccountingYear>
+    <CreationDate>2026-01-31</CreationDate>
+  </GeneralSalaryDeclarationDescription>
+
+  <Company>
+    <CompanyDescription>
+      <CompanyName>ACME SA</CompanyName>
+      <UID-EHRA>CHE-123.456.789</UID-EHRA>
+      <Address>
+        <Street>Rue de la Paix 12</Street>
+        <ZIPCode>1204</ZIPCode>
+        <City>Genève</City>
+        <Country>CH</Country>
+      </Address>
+    </CompanyDescription>
+
+    <Staff>
+      <Person>
+        <Particulars>
+          <SV-AS-Number>756.1234.5678.90</SV-AS-Number>
+          <FirstName>Jean</FirstName>
+          <Name>Dupont</Name>
+          <BirthDate>1985-03-15</BirthDate>
+          <Sex>M</Sex>
+          <CivilStatus>2</CivilStatus>
+          <Address>
+            <Street>Avenue des Alpes 5</Street>
+            <ZIPCode>1000</ZIPCode>
+            <City>Lausanne</City>
+            <Country>CH</Country>
+          </Address>
+          <ResidenceCanton>VD</ResidenceCanton>
+        </Particulars>
+
+        <Salary>
+          <!-- Domain Tax / Lohnausweis -->
+          <TaxSalaries>
+            <TaxSalary>
+              <!-- Période : jan-déc 2025 -->
+              <PeriodFrom>2025-01-01</PeriodFrom>
+              <PeriodTo>2025-12-31</PeriodTo>
+              <ActivityRate>100</ActivityRate>
+
+              <!-- Revenus (lignes 1-7 du Lohnausweis officiel) -->
+              <Income>
+                <!-- z1 : Salaire de base -->
+                <BaseSalary>96000.00</BaseSalary>
+                <!-- z2 : 13e salaire -->
+                <ThirteenthSalary>8000.00</ThirteenthSalary>
+                <!-- z3 : Bonus / gratification -->
+                <Bonus>0.00</Bonus>
+                <!-- z4 : Avantages accessoires en argent -->
+                <CashAllowance>0.00</CashAllowance>
+                <!-- z7 : Autres revenus -->
+                <OtherIncome>2000.00</OtherIncome>
+              </Income>
+
+              <!-- z8 : Salaire brut total -->
+              <GrossIncome>106000.00</GrossIncome>
+
+              <!-- Déductions (z9, z10) -->
+              <Deductions>
+                <!-- z9 : Cotisations AVS/AI/APG -->
+                <AHV_IV_EO_Contribution>7420.00</AHV_IV_EO_Contribution>
+                <!-- z9 : Cotisations chômage (ALV) -->
+                <ALV_Contribution>1060.00</ALV_Contribution>
+                <!-- z10 : Cotisations LPP/2e pilier -->
+                <BVG_LPP_Contribution>6360.00</BVG_LPP_Contribution>
+              </Deductions>
+
+              <!-- z11 : Salaire net -->
+              <NetIncome>91160.00</NetIncome>
+
+              <!-- Frais professionnels (z13) -->
+              <Expenses>
+                <!-- Frais de déplacement -->
+                <CommutingExpenses>3000.00</CommutingExpenses>
+                <!-- Frais de repas -->
+                <MealExpenses>1500.00</MealExpenses>
+              </Expenses>
+            </TaxSalary>
+          </TaxSalaries>
+        </Salary>
+      </Person>
+    </Staff>
+  </Company>
+</SalaryDeclaration>

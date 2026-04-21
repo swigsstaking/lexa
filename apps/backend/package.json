@@ -11,7 +11,9 @@
     "migrate": "tsx src/db/migrate.ts",
     "test:rag": "tsx src/scripts/test-rag.ts",
     "test:classify": "tsx src/scripts/test-classify.ts",
-    "qa-lexa": "tsx src/scripts/qa-lexa.ts"
+    "qa-lexa": "tsx src/scripts/qa-lexa.ts",
+    "crypto:snapshot": "tsx src/scheduler/cryptoSnapshotCron.ts",
+    "test:swissdec": "tsx src/services/swissdec/__tests__/elmParser.test.ts"
   },
   "dependencies": {
     "@napi-rs/canvas": "^0.1.67",

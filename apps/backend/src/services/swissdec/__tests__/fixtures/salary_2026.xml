@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fixture synthétique — Lohnausweis Swissdec ELM 5.0 (2026)
+  Deuxième exemple : femme, canton ZH, LPP plus élevé, sans 13e
+  Utilisé uniquement pour les tests unitaires Lexa.
+-->
+<SalaryDeclaration
+  xmlns="http://www.swissdec.ch/schema/sd/20050902/SalaryDeclaration"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  schemaVersion="5.0">
+
+  <GeneralSalaryDeclarationDescription>
+    <AccountingYear>2026</AccountingYear>
+    <CreationDate>2027-01-31</CreationDate>
+  </GeneralSalaryDeclarationDescription>
+
+  <Company>
+    <CompanyDescription>
+      <CompanyName>TechZürich GmbH</CompanyName>
+      <UID-EHRA>CHE-987.654.321</UID-EHRA>
+      <Address>
+        <Street>Bahnhofstrasse 1</Street>
+        <ZIPCode>8001</ZIPCode>
+        <City>Zürich</City>
+        <Country>CH</Country>
+      </Address>
+    </CompanyDescription>
+
+    <Staff>
+      <Person>
+        <Particulars>
+          <SV-AS-Number>756.9876.5432.10</SV-AS-Number>
+          <FirstName>Maria</FirstName>
+          <Name>Müller</Name>
+          <BirthDate>1990-07-22</BirthDate>
+          <Sex>F</Sex>
+          <CivilStatus>1</CivilStatus>
+          <Address>
+            <Street>Seestrasse 100</Street>
+            <ZIPCode>8002</ZIPCode>
+            <City>Zürich</City>
+            <Country>CH</Country>
+          </Address>
+          <ResidenceCanton>ZH</ResidenceCanton>
+        </Particulars>
+
+        <Salary>
+          <TaxSalaries>
+            <TaxSalary>
+              <PeriodFrom>2026-01-01</PeriodFrom>
+              <PeriodTo>2026-12-31</PeriodTo>
+              <ActivityRate>80</ActivityRate>
+
+              <Income>
+                <BaseSalary>86400.00</BaseSalary>
+                <ThirteenthSalary>0.00</ThirteenthSalary>
+                <Bonus>5000.00</Bonus>
+                <CashAllowance>0.00</CashAllowance>
+                <OtherIncome>0.00</OtherIncome>
+              </Income>
+
+              <GrossIncome>91400.00</GrossIncome>
+
+              <Deductions>
+                <AHV_IV_EO_Contribution>6398.00</AHV_IV_EO_Contribution>
+                <ALV_Contribution>914.00</ALV_Contribution>
+                <BVG_LPP_Contribution>8226.00</BVG_LPP_Contribution>
+              </Deductions>
+
+              <NetIncome>75862.00</NetIncome>
+
+              <Expenses>
+                <CommutingExpenses>2400.00</CommutingExpenses>
+                <MealExpenses>0.00</MealExpenses>
+              </Expenses>
+            </TaxSalary>
+          </TaxSalaries>
+        </Salary>
+      </Person>
+    </Staff>
+  </Company>
+</SalaryDeclaration>
