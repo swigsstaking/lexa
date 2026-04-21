@@ -450,7 +450,7 @@ export function PpWorkspace() {
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
         <div style={{ padding: isMobile ? '12px' : '24px', minHeight: '100%' }}>
 
-          {/* Profile hero */}
+          {/* Profile hero — grid sur desktop (DISPONIBLE wrap auto), flex column sur mobile */}
           <div
             style={{
               maxWidth: 1240,
@@ -459,109 +459,100 @@ export function PpWorkspace() {
               border: '1px solid rgb(var(--border))',
               borderRadius: 14,
               padding: isMobile ? 16 : 20,
-              display: 'flex',
-              flexDirection: isMobile ? 'column' : 'row',
+              display: isMobile ? 'flex' : 'grid',
+              flexDirection: isMobile ? 'column' : undefined,
+              gridTemplateColumns: isMobile ? undefined : 'auto 1fr auto auto auto auto',
               gap: isMobile ? 12 : 24,
               alignItems: isMobile ? 'flex-start' : 'center',
             }}
           >
-            {/* Ligne avatar + identité (toujours ensemble) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
-              {/* Avatar — lettre du nom tenant actif (BUG-6 RGPD) */}
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 12,
-                  background: 'linear-gradient(135deg, var(--lexa) 0%, var(--lexa-deep) 100%)',
-                  color: 'var(--v2-bg)',
-                  display: 'grid',
-                  placeItems: 'center',
-                  fontWeight: 600,
-                  fontSize: isMobile ? 18 : 22,
-                  letterSpacing: '-0.02em',
-                  flexShrink: 0,
-                }}
-              >
-                {(activeCompany?.name ?? d.name).charAt(0).toUpperCase()}
-              </div>
-
-              {/* Identité — nom du tenant actif pour éviter affichage inter-tenants (BUG-6 RGPD) */}
-              <div>
-                <div style={{ fontWeight: 600, fontSize: isMobile ? 15 : 18, letterSpacing: '-0.02em', color: 'rgb(var(--ink))' }}>
-                  {activeCompany?.name ?? d.name}
-                </div>
-                <div style={{ color: 'rgb(var(--muted))', fontSize: 12 }}>
-                  {d.sub}
-                  {activeTenantId && (
-                    <span style={{ marginLeft: 8, opacity: 0.5, fontSize: 10, fontFamily: '"JetBrains Mono", monospace' }}>
-                      · {activeTenantId.slice(0, 8)}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* KPIs — flex-wrap 2×N sur mobile, inline sur desktop */}
+            {/* Avatar — lettre du nom tenant actif (BUG-6 RGPD) */}
             <div
               style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: isMobile ? 10 : 0,
-                flex: isMobile ? undefined : 1,
-                justifyContent: isMobile ? 'flex-start' : 'flex-end',
+                width: isMobile ? 44 : 56,
+                height: isMobile ? 44 : 56,
+                borderRadius: 14,
+                background: 'linear-gradient(135deg, var(--lexa) 0%, var(--lexa-deep) 100%)',
+                color: 'var(--v2-bg)',
+                display: 'grid',
+                placeItems: 'center',
+                fontWeight: 600,
+                fontSize: isMobile ? 18 : 22,
+                letterSpacing: '-0.02em',
+                flexShrink: 0,
               }}
             >
-              {[
-                { k: 'Salaire',    v: totalSal, color: TONE_COLOR.pos },
-                { k: 'Vie privée', v: totalVP,  color: TONE_COLOR.neg },
-                { k: 'Épargne',    v: totalEp,  color: TONE_COLOR.asset },
-                { k: 'Impôts',     v: totalObl, color: TONE_COLOR.tax },
-                { k: 'Disponible', v: dispo,    color: 'rgb(var(--ink))', strong: true },
-              ].map((k, i) => (
+              {(activeCompany?.name ?? d.name).charAt(0).toUpperCase()}
+            </div>
+
+            {/* Identité — nom du tenant actif pour éviter affichage inter-tenants (BUG-6 RGPD) */}
+            <div>
+              <div style={{ fontWeight: 600, fontSize: isMobile ? 15 : 18, letterSpacing: '-0.02em', color: 'rgb(var(--ink))' }}>
+                {activeCompany?.name ?? d.name}
+              </div>
+              <div style={{ color: 'rgb(var(--muted))', fontSize: 12 }}>
+                {d.sub}
+                {activeTenantId && (
+                  <span style={{ marginLeft: 8, opacity: 0.5, fontSize: 10, fontFamily: '"JetBrains Mono", monospace' }}>
+                    · {activeTenantId.slice(0, 8)}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* KPIs — grid 4 cols sur desktop (Disponible wrap dessous), flex-wrap 2×N sur mobile */}
+            {[
+              { k: 'Salaire',    v: totalSal, color: TONE_COLOR.pos },
+              { k: 'Vie privée', v: totalVP,  color: TONE_COLOR.neg },
+              { k: 'Épargne',    v: totalEp,  color: TONE_COLOR.asset },
+              { k: 'Impôts',     v: totalObl, color: TONE_COLOR.tax },
+              { k: 'Disponible', v: dispo,    color: 'rgb(var(--ink))', strong: true },
+            ].map((k, i) => (
+              <div
+                key={i}
+                style={{
+                  borderLeft: isMobile ? 'none' : '1px solid rgb(var(--border))',
+                  borderTop: isMobile ? '1px solid rgb(var(--border))' : 'none',
+                  paddingLeft: isMobile ? 0 : 16,
+                  paddingTop: isMobile ? 8 : 0,
+                  minWidth: isMobile ? 'calc(50% - 5px)' : undefined,
+                  // Disponible (5e KPI) : sur desktop occupe toute la ligne suivante
+                  gridColumn: !isMobile && (k as { strong?: boolean }).strong ? '1 / -1' : undefined,
+                }}
+              >
+                <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgb(var(--subtle))', fontWeight: 600 }}>
+                  {k.k}
+                </div>
                 <div
-                  key={i}
                   style={{
-                    borderLeft: isMobile ? 'none' : '1px solid rgb(var(--border))',
-                    borderTop: isMobile ? '1px solid rgb(var(--border))' : 'none',
-                    paddingLeft: isMobile ? 0 : 16,
-                    paddingTop: isMobile ? 8 : 0,
-                    minWidth: isMobile ? 'calc(50% - 5px)' : undefined,
+                    fontFamily: '"JetBrains Mono", monospace',
+                    fontSize: (k as { strong?: boolean }).strong ? (isMobile ? 18 : 28) : (isMobile ? 14 : 16),
+                    fontWeight: 500,
+                    color: k.color,
+                    fontVariantNumeric: 'tabular-nums',
+                    marginTop: 2,
                   }}
                 >
-                  <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgb(var(--subtle))', fontWeight: 600 }}>
-                    {k.k}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: '"JetBrains Mono", monospace',
-                      fontSize: (k as { strong?: boolean }).strong ? (isMobile ? 16 : 20) : (isMobile ? 14 : 16),
-                      fontWeight: 500,
-                      color: k.color,
-                      fontVariantNumeric: 'tabular-nums',
-                      marginTop: 2,
-                    }}
-                  >
-                    {fmtMoney(k.v)}{' '}
-                    <span style={{ fontSize: 10, color: 'rgb(var(--subtle))', fontWeight: 400 }}>CHF</span>
-                  </div>
+                  {fmtMoney(k.v)}{' '}
+                  <span style={{ fontSize: 10, color: 'rgb(var(--subtle))', fontWeight: 400 }}>CHF</span>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
 
-          {/* Grille principale */}
+          {/* Grille principale — grid sur desktop pour donner espace explicite au swimlane (1fr) et à la colonne droite (360px), flex column sur mobile */}
           <div
             style={{
               maxWidth: 1240,
               margin: '0 auto',
-              display: 'flex',
-              flexDirection: isMobile ? 'column' : 'row',
+              display: isMobile ? 'flex' : 'grid',
+              flexDirection: isMobile ? 'column' : undefined,
+              gridTemplateColumns: isMobile ? undefined : 'minmax(0, 1fr) 360px',
               gap: 16,
             }}
           >
             {/* Swimlanes (buckets) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
               {d.buckets.map((b, bi) => {
                 const sub = b.items.reduce((s, x) => s + x.amount, 0);
                 const max = Math.max(...b.items.map((x) => x.amount));
