@@ -5,7 +5,7 @@
 -- pp_crypto_wallets : adresses wallet enregistrées par tenant/user
 CREATE TABLE IF NOT EXISTS pp_crypto_wallets (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id  UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  tenant_id  UUID NOT NULL,
   user_id    UUID NOT NULL,
   chain      TEXT NOT NULL CHECK (chain IN ('eth', 'btc', 'sol')),
   address    TEXT NOT NULL,
@@ -28,7 +28,7 @@ CREATE POLICY pp_crypto_wallets_tenant_isolation ON pp_crypto_wallets
 -- pp_crypto_snapshots : snapshot annuel au 31.12 pour chaque wallet
 CREATE TABLE IF NOT EXISTS pp_crypto_snapshots (
   id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id            UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  tenant_id            UUID NOT NULL,
   wallet_id            UUID NOT NULL REFERENCES pp_crypto_wallets(id) ON DELETE CASCADE,
   year                 INT NOT NULL,
   balance_native       NUMERIC(38, 18) NOT NULL,

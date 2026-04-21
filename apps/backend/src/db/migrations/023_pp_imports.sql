@@ -4,7 +4,7 @@
 
 CREATE TABLE IF NOT EXISTS pp_imports (
   id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id          UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  tenant_id          UUID NOT NULL,
   user_id            UUID NOT NULL,
   category           TEXT NOT NULL CHECK (category IN (
     'salary', 'wealth', 'investment', 'expense', 'insurance', 'crypto', 'auto'
