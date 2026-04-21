@@ -27,6 +27,7 @@ import { startImapListener } from "./services/ImapListener.js";
 import { settingsRouter } from "./routes/settings.js";
 import { bridgeRouter } from "./routes/bridge.js";
 import { ppRouter } from "./routes/pp.js";
+import { ppCryptoRouter } from "./routes/ppCrypto.js";
 
 const app = express();
 
@@ -101,6 +102,7 @@ app.use("/jobs", jobsRouter); // LLM queue job status (session 37)
 app.use("/conseiller", conseillerRouter); // Briefings quotidiens (session briefing)
 app.use("/settings", requireAuth, settingsRouter); // Paramètres tenant (email forward...)
 app.use("/pp", requireAuth, ppRouter);
+app.use("/pp/crypto", requireAuth, ppCryptoRouter);
 
 // 404
 app.use((_req, res) => {

@@ -69,6 +69,11 @@ const ConfigSchema = z.object({
   REDIS_HOST: z.string().default("127.0.0.1"),
   REDIS_PORT: z.coerce.number().int().positive().default(6379),
   LLM_QUEUE_TIMEOUT_MS: z.coerce.number().int().positive().default(180000),
+
+  // Crypto module — PP wallets + snapshots annuels (V1.3)
+  CMC_API_KEY: z.string().default(""),           // CoinMarketCap key (pro-api.coinmarketcap.com)
+  ETHERSCAN_API_KEY: z.string().default(""),     // Etherscan free tier key (etherscan.io/apis)
+  SOLANA_RPC_URL: z.string().url().default("https://api.mainnet-beta.solana.com"),
 });
 
 const parsed = ConfigSchema.safeParse(process.env);
