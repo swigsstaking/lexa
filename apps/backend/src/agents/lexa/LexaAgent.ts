@@ -5,10 +5,15 @@ import { vllm, type VllmStreamChunk } from "../../llm/VllmClient.js";
 import { AGENT_PROMPTS } from "../../llm/agent-prompts.js";
 import { query } from "../../db/postgres.js";
 
+export type LexaProfile = "pp" | "pm";
+
 export type LexaQuery = {
   question: string;
   tenantId: string;
   year?: number;
+  /** PP = contribuable personne physique → prompt + contexte fiscal dédié.
+   *  PM (défaut) = société — prompt comptable + grand livre. */
+  profile?: LexaProfile;
 };
 
 export type LexaAnswer = {
@@ -106,13 +111,10 @@ function buildAccountingContext(
   stats: LedgerStats,
   topAccounts: TopAccount[],
   draftState: DraftState,
+  profile?: LexaProfile,
 ): string {
   const fmt = (n: number) =>
     new Intl.NumberFormat("fr-CH", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
-
-  const accountLines = topAccounts
-    .map((a) => `  ${a.account} solde ${fmt(a.balance)} CHF (débit ${fmt(a.totalDebit)} / crédit ${fmt(a.totalCredit)})`)
-    .join("\n");
 
   const draftLines =
     draftState !== null
@@ -127,7 +129,19 @@ function buildAccountingContext(
           })
           .filter(Boolean)
           .join("\n")
-      : "  Aucun draft fiscal trouvé pour cette année.";
+      : "  Aucune donnée de déclaration saisie pour cette année.";
+
+  // PP : on met en avant le draft fiscal (revenus, déductions, patrimoine) et on omet
+  // le détail ledger qui n'est pas pertinent pour un contribuable privé.
+  if (profile === "pp") {
+    return `CONTEXTE FISCAL PP (tenant ${tenantId}, année ${year}):
+- Draft déclaration PP:
+${draftLines}`;
+  }
+
+  const accountLines = topAccounts
+    .map((a) => `  ${a.account} solde ${fmt(a.balance)} CHF (débit ${fmt(a.totalDebit)} / crédit ${fmt(a.totalCredit)})`)
+    .join("\n");
 
   return `CONTEXTE COMPTABLE (tenant ${tenantId}, année ${year}):
 - Transactions: ${stats.txCount} | Total débit: ${fmt(stats.totalDebit)} CHF | Total crédit: ${fmt(stats.totalCredit)} CHF
@@ -137,11 +151,39 @@ ${accountLines || "  Aucune écriture trouvée."}
 ${draftLines}`;
 }
 
+function buildUserPrompt(
+  accountingContext: string,
+  ragContext: string,
+  question: string,
+  profile?: LexaProfile,
+): string {
+  const guidance =
+    profile === "pp"
+      ? "Réponds de manière concise et précise en t'appuyant sur le CONTEXTE FISCAL PP (revenus, patrimoine, déductions saisies) et les articles de loi pertinents. Si la question touche à la TVA, à la comptabilité commerciale ou à une PM, dis-le et renvoie vers l'agent dédié."
+      : "Réponds de manière concise et précise. Si la question porte sur des chiffres comptables, utilise uniquement les données du contexte comptable ci-dessus. Si elle porte sur une règle fiscale, cite les articles pertinents.";
+
+  return `${accountingContext}
+
+SOURCES JURIDIQUES PERTINENTES:
+${ragContext || "Aucune source RAG pertinente trouvée."}
+
+QUESTION: ${question}
+
+${guidance}
+
+RÉPONSE:`;
+}
+
 export class LexaAgent {
   private readonly model = "lexa-reasoning";
   private readonly useVllm = process.env.USE_VLLM_LEXA === "true";
   private readonly vllmModel = process.env.VLLM_MODEL ?? "apolo13x/Qwen3.5-35B-A3B-NVFP4";
-  private readonly systemPrompt = AGENT_PROMPTS["lexa-reasoning"]?.system ?? "";
+  private readonly systemPromptPm = AGENT_PROMPTS["lexa-reasoning"]?.system ?? "";
+  private readonly systemPromptPp = AGENT_PROMPTS["lexa-reasoning-pp"]?.system ?? "";
+
+  private pickSystemPrompt(profile: LexaProfile | undefined): string {
+    return profile === "pp" ? this.systemPromptPp : this.systemPromptPm;
+  }
 
   async ask(query_: LexaQuery): Promise<LexaAnswer> {
     const started = Date.now();
@@ -166,25 +208,17 @@ export class LexaAgent {
       stats,
       topAccounts,
       draftState,
+      query_.profile,
     );
 
-    const prompt = `${accountingContext}
-
-SOURCES JURIDIQUES PERTINENTES:
-${ragContext || "Aucune source RAG pertinente trouvée."}
-
-QUESTION: ${query_.question}
-
-Réponds de manière concise et précise. Si la question porte sur des chiffres comptables, utilise uniquement les données du contexte comptable ci-dessus. Si elle porte sur une règle fiscale, cite les articles pertinents.
-
-RÉPONSE:`;
+    const prompt = buildUserPrompt(accountingContext, ragContext, query_.question, query_.profile);
 
     let response: string;
     if (this.useVllm) {
       try {
         const result = await vllm.generate({
           model: this.vllmModel,
-          systemPrompt: this.systemPrompt,
+          systemPrompt: this.pickSystemPrompt(query_.profile),
           prompt,
           temperature: 0.2,
           numPredict: 800,
@@ -263,24 +297,16 @@ RÉPONSE:`;
         stats,
         topAccounts,
         draftState,
+        query_.profile,
       );
 
-      const prompt = `${accountingContext}
-
-SOURCES JURIDIQUES PERTINENTES:
-${ragContext || "Aucune source RAG pertinente trouvée."}
-
-QUESTION: ${query_.question}
-
-Réponds de manière concise et précise. Si la question porte sur des chiffres comptables, utilise uniquement les données du contexte comptable ci-dessus. Si elle porte sur une règle fiscale, cite les articles pertinents.
-
-RÉPONSE:`;
+      const prompt = buildUserPrompt(accountingContext, ragContext, query_.question, query_.profile);
 
       if (this.useVllm) {
         try {
           for await (const chunk of vllm.generateStream({
             model: this.vllmModel,
-            systemPrompt: this.systemPrompt,
+            systemPrompt: this.pickSystemPrompt(query_.profile),
             prompt,
             temperature: 0.2,
             numPredict: 800,

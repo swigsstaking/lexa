@@ -87,8 +87,8 @@ export const lexa = {
   ragAsk: (question: string) =>
     api.post<AgentAnswer>('/rag/ask', { question }).then((r) => r.data),
 
-  lexaAsk: (question: string, tenantId: string, year?: number) =>
-    api.post<AgentAnswer>('/agents/lexa/ask', { question, tenantId, year }).then((r) => r.data),
+  lexaAsk: (question: string, tenantId: string, year?: number, profile?: 'pp' | 'pm') =>
+    api.post<AgentAnswer>('/agents/lexa/ask', { question, tenantId, year, profile }).then((r) => r.data),
 
   /**
    * Streaming SSE — utilise fetch natif (axios ne supporte pas ReadableStream).
@@ -105,6 +105,7 @@ export const lexa = {
     question: string,
     tenantId: string,
     year?: number,
+    profile?: 'pp' | 'pm',
   ): AsyncGenerator<
     | { type: 'delta'; delta: string }
     | { type: 'done'; citations: AgentAnswer['citations']; durationMs: number; model: string }
@@ -123,7 +124,7 @@ export const lexa = {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(activeTenantId ? { 'X-Tenant-Id': activeTenantId } : {}),
       },
-      body: JSON.stringify({ question, tenantId, year }),
+      body: JSON.stringify({ question, tenantId, year, profile }),
     });
 
     if (!response.ok || !response.body) {

@@ -395,6 +395,7 @@ const LexaAskSchema = z.object({
   question: z.string().min(3).max(2000),
   tenantId: z.string().uuid(),
   year: z.number().int().optional(),
+  profile: z.enum(["pp", "pm"]).optional(),
 });
 
 /** POST /agents/lexa/ask — agent générique avec context injection comptable

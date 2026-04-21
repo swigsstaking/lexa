@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { PpImportModal } from './PpImportModal';
 import { PpCryptoSwimlane } from './PpCryptoSwimlane';
 import { PpCryptoWalletForm } from './PpCryptoWalletForm';
+import { LexaCmdK, LexaCmdKTrigger } from './LexaCmdK';
 
 type Tone = PpTone;
 
@@ -325,6 +326,7 @@ export function PpWorkspace() {
   const [prefilling, setPrefilling] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [cryptoFormOpen, setCryptoFormOpen] = useState(false);
+  const [cmdkOpen, setCmdkOpen] = useState(false);
   const navigate = useNavigate();
 
   // Auto-ouverture via query params (déclenché depuis StartActionCards onboarding PP)
@@ -468,6 +470,10 @@ export function PpWorkspace() {
 
   return (
     <div className="v2-canvas" style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* CmdK Lexa — version PP (prompt dédié Personne Physique) */}
+      <LexaCmdKTrigger onOpen={() => setCmdkOpen(true)} />
+      <LexaCmdK open={cmdkOpen} setOpen={setCmdkOpen} />
+
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
         <div style={{ padding: isMobile ? '12px' : '24px', minHeight: '100%' }}>
 

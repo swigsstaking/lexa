@@ -3,7 +3,18 @@ import { createPortal } from 'react-dom';
 import { lexa } from '@/api/lexa';
 import { useChatStore, type AgentId } from '@/stores/chatStore';
 import { useAuthStore } from '@/stores/authStore';
-import type { AgentAnswer } from '@/api/types';
+import { useActiveCompany } from '@/stores/companiesStore';
+import type { AgentAnswer, LegalForm } from '@/api/types';
+
+/** Formes juridiques PM — synchronisé avec WorkspaceV2.tsx */
+const PM_FORMS: LegalForm[] = ['sa', 'sca', 'sarl', 'cooperative', 'sa_etrangere', 'snc', 'senc'];
+
+/** Détermine le profil (PP/PM) depuis la forme juridique du tenant actif.
+ *  Règle : identique à celle de WorkspaceV2 pour garantir que le CmdK utilise
+ *  le même prompt système que la vue affichée. */
+function detectProfile(legalForm: LegalForm | undefined): 'pp' | 'pm' {
+  return legalForm && PM_FORMS.includes(legalForm) ? 'pm' : 'pp';
+}
 
 // ——— Types ———
 interface CmdKAccount {
@@ -25,13 +36,22 @@ function fmtMoney(n: number) {
   return new Intl.NumberFormat('fr-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
 }
 
-const SUGGESTIONS = [
+type Suggestion = {
+  icon: string;
+  title: string;
+  sub: string;
+  k: string;
+  agent: AgentId;
+  query: string;
+};
+
+const SUGGESTIONS_PM: Suggestion[] = [
   {
     icon: '§',
     title: 'Préparer la déclaration TVA',
     sub: 'Agent TVA · échéance prochaine',
     k: '↵',
-    agent: 'tva' as AgentId,
+    agent: 'tva',
     query: 'Prépare ma déclaration TVA pour cette période',
   },
   {
@@ -39,7 +59,7 @@ const SUGGESTIONS = [
     title: 'Rapprocher les écritures de la Banque',
     sub: 'Agent Reconciliation · écritures en attente',
     k: '↵',
-    agent: 'reasoning' as AgentId,
+    agent: 'reasoning',
     query: 'Quelles écritures bancaires sont en attente de rapprochement ?',
   },
   {
@@ -47,7 +67,7 @@ const SUGGESTIONS = [
     title: 'Vérifier les anomalies détectées',
     sub: 'Agent Anomalies · soldes de sens anormal',
     k: '↵',
-    agent: 'reasoning' as AgentId,
+    agent: 'reasoning',
     query: 'Quelles anomalies as-tu détectées dans mon grand livre ?',
   },
   {
@@ -55,7 +75,42 @@ const SUGGESTIONS = [
     title: 'Poser une question sur tes comptes',
     sub: 'Pose une question libre sur le grand livre',
     k: '↵',
-    agent: 'reasoning' as AgentId,
+    agent: 'reasoning',
+    query: '',
+  },
+];
+
+const SUGGESTIONS_PP: Suggestion[] = [
+  {
+    icon: '3',
+    title: 'Combien puis-je encore verser sur mon 3e pilier A ?',
+    sub: 'Déduction LIFD art. 33 al. 1 let. e · plafond 2026',
+    k: '↵',
+    agent: 'reasoning',
+    query: 'Combien puis-je encore verser sur mon 3e pilier A cette année et quelle économie fiscale j\'aurai ?',
+  },
+  {
+    icon: '§',
+    title: 'Quelles déductions ai-je oubliées ?',
+    sub: 'Audit des déductions admises dans votre déclaration',
+    k: '↵',
+    agent: 'reasoning',
+    query: 'En fonction de ma situation (salaire, famille, patrimoine), quelles déductions fiscales ai-je peut-être oubliées ?',
+  },
+  {
+    icon: '¶',
+    title: 'Un rachat LPP est-il intéressant pour moi ?',
+    sub: 'Simulation économie fiscale · LIFD 33 al. 1 let. d',
+    k: '↵',
+    agent: 'reasoning',
+    query: 'Est-ce qu\'un rachat LPP cette année serait fiscalement intéressant dans ma situation ?',
+  },
+  {
+    icon: '?',
+    title: 'Poser une question sur ma déclaration',
+    sub: 'Pose une question libre sur ta fiscalité PP',
+    k: '↵',
+    agent: 'reasoning',
     query: '',
   },
 ];
@@ -69,7 +124,7 @@ const AGENTS: { id: AgentId; label: string }[] = [
 const LLM_TIMEOUT_MS = 90_000;
 
 // ——— Hook partagé chat IA ———
-function useChatEngine(agent: AgentId, tenantId: string | null, year?: number) {
+function useChatEngine(agent: AgentId, tenantId: string | null, profile: 'pp' | 'pm', year?: number) {
   const { messages, loading, addMessage, setLoading, updateLastMessage, clear } = useChatStore();
   const abortRef = useRef<AbortController | null>(null);
   const pendingQ = useRef('');
@@ -97,7 +152,7 @@ function useChatEngine(agent: AgentId, tenantId: string | null, year?: number) {
         let finalCitations: AgentAnswer['citations'] | undefined;
         let finalDurationMs = 0;
 
-        for await (const event of lexa.lexaAskStream(q, tenantId, year)) {
+        for await (const event of lexa.lexaAskStream(q, tenantId, year, profile)) {
           if (controller.signal.aborted) break;
 
           if (event.type === 'delta') {
@@ -144,6 +199,7 @@ function useChatEngine(agent: AgentId, tenantId: string | null, year?: number) {
           const [desc, amt] = q.split('|').map((s) => s.trim());
           return lexa.classify(desc ?? q, parseFloat(amt ?? '0') || 0);
         }
+        if (tenantId) return lexa.lexaAsk(q, tenantId, year, profile);
         return lexa.ragAsk(q);
       })();
 
@@ -177,7 +233,7 @@ function useChatEngine(agent: AgentId, tenantId: string | null, year?: number) {
       setLoading(false);
       abortRef.current = null;
     }
-  }, [agent, tenantId, year, loading, addMessage, setLoading, updateLastMessage]);
+  }, [agent, tenantId, year, profile, loading, addMessage, setLoading, updateLastMessage]);
 
   const retry = useCallback(() => {
     const q = pendingQ.current;
@@ -204,6 +260,8 @@ export function LexaCmdK({
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const activeTenantId = useAuthStore((s) => s.activeTenantId);
+  const activeCompany = useActiveCompany();
+  const profile = detectProfile(activeCompany?.legalForm);
   const currentYear = new Date().getFullYear();
 
   // Utilise le store partagé pour les messages
@@ -214,6 +272,7 @@ export function LexaCmdK({
   const { messages, loading, error, sendQuestion, retry, clear } = useChatEngine(
     effectiveAgent,
     activeTenantId,
+    profile,
     currentYear,
   );
 
@@ -266,7 +325,8 @@ export function LexaCmdK({
     )
     .slice(0, 4);
 
-  const filteredSuggestions = SUGGESTIONS.filter(
+  const activeSuggestions = profile === 'pp' ? SUGGESTIONS_PP : SUGGESTIONS_PM;
+  const filteredSuggestions = activeSuggestions.filter(
     (s) => !q || s.title.toLowerCase().includes(q.toLowerCase()),
   );
 
@@ -278,7 +338,7 @@ export function LexaCmdK({
     await sendQuestion(text);
   };
 
-  const handleSuggestionClick = async (s: typeof SUGGESTIONS[0]) => {
+  const handleSuggestionClick = async (s: Suggestion) => {
     setChatMode(true);
     setAgent(s.agent);
     setStoreAgent(s.agent);
@@ -385,7 +445,9 @@ export function LexaCmdK({
               placeholder={
                 chatMode
                   ? 'Continuer la conversation…'
-                  : 'Demande à Lexa, ou saute vers un compte…'
+                  : profile === 'pp'
+                    ? 'Demande à Lexa sur votre déclaration PP…'
+                    : 'Demande à Lexa, ou saute vers un compte…'
               }
               style={{
                 flex: 1,
@@ -398,6 +460,25 @@ export function LexaCmdK({
               }}
               onKeyDown={(e) => { void handleKeyDown(e); }}
             />
+            {/* Badge profile (PP/PM) — indique quel system prompt est utilisé */}
+            <span
+              title={profile === 'pp' ? 'Profil Personne Physique' : 'Profil Personne Morale'}
+              style={{
+                padding: '2px 7px',
+                borderRadius: 5,
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                background: profile === 'pp' ? '#F3F3EE' : '#0A0A0A',
+                color: profile === 'pp' ? '#6B6B66' : 'var(--lexa)',
+                border: profile === 'pp' ? '1px solid #E8E8E1' : 'none',
+                flexShrink: 0,
+                fontFamily: 'JetBrains Mono, monospace',
+              }}
+            >
+              {profile}
+            </span>
             {/* Agent selector (en mode chat) */}
             {chatMode && (
               <div style={{ display: 'flex', gap: 4 }}>
