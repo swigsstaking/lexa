@@ -532,7 +532,15 @@ export const lexa = {
       .post<{ tenantId: string; company: Company; token: string }>('/onboarding/add-account', input)
       .then((r) => r.data),
 
-  // ── Fiduciary — mode multi-clients (S32) ──────────────────────────────────
+  // ── Memberships — tous les comptes du user (owner + fiduciary + viewer) ──────
+  // Utilisé par le dropdown switcher pour lister TOUS les comptes du user.
+
+  listMemberships: () =>
+    api
+      .get<{ memberships: Array<{ tenantId: string; role: string; tenantName: string | null; addedAt: string }> }>('/auth/memberships')
+      .then((r) => r.data.memberships),
+
+  // ── Fiduciary — clients gérés en tant que cabinet fiduciaire (role='fiduciary' uniquement) ──
 
   listFiduciaryClients: () =>
     api

@@ -54,8 +54,17 @@ export function Workspace() {
   const [clientMenuOpen, setClientMenuOpen] = useState(false);
   const clientMenuRef = useRef<HTMLDivElement>(null);
 
-  // S32 : Charger les clients fiduciaires (si membership multiple)
+  // Tous les comptes du user (owner + fiduciary + viewer) — pour le switcher dropdown
   // enabled: !!token évite un 401 transitoire si Zustand n'a pas encore hydraté
+  const { data: accountMemberships } = useQuery({
+    queryKey: ['user-memberships'],
+    queryFn: lexa.listMemberships,
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+    enabled: !!token,
+  });
+
+  // Clients fiduciaires uniquement (role='fiduciary') — pour la section Portefeuille fiduciaire
   const { data: fiduClients } = useQuery({
     queryKey: ['fiduciary-clients'],
     queryFn: lexa.listFiduciaryClients,
@@ -64,7 +73,10 @@ export function Workspace() {
     enabled: !!token,
   });
 
-  const hasMultipleClients = fiduClients && fiduClients.length > 1;
+  // Un user est fiduciaire seulement s'il a au moins un client avec role='fiduciary'
+  const hasFiduClients = (fiduClients?.length ?? 0) > 0;
+  // Le switcher de comptes est visible dès qu'il y a plus d'un compte (owner ou fiduciary)
+  const hasMultipleAccounts = (accountMemberships?.length ?? 0) > 1;
 
   const handleSwitchTenant = async (tenantId: string) => {
     if (tenantId === activeTenantId || switchingTenant) return;
@@ -248,14 +260,14 @@ export function Workspace() {
     },
   ];
 
-  // Items fiduciaire pour le menu switcher client (multi-clients)
-  const fiduItems = hasMultipleClients && fiduClients
-    ? fiduClients.map((client) => ({
-        label: client.tenantName ?? client.tenantId.slice(0, 8),
-        onClick: () => { handleSwitchTenant(client.tenantId); setClientMenuOpen(false); },
+  // Items pour le switcher de comptes — utilise TOUS les memberships (owner + fiduciary)
+  const accountItems = hasMultipleAccounts && accountMemberships
+    ? accountMemberships.map((m) => ({
+        label: m.tenantName ?? m.tenantId.slice(0, 8),
+        onClick: () => { handleSwitchTenant(m.tenantId); setClientMenuOpen(false); },
         icon: Users,
-        active: client.tenantId === activeTenantId,
-        title: `Passer au client ${client.tenantName ?? client.tenantId}`,
+        active: m.tenantId === activeTenantId,
+        title: `Basculer vers ${m.tenantName ?? m.tenantId}`,
       }))
     : [];
 
@@ -314,7 +326,7 @@ export function Workspace() {
               type="button"
               onClick={() => setClientMenuOpen((o) => !o)}
               className="flex items-center gap-2 min-w-0 transition-colors rounded-md px-2 py-1 min-h-[44px] hover:opacity-80"
-              title={hasMultipleClients ? 'Changer de compte' : 'Gérer le compte'}
+              title={hasMultipleAccounts ? 'Changer de compte' : 'Gérer le compte'}
             >
               {(() => {
                 // Icône différente selon type d'entité : PM (Sàrl/SA/Coopérative) = Building2, PP (RI/assoc/fondation/autre) = User
@@ -336,12 +348,12 @@ export function Workspace() {
                 className="absolute left-0 top-full mt-1 min-w-[240px] rounded-lg z-50 py-1 shadow-lg"
               style={{ background: 'var(--chrome-bg-2)', borderColor: 'var(--chrome-line)', border: '1px solid var(--chrome-line)' }}
               >
-                {hasMultipleClients && fiduItems.length > 0 && (
+                {hasMultipleAccounts && accountItems.length > 0 && (
                   <>
                     <div className="px-3 pt-2 pb-1 text-2xs uppercase tracking-wider" style={{ color: 'var(--chrome-ink-3)' }}>
                       Mes comptes
                     </div>
-                    {fiduItems.map((item, i) => {
+                    {accountItems.map((item, i) => {
                       const ItemIcon = item.icon;
                       return (
                         <button
@@ -359,6 +371,20 @@ export function Workspace() {
                         </button>
                       );
                     })}
+                    <div className="border-t border-border my-1" />
+                  </>
+                )}
+                {hasFiduClients && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => { setClientMenuOpen(false); navigate('/fiduciaire'); }}
+                      className="w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 transition-colors hover:opacity-80"
+                      style={{ color: 'var(--chrome-ink-2)' }}
+                    >
+                      <Briefcase className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span>Portefeuille fiduciaire</span>
+                    </button>
                     <div className="border-t border-border my-1" />
                   </>
                 )}

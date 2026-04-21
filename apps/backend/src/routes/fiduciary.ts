@@ -157,7 +157,8 @@ fiduciaryRouter.get("/clients", requireAuth, async (req: Request, res: Response)
   const jwtUser = req.user as JwtPayload;
   try {
     const memberships = await listUserMemberships(jwtUser.sub);
-    res.json({ clients: memberships });
+    const fiduClients = memberships.filter((m) => m.role === "fiduciary");
+    res.json({ clients: fiduClients });
   } catch (err) {
     console.error("[fiduciary.clients]", err);
     res.status(500).json({ error: "failed to list clients" });

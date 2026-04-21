@@ -464,6 +464,21 @@ const AdminResetSchema = z.object({
   newPassword: z.string().min(8).max(200),
 });
 
+// ── GET /api/auth/memberships ──────────────────────────────────────────────
+// Retourne TOUS les memberships du user authentifié (owner + fiduciary + viewer).
+// Utilisé par le dropdown switcher frontend pour lister tous les comptes.
+
+authRouter.get("/memberships", requireAuth, async (req: Request, res: Response) => {
+  const jwtUser = req.user as JwtPayload;
+  try {
+    const memberships = await listUserMemberships(jwtUser.sub);
+    res.json({ memberships });
+  } catch (err) {
+    console.error("[auth.memberships]", err);
+    res.status(500).json({ error: "memberships failed" });
+  }
+});
+
 // ── POST /auth/switch-tenant (S32) ────────────────────────────────────────
 // Permet à un fiduciaire de changer de tenant actif.
 // Valide le membership, puis émet un nouveau JWT avec activeTenantId mis à jour.
