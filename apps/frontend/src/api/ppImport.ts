@@ -92,7 +92,15 @@ export function useRefreshCryptoSnapshot() {
     mutationFn: ({ walletId, year }: { walletId: string; year: number }) =>
       lexa.refreshCryptoSnapshot(walletId, year),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['pp-crypto-snapshot'] });
+      // Le backend queue un job async (lookup blockchain ~20-60s). On ne peut pas
+      // invalider une seule fois — il faut poll jusqu'à ce que lastSnapshot évolue.
+      const delaysSec = [3, 8, 15, 25, 40, 60, 90];
+      for (const delay of delaysSec) {
+        setTimeout(() => {
+          void queryClient.invalidateQueries({ queryKey: ['pp-crypto-wallets'] });
+          void queryClient.invalidateQueries({ queryKey: ['pp-crypto-snapshot'] });
+        }, delay * 1000);
+      }
     },
   });
 }

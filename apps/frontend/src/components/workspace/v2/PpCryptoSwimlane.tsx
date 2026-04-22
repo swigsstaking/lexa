@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { fmtMoney } from './fmtMoney';
 import { usePpCryptoWallets, usePpCryptoSnapshot, useRefreshCryptoSnapshot, useDeletePpCryptoWallet } from '@/api/ppImport';
 import type { PpCryptoWallet } from '@/api/ppImport';
@@ -22,6 +22,24 @@ interface WalletRowProps {
 function WalletRow({ wallet, year }: WalletRowProps) {
   const refreshMutation = useRefreshCryptoSnapshot();
   const deleteMutation = useDeletePpCryptoWallet();
+  // Le backend queue un job async (~20-60s). On garde un état pending local
+  // jusqu'à ce que lastSnapshot évolue OU 90s (timeout UX).
+  const [refreshingSince, setRefreshingSince] = useState<number | null>(null);
+  const lastSnapshotAt = wallet.lastSnapshot?.snapshottedAt ?? null;
+
+  useEffect(() => {
+    if (!refreshingSince) return;
+    // Auto-reset quand le snapshot a évolué après le click
+    if (lastSnapshotAt && new Date(lastSnapshotAt).getTime() > refreshingSince) {
+      setRefreshingSince(null);
+      return;
+    }
+    // Timeout dur à 90s pour ne pas bloquer l'UI si le job backend crash
+    const hardTimeout = setTimeout(() => setRefreshingSince(null), 90_000);
+    return () => clearTimeout(hardTimeout);
+  }, [refreshingSince, lastSnapshotAt]);
+
+  const isPending = refreshMutation.isPending || refreshingSince !== null;
 
   const snap = wallet.lastSnapshot;
   const chainColor = CHAIN_COLOR[wallet.chain] ?? 'rgb(var(--muted))';
@@ -30,6 +48,7 @@ function WalletRow({ wallet, year }: WalletRowProps) {
     : wallet.address;
 
   const handleRefresh = () => {
+    setRefreshingSince(Date.now());
     void refreshMutation.mutateAsync({ walletId: wallet.id, year });
   };
 
@@ -112,24 +131,24 @@ function WalletRow({ wallet, year }: WalletRowProps) {
       {/* Refresh button */}
       <button
         onClick={handleRefresh}
-        disabled={refreshMutation.isPending}
-        title="Rafraîchir le snapshot"
+        disabled={isPending}
+        title={isPending ? 'Snapshot en cours… (lookup blockchain 20–60 s)' : 'Rafraîchir le snapshot'}
         style={{
           width: 28,
           height: 28,
           borderRadius: 6,
           border: '1px solid rgb(var(--border))',
           background: 'transparent',
-          cursor: refreshMutation.isPending ? 'not-allowed' : 'pointer',
+          cursor: isPending ? 'wait' : 'pointer',
           display: 'grid',
           placeItems: 'center',
           fontSize: 12,
           color: 'rgb(var(--muted))',
           flexShrink: 0,
-          opacity: refreshMutation.isPending ? 0.5 : 1,
+          opacity: isPending ? 0.5 : 1,
         }}
       >
-        {refreshMutation.isPending ? '…' : '↻'}
+        {isPending ? '…' : '↻'}
       </button>
 
       {/* Delete button */}
@@ -161,6 +180,7 @@ function WalletRow({ wallet, year }: WalletRowProps) {
 export function PpCryptoSwimlane({ year }: Props) {
   const currentYear = year ?? new Date().getFullYear();
   const [showForm, setShowForm] = useState(false);
+  const [refreshAllSince, setRefreshAllSince] = useState<number | null>(null);
 
   const { data: wallets, isLoading: walletsLoading } = usePpCryptoWallets();
   const { data: snapshot, isLoading: snapLoading } = usePpCryptoSnapshot(currentYear - 1);
@@ -169,8 +189,25 @@ export function PpCryptoSwimlane({ year }: Props) {
   const totalChf = snapshot?.totalChf ?? 0;
   const walletList = wallets ?? [];
   const isLoading = walletsLoading || snapLoading;
+  // Dernier snapshot mis à jour (max des snapshottedAt de tous les wallets)
+  const latestSnapshotAt = Math.max(
+    0,
+    ...(snapshot?.snapshots ?? []).map((s) => new Date(s.snapshottedAt).getTime()),
+  );
+  const isRefreshingAll = refreshAll.isPending || refreshAllSince !== null;
+
+  useEffect(() => {
+    if (!refreshAllSince) return;
+    if (latestSnapshotAt > refreshAllSince) {
+      setRefreshAllSince(null);
+      return;
+    }
+    const hardTimeout = setTimeout(() => setRefreshAllSince(null), 90_000);
+    return () => clearTimeout(hardTimeout);
+  }, [refreshAllSince, latestSnapshotAt]);
 
   const handleRefreshAll = () => {
+    setRefreshAllSince(Date.now());
     for (const w of walletList) {
       void refreshAll.mutateAsync({ walletId: w.id, year: currentYear - 1 });
     }
@@ -227,20 +264,20 @@ export function PpCryptoSwimlane({ year }: Props) {
             {walletList.length > 0 && (
               <button
                 onClick={handleRefreshAll}
-                disabled={refreshAll.isPending}
-                title="Rafraîchir tous les snapshots"
+                disabled={isRefreshingAll}
+                title={isRefreshingAll ? 'Snapshots en cours… (lookup blockchain 20–60 s)' : 'Rafraîchir tous les snapshots'}
                 style={{
                   padding: '4px 10px',
                   borderRadius: 6,
                   border: '1px solid rgb(var(--border))',
                   background: 'transparent',
-                  cursor: refreshAll.isPending ? 'not-allowed' : 'pointer',
+                  cursor: isRefreshingAll ? 'wait' : 'pointer',
                   fontSize: 11,
                   color: 'rgb(var(--muted))',
-                  opacity: refreshAll.isPending ? 0.6 : 1,
+                  opacity: isRefreshingAll ? 0.6 : 1,
                 }}
               >
-                {refreshAll.isPending ? '…' : '↻ Refresh'}
+                {isRefreshingAll ? '… Refresh en cours' : '↻ Refresh'}
               </button>
             )}
             <button
