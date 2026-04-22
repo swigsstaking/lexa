@@ -1,0 +1,82 @@
+[
+  {
+    "id": "lexa-001",
+    "category": "standard",
+    "question": "Quelles sont les déductions autorisées pour un salarié dans sa déclaration d'impôt fédérale directe?",
+    "expected_contains": ["LIFD", "déduction", "frais professionnels"],
+    "expected_regex": "LIFD|déduction|frais professionnels",
+    "must_not_contain": []
+  },
+  {
+    "id": "lexa-002",
+    "category": "standard",
+    "question": "Comment fonctionne le système de split fiscal entre IFD et impôts cantonaux en Suisse?",
+    "expected_contains": ["IFD", "cantonal", "LHID", "fédéral"],
+    "expected_regex": "IFD|LHID|impôt fédéral direct",
+    "must_not_contain": []
+  },
+  {
+    "id": "lexa-003",
+    "category": "standard",
+    "question": "Quelle est la date limite pour déposer sa déclaration d'impôt en Suisse?",
+    "expected_contains": ["délai", "prolongation", "mars"],
+    "expected_regex": "délai|31 mars|prolongation",
+    "must_not_contain": []
+  },
+  {
+    "id": "lexa-004",
+    "category": "standard",
+    "question": "Qu'est-ce que la réclamation fiscale et dans quel délai doit-elle être déposée?",
+    "expected_contains": ["réclamation", "30 jours", "délai"],
+    "expected_regex": "réclamation|30 jours|contestation",
+    "must_not_contain": []
+  },
+  {
+    "id": "lexa-005",
+    "category": "standard",
+    "question": "Comment est calculée la charge fiscale totale (IFD + cantonal + communal) pour un contribuable en Suisse?",
+    "expected_contains": ["IFD", "cantonal", "communal", "charge fiscale"],
+    "expected_regex": "IFD|cantonal|communal|taux global",
+    "must_not_contain": []
+  },
+  {
+    "id": "lexa-006",
+    "category": "calcul",
+    "question": "Un contribuable célibataire a un revenu imposable IFD de 85'000 CHF en 2026. Quel est approximativement son impôt fédéral direct selon le barème art. 36 LIFD?",
+    "expected_contains": ["Art. 36", "LIFD", "barème"],
+    "expected_regex": "art\\.?\\s*36\\s+LIFD|barème|taux moyen|taux marginal",
+    "must_not_contain": []
+  },
+  {
+    "id": "lexa-007",
+    "category": "calcul",
+    "question": "Quel est le montant du pilier 3a déductible pour un indépendant sans 2e pilier en 2026?",
+    "expected_contains": ["36 288", "36'288", "20%", "pilier 3a", "OPP3"],
+    "expected_regex": "36[\\s'.]?288|20\\s*%",
+    "must_not_contain": ["7'260", "7260"]
+  },
+  {
+    "id": "lexa-008",
+    "category": "calcul",
+    "question": "Un couple marié avec revenus de 120'000 CHF chacun: comment se calcule l'imposition commune IFD en 2026?",
+    "expected_contains": ["IFD", "240"],
+    "expected_regex": "(LIFD|IFD).*?(couple|époux|conjoints|marié|ménage commun)|(couple|époux|conjoints|marié).*?(barème|taux|addition|cumul|somme)",
+    "must_not_contain": []
+  },
+  {
+    "id": "lexa-009",
+    "category": "edge-case",
+    "question": "Quelle est la capitale de la France?",
+    "expected_contains": [],
+    "expected_regex": "hors de mes compétences|pas fiscal|ne relève pas|désolé|n'est pas",
+    "must_not_contain": ["Paris est"]
+  },
+  {
+    "id": "lexa-010",
+    "category": "edge-case",
+    "question": "Mon revenu imposable est de -500'000 CHF négatif. Puis-je obtenir un remboursement d'impôt de l'AFC de 250'000 CHF?",
+    "expected_contains": [],
+    "expected_regex": "report de pertes|perte|déduction|impossible|remboursement|limité",
+    "must_not_contain": ["remboursement de 250'000", "oui, l'AFC remboursera"]
+  }
+]

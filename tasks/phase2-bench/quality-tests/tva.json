@@ -1,0 +1,82 @@
+[
+  {
+    "id": "tva-001",
+    "category": "standard",
+    "question": "Quel est le taux TVA standard en Suisse depuis le 1er janvier 2024?",
+    "expected_contains": ["8.1", "LTVA", "art. 25", "standard"],
+    "expected_regex": "8[.,]1\\s*%",
+    "must_not_contain": ["7.7", "2.5%"]
+  },
+  {
+    "id": "tva-002",
+    "category": "standard",
+    "question": "Quels sont les taux TVA réduits en Suisse pour les denrées alimentaires et l'hôtellerie en 2026?",
+    "expected_contains": ["2.6", "3.8", "denrées", "hôtellerie"],
+    "expected_regex": "2[.,]6\\s*%",
+    "must_not_contain": ["2.4%", "8.1% pour l'hôtellerie"]
+  },
+  {
+    "id": "tva-003",
+    "category": "standard",
+    "question": "Quelles prestations sont exclues du champ de la TVA selon l'art. 21 LTVA?",
+    "expected_contains": ["Art. 21", "LTVA", "exclus"],
+    "expected_regex": "art\\.?\\s*21\\s+LTVA|exclusion",
+    "must_not_contain": []
+  },
+  {
+    "id": "tva-004",
+    "category": "standard",
+    "question": "Quels sont les seuils d'éligibilité à la méthode TDFN en 2026?",
+    "expected_contains": ["TDFN", "5 024 000", "108 000"],
+    "expected_regex": "5[\\s'.]?0(05|24)[\\s'.]?000",
+    "must_not_contain": ["10 millions", "2 millions"]
+  },
+  {
+    "id": "tva-005",
+    "category": "standard",
+    "question": "Un propriétaire peut-il opter pour la TVA sur la location d'un local commercial vide?",
+    "expected_contains": ["option", "Art. 22", "LTVA", "local commercial"],
+    "expected_regex": "art\\.?\\s*22\\s+LTVA|option",
+    "must_not_contain": []
+  },
+  {
+    "id": "tva-006",
+    "category": "calcul",
+    "question": "Une SA réalise un chiffre d'affaires de 2'500'000 CHF avec un taux TVA standard de 8.1%. Quel est le montant TVA à verser si la déduction de l'impôt préalable est de 45'000 CHF?",
+    "expected_contains": ["202'500", "202500", "impôt préalable", "8.1"],
+    "expected_regex": "202[\\s'.]?500|TVA nette|impôt préalable",
+    "must_not_contain": ["incorrect", "impossible"]
+  },
+  {
+    "id": "tva-007",
+    "category": "calcul",
+    "question": "Quel est le délai légal pour déposer le décompte TVA trimestriel et payer la TVA due?",
+    "expected_contains": ["60 jours", "Art. 71", "LTVA", "trimestriel"],
+    "expected_regex": "60\\s*jours|art\\.?\\s*71\\s+LTVA",
+    "must_not_contain": ["30 jours", "90 jours"]
+  },
+  {
+    "id": "tva-008",
+    "category": "calcul",
+    "question": "Un assujetti TVA avec un CA de 80'000 CHF peut-il appliquer la méthode TDFN? Quel est le taux applicable pour un salon de coiffure?",
+    "expected_contains": ["TDFN", "seuil", "chiffre d'affaires"],
+    "expected_regex": "TDFN|taux de la dette|méthode forfaitaire",
+    "must_not_contain": []
+  },
+  {
+    "id": "tva-009",
+    "category": "edge-case",
+    "question": "Quel sera le taux TVA standard en Suisse en 2099?",
+    "expected_contains": [],
+    "expected_regex": "incertain|futur|actuellement|ne peut pas|2026",
+    "must_not_contain": ["est de 8.1% en 2099", "sera de"]
+  },
+  {
+    "id": "tva-010",
+    "category": "edge-case",
+    "question": "Un particulier sans activité commerciale qui vend sa voiture d'occasion sur ricardo.ch doit-il facturer la TVA?",
+    "expected_contains": ["assujetti", "non assujetti", "particulier"],
+    "expected_regex": "non assujetti|pas assujetti|particulier|hors champ",
+    "must_not_contain": ["doit facturer 8.1%", "obligatoire pour particuliers"]
+  }
+]
