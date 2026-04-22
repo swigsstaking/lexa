@@ -619,7 +619,7 @@ function BriefingSection({ year }: { year: number }) {
         </section>
       ) : (
         <section className="bg-background border border-border rounded-xl p-6 mb-6 text-center">
-          <Sparkles className="w-8 h-8 mx-auto mb-3 text-amber-400/50" />
+          <Sparkles className="w-8 h-8 mx-auto mb-3 text-warning" />
           <p className="text-sm text-muted mb-1">Pas encore de briefing pour aujourd'hui.</p>
           <p className="text-xs text-muted/60 mb-4">
             Il sera généré automatiquement à 6h du matin, ou vous pouvez le générer maintenant.

@@ -83,7 +83,7 @@ export function Step5PreviewVs({ state, year, canton = 'VS' }: Props) {
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-muted">+ Corrections fiscales</span>
-          <span className="mono-num text-amber-400">{est.corrections > 0 ? '+' : ''}{chf(est.corrections)} CHF</span>
+          <span className="mono-num text-warning">{est.corrections > 0 ? '+' : ''}{chf(est.corrections)} CHF</span>
         </div>
         <div className="border-t border-border pt-2 flex justify-between text-sm font-semibold">
           <span>Bénéfice net imposable</span>
@@ -96,32 +96,32 @@ export function Step5PreviewVs({ state, year, canton = 'VS' }: Props) {
       </div>
 
       {/* Estimation impôts */}
-      <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-4">
-        <div className="text-[10px] uppercase tracking-wide text-amber-400 mb-1">
+      <div className="rounded-lg bg-warning/10 border border-warning/30 p-4">
+        <div className="text-[10px] uppercase tracking-wide text-warning mb-1">
           Estimation impôt PM {canton} {year}
         </div>
-        <div className="text-xl font-bold text-amber-300 mb-3">
+        <div className="text-xl font-bold text-warning mb-3">
           {chf(est.total)} CHF
         </div>
         <div className="space-y-1.5">
-          <div className="flex justify-between text-xs text-amber-200/80">
+          <div className="flex justify-between text-xs text-warning">
             <span>IFD 8.5% (art. 68 LIFD)</span>
             <span className="mono-num">{chf(est.ifd)} CHF</span>
           </div>
-          <div className="flex justify-between text-xs text-amber-200/80">
+          <div className="flex justify-between text-xs text-warning">
             <span>ICC {canton} ~8.5% (LF {canton} PM)</span>
             <span className="mono-num">{chf(est.icc)} CHF</span>
           </div>
-          <div className="flex justify-between text-xs text-amber-200/80">
+          <div className="flex justify-between text-xs text-warning">
             <span>Impôt capital 0.15%</span>
             <span className="mono-num">{chf(est.capitalTax)} CHF</span>
           </div>
-          <div className="border-t border-amber-500/30 pt-1 flex justify-between text-xs text-amber-300 font-semibold">
+          <div className="border-t border-warning/30 pt-1 flex justify-between text-xs text-warning font-semibold">
             <span>Taux effectif estimé</span>
             <span>{(est.effectiveRate * 100).toFixed(1)}%</span>
           </div>
         </div>
-        <p className="text-[9px] text-amber-200/50 mt-2 leading-tight">
+        <p className="text-[9px] text-muted mt-2 leading-tight">
           Estimation indicative basée sur barèmes 2026 simplifiés (V1). Barèmes officiels ICC {canton} à vérifier avec les autorités fiscales cantonales.
         </p>
       </div>

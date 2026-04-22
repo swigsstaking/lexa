@@ -97,21 +97,18 @@ export function AddAccount() {
                 </button>
               </div>
 
-              {/* 3e option — compte fiduciaire (rectangle allongé) */}
+              {/* 3e option — compte fiduciaire (même design, rectangle allongé) */}
               <button
                 onClick={() => handleTypeSelect('fiduciary')}
-                className="card-elevated w-full mt-4 p-5 text-left hover:border-accent/40 transition-colors flex items-center gap-4"
+                className="card-elevated w-full mt-4 p-6 text-left hover:border-accent/40 transition-colors flex items-center gap-4"
               >
-                <div className="w-11 h-11 rounded-lg bg-accent/10 grid place-items-center flex-shrink-0">
-                  <Briefcase className="w-5 h-5 text-accent" />
-                </div>
+                <Briefcase className="w-6 h-6 text-accent flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <h3 className="text-base font-semibold text-ink">Compte fiduciaire</h3>
-                  <p className="text-sm text-muted mt-0.5">
+                  <p className="text-sm text-muted mt-1">
                     Cabinet gérant plusieurs clients · accès multi-dossiers, rôles fiduciary/viewer
                   </p>
                 </div>
-                <span className="text-xs text-muted flex-shrink-0 hidden sm:inline">→</span>
               </button>
             </>
           )}

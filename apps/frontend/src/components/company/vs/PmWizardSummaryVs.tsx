@@ -77,14 +77,14 @@ export function PmWizardSummaryVs({ draft, canton = 'VS' }: Props) {
           </div>
 
           {total > 0 && (
-            <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-4 -mx-4 -mb-4">
-              <div className="text-[10px] uppercase tracking-wide text-amber-400 mb-1">
+            <div className="rounded-lg bg-warning/10 border border-warning/30 p-4 -mx-4 -mb-4">
+              <div className="text-[10px] uppercase tracking-wide text-warning mb-1">
                 Estimation impôt PM {canton} {draft.year}
               </div>
-              <div className="text-xl font-bold text-amber-300">
+              <div className="text-xl font-bold text-warning">
                 {chf(total)} CHF
               </div>
-              <div className="text-[10px] text-amber-200/70 mt-1">
+              <div className="text-[10px] text-muted mt-1">
                 ICC {chf(icc)} · IFD {chf(ifd)} · Taux {(effectiveRate * 100).toFixed(1)}%
               </div>
             </div>

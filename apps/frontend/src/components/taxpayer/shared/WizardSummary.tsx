@@ -253,31 +253,31 @@ export function WizardSummary({ draft, canton }: Props) {
             />
           </div>
 
-          <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-4 -mx-4 -mb-4">
-            <div className="text-[10px] uppercase tracking-wide text-amber-400 mb-1">
+          <div className="rounded-lg bg-warning/10 border border-warning/30 p-4 -mx-4 -mb-4">
+            <div className="text-[10px] uppercase tracking-wide text-warning mb-1">
               Estimation impôt {canton.code} 2026
             </div>
             {taxLoading ? (
-              <div className="flex items-center gap-2 text-amber-300/70">
+              <div className="flex items-center gap-2 text-warning">
                 <Loader2 className="w-3 h-3 animate-spin" />
                 <span className="text-xs">Calcul…</span>
               </div>
             ) : taxPreview ? (
               <>
-                <div className="text-xl font-bold text-amber-300">
+                <div className="text-xl font-bold text-warning">
                   {chf(taxPreview.total)} CHF
                 </div>
-                <div className="text-[10px] text-amber-200/70 mt-1">
+                <div className="text-[10px] text-muted mt-1">
                   ICC {chf(taxPreview.icc)} · IFD {chf(taxPreview.ifd)} · Taux {(taxPreview.effectiveRate * 100).toFixed(1)}%
                 </div>
-                <div className="text-[9px] text-amber-200/50 mt-2 leading-tight">
+                <div className="text-[9px] text-muted mt-2 leading-tight">
                   {taxPreview.disclaimer}
                 </div>
               </>
             ) : revenuImposable > 0 ? (
-              <div className="text-xs text-amber-200/50">Estimation indisponible</div>
+              <div className="text-xs text-muted">Estimation indisponible</div>
             ) : (
-              <div className="text-xs text-amber-200/50">Saisissez vos revenus pour estimer</div>
+              <div className="text-xs text-muted">Saisissez vos revenus pour estimer</div>
             )}
           </div>
         </div>

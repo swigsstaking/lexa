@@ -102,14 +102,14 @@ export function Step3CorrectionsVs({ state, onPatch }: Props) {
       </div>
 
       {totalCorrections > 0 && (
-        <div className="card bg-amber-500/10 border-amber-500/30 p-4">
-          <div className="text-2xs uppercase tracking-wider text-amber-400 mb-1">
+        <div className="card bg-warning/10 border-warning/30 p-4">
+          <div className="text-2xs uppercase tracking-wider text-warning mb-1">
             Total corrections
           </div>
-          <div className="text-xl font-bold text-amber-300">
+          <div className="text-xl font-bold text-warning">
             +{totalCorrections.toLocaleString('fr-CH', { maximumFractionDigits: 0 })} CHF
           </div>
-          <p className="text-2xs text-amber-200/70 mt-1">
+          <p className="text-2xs text-muted mt-1">
             Réintégrées au bénéfice comptable pour obtenir le bénéfice net imposable.
           </p>
         </div>
