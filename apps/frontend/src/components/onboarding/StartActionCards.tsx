@@ -50,10 +50,9 @@ export function StartActionCards({ onSelect }: StartActionCardsProps) {
     } else if (key === 'ocr') {
       navigate('/documents', { state: { focus: 'ocr' } });
     } else if (key === 'pp_import') {
-      // Re-navigate vers /workspace avec query param écouté par PpWorkspace pour ouvrir le modal
-      navigate('/workspace?openImport=1');
+      navigate('/documents');
     } else if (key === 'pp_crypto') {
-      navigate('/workspace?openCrypto=1');
+      navigate('/documents?category=crypto');
     } else {
       // 'tax' (PM) ou 'pp_tax' (PP) → wizard correspondant
       navigate(getTaxPath());

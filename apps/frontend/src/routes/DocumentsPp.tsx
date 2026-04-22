@@ -10,7 +10,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, FileText, Loader2 } from 'lucide-react';
 import { useUploadPpImport } from '@/api/ppImport';
 import { PpImportPanel } from '@/components/workspace/v2/PpImportPanel';
@@ -41,10 +41,21 @@ const HEIC_EXT_RE = /\.(heic|heif)$/i;
 
 export function DocumentsPp() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isDragging, setIsDragging] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ImportCategory>('auto');
   const [toast, setToast] = useState<string | null>(null);
   const [cryptoFormOpen, setCryptoFormOpen] = useState(false);
+
+  // Auto-ouverture form crypto si query param ?category=crypto (redirect depuis StartActionCards)
+  useEffect(() => {
+    if (searchParams.get('category') === 'crypto') {
+      setCryptoFormOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete('category');
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useUploadPpImport();
 

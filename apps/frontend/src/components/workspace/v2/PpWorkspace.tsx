@@ -9,7 +9,6 @@ import { lexa } from '@/api/lexa';
 import type { PpTone } from '@/api/lexa';
 import { useActiveCompany } from '@/stores/companiesStore';
 import { useAuthStore } from '@/stores/authStore';
-import { PpImportModal } from './PpImportModal';
 import { PpCryptoSwimlane } from './PpCryptoSwimlane';
 import { PpCryptoWalletForm } from './PpCryptoWalletForm';
 import { LexaCmdK, LexaCmdKTrigger } from './LexaCmdK';
@@ -324,20 +323,14 @@ export function PpWorkspace() {
   const [selected, setSelected] = useState<{ b: number; i: number } | null>(null);
   const [drawerItem, setDrawerItem] = useState<PpItem | null>(null);
   const [prefilling, setPrefilling] = useState(false);
-  const [importOpen, setImportOpen] = useState(false);
   const [cryptoFormOpen, setCryptoFormOpen] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Auto-ouverture via query params (déclenché depuis StartActionCards onboarding PP)
+  // Auto-ouverture form crypto via legacy query param (rétrocompat anciens liens)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('openImport') === '1') {
-      setImportOpen(true);
-      params.delete('openImport');
-      const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
-      window.history.replaceState(null, '', newUrl);
-    } else if (params.get('openCrypto') === '1') {
+    if (params.get('openCrypto') === '1') {
       setCryptoFormOpen(true);
       params.delete('openCrypto');
       const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
@@ -518,46 +511,6 @@ export function PpWorkspace() {
                 <div style={{ fontWeight: 600, fontSize: isMobile ? 15 : 18, letterSpacing: '-0.02em', color: 'rgb(var(--ink))' }}>
                   {activeCompany?.name ?? d.name}
                 </div>
-                <button
-                  onClick={() => setImportOpen(true)}
-                  className="pp-import-cta"
-                  title="Importer un document (raccourci modal : W/B/P/F/A/C)"
-                  style={{
-                    padding: '5px 12px',
-                    borderRadius: 999,
-                    border: 'none',
-                    background: 'linear-gradient(135deg, var(--lexa) 0%, var(--lexa-deep) 100%)',
-                    cursor: 'pointer',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: 'var(--v2-bg)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                    boxShadow: '0 1px 2px rgba(212, 52, 44, 0.18), 0 0 0 0 rgba(212, 52, 44, 0.0)',
-                    transition: 'transform 0.12s ease, box-shadow 0.18s ease',
-                    letterSpacing: '0.01em',
-                  }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M12 3v12" />
-                    <path d="m7 8 5-5 5 5" />
-                    <path d="M5 21h14" />
-                  </svg>
-                  Importer
-                </button>
-                <style>{`
-                  .pp-import-cta:hover {
-                    transform: translateY(-1px);
-                    box-shadow: 0 3px 10px rgba(212, 52, 44, 0.28), 0 0 0 3px rgba(212, 52, 44, 0.12);
-                  }
-                  .pp-import-cta:active {
-                    transform: translateY(0);
-                    box-shadow: 0 1px 2px rgba(212, 52, 44, 0.18);
-                  }
-                `}</style>
               </div>
               <div style={{ color: 'rgb(var(--muted))', fontSize: 12 }}>
                 {d.sub}
@@ -852,18 +805,7 @@ export function PpWorkspace() {
       {/* Drawer détail PP item */}
       <PpDetailDrawer item={drawerItem} onClose={() => setDrawerItem(null)} hasRealData={hasRealData} />
 
-      {/* Modal import universel PP */}
-      {importOpen && (
-        <PpImportModal
-          onClose={() => setImportOpen(false)}
-          onOpenCryptoForm={() => {
-            setImportOpen(false);
-            setCryptoFormOpen(true);
-          }}
-        />
-      )}
-
-      {/* Formulaire ajout wallet crypto (accessible depuis le modal ou directement) */}
+      {/* Formulaire ajout wallet crypto (accessible depuis la swimlane crypto) */}
       {cryptoFormOpen && (
         <PpCryptoWalletForm
           onClose={() => setCryptoFormOpen(false)}
