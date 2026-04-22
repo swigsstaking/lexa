@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { lexa } from '@/api/lexa';
 import { PmColumnsA } from './PmColumnsA';
 import { PmColumnsB } from './PmColumnsB';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { PmLedger } from './PmLedger';
 import type { V2Account } from './AccountTile';
 import { classFromCode, extractCode, extractName } from './soldeDirection';
@@ -65,9 +66,21 @@ function toV2Account(a: LedgerAccount): V2Account {
 }
 
 export function PmWorkspace() {
+  const isMobile = useIsMobile();
+  // Mobile force Colonnes A (vue liste lisible) — Colonnes B a besoin de 2 cols
+  // côte-à-côte pour le flow visuel, illisible < 768px. Ledger reste OK en mobile.
   const [pmView, setPmView] = useState<PmView>(() => {
-    try { return (localStorage.getItem('lexa:pmView') as PmView) || 'colA'; } catch { return 'colA'; }
+    try {
+      const saved = (localStorage.getItem('lexa:pmView') as PmView) || 'colA';
+      return saved === 'colB' && typeof window !== 'undefined' && window.innerWidth < 768 ? 'colA' : saved;
+    } catch {
+      return 'colA';
+    }
   });
+  // Override : si on passe en mobile et on était sur colB, basculer sur colA
+  useEffect(() => {
+    if (isMobile && pmView === 'colB') setPmView('colA');
+  }, [isMobile, pmView]);
   const [showFlows, setShowFlows] = useState(true);
   const [focusCode, setFocusCode] = useState<string | null>(null);
   const [kpiVisibility] = useState({
@@ -222,7 +235,7 @@ export function PmWorkspace() {
               zIndex: 20,
             }}
           >
-            {PM_VIEW_OPTS.map((o) => (
+            {PM_VIEW_OPTS.filter((o) => !(isMobile && o.key === 'colB')).map((o) => (
               <button
                 key={o.key}
                 onClick={(e) => { e.stopPropagation(); handleSetView(o.key); setVueMenuOpen(false); }}
