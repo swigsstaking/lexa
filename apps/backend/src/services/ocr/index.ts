@@ -22,13 +22,16 @@ const OLLAMA_URL = config.OLLAMA_URL;
 const VISION_MODEL = config.MODEL_OCR; // "qwen3-vl-ocr"
 
 // Params communs (spec §7 critère 7)
+// num_predict 4096 : 99 % des documents fiscaux tiennent en <2000 tokens.
+// Réduit de 8192 pour limiter la latence sur scans haute résolution.
 const OLLAMA_OPTIONS = {
   temperature: 0,
-  num_predict: 8192,
+  num_predict: 4096,
 } as const;
 
 // ── Pre-processing image ──────────────────────────────────────────────────────
 
+// 900px : compromis qualité/latence. 768 testé = extraction vide sur scans fins.
 const MAX_DIMENSION = 900;
 const JPEG_QUALITY = 80;
 
@@ -82,7 +85,7 @@ export type OcrExtractionResult = {
 async function callOllamaVision(
   imageBase64: string,
   prompt: string,
-  timeoutMs = 90_000,
+  timeoutMs = 150_000,
 ): Promise<string> {
   const { data } = await axios.post(
     `${OLLAMA_URL}/api/chat`,
@@ -97,12 +100,19 @@ async function callOllamaVision(
       ],
       stream: false,
       think: false,
+      keep_alive: "30m",
       options: OLLAMA_OPTIONS,
     },
     { timeout: timeoutMs },
   );
 
-  return (data.message?.content ?? "") as string;
+  const content = (data.message?.content ?? "") as string;
+  if (!content.trim()) {
+    console.warn(
+      `[ocr] callOllamaVision empty content — eval_count=${data.eval_count} prompt_eval_count=${data.prompt_eval_count} done_reason=${data.done_reason}`,
+    );
+  }
+  return content;
 }
 
 function cleanJsonResponse(raw: string): string {
@@ -152,7 +162,7 @@ export async function extractByCategory(
   const base64 = preprocessed.toString("base64");
 
   const prompt = getPromptForCategory(category);
-  const raw = await callOllamaVision(base64, prompt, 90_000);
+  const raw = await callOllamaVision(base64, prompt, 150_000);
   const cleaned = cleanJsonResponse(raw);
 
   let rawExtraction: Record<string, unknown> = {};
