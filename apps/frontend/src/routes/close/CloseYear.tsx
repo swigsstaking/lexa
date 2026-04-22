@@ -215,24 +215,24 @@ export function CloseYear() {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-bg text-ink">
-      {/* Header */}
-      <header className="h-12 flex items-center justify-between px-4 border-b border-border bg-surface flex-shrink-0">
-        <div className="flex items-center gap-3">
+      {/* Header — wrap mobile, inline desktop */}
+      <header className="min-h-12 flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-border bg-surface flex-shrink-0">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
           <button
             onClick={() => navigate('/workspace')}
-            className="btn-ghost !p-1.5"
+            className="btn-ghost !p-1.5 flex-shrink-0"
             title="Retour au workspace"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
-          <div className="w-6 h-6 rounded-md bg-accent text-accent-fg grid place-items-center font-semibold text-xs">
+          <div className="w-6 h-6 rounded-md bg-accent text-accent-fg grid place-items-center font-semibold text-xs flex-shrink-0">
             L
           </div>
-          <span className="text-sm font-semibold">Clôture continue</span>
-          <span className="chip">Exercice {year}</span>
+          <span className="text-sm font-semibold truncate">Clôture continue</span>
+          <span className="chip flex-shrink-0">Exercice {year}</span>
           {healthQuery.data && (
             <span
-              className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${
+              className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border flex-shrink-0 ${
                 healthQuery.data.isBalanced
                   ? 'text-success bg-success/10 border-success/30'
                   : 'text-danger bg-danger/10 border-danger/30'
@@ -250,10 +250,11 @@ export function CloseYear() {
 
         <button
           onClick={() => setChatOpen(true)}
-          className="btn-primary !px-3 !py-1.5 flex items-center gap-1.5"
+          className="btn-primary !px-3 !py-1.5 flex items-center gap-1.5 flex-shrink-0"
         >
           <MessageSquare className="w-3.5 h-3.5" />
-          <span className="text-xs">Ask agent Clôture</span>
+          <span className="text-xs hidden sm:inline">Ask agent Clôture</span>
+          <span className="text-xs sm:hidden">Ask IA</span>
         </button>
       </header>
 

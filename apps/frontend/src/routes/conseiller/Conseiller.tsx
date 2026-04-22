@@ -695,36 +695,40 @@ export function Conseiller() {
 
   return (
     <div className="min-h-screen bg-base">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b border-border px-4 py-3 flex items-center gap-3">
-        <button
-          onClick={() => navigate('/workspace')}
-          className="text-muted hover:text-ink transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </button>
-        <Lightbulb className="w-5 h-5 text-amber-400" />
-        <h1 className="font-semibold text-sm">Conseiller fiscal — {year}</h1>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs text-muted">LIFD art. 33 · 58 · 62 · 68 · LHID art. 24-31</span>
+      {/* Header — wrap responsive mobile, inline desktop */}
+      <div className="sticky top-0 z-10 bg-background border-b border-border px-4 py-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <button
-            onClick={handleBriefing}
-            className="flex items-center gap-1.5 text-xs bg-amber-500 text-white rounded-lg px-3 py-1.5 hover:bg-amber-600 transition-colors"
+            onClick={() => navigate('/workspace')}
+            className="text-muted hover:text-ink transition-colors"
           >
-            <Lightbulb className="w-3.5 h-3.5" />
-            Briefing IA
+            <ArrowLeft className="w-4 h-4" />
           </button>
-          <button
-            onClick={() => {
-              setChatInitialQuestion(undefined);
-              setShowChat(true);
-            }}
-            className="flex items-center gap-1.5 text-xs bg-primary text-white rounded-lg px-3 py-1.5 hover:bg-primary/90 transition-colors"
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            Ask Conseiller
-          </button>
+          <Lightbulb className="w-5 h-5 text-amber-400 flex-shrink-0" />
+          <h1 className="font-semibold text-sm flex-1 min-w-0 truncate">Conseiller fiscal — {year}</h1>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={handleBriefing}
+              className="flex items-center gap-1.5 text-xs bg-amber-500 text-white rounded-lg px-3 py-1.5 hover:bg-amber-600 transition-colors"
+            >
+              <Lightbulb className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Briefing IA</span>
+              <span className="sm:hidden">Briefing</span>
+            </button>
+            <button
+              onClick={() => {
+                setChatInitialQuestion(undefined);
+                setShowChat(true);
+              }}
+              className="flex items-center gap-1.5 text-xs bg-primary text-white rounded-lg px-3 py-1.5 hover:bg-primary/90 transition-colors"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Ask Conseiller</span>
+              <span className="sm:hidden">Ask</span>
+            </button>
+          </div>
         </div>
+        <div className="hidden lg:block mt-1 text-xs text-muted">LIFD art. 33 · 58 · 62 · 68 · LHID art. 24-31</div>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">

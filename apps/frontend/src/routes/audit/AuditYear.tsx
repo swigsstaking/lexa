@@ -258,26 +258,27 @@ export function AuditYear() {
 
   return (
     <div className="min-h-screen bg-base">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b border-border px-4 py-3 flex items-center gap-3">
-        <button
-          onClick={() => navigate('/workspace')}
-          className="text-muted hover:text-ink transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </button>
-        <Shield className="w-5 h-5 text-amber-500" />
-        <h1 className="font-semibold text-sm">Audit Intégrité IA — {year}</h1>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs text-muted">CO art. 958f — Conservation 10 ans</span>
+      {/* Header — wrap mobile, inline desktop */}
+      <div className="sticky top-0 z-10 bg-background border-b border-border px-4 py-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={() => navigate('/workspace')}
+            className="text-muted hover:text-ink transition-colors flex-shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <Shield className="w-5 h-5 text-amber-500 flex-shrink-0" />
+          <h1 className="font-semibold text-sm flex-1 min-w-0 truncate">Audit Intégrité IA — {year}</h1>
           <button
             onClick={() => setShowChat(true)}
-            className="flex items-center gap-1.5 text-xs bg-amber-500 text-white rounded-lg px-3 py-1.5 hover:bg-amber-600 transition-colors"
+            className="flex items-center gap-1.5 text-xs bg-amber-500 text-white rounded-lg px-3 py-1.5 hover:bg-amber-600 transition-colors flex-shrink-0"
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            Ask Audit Agent
+            <span className="hidden sm:inline">Ask Audit Agent</span>
+            <span className="sm:hidden">Ask IA</span>
           </button>
         </div>
+        <div className="hidden lg:block mt-1 text-xs text-muted">CO art. 958f — Conservation 10 ans</div>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">

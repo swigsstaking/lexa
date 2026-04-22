@@ -264,9 +264,9 @@ export function PmWizardCanton({ canton }: Props) {
         </div>
       </header>
 
-      {/* Stepper */}
-      <div className="border-b border-border bg-surface/40 px-6 py-4 flex-shrink-0">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
+      {/* Stepper — scroll horizontal mobile si nécessaire */}
+      <div className="border-b border-border bg-surface/40 px-4 lg:px-6 py-3 lg:py-4 flex-shrink-0 overflow-x-auto">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 min-w-max lg:min-w-0">
           {STEPS.map((s, i) => {
             const Icon = s.icon;
             const isActive = currentStep === s.id;
@@ -299,7 +299,7 @@ export function PmWizardCanton({ canton }: Props) {
 
       {/* Main */}
       <main className="flex-1 overflow-auto">
-        <div className="max-w-6xl mx-auto px-6 py-8 pb-48 lg:pb-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
           <motion.div
             key={currentStep}
             initial={{ opacity: 0, x: 16 }}
@@ -346,9 +346,8 @@ export function PmWizardCanton({ canton }: Props) {
             )}
           </motion.div>
 
-          {/* Side-panel */}
-          {/* Side-panel summary — sticky bottom mobile, side panel desktop */}
-          <aside className="lg:col-span-1 fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto bg-surface/95 lg:bg-transparent backdrop-blur-sm lg:backdrop-blur-none border-t lg:border-t-0 border-border p-4 lg:p-0 max-h-[40vh] lg:max-h-none overflow-y-auto z-10 lg:z-auto">
+          {/* Side-panel — inline mobile, sticky desktop (évite overlay masquant boutons) */}
+          <aside className="lg:col-span-1 lg:sticky lg:top-6">
             <PmWizardSummaryVs draft={draft} canton={canton} />
           </aside>
         </div>
