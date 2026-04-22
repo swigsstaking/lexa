@@ -11,7 +11,6 @@ import type { LedgerAccount, LedgerEntry } from '@/api/types';
 import { LedgerDrawer } from '@/components/canvas/LedgerDrawer';
 import type { LedgerSelection } from '@/components/canvas/LedgerDrawer';
 import { LexaCmdK, LexaCmdKTrigger, AgentsPill } from './LexaCmdK';
-import { useChatStore } from '@/stores/chatStore';
 
 type PmView = 'colA' | 'colB' | 'ledger';
 
@@ -78,16 +77,14 @@ export function PmWorkspace() {
 
   // CmdK quick-launcher
   const [cmdkOpen, setCmdkOpen] = useState(false);
-  const openChat = useChatStore((s) => s.setOpen);
-  const chatLoading = useChatStore((s) => s.loading);
 
-  // AgentsPill — visible seulement si l'IA travaille (classification en cours ou chat actif)
+  // AgentsPill — visible seulement si l'IA travaille (classification en cours)
   const { data: processingStatus } = useQuery({
     queryKey: ['ledger-processing-status'],
     queryFn: lexa.ledgerProcessingStatus,
     refetchInterval: (q) => ((q.state.data?.pending ?? 0) === 0 ? false : 3000),
   });
-  const aiWorking = (processingStatus?.pending ?? 0) > 0 || chatLoading;
+  const aiWorking = (processingStatus?.pending ?? 0) > 0;
 
   // Vue dropdown discret
   const [vueMenuOpen, setVueMenuOpen] = useState(false);
@@ -334,7 +331,6 @@ export function PmWorkspace() {
           // Pré-remplit le chat avec la suggestion
           void title;
         }}
-        onOpenChat={() => openChat(true)}
       />
 
       <div style={{ flex: 1, minHeight: 0 }}>

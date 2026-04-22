@@ -13,12 +13,9 @@ export interface ChatMessage {
 }
 
 interface ChatState {
-  open: boolean;
   agent: AgentId;
   messages: ChatMessage[];
   loading: boolean;
-  setOpen: (open: boolean) => void;
-  toggle: () => void;
   setAgent: (a: AgentId) => void;
   addMessage: (m: ChatMessage) => void;
   /** Met à jour un message existant par son id (ex: accumulation streaming) */
@@ -28,12 +25,9 @@ interface ChatState {
 }
 
 export const useChatStore = create<ChatState>((set) => ({
-  open: false,
   agent: 'reasoning',
   messages: [],
   loading: false,
-  setOpen: (open) => set({ open }),
-  toggle: () => set((s) => ({ open: !s.open })),
   setAgent: (agent) => set({ agent }),
   addMessage: (m) => set((s) => ({ messages: [...s.messages, m] })),
   updateLastMessage: (id, patch) =>

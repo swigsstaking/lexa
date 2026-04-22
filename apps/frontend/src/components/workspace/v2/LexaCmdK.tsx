@@ -29,7 +29,6 @@ interface LexaCmdKProps {
   accounts?: CmdKAccount[];
   onSuggestion?: (title: string) => void;
   onJumpAccount?: (code: string) => void;
-  onOpenChat?: () => void;
 }
 
 function fmtMoney(n: number) {

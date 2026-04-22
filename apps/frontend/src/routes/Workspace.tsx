@@ -23,10 +23,8 @@ import { lexa } from '@/api/lexa';
 import { useActiveCompany, useCompaniesStore } from '@/stores/companiesStore';
 import { User } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import { useChatStore } from '@/stores/chatStore';
 import { PeriodModal } from '@/components/canvas/PeriodModal';
 import { usePeriodStore } from '@/stores/periodStore';
-import { ChatOverlay } from '@/components/chat/ChatOverlay';
 import { LedgerModal } from '@/components/ledger/LedgerModal';
 import { FiscalTimeline } from '@/components/timeline/FiscalTimeline';
 import { NavDropdown } from '@/components/Nav/NavDropdown';
@@ -46,7 +44,6 @@ export function Workspace() {
   const setToken = useAuthStore((s) => s.setToken);
   const activeTenantId = useAuthStore((s) => s.activeTenantId);
   const token = useAuthStore((s) => s.token);
-  const setChatOpen = useChatStore((s) => s.setOpen);
 
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const [cursorDate, setCursorDate] = useState<Date>(new Date());
@@ -244,12 +241,6 @@ export function Workspace() {
   ];
 
   const iaItems = [
-    {
-      label: 'Chat IA',
-      onClick: () => setChatOpen(true),
-      icon: Sparkles,
-      title: 'Ouvrir le chat IA (⌘⇧K)',
-    },
     {
       label: 'Conseiller fiscal',
       onClick: () => navigate(`/conseiller/${year}`),
@@ -581,7 +572,6 @@ export function Workspace() {
       <FiscalTimeline selected={cursorDate} onSelect={setCursorDate} />
 
       {/* Overlays */}
-      <ChatOverlay />
       <LedgerModal open={ledgerOpen} onClose={() => setLedgerOpen(false)} />
       <WorkspacePeriodModal />
     </div>

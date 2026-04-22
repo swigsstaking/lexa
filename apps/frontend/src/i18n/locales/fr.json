@@ -216,19 +216,5 @@
     "tva_total_due": "TVA due totale",
     "tva_input_tax": "Impôt préalable",
     "tva_solde": "Solde à payer"
-  },
-  "chat": {
-    "title": "Agents IA",
-    "sub": "Posez vos questions comptables, fiscales ou TVA. Réponses citées par sources légales.",
-    "placeholder": "Posez votre question...",
-    "placeholder_classifier": "Ex: FIDUCIAIRE DUPONT | 450",
-    "thinking": "L'agent réfléchit...",
-    "citations": "Citations",
-    "agent_reasoning": "Raisonnement",
-    "agent_reasoning_desc": "Questions juridiques/fiscales générales",
-    "agent_tva": "TVA",
-    "agent_tva_desc": "LTVA, OLTVA, Info TVA",
-    "agent_classifier": "Classifier",
-    "agent_classifier_desc": "Classification d'une transaction"
   }
 }
