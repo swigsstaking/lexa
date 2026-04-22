@@ -349,6 +349,7 @@ export function Documents() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [lastUploaded, setLastUploaded] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [converting, setConverting] = useState(false);
   const [creatingEntryDocId, setCreatingEntryDocId] = useState<string | null>(null);
   const [applyFeedback, setApplyFeedback] = useState<{ docId: string; message: string; ok: boolean } | null>(null);
   const [applyingDocId, setApplyingDocId] = useState<string | null>(null);
@@ -453,19 +454,33 @@ export function Documents() {
     createEntryMutation.mutate(documentId);
   };
 
-  // Drag & drop — route vers uploadDocument (PDF/image) ou uploadCamt053 (XML)
-  const routeAndUpload = (file: File) => {
+  // Drag & drop — route vers uploadDocument (PDF/image) ou uploadCamt053 (XML).
+  // Les images HEIC/HEIF (iPhone) sont converties en JPEG avant upload.
+  const routeAndUpload = async (file: File) => {
     const ext = file.name.toLowerCase().split('.').pop();
     if (ext === 'xml' || file.type === 'application/xml' || file.type === 'text/xml') {
       setCamt053Result(null);
       setCamt053Error(null);
       camt053Mutation.mutate(file);
-    } else if (file.type.match(/^(application\/pdf|image\/)/)) {
-      setLastUploaded(null);
-      setUploadError(null);
-      uploadMutation.mutate(file);
-    } else {
-      setUploadError(`Format "${file.type || ext}" non supporté — PDF, JPEG, PNG ou XML CAMT.053 uniquement`);
+      return;
+    }
+    if (!file.type.match(/^(application\/pdf|image\/)/) && !['heic', 'heif'].includes(ext ?? '')) {
+      setUploadError(`Format "${file.type || ext}" non supporté — PDF, JPEG, PNG, HEIC ou XML CAMT.053 uniquement`);
+      return;
+    }
+    setLastUploaded(null);
+    setUploadError(null);
+    try {
+      const { ensureJpeg } = await import('@/utils/convertHeic');
+      const { file: toUpload, converted, durationMs } = await ensureJpeg(file);
+      if (converted) {
+        setConverting(false);
+        console.info(`[Documents] HEIC → JPEG converti en ${durationMs} ms`);
+      }
+      uploadMutation.mutate(toUpload);
+    } catch (err) {
+      setConverting(false);
+      setUploadError(`Conversion HEIC échouée : ${(err as Error).message}. Réessayez avec un JPEG.`);
     }
   };
 
@@ -473,8 +488,10 @@ export function Documents() {
     e.preventDefault();
     setIsDragging(false);
     const files = Array.from(e.dataTransfer.files);
+    // Détection HEIC avant la boucle pour afficher le spinner tôt
+    if (files.some((f) => /\.(heic|heif)$/i.test(f.name))) setConverting(true);
     for (const file of files) {
-      routeAndUpload(file);
+      void routeAndUpload(file);
     }
   };
 
@@ -496,9 +513,8 @@ export function Documents() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setLastUploaded(null);
-    setUploadError(null);
-    uploadMutation.mutate(file);
+    if (/\.(heic|heif)$/i.test(file.name)) setConverting(true);
+    void routeAndUpload(file);
     // Reset input pour permettre de re-uploader le même fichier
     e.target.value = '';
   };
@@ -547,17 +563,22 @@ export function Documents() {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,.jpg,.jpeg,.png"
+            accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,image/heic,image/heif"
             onChange={handleFileChange}
             className="hidden"
           />
 
           <button
             onClick={() => fileInputRef.current?.click()}
-            disabled={uploadMutation.isPending}
+            disabled={uploadMutation.isPending || converting}
             className="btn-primary flex items-center gap-2"
           >
-            {uploadMutation.isPending ? (
+            {converting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Conversion HEIC → JPEG…</span>
+              </>
+            ) : uploadMutation.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span>Traitement OCR en cours...</span>

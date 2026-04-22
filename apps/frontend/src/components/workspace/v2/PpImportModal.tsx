@@ -23,7 +23,9 @@ const CATEGORIES: CategoryCard[] = [
 ];
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-const ACCEPTED_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+// HEIC/HEIF (iPhone par défaut) converti automatiquement en JPEG côté client
+const ACCEPTED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/heic', 'image/heif'];
+const HEIC_EXT_RE = /\.(heic|heif)$/i;
 
 interface Props {
   onClose: () => void;
@@ -47,16 +49,30 @@ export function PpImportModal({ onClose, onOpenCryptoForm }: Props) {
 
   const handleFile = useCallback(
     async (file: File) => {
-      if (!ACCEPTED_TYPES.includes(file.type)) {
-        showToast('Format non supporté. Utilisez PDF, JPG ou PNG.');
+      const isHeicFile = ACCEPTED_TYPES.includes(file.type) === false && HEIC_EXT_RE.test(file.name);
+      if (!ACCEPTED_TYPES.includes(file.type) && !isHeicFile) {
+        showToast('Format non supporté. Utilisez PDF, JPG, PNG ou HEIC.');
         return;
       }
       if (file.size > MAX_FILE_SIZE) {
         showToast('Fichier trop lourd (max 10 MB).');
         return;
       }
+      // Conversion HEIC → JPEG (iPhone)
+      let toUpload = file;
+      if (file.type.startsWith('image/heic') || file.type.startsWith('image/heif') || HEIC_EXT_RE.test(file.name)) {
+        showToast('Conversion HEIC → JPEG…');
+        try {
+          const { ensureJpeg } = await import('@/utils/convertHeic');
+          const res = await ensureJpeg(file);
+          toUpload = res.file;
+        } catch (err) {
+          showToast(`Conversion HEIC échouée : ${(err as Error).message}`);
+          return;
+        }
+      }
       try {
-        await uploadMutation.mutateAsync({ file, category: selectedCategory });
+        await uploadMutation.mutateAsync({ file: toUpload, category: selectedCategory });
         showToast('Document envoyé — traitement en cours...');
         setPanelOpen(true);
       } catch (err: unknown) {
@@ -242,7 +258,7 @@ export function PpImportModal({ onClose, onOpenCryptoForm }: Props) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,.jpg,.jpeg,.png"
+            accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,image/heic,image/heif"
             onChange={onFileInput}
             style={{ display: 'none' }}
           />
