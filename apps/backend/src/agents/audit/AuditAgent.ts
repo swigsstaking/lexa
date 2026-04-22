@@ -105,7 +105,10 @@ ${userPrompt}`;
           model: this.vllmModel,
           systemPrompt: SYSTEM_PROMPT_AUDIT,
           prompt: userPrompt,
-          temperature: 0.05,
+          temperature: 0,
+          topP: 0.1,
+          topK: 1,
+          repetitionPenalty: 1.0,
           numPredict: 2048,
         });
         response = result.response;

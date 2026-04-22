@@ -93,7 +93,10 @@ ${userPrompt}`;
           model: this.model,
           systemPrompt: SYSTEM_PROMPT_CLASSIFIER,
           prompt: userPrompt,
-          temperature: 0.1,
+          temperature: 0,
+          topP: 0.1,
+          topK: 1,
+          repetitionPenalty: 1.0,
           numPredict: 200, // few-shot prompt génère ~130-150 tokens (reasoning + citations)
           format: "json",
           think: false,

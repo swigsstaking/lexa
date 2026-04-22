@@ -81,7 +81,10 @@ REPONSE:`;
           model: this.vllmModel,
           systemPrompt: this.systemPrompt,
           prompt,
-          temperature: 0.15,
+          temperature: 0,
+          topP: 0.1,
+          topK: 1,
+          repetitionPenalty: 1.0,
           numPredict: 800,
           think: false,
         });

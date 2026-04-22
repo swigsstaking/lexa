@@ -122,7 +122,10 @@ REPONSE CONSEILLER:`;
           model: this.vllmModel,
           systemPrompt: this.systemPrompt,
           prompt,
-          temperature: 0.2,
+          temperature: 0,
+          topP: 0.1,
+          topK: 1,
+          repetitionPenalty: 1.0,
           numPredict: 1000,
           think: false,
         });
@@ -237,7 +240,10 @@ Si aucune alerte urgente, le dire positivement. Si des transactions sont en atte
             model: this.vllmModel,
             systemPrompt: this.systemPrompt,
             prompt,
-            temperature: 0.3,
+            temperature: 0,
+            topP: 0.1,
+            topK: 1,
+            repetitionPenalty: 1.0,
             numPredict: 1000,
             think: false,
           }).then((r) => ({ response: r.response }))
