@@ -1,0 +1,672 @@
+[
+  {
+    "file": "salary-01-clean.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Swigs SA",
+      "employer_uid": "CHE-123.456.789",
+      "employee_name": "Marie Rochat",
+      "year": 2026,
+      "gross_annual_salary": 96048,
+      "bonus": 3000,
+      "ahv_ai_apg": 5448,
+      "lpp_employee": 8419,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "salary-02-clean.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Migros Genève",
+      "employer_uid": "CHE-116.308.287",
+      "employee_name": "Jean Dupont",
+      "year": 2026,
+      "gross_annual_salary": 73434,
+      "bonus": 12000,
+      "ahv_ai_apg": 4699,
+      "lpp_employee": 7262,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "salary-03-clean.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Swigs SA",
+      "employer_uid": "CHE-123.456.789",
+      "employee_name": "Léa Bernasconi",
+      "year": 2025,
+      "gross_annual_salary": 64165,
+      "bonus": 0,
+      "ahv_ai_apg": 3529,
+      "lpp_employee": 5454,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "salary-04-clean.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Swigs SA",
+      "employer_uid": "CHE-123.456.789",
+      "employee_name": "Jean Dupont",
+      "year": 2024,
+      "gross_annual_salary": 126237,
+      "bonus": 12000,
+      "ahv_ai_apg": 7603,
+      "lpp_employee": 11750,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "salary-05-clean.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Swigs SA",
+      "employer_uid": "CHE-123.456.789",
+      "employee_name": "Léa Bernasconi",
+      "year": 2024,
+      "gross_annual_salary": 145181,
+      "bonus": 12000,
+      "ahv_ai_apg": 8645,
+      "lpp_employee": 13360,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "salary-06-clean.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Nestlé Suisse",
+      "employer_uid": "CHE-105.840.816",
+      "employee_name": "Jean Dupont",
+      "year": 2025,
+      "gross_annual_salary": 137236,
+      "bonus": 5000,
+      "ahv_ai_apg": 7823,
+      "lpp_employee": 12090,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "salary-07-clean.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Swigs SA",
+      "employer_uid": "CHE-123.456.789",
+      "employee_name": "Jean Dupont",
+      "year": 2026,
+      "gross_annual_salary": 115392,
+      "bonus": 5000,
+      "ahv_ai_apg": 6622,
+      "lpp_employee": 10233,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "salary-08-clean.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "CFF SA",
+      "employer_uid": "CHE-115.932.017",
+      "employee_name": "Jean Dupont",
+      "year": 2024,
+      "gross_annual_salary": 104118,
+      "bonus": 0,
+      "ahv_ai_apg": 5726,
+      "lpp_employee": 8850,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "salary-09-clean.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Swigs SA",
+      "employer_uid": "CHE-123.456.789",
+      "employee_name": "Thomas Rey",
+      "year": 2024,
+      "gross_annual_salary": 107052,
+      "bonus": 5000,
+      "ahv_ai_apg": 6163,
+      "lpp_employee": 9524,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "salary-10-clean.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Raiffeisen VS",
+      "employer_uid": "CHE-108.244.893",
+      "employee_name": "Sophie Mueller",
+      "year": 2024,
+      "gross_annual_salary": 120217,
+      "bonus": 12000,
+      "ahv_ai_apg": 7272,
+      "lpp_employee": 11238,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "salary-11-clean.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Swigs SA",
+      "employer_uid": "CHE-123.456.789",
+      "employee_name": "Thomas Rey",
+      "year": 2024,
+      "gross_annual_salary": 132357,
+      "bonus": 5000,
+      "ahv_ai_apg": 7555,
+      "lpp_employee": 11675,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "salary-12-clean.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Raiffeisen VS",
+      "employer_uid": "CHE-108.244.893",
+      "employee_name": "Sophie Mueller",
+      "year": 2026,
+      "gross_annual_salary": 85203,
+      "bonus": 0,
+      "ahv_ai_apg": 4686,
+      "lpp_employee": 7242,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "salary-13-clean.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Swigs SA",
+      "employer_uid": "CHE-123.456.789",
+      "employee_name": "Jean Dupont",
+      "year": 2025,
+      "gross_annual_salary": 70458,
+      "bonus": 3000,
+      "ahv_ai_apg": 4040,
+      "lpp_employee": 6244,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "salary-14-soft.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Swigs SA",
+      "employer_uid": "CHE-123.456.789",
+      "employee_name": "Thomas Rey",
+      "year": 2025,
+      "gross_annual_salary": 119429,
+      "bonus": 5000,
+      "ahv_ai_apg": 6844,
+      "lpp_employee": 10576,
+      "_level": "soft"
+    }
+  },
+  {
+    "file": "salary-15-soft.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "CFF SA",
+      "employer_uid": "CHE-115.932.017",
+      "employee_name": "Thomas Rey",
+      "year": 2025,
+      "gross_annual_salary": 82551,
+      "bonus": 8000,
+      "ahv_ai_apg": 4980,
+      "lpp_employee": 7697,
+      "_level": "soft"
+    }
+  },
+  {
+    "file": "salary-16-soft.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Swigs SA",
+      "employer_uid": "CHE-123.456.789",
+      "employee_name": "Sophie Mueller",
+      "year": 2025,
+      "gross_annual_salary": 63035,
+      "bonus": 3000,
+      "ahv_ai_apg": 3632,
+      "lpp_employee": 5613,
+      "_level": "soft"
+    }
+  },
+  {
+    "file": "salary-17-soft.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Swigs SA",
+      "employer_uid": "CHE-123.456.789",
+      "employee_name": "Thomas Rey",
+      "year": 2025,
+      "gross_annual_salary": 106454,
+      "bonus": 8000,
+      "ahv_ai_apg": 6295,
+      "lpp_employee": 9729,
+      "_level": "soft"
+    }
+  },
+  {
+    "file": "salary-18-soft.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Migros Genève",
+      "employer_uid": "CHE-116.308.287",
+      "employee_name": "Thomas Rey",
+      "year": 2024,
+      "gross_annual_salary": 77801,
+      "bonus": 8000,
+      "ahv_ai_apg": 4719,
+      "lpp_employee": 7293,
+      "_level": "soft"
+    }
+  },
+  {
+    "file": "salary-19-soft.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Nestlé Suisse",
+      "employer_uid": "CHE-105.840.816",
+      "employee_name": "Thomas Rey",
+      "year": 2025,
+      "gross_annual_salary": 106220,
+      "bonus": 8000,
+      "ahv_ai_apg": 6282,
+      "lpp_employee": 9709,
+      "_level": "soft"
+    }
+  },
+  {
+    "file": "salary-20-soft.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Swigs SA",
+      "employer_uid": "CHE-123.456.789",
+      "employee_name": "Jean Dupont",
+      "year": 2024,
+      "gross_annual_salary": 142447,
+      "bonus": 5000,
+      "ahv_ai_apg": 8110,
+      "lpp_employee": 12533,
+      "_level": "soft"
+    }
+  },
+  {
+    "file": "salary-21-rough.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "CFF SA",
+      "employer_uid": "CHE-115.932.017",
+      "employee_name": "Jean Dupont",
+      "year": 2026,
+      "gross_annual_salary": 104559,
+      "bonus": 3000,
+      "ahv_ai_apg": 5916,
+      "lpp_employee": 9143,
+      "_level": "rough"
+    }
+  },
+  {
+    "file": "salary-22-rough.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Raiffeisen VS",
+      "employer_uid": "CHE-108.244.893",
+      "employee_name": "Thomas Rey",
+      "year": 2025,
+      "gross_annual_salary": 116948,
+      "bonus": 3000,
+      "ahv_ai_apg": 6597,
+      "lpp_employee": 10196,
+      "_level": "rough"
+    }
+  },
+  {
+    "file": "salary-23-rough.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Migros Genève",
+      "employer_uid": "CHE-116.308.287",
+      "employee_name": "Jean Dupont",
+      "year": 2024,
+      "gross_annual_salary": 93207,
+      "bonus": 5000,
+      "ahv_ai_apg": 5401,
+      "lpp_employee": 8348,
+      "_level": "rough"
+    }
+  },
+  {
+    "file": "salary-24-rough.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Nestlé Suisse",
+      "employer_uid": "CHE-105.840.816",
+      "employee_name": "Jean Dupont",
+      "year": 2025,
+      "gross_annual_salary": 93033,
+      "bonus": 12000,
+      "ahv_ai_apg": 5777,
+      "lpp_employee": 8928,
+      "_level": "rough"
+    }
+  },
+  {
+    "file": "salary-25-rough.png",
+    "ground_truth": {
+      "category": "salary",
+      "employer_name": "Nestlé Suisse",
+      "employer_uid": "CHE-105.840.816",
+      "employee_name": "Jean Dupont",
+      "year": 2026,
+      "gross_annual_salary": 111928,
+      "bonus": 5000,
+      "ahv_ai_apg": 6431,
+      "lpp_employee": 9939,
+      "_level": "rough"
+    }
+  },
+  {
+    "file": "3a-01-clean.png",
+    "ground_truth": {
+      "category": "3a",
+      "institution": "PostFinance 3a",
+      "contributor_name": "Jean Dupont",
+      "year": 2025,
+      "amount": 5000,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "3a-02-clean.png",
+    "ground_truth": {
+      "category": "3a",
+      "institution": "Raiffeisen 3a",
+      "contributor_name": "Sophie Mueller",
+      "year": 2025,
+      "amount": 6500,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "3a-03-clean.png",
+    "ground_truth": {
+      "category": "3a",
+      "institution": "Raiffeisen 3a",
+      "contributor_name": "Thomas Rey",
+      "year": 2025,
+      "amount": 6500,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "3a-04-clean.png",
+    "ground_truth": {
+      "category": "3a",
+      "institution": "Credit Suisse 3a",
+      "contributor_name": "Thomas Rey",
+      "year": 2026,
+      "amount": 7056,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "3a-05-clean.png",
+    "ground_truth": {
+      "category": "3a",
+      "institution": "Swiss Life 3a",
+      "contributor_name": "Léa Bernasconi",
+      "year": 2025,
+      "amount": 6500,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "3a-06-clean.png",
+    "ground_truth": {
+      "category": "3a",
+      "institution": "PostFinance 3a",
+      "contributor_name": "Sophie Mueller",
+      "year": 2024,
+      "amount": 5000,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "3a-07-clean.png",
+    "ground_truth": {
+      "category": "3a",
+      "institution": "Raiffeisen 3a",
+      "contributor_name": "Jean Dupont",
+      "year": 2024,
+      "amount": 7260,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "3a-08-clean.png",
+    "ground_truth": {
+      "category": "3a",
+      "institution": "Raiffeisen 3a",
+      "contributor_name": "Thomas Rey",
+      "year": 2026,
+      "amount": 7260,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "3a-09-soft.png",
+    "ground_truth": {
+      "category": "3a",
+      "institution": "Swiss Life 3a",
+      "contributor_name": "Thomas Rey",
+      "year": 2024,
+      "amount": 6500,
+      "_level": "soft"
+    }
+  },
+  {
+    "file": "3a-10-soft.png",
+    "ground_truth": {
+      "category": "3a",
+      "institution": "UBS 3a",
+      "contributor_name": "Léa Bernasconi",
+      "year": 2024,
+      "amount": 5000,
+      "_level": "soft"
+    }
+  },
+  {
+    "file": "3a-11-soft.png",
+    "ground_truth": {
+      "category": "3a",
+      "institution": "UBS 3a",
+      "contributor_name": "Sophie Mueller",
+      "year": 2025,
+      "amount": 5000,
+      "_level": "soft"
+    }
+  },
+  {
+    "file": "3a-12-soft.png",
+    "ground_truth": {
+      "category": "3a",
+      "institution": "Raiffeisen 3a",
+      "contributor_name": "Thomas Rey",
+      "year": 2025,
+      "amount": 6500,
+      "_level": "soft"
+    }
+  },
+  {
+    "file": "3a-13-rough.png",
+    "ground_truth": {
+      "category": "3a",
+      "institution": "Raiffeisen 3a",
+      "contributor_name": "Marie Rochat",
+      "year": 2024,
+      "amount": 7056,
+      "_level": "rough"
+    }
+  },
+  {
+    "file": "3a-14-rough.png",
+    "ground_truth": {
+      "category": "3a",
+      "institution": "Credit Suisse 3a",
+      "contributor_name": "Thomas Rey",
+      "year": 2026,
+      "amount": 7056,
+      "_level": "rough"
+    }
+  },
+  {
+    "file": "3a-15-rough.png",
+    "ground_truth": {
+      "category": "3a",
+      "institution": "PostFinance 3a",
+      "contributor_name": "Marie Rochat",
+      "year": 2025,
+      "amount": 5000,
+      "_level": "rough"
+    }
+  },
+  {
+    "file": "invoice-01-clean.png",
+    "ground_truth": {
+      "category": "invoice",
+      "vendor": "Migros Online",
+      "invoice_number": "FAC-2024-2779",
+      "date": "2024-12-07",
+      "amount_ht": 1580,
+      "tva": 127.98,
+      "amount_ttc": 1707.98,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "invoice-02-clean.png",
+    "ground_truth": {
+      "category": "invoice",
+      "vendor": "Apple Switzerland",
+      "invoice_number": "FAC-2024-4979",
+      "date": "2025-05-28",
+      "amount_ht": 4438,
+      "tva": 359.48,
+      "amount_ttc": 4797.48,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "invoice-03-clean.png",
+    "ground_truth": {
+      "category": "invoice",
+      "vendor": "Migros Online",
+      "invoice_number": "FAC-2025-8754",
+      "date": "2024-03-02",
+      "amount_ht": 3475,
+      "tva": 281.48,
+      "amount_ttc": 3756.48,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "invoice-04-clean.png",
+    "ground_truth": {
+      "category": "invoice",
+      "vendor": "Swisscom AG",
+      "invoice_number": "FAC-2024-1081",
+      "date": "2024-03-07",
+      "amount_ht": 721,
+      "tva": 58.4,
+      "amount_ttc": 779.4,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "invoice-05-clean.png",
+    "ground_truth": {
+      "category": "invoice",
+      "vendor": "Apple Switzerland",
+      "invoice_number": "FAC-2025-8000",
+      "date": "2025-05-28",
+      "amount_ht": 4000,
+      "tva": 324.0,
+      "amount_ttc": 4324.0,
+      "_level": "clean"
+    }
+  },
+  {
+    "file": "invoice-06-soft.png",
+    "ground_truth": {
+      "category": "invoice",
+      "vendor": "Apple Switzerland",
+      "invoice_number": "FAC-2025-0631",
+      "date": "2026-02-07",
+      "amount_ht": 4388,
+      "tva": 355.43,
+      "amount_ttc": 4743.43,
+      "_level": "soft"
+    }
+  },
+  {
+    "file": "invoice-07-soft.png",
+    "ground_truth": {
+      "category": "invoice",
+      "vendor": "Ricoh Switzerland",
+      "invoice_number": "FAC-2026-4844",
+      "date": "2025-05-02",
+      "amount_ht": 1520,
+      "tva": 123.12,
+      "amount_ttc": 1643.12,
+      "_level": "soft"
+    }
+  },
+  {
+    "file": "invoice-08-soft.png",
+    "ground_truth": {
+      "category": "invoice",
+      "vendor": "Apple Switzerland",
+      "invoice_number": "FAC-2026-7302",
+      "date": "2025-01-20",
+      "amount_ht": 167,
+      "tva": 13.53,
+      "amount_ttc": 180.53,
+      "_level": "soft"
+    }
+  },
+  {
+    "file": "invoice-09-rough.png",
+    "ground_truth": {
+      "category": "invoice",
+      "vendor": "SBB Ticket",
+      "invoice_number": "FAC-2024-5824",
+      "date": "2024-11-25",
+      "amount_ht": 2650,
+      "tva": 214.65,
+      "amount_ttc": 2864.65,
+      "_level": "rough"
+    }
+  },
+  {
+    "file": "invoice-10-rough.png",
+    "ground_truth": {
+      "category": "invoice",
+      "vendor": "Apple Switzerland",
+      "invoice_number": "FAC-2024-8840",
+      "date": "2025-04-08",
+      "amount_ht": 1286,
+      "tva": 104.17,
+      "amount_ttc": 1390.17,
+      "_level": "rough"
+    }
+  }
+]

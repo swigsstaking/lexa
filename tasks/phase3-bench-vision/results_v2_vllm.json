@@ -1,0 +1,454 @@
+{
+  "vllm": {
+    "backend": "vllm-qwen3-vl-8b-fp8",
+    "n": 50,
+    "overall": {
+      "n": 50,
+      "avg_accuracy": 1.0,
+      "avg_duration_s": 4.3,
+      "pass_rate_90": 1.0
+    },
+    "by_level": {
+      "clean": {
+        "n": 26,
+        "avg_accuracy": 1.0,
+        "avg_duration_s": 4.3,
+        "pass_rate_90": 1.0
+      },
+      "soft": {
+        "n": 14,
+        "avg_accuracy": 1.0,
+        "avg_duration_s": 4.3,
+        "pass_rate_90": 1.0
+      },
+      "rough": {
+        "n": 10,
+        "avg_accuracy": 1.0,
+        "avg_duration_s": 4.3,
+        "pass_rate_90": 1.0
+      }
+    },
+    "by_category": {
+      "salary": {
+        "n": 25,
+        "avg_accuracy": 1.0,
+        "avg_duration_s": 5.3,
+        "pass_rate_90": 1.0
+      },
+      "3a": {
+        "n": 15,
+        "avg_accuracy": 1.0,
+        "avg_duration_s": 2.6,
+        "pass_rate_90": 1.0
+      },
+      "invoice": {
+        "n": 10,
+        "avg_accuracy": 1.0,
+        "avg_duration_s": 4.3,
+        "pass_rate_90": 1.0
+      }
+    },
+    "results": [
+      {
+        "file": "salary-01-clean.png",
+        "category": "salary",
+        "level": "clean",
+        "duration_s": 8.6,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-02-clean.png",
+        "category": "salary",
+        "level": "clean",
+        "duration_s": 5.1,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-03-clean.png",
+        "category": "salary",
+        "level": "clean",
+        "duration_s": 5.1,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-04-clean.png",
+        "category": "salary",
+        "level": "clean",
+        "duration_s": 5.1,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-05-clean.png",
+        "category": "salary",
+        "level": "clean",
+        "duration_s": 5.3,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-06-clean.png",
+        "category": "salary",
+        "level": "clean",
+        "duration_s": 5.1,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-07-clean.png",
+        "category": "salary",
+        "level": "clean",
+        "duration_s": 5.0,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-08-clean.png",
+        "category": "salary",
+        "level": "clean",
+        "duration_s": 4.9,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-09-clean.png",
+        "category": "salary",
+        "level": "clean",
+        "duration_s": 5.0,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-10-clean.png",
+        "category": "salary",
+        "level": "clean",
+        "duration_s": 5.2,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-11-clean.png",
+        "category": "salary",
+        "level": "clean",
+        "duration_s": 5.0,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-12-clean.png",
+        "category": "salary",
+        "level": "clean",
+        "duration_s": 4.9,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-13-clean.png",
+        "category": "salary",
+        "level": "clean",
+        "duration_s": 5.0,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-14-soft.png",
+        "category": "salary",
+        "level": "soft",
+        "duration_s": 6.6,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-15-soft.png",
+        "category": "salary",
+        "level": "soft",
+        "duration_s": 5.1,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-16-soft.png",
+        "category": "salary",
+        "level": "soft",
+        "duration_s": 5.3,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-17-soft.png",
+        "category": "salary",
+        "level": "soft",
+        "duration_s": 5.0,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-18-soft.png",
+        "category": "salary",
+        "level": "soft",
+        "duration_s": 5.1,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-19-soft.png",
+        "category": "salary",
+        "level": "soft",
+        "duration_s": 5.2,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-20-soft.png",
+        "category": "salary",
+        "level": "soft",
+        "duration_s": 5.2,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-21-rough.png",
+        "category": "salary",
+        "level": "rough",
+        "duration_s": 5.5,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-22-rough.png",
+        "category": "salary",
+        "level": "rough",
+        "duration_s": 5.4,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-23-rough.png",
+        "category": "salary",
+        "level": "rough",
+        "duration_s": 5.2,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-24-rough.png",
+        "category": "salary",
+        "level": "rough",
+        "duration_s": 5.2,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "salary-25-rough.png",
+        "category": "salary",
+        "level": "rough",
+        "duration_s": 5.2,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "3a-01-clean.png",
+        "category": "3a",
+        "level": "clean",
+        "duration_s": 2.7,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "3a-02-clean.png",
+        "category": "3a",
+        "level": "clean",
+        "duration_s": 2.6,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "3a-03-clean.png",
+        "category": "3a",
+        "level": "clean",
+        "duration_s": 2.6,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "3a-04-clean.png",
+        "category": "3a",
+        "level": "clean",
+        "duration_s": 2.5,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "3a-05-clean.png",
+        "category": "3a",
+        "level": "clean",
+        "duration_s": 2.9,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "3a-06-clean.png",
+        "category": "3a",
+        "level": "clean",
+        "duration_s": 2.5,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "3a-07-clean.png",
+        "category": "3a",
+        "level": "clean",
+        "duration_s": 2.6,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "3a-08-clean.png",
+        "category": "3a",
+        "level": "clean",
+        "duration_s": 2.5,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "3a-09-soft.png",
+        "category": "3a",
+        "level": "soft",
+        "duration_s": 2.7,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "3a-10-soft.png",
+        "category": "3a",
+        "level": "soft",
+        "duration_s": 2.8,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "3a-11-soft.png",
+        "category": "3a",
+        "level": "soft",
+        "duration_s": 2.6,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "3a-12-soft.png",
+        "category": "3a",
+        "level": "soft",
+        "duration_s": 2.6,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "3a-13-rough.png",
+        "category": "3a",
+        "level": "rough",
+        "duration_s": 2.7,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "3a-14-rough.png",
+        "category": "3a",
+        "level": "rough",
+        "duration_s": 2.7,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "3a-15-rough.png",
+        "category": "3a",
+        "level": "rough",
+        "duration_s": 2.6,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "invoice-01-clean.png",
+        "category": "invoice",
+        "level": "clean",
+        "duration_s": 4.4,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "invoice-02-clean.png",
+        "category": "invoice",
+        "level": "clean",
+        "duration_s": 4.2,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "invoice-03-clean.png",
+        "category": "invoice",
+        "level": "clean",
+        "duration_s": 4.4,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "invoice-04-clean.png",
+        "category": "invoice",
+        "level": "clean",
+        "duration_s": 4.2,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "invoice-05-clean.png",
+        "category": "invoice",
+        "level": "clean",
+        "duration_s": 4.2,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "invoice-06-soft.png",
+        "category": "invoice",
+        "level": "soft",
+        "duration_s": 4.3,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "invoice-07-soft.png",
+        "category": "invoice",
+        "level": "soft",
+        "duration_s": 4.3,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "invoice-08-soft.png",
+        "category": "invoice",
+        "level": "soft",
+        "duration_s": 4.1,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "invoice-09-rough.png",
+        "category": "invoice",
+        "level": "rough",
+        "duration_s": 4.3,
+        "accuracy": 1.0,
+        "errors": []
+      },
+      {
+        "file": "invoice-10-rough.png",
+        "category": "invoice",
+        "level": "rough",
+        "duration_s": 4.3,
+        "accuracy": 1.0,
+        "errors": []
+      }
+    ]
+  }
+}
