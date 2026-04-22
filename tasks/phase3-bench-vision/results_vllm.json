@@ -1,0 +1,186 @@
+{
+  "vllm": {
+    "backend": "vllm-qwen3-vl-8b-fp8",
+    "n": 20,
+    "avg_accuracy": 1.0,
+    "avg_duration_s": 4.8,
+    "median_duration_s": 4.7,
+    "p95_duration_s": 5.2,
+    "by_category": {
+      "salary": {
+        "avg_accuracy": 1.0,
+        "avg_duration_s": 6.3
+      },
+      "3a": {
+        "avg_accuracy": 1.0,
+        "avg_duration_s": 2.6
+      },
+      "invoice": {
+        "avg_accuracy": 1.0,
+        "avg_duration_s": 4.3
+      }
+    },
+    "results": [
+      {
+        "file": "salary-01.png",
+        "category": "salary",
+        "duration_s": 16.8,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"employer_name\": \"Swigs SA\",\n  \"employer_uid\": \"CHE-123.456.789\",\n  \"employee_name\": \"Marie Rochat\",\n  \"year\": 2026,\n  \"gross_annual_salary\": 96048,\n  \"bonus\": 3000,\n  \"ahv_ai_apg\": 5448,\n  \"lpp_e"
+      },
+      {
+        "file": "salary-02.png",
+        "category": "salary",
+        "duration_s": 5.2,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"employer_name\": \"Migros Genève\",\n  \"employer_uid\": \"CHE-116.308.287\",\n  \"employee_name\": \"Jean Dupont\",\n  \"year\": 2026,\n  \"gross_annual_salary\": 73434,\n  \"bonus\": 12000,\n  \"ahv_ai_apg\": 4699,\n  \""
+      },
+      {
+        "file": "salary-03.png",
+        "category": "salary",
+        "duration_s": 5.0,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"employer_name\": \"Swigs SA\",\n  \"employer_uid\": \"CHE-123.456.789\",\n  \"employee_name\": \"Léa Bernasconi\",\n  \"year\": 2025,\n  \"gross_annual_salary\": 64165,\n  \"bonus\": 0,\n  \"ahv_ai_apg\": 3529,\n  \"lpp_em"
+      },
+      {
+        "file": "salary-04.png",
+        "category": "salary",
+        "duration_s": 5.1,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"employer_name\": \"Swigs SA\",\n  \"employer_uid\": \"CHE-123.456.789\",\n  \"employee_name\": \"Jean Dupont\",\n  \"year\": 2024,\n  \"gross_annual_salary\": 126237,\n  \"bonus\": 12000,\n  \"ahv_ai_apg\": 7603,\n  \"lpp_"
+      },
+      {
+        "file": "salary-05.png",
+        "category": "salary",
+        "duration_s": 5.2,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"employer_name\": \"Swigs SA\",\n  \"employer_uid\": \"CHE-123.456.789\",\n  \"employee_name\": \"Léa Bernasconi\",\n  \"year\": 2024,\n  \"gross_annual_salary\": 145181,\n  \"bonus\": 12000,\n  \"ahv_ai_apg\": 8645,\n  \"l"
+      },
+      {
+        "file": "salary-06.png",
+        "category": "salary",
+        "duration_s": 5.1,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"employer_name\": \"Nestlé Suisse\",\n  \"employer_uid\": \"CHE-105.840.816\",\n  \"employee_name\": \"Jean Dupont\",\n  \"year\": 2025,\n  \"gross_annual_salary\": 137236,\n  \"bonus\": 5000,\n  \"ahv_ai_apg\": 7823,\n  \""
+      },
+      {
+        "file": "salary-07.png",
+        "category": "salary",
+        "duration_s": 5.0,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"employer_name\": \"Swigs SA\",\n  \"employer_uid\": \"CHE-123.456.789\",\n  \"employee_name\": \"Jean Dupont\",\n  \"year\": 2026,\n  \"gross_annual_salary\": 115392,\n  \"bonus\": 5000,\n  \"ahv_ai_apg\": 6622,\n  \"lpp_e"
+      },
+      {
+        "file": "salary-08.png",
+        "category": "salary",
+        "duration_s": 5.0,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"employer_name\": \"CFF SA\",\n  \"employer_uid\": \"CHE-115.932.017\",\n  \"employee_name\": \"Jean Dupont\",\n  \"year\": 2024,\n  \"gross_annual_salary\": 104118,\n  \"bonus\": 0,\n  \"ahv_ai_apg\": 5726,\n  \"lpp_employ"
+      },
+      {
+        "file": "salary-09.png",
+        "category": "salary",
+        "duration_s": 5.0,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"employer_name\": \"Swigs SA\",\n  \"employer_uid\": \"CHE-123.456.789\",\n  \"employee_name\": \"Thomas Rey\",\n  \"year\": 2024,\n  \"gross_annual_salary\": 107052,\n  \"bonus\": 5000,\n  \"ahv_ai_apg\": 6163,\n  \"lpp_em"
+      },
+      {
+        "file": "salary-10.png",
+        "category": "salary",
+        "duration_s": 5.2,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"employer_name\": \"Raiffeisen VS\",\n  \"employer_uid\": \"CHE-108.244.893\",\n  \"employee_name\": \"Sophie Mueller\",\n  \"year\": 2024,\n  \"gross_annual_salary\": 120217,\n  \"bonus\": 12000,\n  \"ahv_ai_apg\": 7272,"
+      },
+      {
+        "file": "3a-01.png",
+        "category": "3a",
+        "duration_s": 2.6,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"institution\": \"UBS 3a\",\n  \"contributor_name\": \"Thomas Rey\",\n  \"year\": 2024,\n  \"amount\": 7056\n}"
+      },
+      {
+        "file": "3a-02.png",
+        "category": "3a",
+        "duration_s": 2.6,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"institution\": \"Swiss Life 3a\",\n  \"contributor_name\": \"Sophie Mueller\",\n  \"year\": 2026,\n  \"amount\": 6500\n}"
+      },
+      {
+        "file": "3a-03.png",
+        "category": "3a",
+        "duration_s": 2.5,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"institution\": \"UBS 3a\",\n  \"contributor_name\": \"Marie Rochat\",\n  \"year\": 2026,\n  \"amount\": 6500\n}"
+      },
+      {
+        "file": "3a-04.png",
+        "category": "3a",
+        "duration_s": 2.6,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"institution\": \"Credit Suisse 3a\",\n  \"contributor_name\": \"Marie Rochat\",\n  \"year\": 2024,\n  \"amount\": 5000\n}"
+      },
+      {
+        "file": "3a-05.png",
+        "category": "3a",
+        "duration_s": 2.5,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"institution\": \"Raiffeisen 3a\",\n  \"contributor_name\": \"Sophie Mueller\",\n  \"year\": 2025,\n  \"amount\": 7056\n}"
+      },
+      {
+        "file": "invoice-01.png",
+        "category": "invoice",
+        "duration_s": 4.1,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"vendor\": \"Swisscom AG\",\n  \"invoice_number\": \"FAC-2025-5821\",\n  \"date\": \"2025-11-07\",\n  \"amount_ht\": 684.0,\n  \"tva\": 55.4,\n  \"amount_ttc\": 739.4\n}"
+      },
+      {
+        "file": "invoice-02.png",
+        "category": "invoice",
+        "duration_s": 4.3,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"vendor\": \"SBB Ticket\",\n  \"invoice_number\": \"FAC-2026-2804\",\n  \"date\": \"2024-12-18\",\n  \"amount_ht\": 1438.0,\n  \"tva\": 116.48,\n  \"amount_ttc\": 1554.48\n}"
+      },
+      {
+        "file": "invoice-03.png",
+        "category": "invoice",
+        "duration_s": 4.3,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"vendor\": \"Migros Online\",\n  \"invoice_number\": \"FAC-2025-4423\",\n  \"date\": \"2026-12-21\",\n  \"amount_ht\": 1899.0,\n  \"tva\": 153.82,\n  \"amount_ttc\": 2052.82\n}"
+      },
+      {
+        "file": "invoice-04.png",
+        "category": "invoice",
+        "duration_s": 4.4,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"vendor\": \"Ricoh Switzerland\",\n  \"invoice_number\": \"FAC-2024-3753\",\n  \"date\": \"2025-01-27\",\n  \"amount_ht\": 3386.0,\n  \"tva\": 274.27,\n  \"amount_ttc\": 3660.27\n}"
+      },
+      {
+        "file": "invoice-05.png",
+        "category": "invoice",
+        "duration_s": 4.4,
+        "accuracy": 1.0,
+        "errors": [],
+        "raw_sample": "{\n  \"vendor\": \"Ricoh Switzerland\",\n  \"invoice_number\": \"FAC-2024-3457\",\n  \"date\": \"2025-12-19\",\n  \"amount_ht\": 1841.0,\n  \"tva\": 149.12,\n  \"amount_ttc\": 1990.12\n}"
+      }
+    ]
+  }
+}

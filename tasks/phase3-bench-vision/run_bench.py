@@ -95,13 +95,13 @@ def call_ollama(image_b64: str, prompt: str, timeout: int = 150) -> tuple[str, f
             "stream": False,
             "think": False,
             "keep_alive": "30m",
-            "options": {"temperature": 0, "num_predict": 2048},
+            "options": {"temperature": 0, "num_predict": 2048, "num_ctx": 8192},
         },
         timeout=timeout,
     )
     dt = time.time() - t0
     if not r.ok:
-        return "", dt
+        return f"HTTP {r.status_code}: {r.text[:200]}", dt
     return r.json().get("message", {}).get("content", ""), dt
 
 
