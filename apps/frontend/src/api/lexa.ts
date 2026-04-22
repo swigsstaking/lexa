@@ -622,6 +622,7 @@ export const lexa = {
     canton?: string;
     isVatSubject?: boolean;
     vatNumber?: string;
+    isFiduciary?: boolean;
   }) =>
     api
       .post<{ tenantId: string; company: Company; token: string }>('/onboarding/add-account', input)

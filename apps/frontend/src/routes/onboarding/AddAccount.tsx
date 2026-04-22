@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building2, User, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, Building2, User, Check, Loader2, Briefcase } from 'lucide-react';
 import { lexa } from '@/api/lexa';
 import { useAuthStore } from '@/stores/authStore';
 import { useCompaniesStore } from '@/stores/companiesStore';
 import type { LegalForm } from '@/api/types';
 import { CompanySearchField } from '@/components/CompanySearchField';
 
-type AccountType = 'private' | 'business' | null;
+type AccountType = 'private' | 'business' | 'fiduciary' | null;
 
 const CANTONS = [
   'VS','GE','VD','FR','NE','JU','BE','ZH','LU','AG',
@@ -31,7 +31,9 @@ export function AddAccount() {
 
   const handleTypeSelect = (type: AccountType) => {
     setAccountType(type);
-    setLegalForm(type === 'private' ? 'raison_individuelle' : 'sarl');
+    if (type === 'private') setLegalForm('raison_individuelle');
+    else if (type === 'fiduciary') setLegalForm('sarl'); // Cabinet fiduciaire généralement en Sàrl ou SA
+    else setLegalForm('sarl');
     setStep(2);
   };
 
@@ -45,6 +47,7 @@ export function AddAccount() {
         canton,
         isVatSubject,
         vatNumber: vatNumber || undefined,
+        isFiduciary: accountType === 'fiduciary',
       });
       setToken(result.token, result.tenantId);
       addCompany(result.company);
@@ -93,6 +96,23 @@ export function AddAccount() {
                   <p className="text-sm text-muted">Sàrl, SA, Coopérative, Association</p>
                 </button>
               </div>
+
+              {/* 3e option — compte fiduciaire (rectangle allongé) */}
+              <button
+                onClick={() => handleTypeSelect('fiduciary')}
+                className="card-elevated w-full mt-4 p-5 text-left hover:border-accent/40 transition-colors flex items-center gap-4"
+              >
+                <div className="w-11 h-11 rounded-lg bg-accent/10 grid place-items-center flex-shrink-0">
+                  <Briefcase className="w-5 h-5 text-accent" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-semibold text-ink">Compte fiduciaire</h3>
+                  <p className="text-sm text-muted mt-0.5">
+                    Cabinet gérant plusieurs clients · accès multi-dossiers, rôles fiduciary/viewer
+                  </p>
+                </div>
+                <span className="text-xs text-muted flex-shrink-0 hidden sm:inline">→</span>
+              </button>
             </>
           )}
 
@@ -105,15 +125,26 @@ export function AddAccount() {
               </button>
 
               <h1 className="text-xl font-semibold text-ink mb-2">
-                {accountType === 'private' ? 'Votre compte privé' : 'Votre entreprise'}
+                {accountType === 'private'
+                  ? 'Votre compte privé'
+                  : accountType === 'fiduciary'
+                    ? 'Votre cabinet fiduciaire'
+                    : 'Votre entreprise'}
               </h1>
+              {accountType === 'fiduciary' && (
+                <p className="text-sm text-muted mb-2">
+                  Le cabinet sera créé en Sàrl par défaut. Vous pourrez ensuite inviter vos clients
+                  en tant que tenants avec rôle <span className="font-mono text-ink">fiduciary</span> ou{' '}
+                  <span className="font-mono text-ink">viewer</span>.
+                </p>
+              )}
 
               <div className="space-y-4 mt-6">
-                {accountType === 'business' && (
+                {(accountType === 'business' || accountType === 'fiduciary') && (
                   <div>
                     <label className="label">Rechercher dans le registre UID</label>
                     <CompanySearchField
-                      placeholder="Nom ou UID de l'entreprise…"
+                      placeholder={accountType === 'fiduciary' ? 'Nom ou IDE du cabinet…' : "Nom ou UID de l'entreprise…"}
                       onSelect={(c) => {
                         setName(c.name);
                         if (c.legalForm) setLegalForm(c.legalForm);
@@ -132,7 +163,9 @@ export function AddAccount() {
                   <label className="label" htmlFor="name">
                     {accountType === 'private'
                       ? 'Nom complet (ou raison sociale RI)'
-                      : 'Raison sociale'}
+                      : accountType === 'fiduciary'
+                        ? 'Nom du cabinet'
+                        : 'Raison sociale'}
                   </label>
                   <input
                     id="name"
@@ -159,7 +192,7 @@ export function AddAccount() {
                   />
                 </div>
 
-                {accountType === 'business' && (
+                {(accountType === 'business' || accountType === 'fiduciary') && (
                   <div>
                     <label className="label" htmlFor="legal">Forme juridique</label>
                     <select
@@ -170,9 +203,16 @@ export function AddAccount() {
                     >
                       <option value="sarl">Société à responsabilité limitée (Sàrl)</option>
                       <option value="sa">Société anonyme (SA)</option>
-                      <option value="association">Association</option>
-                      <option value="cooperative">Coopérative</option>
-                      <option value="fondation">Fondation</option>
+                      {accountType === 'fiduciary' && (
+                        <option value="raison_individuelle">Raison individuelle</option>
+                      )}
+                      {accountType === 'business' && (
+                        <>
+                          <option value="association">Association</option>
+                          <option value="cooperative">Coopérative</option>
+                          <option value="fondation">Fondation</option>
+                        </>
+                      )}
                       <option value="autre">Autre</option>
                     </select>
                   </div>

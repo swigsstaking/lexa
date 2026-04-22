@@ -173,6 +173,8 @@ const AddAccountSchema = z.object({
   canton: CANTON_ENUM.optional(),
   isVatSubject: z.boolean().default(false),
   vatNumber: z.string().optional(),
+  /** Flag "cabinet fiduciaire" — stocké dans metadata.is_fiduciary */
+  isFiduciary: z.boolean().default(false),
 });
 
 onboardingRouter.post("/add-account", requireAuth, async (req, res) => {
@@ -181,19 +183,20 @@ onboardingRouter.post("/add-account", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "invalid body", details: parse.error.flatten() });
   }
 
-  const { name, legalForm, canton, isVatSubject, vatNumber } = parse.data;
+  const { name, legalForm, canton, isVatSubject, vatNumber, isFiduciary } = parse.data;
   const jwtUser = req.user as JwtPayload;
   const userId = jwtUser.sub;
 
   try {
     const newTenantId = randomUUID();
+    const metadata = isFiduciary ? { is_fiduciary: true } : {};
 
     // 1. Créer la company (inclut tenant_id — pas de table tenants séparée dans ce schéma)
     const companyResult = await query(
       `INSERT INTO companies (
          tenant_id, name, legal_form, canton, country,
-         is_vat_subject, vat_number, source
-       ) VALUES ($1, $2, $3, $4, 'CH', $5, $6, 'manual')
+         is_vat_subject, vat_number, source, metadata
+       ) VALUES ($1, $2, $3, $4, 'CH', $5, $6, 'manual', $7)
        RETURNING *`,
       [
         newTenantId,
@@ -202,6 +205,7 @@ onboardingRouter.post("/add-account", requireAuth, async (req, res) => {
         canton ?? null,
         isVatSubject,
         vatNumber ?? null,
+        JSON.stringify(metadata),
       ],
     );
     const company = companyResult.rows[0];
