@@ -210,35 +210,49 @@ export function Workspace() {
 
   // ── Items des 4 dropdowns ───────────────────────────────────────────────
 
-  const declarationsItems = [
-    {
-      label: `Déclaration PP${canton ? ` (${canton})` : ''}`,
-      onClick: () => navigate(taxpayerPath),
-      icon: FileSignature,
-      title: 'Déclaration fiscale personne physique',
-    },
-    {
-      label: `Déclaration PM${canton ? ` (${canton})` : ''}`,
-      onClick: () => navigate(pmPath),
-      icon: Briefcase,
-      title: 'Déclaration fiscale PM (Sàrl/SA)',
-    },
-  ];
+  // Profile detection — même règle que WorkspaceV2 / LexaCmdK
+  // PM = personnes morales (Sàrl, SA, Coopérative, Association, SA étrangère, SNC, SENC)
+  // PP = Raison Individuelle, Société Simple, null → déclaration fiscale PP (Art. 17-18 LIFD)
+  const PM_FORMS = ['sa', 'sca', 'sarl', 'cooperative', 'sa_etrangere', 'snc', 'senc'];
+  const isPM = company?.legalForm ? PM_FORMS.includes(company.legalForm) : false;
 
-  const comptaItems = [
-    {
-      label: 'Clôture continue',
-      onClick: () => navigate(`/close/${year}`),
-      icon: BookOpen,
-      title: 'Clôture continue CO 957-963',
-    },
-    {
-      label: 'Audit',
-      onClick: () => navigate(`/audit/${year}`),
-      icon: Shield,
-      title: 'Audit intégrité IA — CO 958f',
-    },
-  ];
+  // Déclaration : une seule affichée selon le profile (pas de doublon PP/PM)
+  const declarationsItems = isPM
+    ? [
+        {
+          label: `Déclaration PM${canton ? ` (${canton})` : ''}`,
+          onClick: () => navigate(pmPath),
+          icon: Briefcase,
+          title: 'Déclaration fiscale PM (Sàrl/SA)',
+        },
+      ]
+    : [
+        {
+          label: `Déclaration PP${canton ? ` (${canton})` : ''}`,
+          onClick: () => navigate(taxpayerPath),
+          icon: FileSignature,
+          title: 'Déclaration fiscale personne physique',
+        },
+      ];
+
+  // Comptabilité : réservée PM (CO 957-963 — comptabilité double obligatoire au-dessus
+  // de 500k CHF CA, ne concerne pas les salariés PP ni les RI en compta simplifiée)
+  const comptaItems = isPM
+    ? [
+        {
+          label: 'Clôture continue',
+          onClick: () => navigate(`/close/${year}`),
+          icon: BookOpen,
+          title: 'Clôture continue CO 957-963',
+        },
+        {
+          label: 'Audit',
+          onClick: () => navigate(`/audit/${year}`),
+          icon: Shield,
+          title: 'Audit intégrité IA — CO 958f',
+        },
+      ]
+    : [];
 
   const iaItems = [
     {
@@ -261,9 +275,10 @@ export function Workspace() {
     : [];
 
   // ── Groupes pour mobile ─────────────────────────────────────────────────
+  // Comptabilité masquée en PP (pas pertinent pour salariés/RI en compta simplifiée)
   const mobileGroups = [
     { label: 'Déclarations', items: declarationsItems },
-    { label: 'Comptabilité', items: comptaItems },
+    ...(comptaItems.length > 0 ? [{ label: 'Comptabilité', items: comptaItems }] : []),
     { label: 'IA', items: iaItems },
   ];
 
@@ -428,11 +443,13 @@ export function Workspace() {
               icon={FileSignature}
               items={declarationsItems}
             />
-            <NavDropdown
-              label="Comptabilité"
-              icon={BookOpen}
-              items={comptaItems}
-            />
+            {comptaItems.length > 0 && (
+              <NavDropdown
+                label="Comptabilité"
+                icon={BookOpen}
+                items={comptaItems}
+              />
+            )}
             {/* Documents — bouton direct (Feature 2) */}
             <button
               type="button"

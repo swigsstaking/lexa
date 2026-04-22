@@ -10,6 +10,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useActiveCompany } from '@/stores/companiesStore';
 import {
   ArrowLeft,
   Lightbulb,
@@ -678,12 +679,16 @@ function BriefingSection({ year }: { year: number }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
+const PM_FORMS_CONSEILLER = ['sa', 'sca', 'sarl', 'cooperative', 'sa_etrangere', 'snc', 'senc'];
+
 export function Conseiller() {
   const { year: yearParam } = useParams<{ year: string }>();
   const navigate = useNavigate();
   const year = parseInt(yearParam ?? '2026', 10);
   const [showChat, setShowChat] = useState(false);
   const [chatInitialQuestion, setChatInitialQuestion] = useState<string | undefined>();
+  const activeCompany = useActiveCompany();
+  const isPM = activeCompany?.legalForm ? PM_FORMS_CONSEILLER.includes(activeCompany.legalForm) : false;
 
   const handleBriefing = () => {
     setChatInitialQuestion(
@@ -750,15 +755,16 @@ export function Conseiller() {
           </div>
         </div>
 
-        {/* 3 simulation cards */}
+        {/* Simulation cards — filtrées selon profile :
+            PP : Rachat LPP + Pilier 3a (pertinents pour un contribuable particulier)
+            PM : Rachat LPP (LPP dirigeant) + Dividende vs Salaire (arbitrage société) */}
         <div>
           <h2 className="text-sm font-semibold text-muted uppercase tracking-wider mb-3">
             Simulations rapides
           </h2>
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className={`grid grid-cols-1 gap-4 ${isPM ? 'lg:grid-cols-2' : 'lg:grid-cols-2'}`}>
             <RachatLppCard year={year} />
-            <Pilier3aCard year={year} />
-            <DividendVsSalaryCard />
+            {isPM ? <DividendVsSalaryCard /> : <Pilier3aCard year={year} />}
           </div>
         </div>
 
