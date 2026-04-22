@@ -1,0 +1,1235 @@
+{
+  "meta": {
+    "timestamp": "2026-04-22T06:12:15.950803+00:00",
+    "endpoint": "https://lexa.swigs.online",
+    "dry_run": false,
+    "elapsed_s": 1086.2
+  },
+  "agents": {
+    "tva": {
+      "results": [
+        {
+          "id": "tva-001",
+          "agent": "tva",
+          "category": "standard",
+          "question": "Quel est le taux TVA standard en Suisse depuis le 1er janvier 2024?",
+          "response": "Le taux de TVA standard en Suisse est de 8,1 % depuis le 1er janvier 2024. Ce taux s'applique par défaut à toutes les prestations non visées par les taux réduits ou spéciaux, conformément à l'article 25 de la Loi sur la TVA (LTVA) et à l'article 41 de l'Ordonnance sur la TVA (OLTVA). L'Info TVA 12 confirme l'application de ce taux normal pour les prestations courantes.\n\nInformation à titre indicatif - vérifiez avec votre fiduciaire.",
+          "all_responses": [
+            "Le taux de TVA standard en Suisse est de 8,1 % depuis le 1er janvier 2024. Ce taux s'applique par défaut à toutes les prestations non visées par les taux réduits ou spéciaux, conformément à l'article 25 de la Loi sur la TVA (LTVA) et à l'article 41 de l'Ordonnance sur la TVA (OLTVA). L'Info TVA 12 confirme l'application de ce taux normal pour les prestations courantes.\n\nInformation à titre indicatif - vérifiez avec votre fiduciaire.",
+            "Le taux de TVA standard en Suisse est de 8,1 % depuis le 1er janvier 2024. Ce taux s'applique par défaut à toutes les prestations non visées par les taux réduits ou spéciaux, conformément à l'article 25 de la Loi sur la TVA (LTVA) et à l'article 41 de l'Ordonnance sur la TVA (OLTVA). L'Info TVA 12 confirme l'application de ce taux normal pour les prestations courantes.\n\nInformation à titre indicatif - vérifiez avec votre fiduciaire.",
+            "Le taux de TVA standard en Suisse est de 8,1 % depuis le 1er janvier 2024. Ce taux s'applique par défaut à toutes les prestations non visées par les taux réduits ou spéciaux, conformément à l'article 25 de la LTVA (RS 641.20) et à l'article 41 de l'OLTVA (RS 641.201). Cette disposition est confirmée dans l'Info TVA 12 relative aux taux applicables.\n\nInformation à titre indicatif - vérifiez avec votre fiduciaire.",
+            "Le taux de TVA standard en Suisse est de 8,1 % depuis le 1er janvier 2024. Ce taux s'applique par défaut à toutes les prestations non visées par les taux réduits ou spéciaux, conformément à l'article 25 de la Loi sur la TVA (LTVA) et à l'article 41 de l'Ordonnance sur la TVA (OLTVA). L'Info TVA 12 confirme l'application de ce taux normal pour les prestations courantes.\n\nInformation à titre indicatif - vérifiez avec votre fiduciaire.",
+            "Le taux de TVA standard en Suisse est de 8,1 % depuis le 1er janvier 2024. Ce taux s'applique par défaut à toutes les prestations non visées par les taux réduits ou spéciaux, conformément à l'article 25 de la Loi sur la TVA (LTVA, RS 641.20) et à l'article 41 de l'Ordonnance sur la TVA (OLTVA, RS 641.201). Cette disposition est confirmée dans l'Info TVA 12 relative au taux de la dette fiscale nette.\n\nInformation à titre indicatif - vérifiez avec votre fiduciaire."
+          ],
+          "ttft_ms": 3504.9,
+          "total_ms": 3620.8,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 0.5,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": [
+              {
+                "keyword": "8.1",
+                "found": false
+              },
+              {
+                "keyword": "LTVA",
+                "found": true
+              },
+              {
+                "keyword": "art. 25",
+                "found": false
+              },
+              {
+                "keyword": "standard",
+                "found": true
+              }
+            ]
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 1.0,
+            "pass_count": 5,
+            "avg_contains_score": 0.5,
+            "score_stdev": 0.0,
+            "similarity": 0.862,
+            "latency_stdev_ms": 223.4,
+            "stable": true
+          }
+        },
+        {
+          "id": "tva-002",
+          "agent": "tva",
+          "category": "standard",
+          "question": "Quels sont les taux TVA réduits en Suisse pour les denrées alimentaires et l'hôtellerie en 2026?",
+          "response": "En Suisse, depuis le 1er janvier 2024 et applicable en 2026, le taux de TVA réduit pour les denrées alimentaires (y compris le bétail, la volaille, le poisson, les céréales, les semences, les plantes vivantes, les fleurs coupées et les médicaments) est de 2,6 %, conformément à l'Art. 25 al. 2 LTVA (RS 641.20) et confirmé par l'Art. 41 OLTVA (RS 641.201). L'Info TVA 12 (section 16.3) précise que ce taux s'applique notamment à la vente à emporter, aux services traiteurs (livraison sans service à d",
+          "all_responses": [
+            "En Suisse, depuis le 1er janvier 2024 et applicable en 2026, le taux de TVA réduit pour les denrées alimentaires (y compris le bétail, la volaille, le poisson, les céréales, les semences, les plantes vivantes, les fleurs coupées et les médicaments) est de 2,6 %, conformément à l'Art. 25 al. 2 LTVA (RS 641.20) et confirmé par l'Art. 41 OLTVA (RS 641.201). L'Info TVA 12 (section 16.3) précise que ce taux s'applique notamment à la vente à emporter, aux services traiteurs (livraison sans service à d",
+            "En Suisse, à partir du 1er janvier 2024 et valables en 2026, le taux de TVA réduit pour les denrées alimentaires est de 2,6 % conformément à l'Art. 25 al. 2 LTVA (RS 641.20) et à l'Art. 41 OLTVA (RS 641.201). Ce taux s'applique également aux médicaments, livres, journaux et plantes, comme détaillé dans l'Info TVA 12 (section 16.3) pour les secteurs de la pharmacie, du traiteur et de la vente à emporter.\n\nPour l'hôtellerie, le taux spécial de 3,8 % s'applique aux prestations d'hébergement (nuitée",
+            "En Suisse, depuis le 1er janvier 2024 et applicable en 2026, le taux de TVA réduit pour les denrées alimentaires (y compris le bétail, la volaille, le poisson, les céréales, les plantes vivantes, etc.) est de 2,6 %, conformément à l'Art. 25 al. 2 LTVA (RS 641.20) et confirmé par l'Art. 41 OLTVA (RS 641.201). L'Info TVA 12 (TDFN) précise que ce taux s'applique notamment au commerce de denrées alimentaires, aux pharmacies et aux services traiteurs pour la vente à emporter.\n\nPour l'hôtellerie, le t",
+            "En Suisse, depuis le 1er janvier 2024 et valables en 2026, le taux de TVA réduit pour les denrées alimentaires est de 2,6 % selon l'Art. 25 al. 2 LTVA (RS 641.20) et l'Art. 41 OLTVA (RS 641.201). Ce taux s'applique aux denrées alimentaires, médicaments, livres, journaux et semences, comme précisé dans l'Info TVA 12 (section 16.3) concernant les pharmacies et la vente à emporter.\n\nPour l'hôtellerie, le taux spécial de 3,8 % s'applique aux prestations d'hébergement (nuitées) avec petit-déjeuner, c",
+            "En Suisse, depuis le 1er janvier 2024 et valables pour 2026, le taux de TVA réduit pour les denrées alimentaires (y compris le bétail, la volaille, le poisson, les céréales, les semences, les plantes vivantes, les fleurs coupées et les médicaments) est de 2,6 %, conformément à l'Art. 25 al. 2 LTVA (RS 641.20) et à l'Art. 41 OLTVA (RS 641.201). L'Info TVA 12 (TDFN) précise que ce taux s'applique notamment aux pharmacies, aux livraisons de denrées alimentaires à domicile et aux services traiteurs "
+          ],
+          "ttft_ms": 8133.7,
+          "total_ms": 7023.4,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 0.5,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": [
+              {
+                "keyword": "2.6",
+                "found": false
+              },
+              {
+                "keyword": "3.8",
+                "found": false
+              },
+              {
+                "keyword": "denrées",
+                "found": true
+              },
+              {
+                "keyword": "hôtellerie",
+                "found": true
+              }
+            ]
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 1.0,
+            "pass_count": 5,
+            "avg_contains_score": 0.5,
+            "score_stdev": 0.0,
+            "similarity": 0.661,
+            "latency_stdev_ms": 759.7,
+            "stable": true
+          }
+        },
+        {
+          "id": "tva-003",
+          "agent": "tva",
+          "category": "standard",
+          "question": "Quelles prestations sont exclues du champ de la TVA selon l'art. 21 LTVA?",
+          "response": "Selon l'article 21, alinéa 2, de la LTVA (RS 641.20), plusieurs prestations sont exclues du champ de la TVA. Ces exclusions incluent notamment les prestations fournies à des missions diplomatiques, des représentations diplomatiques et des organisations internationales, ainsi que la location de locaux à usage d'habitation (Art. 21, al. 2, ch. 21 LTVA).\n\nL'Info TVA secteur 17 précise que la location de surfaces publicitaires, vitrines ou présentoirs analogues avec un immeuble, lorsque le bailleur ",
+          "all_responses": [
+            "Selon l'article 21, alinéa 2, de la LTVA (RS 641.20), plusieurs prestations sont exclues du champ de la TVA. Ces exclusions incluent notamment les prestations fournies à des missions diplomatiques, des représentations diplomatiques et des organisations internationales, ainsi que la location de locaux à usage d'habitation (Art. 21, al. 2, ch. 21 LTVA).\n\nL'Info TVA secteur 17 précise que la location de surfaces publicitaires, vitrines ou présentoirs analogues avec un immeuble, lorsque le bailleur ",
+            "Selon l'article 21, alinéa 2, de la LTVA (RS 641.20), plusieurs prestations sont exclues du champ de la TVA. Cela inclut notamment les prestations fournies à des missions diplomatiques, des représentations diplomatiques et des organisations internationales (Info TVA secteur 17, section 71), ainsi que la location de locaux à usage d'habitation et la location de surfaces publicitaires ou de vitrines avec l'immeuble lorsque le bailleur et le locataire sont les mêmes personnes (Info TVA secteur 17, ",
+            "Selon l'article 21, alinéa 2, de la LTVA (RS 641.20), plusieurs prestations sont exclues du champ de la TVA. Ces exclusions sont détaillées dans les Info TVA sectorielles et générales suivantes :\n\n1.  **Prestations à des missions diplomatiques et organisations internationales** : Les prestations fournies à des missions diplomatiques, des représentations diplomatiques ou des organisations internationales sont exclues, sous réserve des conditions des articles 107 al. 1 let. a LTVA et 143 à 150 OTV",
+            "Selon l'article 21, alinéa 2, de la LTVA (RS 641.20), plusieurs prestations sont exclues du champ de la TVA. Ces exclusions concernent notamment les prestations fournies à des missions diplomatiques, des représentations diplomatiques et des organisations internationales, ainsi que les prestations de services de santé et de formation (Info TVA secteur 17, section 71).\n\nLes prestations exclues incluent également la location de locaux à usage d'habitation et la location de surfaces publicitaires, v",
+            "Selon l'article 21, alinéa 2, de la LTVA (RS 641.20), plusieurs prestations sont exclues du champ de la TVA. Ces exclusions concernent notamment les prestations fournies à des missions diplomatiques, des représentations diplomatiques et des organisations internationales, ainsi que les prestations de services liées à l'administration, la location et la vente d'immeubles (Info TVA secteur 17, section 71 et 201).\n\nPlus spécifiquement, l'article 21, alinéa 2, chiffre 21 de la LTVA exclut les locatio"
+          ],
+          "ttft_ms": 7948.0,
+          "total_ms": 8619.5,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 1.0,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": [
+              {
+                "keyword": "Art. 21",
+                "found": true
+              },
+              {
+                "keyword": "LTVA",
+                "found": true
+              },
+              {
+                "keyword": "exclus",
+                "found": true
+              }
+            ]
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 0.8,
+            "pass_count": 4,
+            "avg_contains_score": 0.733,
+            "score_stdev": 0.25,
+            "similarity": 0.359,
+            "latency_stdev_ms": 1740.3,
+            "stable": false
+          }
+        },
+        {
+          "id": "tva-004",
+          "agent": "tva",
+          "category": "standard",
+          "question": "Quels sont les seuils d'éligibilité à la méthode TDFN en 2026?",
+          "response": "Pour l'année 2026, les seuils d'éligibilité à la méthode des Taux de la Dette Fiscale Nette (TDFN) sont fixés par l'Info TVA 12 (section 55). Un assujetti peut appliquer cette méthode si son chiffre d'affaires annuel déterminant provenant de prestations imposables n'excède pas 5 024 000 francs (TVA comprise) et si sa dette fiscale calculée au TDFN ne dépasse pas 108 000 francs par an.\n\nCes conditions sont prévues à l'art. 77, al. 1, OTVA (RS 641.201). Il est important de noter que le passage à c",
+          "all_responses": [
+            "Pour l'année 2026, les seuils d'éligibilité à la méthode des Taux de la Dette Fiscale Nette (TDFN) sont fixés par l'Info TVA 12 (section 55). Un assujetti peut appliquer cette méthode si son chiffre d'affaires annuel déterminant provenant de prestations imposables n'excède pas 5 024 000 francs (TVA comprise) et si sa dette fiscale calculée au TDFN ne dépasse pas 108 000 francs par an.\n\nCes conditions sont prévues à l'art. 77, al. 1, OTVA (RS 641.201). Il est important de noter que le passage à c",
+            "Pour l'année 2026, les seuils d'éligibilité à la méthode des Taux de la Dette Fiscale Nette (TDFN) sont définis par l'Info TVA 12 (section 55). Le chiffre d'affaires annuel déterminant provenant de prestations imposables ne doit pas excéder 5 024 000 francs (TVA comprise) et la dette fiscale calculée au TDFN ne doit pas dépasser 108 000 francs par an.\n\nCes conditions sont prévues par l'article 55 de la Loi sur la TVA (LTVA, RS 641.20) et précisées par l'article 77, alinéa 2, de l'Ordonnance sur ",
+            "Pour l'année 2026, les seuils d'éligibilité à la méthode des taux de la dette fiscale nette (TDFN) sont définis par l'art. 55 LTVA (RS 641.20) et précisés dans l'Info TVA 12 (section 55).\n\nUn assujetti peut appliquer la méthode TDFN si deux conditions cumulatives sont respectées :\n1.  Le chiffre d'affaires annuel déterminant (prestations imposables) n'excède pas **5 024 000 CHF** (TVA comprise).\n2.  La dette fiscale calculée selon le TDFN ne dépasse pas **108 000 CHF** par an.\n\nCes seuils sont a",
+            "Pour l'année 2026, les seuils d'éligibilité à la méthode des Taux de la Dette Fiscale Nette (TDFN) sont définis par l'Info TVA 12. Le chiffre d'affaires annuel déterminant provenant de prestations imposables ne doit pas excéder 5 024 000 francs (TVA comprise) et la dette fiscale calculée au TDFN ne doit pas dépasser 108 000 francs par an (Info TVA 12, section 55).\n\nL'adhésion à cette méthode est encadrée par l'art. 37 LTVA (RS 641.20) et les conditions d'application sont précisées à l'art. 77, a",
+            "Pour l'année 2026, les seuils d'éligibilité à la méthode des taux de la dette fiscale nette (TDFN) sont définis par l'Art. 55 LTVA (RS 641.20) et précisés dans l'Info TVA 12 (section 55).\n\nUn assujetti peut appliquer la méthode TDFN si deux conditions cumulatives sont respectées :\n1.  Le chiffre d'affaires annuel déterminant (prestations imposables) n'excède pas **5 024 000 CHF** (TVA comprise).\n2.  La dette fiscale calculée selon la méthode TDFN ne dépasse pas **108 000 CHF** par an.\n\nCes seuil"
+          ],
+          "ttft_ms": 9030.6,
+          "total_ms": 8387.7,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 0.333,
+            "regex_match": false,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": false,
+            "contains_details": [
+              {
+                "keyword": "5 005 000",
+                "found": false
+              },
+              {
+                "keyword": "TDFN",
+                "found": true
+              },
+              {
+                "keyword": "103 000",
+                "found": false
+              }
+            ]
+          },
+          "passed": false,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 0.0,
+            "pass_count": 0,
+            "avg_contains_score": 0.333,
+            "score_stdev": 0.0,
+            "similarity": 0.363,
+            "latency_stdev_ms": 1165.6,
+            "stable": false
+          }
+        },
+        {
+          "id": "tva-005",
+          "agent": "tva",
+          "category": "standard",
+          "question": "Un propriétaire peut-il opter pour la TVA sur la location d'un local commercial vide?",
+          "response": "Oui, un propriétaire peut opter pour la TVA sur la location d'un local commercial vide. Bien que la location d'immeubles soit généralement exclue du champ de l'impôt sans droit à déduction (Art. 21 ch. 21 LTVA), l'option est possible pour les locaux commerciaux (Art. 22 al. 1 LTVA). Cette option permet d'assujettir la prestation au taux normal de 8,1 %, ce qui confère au propriétaire le droit de déduire l'impôt préalable sur les frais liés à l'immeuble.\n\nSelon l'Info TVA secteur 17 (ch. 7 et ch.",
+          "all_responses": [
+            "Oui, un propriétaire peut opter pour la TVA sur la location d'un local commercial vide. Bien que la location d'immeubles soit généralement exclue du champ de l'impôt sans droit à déduction (Art. 21 ch. 21 LTVA), l'option est possible pour les locaux commerciaux (Art. 22 al. 1 LTVA). Cette option permet d'assujettir la prestation au taux normal de 8,1 %, ce qui confère au propriétaire le droit de déduire l'impôt préalable sur les frais liés à l'immeuble.\n\nSelon l'Info TVA secteur 17 (ch. 7 et ch.",
+            "Oui, un propriétaire peut opter pour la TVA sur la location d'un local commercial vide. Conformément à l'article 22, alinéa 1, de la LTVA (RS 641.20), la location d'immeubles est normalement exclue du champ de l'impôt, mais une option est possible pour les prestations mentionnées à l'article 21, alinéa 2, chiffre 21 de la LTVA.\n\nL'Info TVA secteur 17 (section 117) confirme que la location d'immeubles ou de parts d'immeubles est exclue du champ de l'impôt sans droit à déduction, sauf si l'option ",
+            "Oui, un propriétaire peut opter pour la TVA sur la location d'un local commercial vide. Conformément à l'article 22, alinéa 1, de la LTVA (RS 641.20), la location d'immeubles est normalement exclue du champ de l'impôt, mais l'assujettissement volontaire est possible pour les locaux à usage commercial.\n\nL'Info TVA secteur 17 (ch. 7) confirme que cette option permet de rendre la prestation imposable au taux normal (8,1 % depuis 2024), ce qui ouvre droit à la déduction de la TVA sur les frais liés ",
+            "Oui, un propriétaire peut opter pour la TVA sur la location d'un local commercial vide. Conformément à l'article 22, alinéa 1, de la LTVA (RS 641.20), la location d'immeubles est normalement exclue du champ de l'impôt sans droit à déduction, mais une option est possible pour les prestations mentionnées à l'article 21, alinéa 2, chiffre 21 de la LTVA.\n\nL'Info TVA secteur 17 (ch. 7) confirme que la mise à disposition d'immeubles à des fins d'usage et de jouissance, notamment les locaux commerciaux",
+            "Oui, un propriétaire peut opter pour la TVA sur la location d'un local commercial vide. En principe, la location d'immeubles est exclue du champ de l'impôt sans droit à déduction de l'impôt préalable selon l'article 21, alinéa 2, chiffre 21 de la LTVA. Cependant, l'article 22 de la LTVA permet une assujettissement volontaire (option) pour les prestations de mise à disposition d'immeubles à des fins d'usage et de jouissance.\n\nL'Info TVA secteur 17 (section 117) confirme que cette option est possi"
+          ],
+          "ttft_ms": 7296.7,
+          "total_ms": 6536.8,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 1.0,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": [
+              {
+                "keyword": "option",
+                "found": true
+              },
+              {
+                "keyword": "Art. 22",
+                "found": true
+              },
+              {
+                "keyword": "LTVA",
+                "found": true
+              },
+              {
+                "keyword": "local commercial",
+                "found": true
+              }
+            ]
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 1.0,
+            "pass_count": 5,
+            "avg_contains_score": 0.8,
+            "score_stdev": 0.1,
+            "similarity": 0.423,
+            "latency_stdev_ms": 547.9,
+            "stable": true
+          }
+        },
+        {
+          "id": "tva-006",
+          "agent": "tva",
+          "category": "calcul",
+          "question": "Une SA réalise un chiffre d'affaires de 2'500'000 CHF avec un taux TVA standard de 8.1%. Quel est le montant TVA à verser si la déduction de l'impôt préalable est de 45'000 CHF?",
+          "response": "Pour déterminer le montant de TVA à verser, nous appliquons la méthode effective décrite à l'article 35 de la LTVA (RS 641.20), qui est la méthode par défaut lorsque le chiffre d'affaires ne dépasse pas les seuils du taux de la dette fiscale nette (TDFN) mentionnés à l'article 37 LTVA et dans l'Info TVA 15.\n\nLe chiffre d'affaires de 2'500'000 CHF est inférieur au seuil de 5'005'000 CHF, ce qui confirme l'application de la méthode effective (Art. 35 LTVA). Le calcul se fait en déduisant l'impôt p",
+          "all_responses": [
+            "Pour déterminer le montant de TVA à verser, nous appliquons la méthode effective décrite à l'article 35 de la LTVA (RS 641.20), qui est la méthode par défaut lorsque le chiffre d'affaires ne dépasse pas les seuils du taux de la dette fiscale nette (TDFN) mentionnés à l'article 37 LTVA et dans l'Info TVA 15.\n\nLe chiffre d'affaires de 2'500'000 CHF est inférieur au seuil de 5'005'000 CHF, ce qui confirme l'application de la méthode effective (Art. 35 LTVA). Le calcul se fait en déduisant l'impôt p",
+            "Pour déterminer le montant de TVA à verser, nous appliquons la méthode effective décrite à l'article 35 de la LTVA (RS 641.20), qui est la méthode par défaut lorsque le chiffre d'affaires ne dépasse pas les seuils du taux de la dette fiscale nette (TDFN) mentionnés à l'article 37 al. 1 LTVA et précisés dans l'Info TVA 15.\n\nLe chiffre d'affaires de 2'500'000 CHF est inférieur au seuil de 5'005'000 CHF, ce qui confirme l'application de la méthode effective (Art. 35 LTVA).\n\nLe calcul se déroule com",
+            "Pour déterminer le montant de TVA à verser, nous appliquons la méthode effective décrite à l'art. 35 LTVA (RS 641.20), qui est la méthode par défaut lorsque le chiffre d'affaires ne dépasse pas les seuils du taux de la dette fiscale nette (TDFN) prévus à l'art. 37 LTVA et précisés dans l'Info TVA 15 (ch. 2.1.2).\n\nLe chiffre d'affaires de 2'500'000 CHF est inférieur au seuil de 5'005'000 CHF mentionné dans l'Info TVA 15 (ch. 2.1.2), ce qui confirme l'application de la méthode effective.\n\nLe calcu",
+            "Pour déterminer le montant de TVA à verser, il faut d'abord calculer la TVA collectée sur le chiffre d'affaires. Avec un CA de 2'500'000 CHF et un taux standard de 8,1 %, la TVA collectée s'élève à 202'500 CHF (2'500'000 * 8,1 %).\n\nEnsuite, on applique la méthode de décompte effectif prévue à l'art. 35 LTVA (RS 641.20), qui consiste à soustraire la TVA déductible (impôt préalable) de la TVA collectée. Selon les données fournies, l'impôt préalable déductible est de 45'000 CHF. Le calcul est donc ",
+            "Pour déterminer le montant de TVA à verser, il faut d'abord calculer la TVA collectée sur le chiffre d'affaires. Avec un CA de 2'500'000 CHF et un taux standard de 8,1 %, la TVA collectée s'élève à 202'500 CHF (2'500'000 * 8,1 %).\n\nEnsuite, on applique la méthode de décompte effectif prévue à l'art. 35 LTVA (RS 641.20), qui consiste à soustraire la TVA déductible de la TVA collectée. Selon l'art. 36 LTVA, la déduction de l'impôt préalable est autorisée pour les dépenses grevées de TVA. En soustr"
+          ],
+          "ttft_ms": 8891.5,
+          "total_ms": 10090.4,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 0.5,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": [
+              {
+                "keyword": "202'500",
+                "found": true
+              },
+              {
+                "keyword": "202500",
+                "found": false
+              },
+              {
+                "keyword": "impôt préalable",
+                "found": true
+              },
+              {
+                "keyword": "8.1",
+                "found": false
+              }
+            ]
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 1.0,
+            "pass_count": 5,
+            "avg_contains_score": 0.55,
+            "score_stdev": 0.1,
+            "similarity": 0.387,
+            "latency_stdev_ms": 1698.4,
+            "stable": true
+          }
+        },
+        {
+          "id": "tva-007",
+          "agent": "tva",
+          "category": "calcul",
+          "question": "Quel est le délai légal pour déposer le décompte TVA trimestriel et payer la TVA due?",
+          "response": "Le délai légal pour déposer le décompte TVA et payer la TVA due est de 60 jours suivant la fin de la période de décompte.\n\nPour la méthode effective (Art. 71 OLTVA), le décompte doit être remis spontanément par voie électronique via le portail de l'AFC dans les 60 jours qui suivent l'expiration de la période de décompte (Art. 71 al. 1 LTVA, Art. 123 OTVA). Si l'assujettissement prend fin, ce délai court à compter de la date de cessation de l'activité (Art. 71 al. 2 LTVA). Le paiement de l'impôt ",
+          "all_responses": [
+            "Le délai légal pour déposer le décompte TVA et payer la TVA due est de 60 jours suivant la fin de la période de décompte.\n\nPour la méthode effective (Art. 71 OLTVA), le décompte doit être remis spontanément par voie électronique via le portail de l'AFC dans les 60 jours qui suivent l'expiration de la période de décompte (Art. 71 al. 1 LTVA, Art. 123 OTVA). Si l'assujettissement prend fin, ce délai court à compter de la date de cessation de l'activité (Art. 71 al. 2 LTVA). Le paiement de l'impôt ",
+            "Le délai légal pour déposer le décompte TVA et payer la dette fiscale est de 60 jours suivant la fin de la période de décompte. Cette obligation s'applique tant pour la méthode effective que pour la méthode TDFN, conformément à l'article 71 de la LTVA et à l'article 71 de l'OLTVA. L'assujetti doit effectuer le dépôt par voie électronique via le portail de l'AFC, comme précisé dans l'Info TVA 12 (section 18.4) et l'Info TVA 15 (section 5). Le paiement de l'impôt dû doit également être effectué da",
+            "Le délai légal pour déposer le décompte TVA et payer la TVA due est de 60 jours suivant la fin de la période de décompte.\n\nPour la méthode effective (Art. 71 OLTVA), le décompte doit être remis spontanément par voie électronique via le portail de l'AFC dans les 60 jours qui suivent l'expiration de la période de décompte (Art. 71 al. 1 LTVA). Le paiement de la créance fiscale doit également être effectué dans ce même délai de 60 jours suivant la fin de la période (Art. 86 al. 1 LTVA).\n\nEn cas de ",
+            "Le délai légal pour déposer le décompte TVA et payer l'impôt dû est de 60 jours suivant l'expiration de la période de décompte.\n\nPour la méthode effective (Art. 71 OLTVA), les décomptes sont généralement trimestriels (ou semestriels si le chiffre d'affaires est inférieur à 5'005'000 CHF). L'assujetti doit remettre le décompte par voie électronique via le portail de l'AFC dans les 60 jours suivant la fin de la période (Art. 71 al. 1 LTVA, Art. 123 OTVA). Le paiement de la créance fiscale doit éga",
+            "Le délai légal pour déposer le décompte TVA et payer l'impôt dû est de 60 jours suivant la fin de la période de décompte.\n\nPour la méthode effective, l'assujetti doit remettre le décompte par voie électronique via le portail de l'AFC dans les 60 jours qui suivent l'expiration de la période de décompte, conformément à l'article 71 alinéa 1 de la LTVA (RS 641.20) et à l'article 71 de l'OLTVA (RS 641.201). Ce délai est également confirmé par l'Info TVA 12 (section 18.4) et l'Info TVA 15 (section 5)"
+          ],
+          "ttft_ms": 8382.1,
+          "total_ms": 7225.2,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 1.0,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": [
+              {
+                "keyword": "60 jours",
+                "found": true
+              },
+              {
+                "keyword": "Art. 71",
+                "found": true
+              },
+              {
+                "keyword": "LTVA",
+                "found": true
+              },
+              {
+                "keyword": "trimestriel",
+                "found": true
+              }
+            ]
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 1.0,
+            "pass_count": 5,
+            "avg_contains_score": 0.85,
+            "score_stdev": 0.2,
+            "similarity": 0.356,
+            "latency_stdev_ms": 1390.9,
+            "stable": false
+          }
+        },
+        {
+          "id": "tva-008",
+          "agent": "tva",
+          "category": "calcul",
+          "question": "Un assujetti TVA avec un CA de 80'000 CHF peut-il appliquer la méthode TDFN? Quel est le taux applicable pour un salon de coiffure?",
+          "response": "Oui, un assujetti avec un chiffre d'affaires de 80 000 CHF peut potentiellement appliquer la méthode TDFN, car ce montant est bien inférieur au seuil de 5 024 000 CHF (Info TVA 12, section 55). Cependant, l'application de cette méthode est soumise à deux conditions cumulatives : le chiffre d'affaires annuel ne doit pas excéder 5 024 000 CHF et la dette fiscale calculée ne doit pas dépasser 108 000 CHF par an (Art. 37 al. 1 LTVA ; Info TVA 12, section 55). Si la dette fiscale calculée au taux for",
+          "all_responses": [
+            "Oui, un assujetti avec un chiffre d'affaires de 80 000 CHF peut potentiellement appliquer la méthode TDFN, car ce montant est bien inférieur au seuil de 5 024 000 CHF (Info TVA 12, section 55). Cependant, l'application de cette méthode est soumise à deux conditions cumulatives : le chiffre d'affaires annuel ne doit pas excéder 5 024 000 CHF et la dette fiscale calculée ne doit pas dépasser 108 000 CHF par an (Art. 37 al. 1 LTVA ; Info TVA 12, section 55). Si la dette fiscale calculée au taux for",
+            "Oui, un assujetti avec un chiffre d'affaires de 80 000 CHF peut potentiellement appliquer la méthode TDFN, car ce montant est bien inférieur à la limite de 5 024 000 CHF (Info TVA 12, section 55). Cependant, l'application de cette méthode est soumise à deux conditions cumulatives : le CA ne doit pas excéder 5 024 000 CHF et la dette fiscale calculée ne doit pas dépasser 108 000 CHF par an (Art. 37 al. 1 LTVA ; Info TVA 12, section 55).\n\nPour un salon de coiffure, le taux applicable est déterminé",
+            "Oui, un assujetti avec un chiffre d'affaires de 80 000 CHF peut appliquer la méthode TDFN, car il respecte les seuils de l'article 37 al. 1 LTVA (RS 641.20) et de l'article 77 al. 2 OTVA (RS 641.201), à condition que sa dette fiscale nette ne dépasse pas 108 000 CHF par an (Info TVA 12, section 55).\n\nPour un salon de coiffure, le taux applicable est celui attribué par l'AFC pour l'activité de « soins de beauté » ou « coiffure ». Selon l'Info TVA 12, ce taux est généralement de 5,3 % pour les pre",
+            "Oui, un assujetti avec un chiffre d'affaires de 80 000 CHF peut potentiellement appliquer la méthode TDFN, car ce montant est bien inférieur à la limite de 5 024 000 CHF (Info TVA 12, section 55). Cependant, l'application de cette méthode est soumise à deux conditions cumulatives : le CA ne doit pas excéder 5 024 000 CHF et la dette fiscale calculée ne doit pas dépasser 108 000 CHF par an (Art. 37 al. 1 LTVA ; Info TVA 12, section 55).\n\nPour un salon de coiffure, le taux applicable est déterminé",
+            "Oui, un assujetti avec un chiffre d'affaires de 80'000 CHF peut appliquer la méthode TDFN, car ce montant est bien inférieur au seuil de 5'024'000 CHF (TVA comprise) et la dette fiscale estimée ne dépassera probablement pas la limite de 108'000 CHF, conformément aux conditions de l'Art. 37 al. 1 LTVA et aux critères détaillés dans l'Info TVA 12 (section 55).\n\nPour un salon de coiffure, le taux applicable est généralement de 5,3 %, correspondant à la catégorie « Institut de beauté : prestations d"
+          ],
+          "ttft_ms": 8483.7,
+          "total_ms": 8207.6,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 1.0,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": [
+              {
+                "keyword": "TDFN",
+                "found": true
+              },
+              {
+                "keyword": "seuil",
+                "found": true
+              },
+              {
+                "keyword": "chiffre d'affaires",
+                "found": true
+              }
+            ]
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 1.0,
+            "pass_count": 5,
+            "avg_contains_score": 0.867,
+            "score_stdev": 0.163,
+            "similarity": 0.412,
+            "latency_stdev_ms": 696.5,
+            "stable": false
+          }
+        },
+        {
+          "id": "tva-009",
+          "agent": "tva",
+          "category": "edge-case",
+          "question": "Quel sera le taux TVA standard en Suisse en 2099?",
+          "response": "Le taux de TVA standard en vigueur en Suisse depuis le 1er janvier 2024 est fixé à 8,1 % conformément à l'Art. 25 al. 1 LTVA (RS 641.20) et à l'Art. 41 OLTVA (RS 641.201). Ces textes législatifs ne prévoient aucune modification automatique ou projeté pour l'année 2099. Les taux de TVA sont susceptibles d'être révisés par le Parlement ou par référendum à tout moment, notamment dans le cadre de réformes fiscales futures, mais aucune disposition légale actuelle ne permet de déterminer le taux appli",
+          "all_responses": [
+            "Le taux de TVA standard en vigueur en Suisse depuis le 1er janvier 2024 est fixé à 8,1 % conformément à l'Art. 25 al. 1 LTVA (RS 641.20) et à l'Art. 41 OLTVA (RS 641.201). Ces textes législatifs ne prévoient aucune modification automatique ou projeté pour l'année 2099. Les taux de TVA sont susceptibles d'être révisés par le Parlement ou par référendum à tout moment, notamment dans le cadre de réformes fiscales futures, mais aucune disposition légale actuelle ne permet de déterminer le taux appli",
+            "Le taux de TVA standard en vigueur en Suisse est fixé à 8,1 % depuis le 1er janvier 2024, conformément à l'article 41 de l'Ordonnance sur la taxe sur la valeur ajoutée (OLTVA) et à l'article 25 de la Loi sur la taxe sur la valeur ajoutée (LTVA). Les textes législatifs actuels, y compris les Info TVA 12 et 15, ne prévoient aucune disposition concernant une modification de ce taux pour l'année 2099. La législation fiscale suisse est révisée périodiquement par le Parlement et le Conseil fédéral, et",
+            "Le taux de TVA standard en vigueur en Suisse est fixé à 8,1 % depuis le 1er janvier 2024, conformément à l'article 41 de l'OLTVA (RS 641.201) et à l'article 25 de la LTVA (RS 641.20). Les documents de référence, notamment l'Info TVA 12 sur le TDFN et les plans comptables Käfer (comptes 3000 et 3200), confirment l'application de ce taux pour les prestations et marchandises non exonérées.\n\nLa législation fiscale suisse ne prévoit aucune disposition légale ou indicateur permettant de déterminer ou ",
+            "Le taux de TVA standard en vigueur en Suisse est fixé à 8,1 % depuis le 1er janvier 2024, conformément à l'Art. 25 LTVA (RS 641.20) et à l'Art. 41 OLTVA (RS 641.201). Les documents de référence, notamment l'Info TVA 12 sur le TDFN et les plans comptables Käfer (comptes 3000 et 3200), confirment ce taux actuel.\n\nLa législation fiscale suisse ne prévoit aucune disposition permettant de projeter ou de connaître le taux de TVA applicable en 2099. Les taux sont révisés par le Parlement et le Conseil ",
+            "Le taux de TVA standard en vigueur en Suisse depuis le 1er janvier 2024 est fixé à 8,1 % conformément à l'Art. 41 OLTVA (RS 641.201) et à l'Art. 25 LTVA (RS 641.20). Les documents de référence, notamment l'Info TVA 12 sur le TDFN et les plans comptables Käfer (comptes 3000 et 3200), confirment ce taux actuel.\n\nCependant, aucune disposition légale, article de la LTVA, de l'OLTVA ou note de l'AFC ne permet de prédire ou de fixer le taux de TVA applicable en 2099. Le taux de 8,1 % est le résultat d"
+          ],
+          "ttft_ms": 4746.2,
+          "total_ms": 6104.8,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 1.0,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": []
+          },
+          "passed": false,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 0.4,
+            "pass_count": 2,
+            "avg_contains_score": 1.0,
+            "score_stdev": 0.0,
+            "similarity": 0.358,
+            "latency_stdev_ms": 949.0,
+            "stable": false
+          }
+        },
+        {
+          "id": "tva-010",
+          "agent": "tva",
+          "category": "edge-case",
+          "question": "Un particulier sans activité commerciale qui vend sa voiture d'occasion sur ricardo.ch doit-il facturer la TVA?",
+          "response": "Non, un particulier sans activité commerciale ne doit pas facturer de TVA lors de la vente de sa voiture d'occasion.\n\nEn vertu de l'**Art. 1 LTVA (RS 641.20)**, la TVA s'applique uniquement aux prestations fournies par des assujettis dans le cadre de leur activité économique. Un particulier agissant à titre privé n'est pas considéré comme un assujetti et ses opérations ne relèvent pas du champ d'application de la TVA. La vente d'un bien privé (comme une voiture personnelle) est une opération hor",
+          "all_responses": [
+            "Non, un particulier sans activité commerciale ne doit pas facturer de TVA lors de la vente de sa voiture d'occasion.\n\nEn vertu de l'**Art. 1 LTVA (RS 641.20)**, la TVA s'applique uniquement aux prestations fournies par des assujettis dans le cadre de leur activité économique. Un particulier agissant à titre privé n'est pas considéré comme un assujetti et ses opérations ne relèvent pas du champ d'application de la TVA. La vente d'un bien privé (comme une voiture personnelle) est une opération hor",
+            "Non, un particulier sans activité commerciale ne doit pas facturer de TVA lors de la vente de sa voiture d'occasion.\n\nEn vertu de l'**Art. 1 LTVA (RS 641.20)**, la TVA ne s'applique qu'aux prestations fournies par des assujettis (entrepreneurs) à titre onéreux. Un particulier agissant dans le cadre de sa sphère privée n'est pas un assujetti et ne relève donc pas du champ d'application de la TVA. La vente d'un bien privé par un non-assujetti est exclue du champ de la taxe, indépendamment du canal",
+            "Non, un particulier sans activité commerciale ne doit pas facturer de TVA lors de la vente de sa voiture d'occasion.\n\nEn vertu de l'**Art. 1 LTVA (RS 641.20)**, la TVA s'applique uniquement aux prestations fournies par des assujettis dans le cadre de leur activité économique. Un particulier agissant à titre privé n'est pas considéré comme un assujetti et ses ventes ne sont donc pas soumises à la TVA.\n\nDe plus, l'**Art. 21 ch. 1 LTVA** exclut explicitement du champ d'application de la TVA les pre",
+            "Non, un particulier sans activité commerciale ne doit pas facturer de TVA lors de la vente de sa voiture d'occasion.\n\nLa TVA s'applique uniquement aux prestations fournies par des assujettis dans le cadre de leur activité économique (Art. 1 LTVA). Un particulier agissant à titre privé n'est pas considéré comme un assujetti et ses prestations ne sont pas soumises à la TVA. La vente d'un bien privé par un non-assujetti est exclue du champ d'application de la TVA (Art. 21 ch. 21 LTVA). Par conséque",
+            "Non, un particulier sans activité commerciale ne doit pas facturer de TVA lors de la vente de sa voiture d'occasion.\n\nEn vertu de l'**Art. 1 LTVA (RS 641.20)**, la TVA ne s'applique qu'aux prestations fournies par des assujettis à titre onéreux dans le cadre de leur activité économique. Un particulier agissant à titre privé n'est pas un assujetti et ses actes de disposition ne constituent pas des prestations de services ou de marchandises soumises à la TVA.\n\nPar conséquent, la vente d'un bien pr"
+          ],
+          "ttft_ms": 6600.6,
+          "total_ms": 5866.8,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 0.667,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": [
+              {
+                "keyword": "assujetti",
+                "found": true
+              },
+              {
+                "keyword": "non assujetti",
+                "found": false
+              },
+              {
+                "keyword": "particulier",
+                "found": true
+              }
+            ]
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 1.0,
+            "pass_count": 5,
+            "avg_contains_score": 0.667,
+            "score_stdev": 0.0,
+            "similarity": 0.424,
+            "latency_stdev_ms": 594.8,
+            "stable": true
+          }
+        }
+      ],
+      "stats": {
+        "total": 10,
+        "passed": 8,
+        "failed": 2,
+        "accuracy": 0.8,
+        "accuracy_pct": 80.0,
+        "latency_avg_ms": 7168.3,
+        "latency_median_ms": 7124.3,
+        "ttft_avg_ms": 7301.8,
+        "top_failures": [
+          {
+            "id": "tva-004",
+            "agent": "tva",
+            "category": "standard",
+            "question": "Quels sont les seuils d'éligibilité à la méthode TDFN en 2026?",
+            "response": "Pour l'année 2026, les seuils d'éligibilité à la méthode des Taux de la Dette Fiscale Nette (TDFN) sont fixés par l'Info TVA 12 (section 55). Un assujetti peut appliquer cette méthode si son chiffre d'affaires annuel déterminant provenant de prestations imposables n'excède pas 5 024 000 francs (TVA comprise) et si sa dette fiscale calculée au TDFN ne dépasse pas 108 000 francs par an.\n\nCes conditions sont prévues à l'art. 77, al. 1, OTVA (RS 641.201). Il est important de noter que le passage à c",
+            "all_responses": [
+              "Pour l'année 2026, les seuils d'éligibilité à la méthode des Taux de la Dette Fiscale Nette (TDFN) sont fixés par l'Info TVA 12 (section 55). Un assujetti peut appliquer cette méthode si son chiffre d'affaires annuel déterminant provenant de prestations imposables n'excède pas 5 024 000 francs (TVA comprise) et si sa dette fiscale calculée au TDFN ne dépasse pas 108 000 francs par an.\n\nCes conditions sont prévues à l'art. 77, al. 1, OTVA (RS 641.201). Il est important de noter que le passage à c",
+              "Pour l'année 2026, les seuils d'éligibilité à la méthode des Taux de la Dette Fiscale Nette (TDFN) sont définis par l'Info TVA 12 (section 55). Le chiffre d'affaires annuel déterminant provenant de prestations imposables ne doit pas excéder 5 024 000 francs (TVA comprise) et la dette fiscale calculée au TDFN ne doit pas dépasser 108 000 francs par an.\n\nCes conditions sont prévues par l'article 55 de la Loi sur la TVA (LTVA, RS 641.20) et précisées par l'article 77, alinéa 2, de l'Ordonnance sur ",
+              "Pour l'année 2026, les seuils d'éligibilité à la méthode des taux de la dette fiscale nette (TDFN) sont définis par l'art. 55 LTVA (RS 641.20) et précisés dans l'Info TVA 12 (section 55).\n\nUn assujetti peut appliquer la méthode TDFN si deux conditions cumulatives sont respectées :\n1.  Le chiffre d'affaires annuel déterminant (prestations imposables) n'excède pas **5 024 000 CHF** (TVA comprise).\n2.  La dette fiscale calculée selon le TDFN ne dépasse pas **108 000 CHF** par an.\n\nCes seuils sont a",
+              "Pour l'année 2026, les seuils d'éligibilité à la méthode des Taux de la Dette Fiscale Nette (TDFN) sont définis par l'Info TVA 12. Le chiffre d'affaires annuel déterminant provenant de prestations imposables ne doit pas excéder 5 024 000 francs (TVA comprise) et la dette fiscale calculée au TDFN ne doit pas dépasser 108 000 francs par an (Info TVA 12, section 55).\n\nL'adhésion à cette méthode est encadrée par l'art. 37 LTVA (RS 641.20) et les conditions d'application sont précisées à l'art. 77, a",
+              "Pour l'année 2026, les seuils d'éligibilité à la méthode des taux de la dette fiscale nette (TDFN) sont définis par l'Art. 55 LTVA (RS 641.20) et précisés dans l'Info TVA 12 (section 55).\n\nUn assujetti peut appliquer la méthode TDFN si deux conditions cumulatives sont respectées :\n1.  Le chiffre d'affaires annuel déterminant (prestations imposables) n'excède pas **5 024 000 CHF** (TVA comprise).\n2.  La dette fiscale calculée selon la méthode TDFN ne dépasse pas **108 000 CHF** par an.\n\nCes seuil"
+            ],
+            "ttft_ms": 9030.6,
+            "total_ms": 8387.7,
+            "status_code": 200,
+            "error": null,
+            "scores": {
+              "contains_score": 0.333,
+              "regex_match": false,
+              "must_not_pass": true,
+              "must_not_violations": [],
+              "passed": false,
+              "contains_details": [
+                {
+                  "keyword": "5 005 000",
+                  "found": false
+                },
+                {
+                  "keyword": "TDFN",
+                  "found": true
+                },
+                {
+                  "keyword": "103 000",
+                  "found": false
+                }
+              ]
+            },
+            "passed": false,
+            "repeat_agg": {
+              "repeat": 5,
+              "pass_rate": 0.0,
+              "pass_count": 0,
+              "avg_contains_score": 0.333,
+              "score_stdev": 0.0,
+              "similarity": 0.363,
+              "latency_stdev_ms": 1165.6,
+              "stable": false
+            }
+          },
+          {
+            "id": "tva-009",
+            "agent": "tva",
+            "category": "edge-case",
+            "question": "Quel sera le taux TVA standard en Suisse en 2099?",
+            "response": "Le taux de TVA standard en vigueur en Suisse depuis le 1er janvier 2024 est fixé à 8,1 % conformément à l'Art. 25 al. 1 LTVA (RS 641.20) et à l'Art. 41 OLTVA (RS 641.201). Ces textes législatifs ne prévoient aucune modification automatique ou projeté pour l'année 2099. Les taux de TVA sont susceptibles d'être révisés par le Parlement ou par référendum à tout moment, notamment dans le cadre de réformes fiscales futures, mais aucune disposition légale actuelle ne permet de déterminer le taux appli",
+            "all_responses": [
+              "Le taux de TVA standard en vigueur en Suisse depuis le 1er janvier 2024 est fixé à 8,1 % conformément à l'Art. 25 al. 1 LTVA (RS 641.20) et à l'Art. 41 OLTVA (RS 641.201). Ces textes législatifs ne prévoient aucune modification automatique ou projeté pour l'année 2099. Les taux de TVA sont susceptibles d'être révisés par le Parlement ou par référendum à tout moment, notamment dans le cadre de réformes fiscales futures, mais aucune disposition légale actuelle ne permet de déterminer le taux appli",
+              "Le taux de TVA standard en vigueur en Suisse est fixé à 8,1 % depuis le 1er janvier 2024, conformément à l'article 41 de l'Ordonnance sur la taxe sur la valeur ajoutée (OLTVA) et à l'article 25 de la Loi sur la taxe sur la valeur ajoutée (LTVA). Les textes législatifs actuels, y compris les Info TVA 12 et 15, ne prévoient aucune disposition concernant une modification de ce taux pour l'année 2099. La législation fiscale suisse est révisée périodiquement par le Parlement et le Conseil fédéral, et",
+              "Le taux de TVA standard en vigueur en Suisse est fixé à 8,1 % depuis le 1er janvier 2024, conformément à l'article 41 de l'OLTVA (RS 641.201) et à l'article 25 de la LTVA (RS 641.20). Les documents de référence, notamment l'Info TVA 12 sur le TDFN et les plans comptables Käfer (comptes 3000 et 3200), confirment l'application de ce taux pour les prestations et marchandises non exonérées.\n\nLa législation fiscale suisse ne prévoit aucune disposition légale ou indicateur permettant de déterminer ou ",
+              "Le taux de TVA standard en vigueur en Suisse est fixé à 8,1 % depuis le 1er janvier 2024, conformément à l'Art. 25 LTVA (RS 641.20) et à l'Art. 41 OLTVA (RS 641.201). Les documents de référence, notamment l'Info TVA 12 sur le TDFN et les plans comptables Käfer (comptes 3000 et 3200), confirment ce taux actuel.\n\nLa législation fiscale suisse ne prévoit aucune disposition permettant de projeter ou de connaître le taux de TVA applicable en 2099. Les taux sont révisés par le Parlement et le Conseil ",
+              "Le taux de TVA standard en vigueur en Suisse depuis le 1er janvier 2024 est fixé à 8,1 % conformément à l'Art. 41 OLTVA (RS 641.201) et à l'Art. 25 LTVA (RS 641.20). Les documents de référence, notamment l'Info TVA 12 sur le TDFN et les plans comptables Käfer (comptes 3000 et 3200), confirment ce taux actuel.\n\nCependant, aucune disposition légale, article de la LTVA, de l'OLTVA ou note de l'AFC ne permet de prédire ou de fixer le taux de TVA applicable en 2099. Le taux de 8,1 % est le résultat d"
+            ],
+            "ttft_ms": 4746.2,
+            "total_ms": 6104.8,
+            "status_code": 200,
+            "error": null,
+            "scores": {
+              "contains_score": 1.0,
+              "regex_match": true,
+              "must_not_pass": true,
+              "must_not_violations": [],
+              "passed": true,
+              "contains_details": []
+            },
+            "passed": false,
+            "repeat_agg": {
+              "repeat": 5,
+              "pass_rate": 0.4,
+              "pass_count": 2,
+              "avg_contains_score": 1.0,
+              "score_stdev": 0.0,
+              "similarity": 0.358,
+              "latency_stdev_ms": 949.0,
+              "stable": false
+            }
+          }
+        ],
+        "flag_low_quality": false,
+        "repeat": {
+          "repeat": 5,
+          "similarity_avg": 0.461,
+          "similarity_min": 0.356,
+          "score_stdev_avg": 0.081,
+          "stable_count": 5,
+          "stable_pct": 50.0,
+          "unstable_ids": [
+            "tva-003",
+            "tva-004",
+            "tva-007",
+            "tva-008",
+            "tva-009"
+          ]
+        }
+      }
+    },
+    "conseiller": {
+      "results": [
+        {
+          "id": "conseiller-001",
+          "agent": "conseiller",
+          "category": "standard",
+          "question": "Quels documents dois-je préparer pour constituer une Sàrl en Suisse?",
+          "response": "**Constat**\nLa transformation d'une entreprise individuelle en Sàrl (constitution par apports en nature) est une restructuration fiscale majeure. Elle modifie la nature des revenus (passage de bénéfices à dividendes) et ouvre l'accès à des déductions spécifiques (LPP, amortissements). Cependant, elle nécessite une évaluation précise des actifs selon le CO art. 960 pour éviter des impositions différées injustifiées.\n\n**Opportunité**\nEn passant en Sàrl, vous pouvez déduire les frais de gestion et ",
+          "all_responses": [
+            "**Constat**\nLa transformation d'une entreprise individuelle en Sàrl (constitution par apports en nature) est une restructuration fiscale majeure. Elle modifie la nature des revenus (passage de bénéfices à dividendes) et ouvre l'accès à des déductions spécifiques (LPP, amortissements). Cependant, elle nécessite une évaluation précise des actifs selon le CO art. 960 pour éviter des impositions différées injustifiées.\n\n**Opportunité**\nEn passant en Sàrl, vous pouvez déduire les frais de gestion et ",
+            "**Constat**\nLa transformation d'une entreprise individuelle en Sàrl (constituant par apports en nature) est une restructuration fiscale complexe. Elle déclenche une taxation des bénéfices latents (art. 62 LIFD) et nécessite une évaluation précise des actifs (CO art. 960).\n\n**Opportunité**\nEn passant en Sàrl, vous pouvez déduire les frais de gestion et les amortissements fiscaux (LIFD art. 62) sur le capital social, tout en isolant votre patrimoine personnel. Si vous êtes salarié ou indépendant a",
+            "**Constat**\nLa transformation d'une entreprise individuelle en Sàrl (constitution par apports en nature) est une restructuration fiscale majeure. Elle permet de séparer le patrimoine personnel du risque professionnel et d'optimiser la fiscalité des bénéfices via les amortissements et les provisions. Cependant, elle déclenche une taxation des réserves latentes (CO art. 960) si la valeur de marché dépasse la valeur comptable.\n\n**Opportunité**\nEn passant en Sàrl, vous pouvez déduire les frais profe",
+            "**Constat**\nLa transformation d'une entreprise individuelle en Sàrl (constituant par apports en nature) est une restructuration fiscale majeure. Elle permet de séparer le patrimoine personnel du risque professionnel et d'activer des mécanismes de déduction spécifiques (LIFD art. 62, 63) et d'amortissement (Notice AFC). Cependant, elle nécessite une évaluation précise des actifs selon le CO art. 960 pour éviter une taxation immédiate sur les gains latents.\n\n**Opportunité**\nEn passant à la Sàrl, v",
+            "**Constat**\nLa transformation d'une entreprise individuelle en Sàrl (constitution par apports en nature) est une restructuration fiscale majeure. Elle permet de séparer le patrimoine personnel du risque professionnel et d'activer des mécanismes de déduction spécifiques (LIFD art. 62 sur les amortissements, art. 33 sur les cotisations LPP/3a). Cependant, elle nécessite une évaluation précise des actifs (CO art. 960) pour éviter une taxation immédiate sur les gains latents.\n\n**Opportunité**\nEn pas"
+          ],
+          "ttft_ms": 14791.7,
+          "total_ms": 14617.1,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 0.5,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": [
+              {
+                "keyword": "CO",
+                "found": true
+              },
+              {
+                "keyword": "registre du commerce",
+                "found": false
+              },
+              {
+                "keyword": "statuts",
+                "found": false
+              },
+              {
+                "keyword": "Sàrl",
+                "found": true
+              }
+            ]
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 1.0,
+            "pass_count": 5,
+            "avg_contains_score": 0.6,
+            "score_stdev": 0.122,
+            "similarity": 0.261,
+            "latency_stdev_ms": 660.3,
+            "stable": true
+          }
+        },
+        {
+          "id": "conseiller-002",
+          "agent": "conseiller",
+          "category": "standard",
+          "question": "Quelles sont les obligations comptables d'une association sans but lucratif en Suisse?",
+          "response": "**Constat**\nUne association sans but lucratif (ASBL) en Suisse est soumise à des obligations comptables spécifiques selon sa taille et sa nature, distinctes des sociétés commerciales. L'obligation d'inscription au registre du commerce (ORC art. 90) et la tenue d'un bilan dépendent de l'activité économique et du volume d'affaires.\n\n**Opportunité**\nSi l'ASBL réalise des revenus d'activité lucrative (ex: organisation de conférences payantes, boutique), elle doit tenir une comptabilité complète pour",
+          "all_responses": [
+            "**Constat**\nUne association sans but lucratif (ASBL) en Suisse est soumise à des obligations comptables spécifiques selon sa taille et sa nature, distinctes des sociétés commerciales. L'obligation d'inscription au registre du commerce (ORC art. 90) et la tenue d'un bilan dépendent de l'activité économique et du volume d'affaires.\n\n**Opportunité**\nSi l'ASBL réalise des revenus d'activité lucrative (ex: organisation de conférences payantes, boutique), elle doit tenir une comptabilité complète pour",
+            "**Constat**\nUne association sans but lucratif (ASBL) en Suisse est soumise à des obligations comptables spécifiques selon sa taille et son activité, distinctes des sociétés commerciales. L'obligation d'inscription au registre du commerce (Art. 90 ORC) et la tenue d'un bilan dépendent de la nature de l'activité (industrie commerciale ou collecte de fonds).\n\n**Opportunité**\nSi l'ASBL réalise des revenus d'exploitation dépassant 500'000 CHF ou détient un patrimoine net supérieur à 500'000 CHF, elle",
+            "**Constat**\nUne association sans but lucratif en Suisse est soumise à des obligations comptables spécifiques selon sa taille et son activité. Si elle exerce une activité commerciale ou collecte des fonds à l'étranger, elle doit s'inscrire au registre du commerce (ORC art. 90). Elle doit également établir des comptes annuels (bilan, compte de pertes et profits) et, si le bilan dépasse 5 millions de CHF, faire réviser ces comptes par un réviseur agréé (OIA art. 21).\n\n**Opportunité**\nL'optimisation",
+            "**Constat**\nLes associations sans but lucratif (ASBL) en Suisse sont soumises à des obligations comptables spécifiques selon leur taille et leur activité, régies par le Code des Obligations (CO) et l'Ordonnance sur le Registre du Commerce (ORC). Contrairement aux entreprises commerciales, elles ne sont pas automatiquement soumises à la révision obligatoire des comptes, sauf exceptions (collecte de fonds à l'étranger, activité industrielle commerciale).\n\n**Opportunité**\nSi votre ASBL ne dépasse p",
+            "**Constat**\nUne association sans but lucratif (ASBL) en Suisse est soumise à des obligations comptables spécifiques selon sa taille et son activité. Si elle exerce une activité commerciale ou collecte des fonds à l'étranger, elle doit s'inscrire au registre du commerce (ORC art. 90). Elle doit également établir des comptes annuels conformes au CO art. 960 pour une évaluation fidèle des actifs.\n\n**Opportunité**\nSi l'ASBL réalise des bénéfices imposables (ex: revenus de prestations commerciales no"
+          ],
+          "ttft_ms": 14711.2,
+          "total_ms": 14791.8,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 0.75,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": [
+              {
+                "keyword": "CO",
+                "found": true
+              },
+              {
+                "keyword": "association",
+                "found": true
+              },
+              {
+                "keyword": "comptabilité",
+                "found": true
+              },
+              {
+                "keyword": "art. 957",
+                "found": false
+              }
+            ]
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 1.0,
+            "pass_count": 5,
+            "avg_contains_score": 0.65,
+            "score_stdev": 0.122,
+            "similarity": 0.208,
+            "latency_stdev_ms": 1447.6,
+            "stable": true
+          }
+        },
+        {
+          "id": "conseiller-003",
+          "agent": "conseiller",
+          "category": "standard",
+          "question": "Quand une PME suisse devient-elle obligatoirement assujettie à la TVA?",
+          "response": "**Constat**\nUne PME n'est pas automatiquement assujettie à la TVA dès sa création. L'obligation dépend du volume de ses prestations imposables sur le territoire suisse.\n\n**Opportunité**\nSurveiller le seuil de 100'000 CHF pour anticiper l'assujettissement obligatoire et éviter des pénalités de retard, tout en planifiant la déduction de la TVA préalable (Art. 28 LTVA) via le compte 1170 Käfer pour optimiser la trésorerie.\n\n**Chiffres**\n- **Seuil d'obligation** : 100'000 CHF de prestations imposabl",
+          "all_responses": [
+            "**Constat**\nUne PME n'est pas automatiquement assujettie à la TVA dès sa création. L'obligation dépend du volume de ses prestations imposables sur le territoire suisse.\n\n**Opportunité**\nSurveiller le seuil de 100'000 CHF pour anticiper l'assujettissement obligatoire et éviter des pénalités de retard, tout en planifiant la déduction de la TVA préalable (Art. 28 LTVA) via le compte 1170 Käfer pour optimiser la trésorerie.\n\n**Chiffres**\n- **Seuil d'obligation** : 100'000 CHF de prestations imposabl",
+            "**Constat**\nUne PME suisse devient obligatoirement assujettie à la TVA lorsque son chiffre d'affaires annuel (biens et services) dépasse 105'000 CHF (Art. 10 al. 1 LTVA). En dessous de ce seuil, l'assujettissement est facultatif (Art. 10 al. 2 LTVA).\n\n**Opportunité**\nSi votre chiffre d'affaires approche ce seuil, anticiper la facturation HT (comptes 3000/3200 Käfer) permet de maîtriser la trésorerie TVA. De plus, dès l'assujettissement, la TVA payée sur vos achats (compte 1170 Käfer) devient déd",
+            "**Constat**\nL'assujettissement à la TVA n'est pas automatique dès la création d'une PME. Selon l'art. 1 LTVA, la taxe s'applique aux prestations onéreuses sur le territoire suisse. L'obligation de s'immatriculer survient lorsque le chiffre d'affaires annuel dépasse un seuil précis, distinct du seuil de franchise volontaire.\n\n**Opportunité**\nSurveiller le chiffre d'affaires (comptes 3000 et 3200 Käfer) pour anticiper l'obligation d'immatriculation et éviter les pénalités de retard. Une fois assuj",
+            "**Constat**\nUne PME suisse n'est pas assujettie à la TVA par défaut. L'obligation d'imposition à la TVA (Art. 1 LTVA) ne survient que lorsque le chiffre d'affaires annuel dépasse un seuil précis, indépendamment de la forme juridique ou du statut LPP/3a.\n\n**Opportunité**\nSi votre chiffre d'affaires (comptes 3000 et 3200 Käfer) approche le seuil, une anticipation de la facturation ou un report de commandes peut permettre de différer l'assujettissement et de simplifier la gestion comptable (TVA déd",
+            "**Constat**\nUne PME suisse devient obligatoirement assujettie à la TVA lorsque son chiffre d'affaires annuel (biens et services) dépasse le seuil de 100'000 CHF (Art. 20 LTVA). Avant ce seuil, l'assujettissement est facultatif.\n\n**Opportunité**\nSi votre chiffre d'affaires approche ce seuil, l'assujettissement volontaire (avant 100'000 CHF) peut être stratégique pour récupérer la TVA déductible sur vos investissements (compte 1170 Käfer) et vos sous-traitances (compte 4200 Käfer), améliorant ains"
+          ],
+          "ttft_ms": 12520.8,
+          "total_ms": 13307.5,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 0.6,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": [
+              {
+                "keyword": "100'000",
+                "found": true
+              },
+              {
+                "keyword": "100000",
+                "found": false
+              },
+              {
+                "keyword": "chiffre d'affaires",
+                "found": false
+              },
+              {
+                "keyword": "LTVA",
+                "found": true
+              },
+              {
+                "keyword": "assujettissement",
+                "found": true
+              }
+            ]
+          },
+          "passed": false,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 0.2,
+            "pass_count": 1,
+            "avg_contains_score": 0.72,
+            "score_stdev": 0.098,
+            "similarity": 0.144,
+            "latency_stdev_ms": 701.3,
+            "stable": false
+          }
+        },
+        {
+          "id": "conseiller-004",
+          "agent": "conseiller",
+          "category": "standard",
+          "question": "Quels sont les avantages et inconvénients fiscaux de la SA vs Sàrl pour une startup en Suisse?",
+          "response": "**Constat**\nLe choix entre SA et Sàrl impacte la structure du capital, la responsabilité et la fiscalité des dividendes. Pour une startup, la Sàrl offre une flexibilité de capital (1'000 CHF) et une gestion simplifiée, tandis que la SA impose un capital minimum de 100'000 CHF et des formalités plus lourdes (CO art. 960 pour l'évaluation des actifs).\n\n**Opportunité**\nL'opportunité fiscale majeure réside dans la déductibilité des frais de pension (LIFD art. 33) et l'amortissement des actifs (LIFD ",
+          "all_responses": [
+            "**Constat**\nLe choix entre SA et Sàrl impacte la structure du capital, la responsabilité et la fiscalité des dividendes. Pour une startup, la Sàrl offre une flexibilité de capital (1'000 CHF) et une gestion simplifiée, tandis que la SA impose un capital minimum de 100'000 CHF et des formalités plus lourdes (CO art. 960 pour l'évaluation des actifs).\n\n**Opportunité**\nL'opportunité fiscale majeure réside dans la déductibilité des frais de pension (LIFD art. 33) et l'amortissement des actifs (LIFD ",
+            "**Constat**\nLa SA (LIFD art. 58) et la Sàrl (LIFD art. 68) sont soumises à l'impôt sur le bénéfice, mais la SA impose une capitalisation minimale de 100'000 CHF (CO art. 960) et une structure de gouvernance plus lourde. La Sàrl offre une flexibilité de capital (5'000 CHF) et une gestion simplifiée, idéale pour les startups en phase de lancement.\n\n**Opportunité**\nL'opportunité fiscale majeure réside dans la déductibilité des frais de gestion et des amortissements (LIFD art. 62). Pour une startup,",
+            "**Constat**\nLe choix entre SA et Sàrl impacte la structure du capital, la responsabilité et la fiscalité des dividendes. Pour une startup, la Sàrl offre une flexibilité de capital (1'000 CHF) et une gestion simplifiée, tandis que la SA impose un capital minimum de 100'000 CHF et des formalités plus lourdes (LIFD art. 68).\n\n**Opportunité**\nL'opportunité fiscale majeure réside dans la déductibilité des frais de gestion et l'amortissement des actifs, ainsi que la stratégie de rémunération (salaire ",
+            "**Constat**\nLa SA (Société Anonyme) et la Sàrl (Société à responsabilité limitée) sont soumises à l'impôt sur le bénéfice (LIFD art. 58) et à l'impôt sur le revenu (LHID art. 24-31) de manière similaire. Cependant, la structure de capital et la gestion des dividendes diffèrent. La SA impose une capitalisation minimale de 100'000 CHF (CO art. 960), tandis que la Sàrl ne nécessite que 20'000 CHF.\n\n**Opportunité**\nPour une startup, la Sàrl offre une flexibilité de trésorerie immédiate (capital rédu",
+            "**Constat**\nLa SA (LIFD art. 58) et la Sàrl (LIFD art. 68) sont soumises à l'impôt sur le bénéfice, mais diffèrent par la structure du capital et la gestion des réserves. La SA impose les dividendes à 35% (LIFD art. 24) avec un crédit d'impôt, tandis que la Sàrl permet une taxation plus flexible des bénéfices non distribués.\n\n**Opportunité**\nPour une startup, la Sàrl offre souvent une meilleure flexibilité pour réinvestir les bénéfices sans taxation immédiate sur les dividendes, évitant la doubl"
+          ],
+          "ttft_ms": 16081.2,
+          "total_ms": 15921.9,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 1.0,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": [
+              {
+                "keyword": "SA",
+                "found": true
+              },
+              {
+                "keyword": "Sàrl",
+                "found": true
+              },
+              {
+                "keyword": "capital",
+                "found": true
+              },
+              {
+                "keyword": "impôt",
+                "found": true
+              }
+            ]
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 1.0,
+            "pass_count": 5,
+            "avg_contains_score": 1.0,
+            "score_stdev": 0.0,
+            "similarity": 0.212,
+            "latency_stdev_ms": 659.1,
+            "stable": true
+          }
+        },
+        {
+          "id": "conseiller-005",
+          "agent": "conseiller",
+          "category": "standard",
+          "question": "Comment fonctionne la déduction pour investissement dans une PME en Suisse?",
+          "response": "**Constat**\nEn tant que PME, vous pouvez réduire votre bénéfice imposable via l'amortissement fiscal (LIFD art. 62) et, si applicable, des déductions spécifiques pour la recherche (LIFD art. 62 + 63) ou les investissements. Cependant, la déduction pour investissements (Investitionsabzug) n'est pas automatique pour tous les actifs ; elle s'applique principalement aux investissements dans les biens d'équipement et les bâtiments, sous conditions de durée de détention et de taux d'amortissement.\n\n**",
+          "all_responses": [
+            "**Constat**\nEn tant que PME, vous pouvez réduire votre bénéfice imposable via l'amortissement fiscal (LIFD art. 62) et, si applicable, des déductions spécifiques pour la recherche (LIFD art. 62 + 63) ou les investissements. Cependant, la déduction pour investissements (Investitionsabzug) n'est pas automatique pour tous les actifs ; elle s'applique principalement aux investissements dans les biens d'équipement et les bâtiments, sous conditions de durée de détention et de taux d'amortissement.\n\n**",
+            "Constat : En Suisse, l'investissement en PME permet de réduire l'impôt via l'amortissement (LIFD art. 62) et, pour les indépendants, via la constitution de provisions 3a (LIFD art. 33). Pour les salariés, l'optimisation 3a est strictement plafonnée.\n\nOpportunité : Vous pouvez accélérer la déduction fiscale d'un actif (ex: machine à 100'000 CHF) en optant pour l'amortissement anticipé ou accéléré (LIFD art. 62 + Notice A AFC), ou déduire vos cotisations LPP/3a pour réduire votre revenu imposable.",
+            "**Constat**\nEn Suisse, l'optimisation fiscale pour les PME repose sur la déduction des charges d'exploitation et l'amortissement des actifs, régis par le LIFD (art. 62) et le CO (art. 960). Cependant, l'impact réel dépend de votre statut (salarié vs indépendant) et de l'existence d'une LPP, car les déductions personnelles (3a) sont strictement plafonnées.\n\n**Opportunité**\nVous pouvez réduire votre base imposable en :\n1. Amortissant vos actifs (LIFD art. 62) selon la durée de vie économique (ex: ",
+            "Constat : En Suisse, l'optimisation fiscale pour les PME repose sur la déduction des investissements via l'amortissement (LIFD art. 62) et la déduction des frais professionnels (LIFD art. 33), tout en respectant l'évaluation des actifs (CO art. 960).\n\nOpportunité : Vous pouvez réduire votre base imposable en amortissant vos actifs (machines, véhicules, logiciels) sur leur durée de vie utile ou en accélérant l'amortissement si autorisé. Pour les indépendants, les frais de LPP/3a sont déductibles ",
+            "**Constat**\nLa fiscalité suisse (LIFD art. 62, CO art. 960) permet d'amortir les investissements sur plusieurs années, réduisant le bénéfice imposable progressivement. Cependant, pour les PME, l'amortissement fiscal peut être accéléré (sur 3 ans pour certains biens) ou majoré via des déductions spécifiques (R&D, art. 58 LIFD), mais cela ne remplace pas la déduction directe des cotisations LPP/3a (art. 33 LIFD) qui réduit le revenu brut avant impôt.\n\n**Opportunité**\nPour optimiser votre fiscalité"
+          ],
+          "ttft_ms": 17150.9,
+          "total_ms": 13721.2,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 1.0,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": [
+              {
+                "keyword": "déduction",
+                "found": true
+              },
+              {
+                "keyword": "investissement",
+                "found": true
+              },
+              {
+                "keyword": "PME",
+                "found": true
+              }
+            ]
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 1.0,
+            "pass_count": 5,
+            "avg_contains_score": 0.933,
+            "score_stdev": 0.133,
+            "similarity": 0.132,
+            "latency_stdev_ms": 2069.5,
+            "stable": true
+          }
+        },
+        {
+          "id": "conseiller-006",
+          "agent": "conseiller",
+          "category": "calcul",
+          "question": "Un indépendant réalise 150'000 CHF de chiffre d'affaires. Quelles cotisations sociales AVS/AI/APG doit-il payer en 2026?",
+          "response": "**Constat**\nEn tant qu'indépendant sans affiliation LPP obligatoire, vous êtes assujetti aux cotisations AVS/AI/APG/AC sur votre revenu net imposable (Chiffre d'affaires moins charges déductibles). Pour 2026, le taux global employé est de 5,275 % (AVS 4,35 % + AI 0,70 % + APG 0,225 %) sur la tranche imposable, plus l'AC (1,1 % jusqu'à 148'200 CHF).\n\n**Opportunité**\nVous pouvez réduire votre base imposable pour le calcul de ces cotisations via la déduction des frais professionnels (LIFD art. 33) ",
+          "all_responses": [
+            "**Constat**\nEn tant qu'indépendant sans affiliation LPP obligatoire, vous êtes assujetti aux cotisations AVS/AI/APG/AC sur votre revenu net imposable (Chiffre d'affaires moins charges déductibles). Pour 2026, le taux global employé est de 5,275 % (AVS 4,35 % + AI 0,70 % + APG 0,225 %) sur la tranche imposable, plus l'AC (1,1 % jusqu'à 148'200 CHF).\n\n**Opportunité**\nVous pouvez réduire votre base imposable pour le calcul de ces cotisations via la déduction des frais professionnels (LIFD art. 33) ",
+            "**Constat**\nEn tant qu'indépendant sans affiliation LPP obligatoire, vous êtes assujetti aux cotisations AVS/AI/APG sur votre revenu net imposable (Chiffre d'affaires moins charges déductibles). Le taux global employé-indépendant est de 5,275 % (AVS 4,35 % + AI 0,70 % + APG 0,225 %) pour 2026.\n\n**Opportunité**\nOptimiser votre base imposable via la déduction des charges professionnelles (LIFD art. 33) et, si éligible, les cotisations LPP/3a (LIFD art. 33 al. 1 lit. d). Cela réduit le revenu net s",
+            "**Constat**\nEn tant qu'indépendant sans affiliation LPP obligatoire, vous êtes assujetti aux cotisations AVS/AI/APG sur votre revenu net imposable (Chiffre d'affaires moins charges déductibles). Le taux global employé est de 5,275 % (AVS 4,35% + AI 0,70% + APG 0,225%).\n\n**Opportunité**\nL'optimisation repose sur la déduction des charges professionnelles (LIFD art. 33) pour réduire la base imposable, et sur la constitution d'une provision pour cotisations futures (LIFD art. 62). Une épargne LPP/3a",
+            "**Constat**\nEn tant qu'indépendant sans affiliation LPP obligatoire, vous devez cotiser vous-même à l'AVS/AI/APG sur votre revenu net imposable (Chiffre d'affaires moins charges déductibles). Le taux global employé est de 5,275 % (AVS 4,35% + AI 0,7% + APG 0,225%) en 2026.\n\n**Opportunité**\nVous pouvez réduire votre base imposable via la déduction des cotisations AVS/AI/APG (LIFD art. 33 al. 1 lit. d) et, si vous le souhaitez, constituer une provision pour la retraite (3a) pour réduire l'impôt su",
+            "**Constat**\nEn tant qu'indépendant sans affiliation LPP obligatoire, vous êtes assujetti aux cotisations AVS/AI/APG sur votre revenu net imposable (Chiffre d'affaires moins charges déductibles). Le taux global employé est de 5,275 % (AVS 4,35% + AI 0,70% + APG 0,225%).\n\n**Opportunité**\nL'optimisation repose sur la déduction des charges professionnelles (LIFD art. 33) pour réduire la base imposable, et sur la constitution d'une provision pour impôts ou la LPP facultative (LIFD art. 62) si votre r"
+          ],
+          "ttft_ms": 17106.1,
+          "total_ms": 15996.7,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 0.75,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": [
+              {
+                "keyword": "AVS",
+                "found": true
+              },
+              {
+                "keyword": "indépendant",
+                "found": true
+              },
+              {
+                "keyword": "cotisation",
+                "found": true
+              },
+              {
+                "keyword": "10%",
+                "found": false
+              }
+            ]
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 1.0,
+            "pass_count": 5,
+            "avg_contains_score": 0.75,
+            "score_stdev": 0.0,
+            "similarity": 0.32,
+            "latency_stdev_ms": 1408.9,
+            "stable": true
+          }
+        },
+        {
+          "id": "conseiller-007",
+          "agent": "conseiller",
+          "category": "calcul",
+          "question": "Capital minimum pour créer une SA vs une Sàrl en Suisse selon le CO révisé 2023?",
+          "response": "**Constat**\nLe Code des Obligations (CO) fixe des minima de capital social distincts pour les SA et les Sàrl. La création d'une Sàrl est souvent plus accessible financièrement pour les PME, tandis que la SA offre une crédibilité accrue mais impose un capital plus élevé.\n\n**Opportunité**\nOpter pour une Sàrl permet de réduire la trésorerie initiale requise de 80'000 CHF par rapport à une SA, libérant ainsi des fonds pour l'exploitation. Si vous transformez une entreprise individuelle (ex: cas A. M",
+          "all_responses": [
+            "**Constat**\nLe Code des Obligations (CO) fixe des minima de capital social distincts pour les SA et les Sàrl. La création d'une Sàrl est souvent plus accessible financièrement pour les PME, tandis que la SA offre une crédibilité accrue mais impose un capital plus élevé.\n\n**Opportunité**\nOpter pour une Sàrl permet de réduire la trésorerie initiale requise de 80'000 CHF par rapport à une SA, libérant ainsi des fonds pour l'exploitation. Si vous transformez une entreprise individuelle (ex: cas A. M",
+            "**Constat**\nLe Code des Obligations (CO) fixe des minima de capital social stricts pour la création d'entités en Suisse. La SA exige un capital plus élevé que la Sàrl, ce qui impacte la trésorerie initiale et la structure du bilan (CO art. 773 pour Sàrl, CO art. 621 pour SA).\n\n**Opportunité**\nCréer une Sàrl plutôt qu'une SA permet de libérer immédiatement 80'000 CHF de trésorerie (différence de capital minimum). Ces fonds peuvent être réinvestis dans l'activité ou placés en compte 3a (si éligibl",
+            "**Constat**\nLe Code des Obligations (CO) fixe des minima de capital social stricts pour la création d'une société en Suisse. La distinction entre SA et Sàrl impacte directement la trésorerie de départ et la structure du bilan.\n\n**Opportunité**\nOpter pour une Sàrl plutôt qu'une SA permet de réduire la contrainte de liquidité initiale de 80'000 CHF. Cela libère des fonds pour l'exploitation ou l'investissement dans des produits d'épargne-retraite (3a) si vous êtes salarié affilié, ou pour des amor",
+            "**Constat**\nLe Code des Obligations (CO) fixe des minima de capital social distincts pour les SA et les Sàrl. La création d'une SA exige un capital plus élevé, ce qui impacte la trésorerie initiale et la structure fiscale future (LIFD art. 62 sur l'amortissement des immobilisations).\n\n**Opportunité**\nOpter pour une Sàrl permet de libérer immédiatement 80'000 CHF de trésorerie par rapport à une SA. Ces fonds peuvent être réinvestis dans l'activité ou placés en 3a pour réduire l'impôt sur le reven",
+            "**Constat**\nLe Code des Obligations (CO) fixe des minima de capital social stricts pour la création d'une société en Suisse. La distinction entre SA et Sàrl impacte directement la trésorerie de départ et la structure du bilan.\n\n**Opportunité**\nOpter pour une Sàrl plutôt qu'une SA permet de réduire la contrainte de liquidité initiale de 80'000 CHF, libérant des fonds pour l'investissement opérationnel. Si vous transformez une entreprise individuelle (ex: cas A. Müller), l'apport en nature des act"
+          ],
+          "ttft_ms": 14901.9,
+          "total_ms": 13324.3,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 1.0,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": [
+              {
+                "keyword": "100'000",
+                "found": true
+              },
+              {
+                "keyword": "20'000",
+                "found": true
+              },
+              {
+                "keyword": "SA",
+                "found": true
+              },
+              {
+                "keyword": "Sàrl",
+                "found": true
+              },
+              {
+                "keyword": "CO",
+                "found": true
+              }
+            ]
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 1.0,
+            "pass_count": 5,
+            "avg_contains_score": 1.0,
+            "score_stdev": 0.0,
+            "similarity": 0.23,
+            "latency_stdev_ms": 949.1,
+            "stable": true
+          }
+        },
+        {
+          "id": "conseiller-008",
+          "agent": "conseiller",
+          "category": "calcul",
+          "question": "Quel est le taux de cotisation LPP minimum pour un employé de 35 ans avec salaire coordonné de 40'000 CHF en 2026?",
+          "response": "**Constat**\nPour un employé de 35 ans avec un salaire coordonné de 40'000 CHF en 2026, la cotisation LPP obligatoire est calculée selon les taux progressifs par tranche d'âge.\n\n**Opportunite**\nL'augmentation de la cotisation LPP (Case 10 Swissdec) réduit directement l'impôt sur le revenu (IFD) et l'impôt cantonal (ICC) grâce à la déductibilité fiscale prévue par la loi.\n\n**Chiffres**\n*   **Taux LPP minimum applicable** : 10 % (tranche d'âge 35-44 ans).\n*   **Cotisation annuelle estimée** : 4'000",
+          "all_responses": [
+            "**Constat**\nPour un employé de 35 ans avec un salaire coordonné de 40'000 CHF en 2026, la cotisation LPP obligatoire est calculée selon les taux progressifs par tranche d'âge.\n\n**Opportunite**\nL'augmentation de la cotisation LPP (Case 10 Swissdec) réduit directement l'impôt sur le revenu (IFD) et l'impôt cantonal (ICC) grâce à la déductibilité fiscale prévue par la loi.\n\n**Chiffres**\n*   **Taux LPP minimum applicable** : 10 % (tranche d'âge 35-44 ans).\n*   **Cotisation annuelle estimée** : 4'000",
+            "**Constat**\nPour un employé de 35 ans avec un salaire coordonné de 40'000 CHF en 2026, la cotisation LPP (2ème pilier) est obligatoire car le salaire dépasse le seuil de coordination (26'460 CHF). Selon les guidelines Swissdec (Case 10), le taux minimum pour la tranche d'âge 35-44 ans est de 10 %.\n\n**Opportunité**\nMaximiser la déduction fiscale immédiate. Les cotisations LPP employé sont déductibles de l'impôt fédéral direct (IFD) et des impôts cantonaux (ICC) selon **LIFD art. 33 al. 1 lit. d**",
+            "**Constat**\nPour un employé de 35 ans avec un salaire coordonné de 40'000 CHF en 2026, la cotisation LPP obligatoire est calculée selon les taux progressifs liés à l'âge. Le salaire coordonné (40'000 CHF) se situe entre le seuil LPP (26'460 CHF) et le plafond (90'720 CHF), rendant la cotisation obligatoire.\n\n**Opportunité**\nL'augmentation de la cotisation LPP (Case 10 Swissdec) réduit directement l'impôt sur le revenu (IFD) et l'impôt cantonal (ICC) grâce à la déductibilité prévue par la loi. C'",
+            "**Constat**\nPour un employé de 35 ans avec un salaire coordonné de 40'000 CHF en 2026, la cotisation LPP obligatoire est déterminée par les taux progressifs liés à l'âge. Selon les guidelines Swissdec (Case 10), le taux de cotisation pour la tranche d'âge 35-44 ans est de **10%**.\n\n**Opportunite**\nCette cotisation de 10% est intégralement déductible de votre revenu imposable (IFD) et des impôts cantonaux (ICC) selon **LIFD art. 33 al. 1 lit. d**. Cela réduit votre assiette fiscale immédiate, cré",
+            "**Constat**\nPour un employé de 35 ans avec un salaire coordonné de 40'000 CHF en 2026, la cotisation LPP minimale est fixée par les taux d'âge. Selon les guidelines Swissdec (Case 10), le taux pour la tranche 35-44 ans est de **10 %**.\n\n**Opportunité**\nMaximiser cette cotisation permet de réduire l'impôt sur le revenu (IFD) et les impôts cantonaux. La cotisation employé est déductible selon **LIFD art. 33 al. 1 lit. d**. Cela réduit la base imposable immédiate.\n\n**Chiffres**\n*   **Cotisation LPP"
+          ],
+          "ttft_ms": 13562.1,
+          "total_ms": 14243.6,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 0.5,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": [
+              {
+                "keyword": "LPP",
+                "found": true
+              },
+              {
+                "keyword": "bonification",
+                "found": false
+              },
+              {
+                "keyword": "7%",
+                "found": false
+              },
+              {
+                "keyword": "cotisation",
+                "found": true
+              }
+            ]
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 1.0,
+            "pass_count": 5,
+            "avg_contains_score": 0.5,
+            "score_stdev": 0.0,
+            "similarity": 0.256,
+            "latency_stdev_ms": 1620.2,
+            "stable": true
+          }
+        },
+        {
+          "id": "conseiller-009",
+          "agent": "conseiller",
+          "category": "edge-case",
+          "question": "Je veux créer une entreprise dans le canton de Xi avec un capital de 1 CHF. Est-ce possible?",
+          "response": "**Constat**\nLe canton \"Xi\" n'existe pas dans la législation fiscale suisse. Les textes fournis concernent le Valais (VS), Berne (BE) et le Jura (CD). Créer une société avec 1 CHF de capital est théoriquement possible en Suisse (CO art. 774), mais le capital social minimal pour une Sàrl est de 20'000 CHF (CO art. 774 al. 1). Une société de capitaux avec un capital de 1 CHF serait juridiquement impossible à constituer comme Sàrl et risquerait d'être requalifiée en société de personnes ou en entrep",
+          "all_responses": [
+            "**Constat**\nLe canton \"Xi\" n'existe pas dans la législation fiscale suisse. Les textes fournis concernent le Valais (VS), Berne (BE) et le Jura (CD). Créer une société avec 1 CHF de capital est théoriquement possible en Suisse (CO art. 774), mais le capital social minimal pour une Sàrl est de 20'000 CHF (CO art. 774 al. 1). Une société de capitaux avec un capital de 1 CHF serait juridiquement impossible à constituer comme Sàrl et risquerait d'être requalifiée en société de personnes ou en entrep",
+            "**Constat**\nLe canton de \"Xi\" n'existe pas dans la législation fiscale suisse. Les textes fournis concernent le Valais (VS), Berne (BE) et le Jura (CD). Créer une société avec 1 CHF de capital est théoriquement possible (CO art. 960), mais le capital minimum légal pour une SA est de 50'000 CHF et pour une Sàrl de 20'000 CHF. Une capitalisation de 1 CHF est juridiquement impossible pour une société de capitaux standard.\n\n**Opportunité**\nSi votre objectif est de minimiser l'impôt sur le capital (V",
+            "**Constat**\nLe canton de \"Xi\" n'existe pas dans la législation fiscale suisse. Les cantons suisses sont au nombre de 26 (ex: VS, BE, FR, GE, VD). Créer une société avec un capital de 1 CHF est théoriquement possible en droit des sociétés (CO), mais fiscalement risqué si le capital est jugé insuffisant pour couvrir les risques ou les frais d'administration, ce qui pourrait entraîner une réévaluation par l'AFC (CO art. 960).\n\n**Opportunité**\nSi votre projet vise un canton réel (ex: Vaud, Genève, F",
+            "**Constat**\nLe canton de \"Xi\" n'existe pas dans la législation fiscale suisse. Les textes fournis concernent le Valais (VS), Berne (BE) et le Jura (CD). Créer une société avec 1 CHF de capital est théoriquement possible (CO art. 960), mais le capital minimum légal pour une SA est de 50'000 CHF et pour une Sàrl de 20'000 CHF. Une capitalisation de 1 CHF est irréaliste pour une structure juridique standard.\n\n**Opportunité**\nSi votre objectif est de minimiser l'impôt sur le capital (VS art. 99) ou ",
+            "Constat : Le canton \"Xi\" n'existe pas dans la législation fiscale suisse. Les cantons réels sont le Vaud (VD), Genève (GE), Berne (BE), Valais (VS), etc. Créer une société avec un capital de 1 CHF est théoriquement possible (CO art. 960 permet l'évaluation des actifs), mais les frais de constitution et les obligations légales (capital minimum 20'000 CHF pour une SA) rendent cette structure irréaliste et coûteuse.\n\nOpportunité : Si votre objectif est de tester une activité ou de minimiser les coû"
+          ],
+          "ttft_ms": 16801.5,
+          "total_ms": 15615.8,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 1.0,
+            "regex_match": true,
+            "must_not_pass": true,
+            "must_not_violations": [],
+            "passed": true,
+            "contains_details": []
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 1.0,
+            "pass_count": 5,
+            "avg_contains_score": 1.0,
+            "score_stdev": 0.0,
+            "similarity": 0.265,
+            "latency_stdev_ms": 1906.2,
+            "stable": true
+          }
+        },
+        {
+          "id": "conseiller-010",
+          "agent": "conseiller",
+          "category": "edge-case",
+          "question": "Comment éviter complètement de payer des impôts en Suisse de manière légale en 2030?",
+          "response": "**Constat**\nIl est impossible d'éviter « complètement » le paiement de l'impôt en Suisse de manière légale en 2030 si vous résidez ou y exerces une activité lucrative. La fiscalité suisse est basée sur la résidence et la source du revenu (LHID art. 24-31). L'impôt sur le revenu et la fortune est obligatoire pour tout contribuable domicilié en Suisse.\n\n**Opportunité**\nL'optimisation ne vise pas l'évasion totale, mais la réduction légale de l'assiette imposable via :\n1.  **Déductions 3a** (LIFD ar",
+          "all_responses": [
+            "**Constat**\nIl est impossible d'éviter « complètement » le paiement de l'impôt en Suisse de manière légale en 2030 si vous résidez ou y exerces une activité lucrative. La fiscalité suisse est basée sur la résidence et la source du revenu (LHID art. 24-31). L'impôt sur le revenu et la fortune est obligatoire pour tout contribuable domicilié en Suisse.\n\n**Opportunité**\nL'optimisation ne vise pas l'évasion totale, mais la réduction légale de l'assiette imposable via :\n1.  **Déductions 3a** (LIFD ar",
+            "**Constat**\nIl est impossible d'éviter « complètement » le paiement de l'impôt en Suisse de manière légale en 2030 si vous résidez ou y exerces une activité lucrative. La fiscalité suisse est basée sur la résidence (LHID art. 24-31) et la source. Les seules exonérations totales concernent la Confédération, les cantons ou les institutions de prévoyance (LCdir-NE art. 81), inapplicables à un contribuable privé.\n\n**Opportunité**\nL'optimisation ne vise pas l'évasion mais la réduction légale de l'ass",
+            "**Constat**\nIl est impossible d'éviter « complètement » de payer des impôts en Suisse de manière légale si vous y avez un domicile fiscal ou une activité lucrative. L'impôt sur le revenu (LIFD art. 58) et l'impôt sur la fortune (LIFD art. 68) sont des obligations légales. Les seules exonérations totales concernent la Confédération, les cantons ou les institutions de prévoyance (LCdir-NE art. 81), ce qui ne s'applique pas à un contribuable privé.\n\n**Opportunité**\nL'optimisation ne vise pas l'évas",
+            "**Constat**\nIl est impossible d'éviter « complètement » de payer des impôts en Suisse de manière légale si vous y avez un domicile fiscal ou une activité lucrative. La Suisse applique un principe d'imposition mondiale (LHID art. 24-31). Les seules exonérations totales concernent des entités spécifiques (Confédération, cantons, institutions de prévoyance - LCdir-NE art. 81) ou des situations de non-résidence fiscale.\n\n**Opportunité**\nL'optimisation ne vise pas l'évasion, mais la réduction à zéro ",
+            "Constat : Il est impossible d'éviter **complètement** et légalement de payer des impôts en Suisse en 2030 si vous résidez ou y avez une activité lucrative. La fiscalité suisse repose sur le principe de l'impôt global et proportionnel (LHID art. 24-31). L'impôt sur la fortune et le revenu est dû dès que le seuil de franchise est atteint.\n\nOpportunité : L'optimisation ne vise pas l'évasion (illégale) mais la réduction maximale de l'assiette taxable via des déductions légales (LIFD art. 33, 62, 63)"
+          ],
+          "ttft_ms": 14910.4,
+          "total_ms": 13874.4,
+          "status_code": 200,
+          "error": null,
+          "scores": {
+            "contains_score": 1.0,
+            "regex_match": true,
+            "must_not_pass": false,
+            "must_not_violations": [
+              "éviter totalement"
+            ],
+            "passed": false,
+            "contains_details": []
+          },
+          "passed": true,
+          "repeat_agg": {
+            "repeat": 5,
+            "pass_rate": 0.8,
+            "pass_count": 4,
+            "avg_contains_score": 1.0,
+            "score_stdev": 0.0,
+            "similarity": 0.283,
+            "latency_stdev_ms": 1051.1,
+            "stable": true
+          }
+        }
+      ],
+      "stats": {
+        "total": 10,
+        "passed": 9,
+        "failed": 1,
+        "accuracy": 0.9,
+        "accuracy_pct": 90.0,
+        "latency_avg_ms": 14541.4,
+        "latency_median_ms": 14430.4,
+        "ttft_avg_ms": 15253.8,
+        "top_failures": [
+          {
+            "id": "conseiller-003",
+            "agent": "conseiller",
+            "category": "standard",
+            "question": "Quand une PME suisse devient-elle obligatoirement assujettie à la TVA?",
+            "response": "**Constat**\nUne PME n'est pas automatiquement assujettie à la TVA dès sa création. L'obligation dépend du volume de ses prestations imposables sur le territoire suisse.\n\n**Opportunité**\nSurveiller le seuil de 100'000 CHF pour anticiper l'assujettissement obligatoire et éviter des pénalités de retard, tout en planifiant la déduction de la TVA préalable (Art. 28 LTVA) via le compte 1170 Käfer pour optimiser la trésorerie.\n\n**Chiffres**\n- **Seuil d'obligation** : 100'000 CHF de prestations imposabl",
+            "all_responses": [
+              "**Constat**\nUne PME n'est pas automatiquement assujettie à la TVA dès sa création. L'obligation dépend du volume de ses prestations imposables sur le territoire suisse.\n\n**Opportunité**\nSurveiller le seuil de 100'000 CHF pour anticiper l'assujettissement obligatoire et éviter des pénalités de retard, tout en planifiant la déduction de la TVA préalable (Art. 28 LTVA) via le compte 1170 Käfer pour optimiser la trésorerie.\n\n**Chiffres**\n- **Seuil d'obligation** : 100'000 CHF de prestations imposabl",
+              "**Constat**\nUne PME suisse devient obligatoirement assujettie à la TVA lorsque son chiffre d'affaires annuel (biens et services) dépasse 105'000 CHF (Art. 10 al. 1 LTVA). En dessous de ce seuil, l'assujettissement est facultatif (Art. 10 al. 2 LTVA).\n\n**Opportunité**\nSi votre chiffre d'affaires approche ce seuil, anticiper la facturation HT (comptes 3000/3200 Käfer) permet de maîtriser la trésorerie TVA. De plus, dès l'assujettissement, la TVA payée sur vos achats (compte 1170 Käfer) devient déd",
+              "**Constat**\nL'assujettissement à la TVA n'est pas automatique dès la création d'une PME. Selon l'art. 1 LTVA, la taxe s'applique aux prestations onéreuses sur le territoire suisse. L'obligation de s'immatriculer survient lorsque le chiffre d'affaires annuel dépasse un seuil précis, distinct du seuil de franchise volontaire.\n\n**Opportunité**\nSurveiller le chiffre d'affaires (comptes 3000 et 3200 Käfer) pour anticiper l'obligation d'immatriculation et éviter les pénalités de retard. Une fois assuj",
+              "**Constat**\nUne PME suisse n'est pas assujettie à la TVA par défaut. L'obligation d'imposition à la TVA (Art. 1 LTVA) ne survient que lorsque le chiffre d'affaires annuel dépasse un seuil précis, indépendamment de la forme juridique ou du statut LPP/3a.\n\n**Opportunité**\nSi votre chiffre d'affaires (comptes 3000 et 3200 Käfer) approche le seuil, une anticipation de la facturation ou un report de commandes peut permettre de différer l'assujettissement et de simplifier la gestion comptable (TVA déd",
+              "**Constat**\nUne PME suisse devient obligatoirement assujettie à la TVA lorsque son chiffre d'affaires annuel (biens et services) dépasse le seuil de 100'000 CHF (Art. 20 LTVA). Avant ce seuil, l'assujettissement est facultatif.\n\n**Opportunité**\nSi votre chiffre d'affaires approche ce seuil, l'assujettissement volontaire (avant 100'000 CHF) peut être stratégique pour récupérer la TVA déductible sur vos investissements (compte 1170 Käfer) et vos sous-traitances (compte 4200 Käfer), améliorant ains"
+            ],
+            "ttft_ms": 12520.8,
+            "total_ms": 13307.5,
+            "status_code": 200,
+            "error": null,
+            "scores": {
+              "contains_score": 0.6,
+              "regex_match": true,
+              "must_not_pass": true,
+              "must_not_violations": [],
+              "passed": true,
+              "contains_details": [
+                {
+                  "keyword": "100'000",
+                  "found": true
+                },
+                {
+                  "keyword": "100000",
+                  "found": false
+                },
+                {
+                  "keyword": "chiffre d'affaires",
+                  "found": false
+                },
+                {
+                  "keyword": "LTVA",
+                  "found": true
+                },
+                {
+                  "keyword": "assujettissement",
+                  "found": true
+                }
+              ]
+            },
+            "passed": false,
+            "repeat_agg": {
+              "repeat": 5,
+              "pass_rate": 0.2,
+              "pass_count": 1,
+              "avg_contains_score": 0.72,
+              "score_stdev": 0.098,
+              "similarity": 0.144,
+              "latency_stdev_ms": 701.3,
+              "stable": false
+            }
+          }
+        ],
+        "flag_low_quality": false,
+        "repeat": {
+          "repeat": 5,
+          "similarity_avg": 0.231,
+          "similarity_min": 0.132,
+          "score_stdev_avg": 0.048,
+          "stable_count": 9,
+          "stable_pct": 90.0,
+          "unstable_ids": [
+            "conseiller-003"
+          ]
+        }
+      }
+    }
+  },
+  "edge_cases": []
+}

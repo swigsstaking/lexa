@@ -8,6 +8,12 @@ export type VllmGenerateOptions = {
   /** Model served by vLLM (must match --served-model-name or HF id) */
   model: string;
   temperature?: number;
+  /** Nucleus sampling — typiquement 0.9. Forcer 0.1 pour greedy-like. */
+  topP?: number;
+  /** Top-K sampling (extension vLLM, pas OpenAI-standard). 1 = greedy déterministe. */
+  topK?: number;
+  /** Pénalité de répétition (extension vLLM). 1.0 = aucune pénalité. */
+  repetitionPenalty?: number;
   /** Max completion tokens */
   numPredict?: number;
   /** Forces response_format: {type: "json_object"} — vLLM guided JSON */
@@ -49,6 +55,9 @@ export class VllmClient {
       max_tokens: opts.numPredict ?? 100,
       chat_template_kwargs: { enable_thinking: opts.think ?? false },
     };
+    if (opts.topP !== undefined) body.top_p = opts.topP;
+    if (opts.topK !== undefined) body.top_k = opts.topK;
+    if (opts.repetitionPenalty !== undefined) body.repetition_penalty = opts.repetitionPenalty;
     if (opts.format === "json") {
       body.response_format = { type: "json_object" };
     }
@@ -84,6 +93,9 @@ export class VllmClient {
       chat_template_kwargs: { enable_thinking: opts.think ?? false },
       stream: true,
     };
+    if (opts.topP !== undefined) body.top_p = opts.topP;
+    if (opts.topK !== undefined) body.top_k = opts.topK;
+    if (opts.repetitionPenalty !== undefined) body.repetition_penalty = opts.repetitionPenalty;
     if (opts.format === "json") {
       body.response_format = { type: "json_object" };
     }

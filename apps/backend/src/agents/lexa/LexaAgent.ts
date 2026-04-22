@@ -220,7 +220,10 @@ export class LexaAgent {
           model: this.vllmModel,
           systemPrompt: this.pickSystemPrompt(query_.profile),
           prompt,
-          temperature: 0.2,
+          temperature: 0,
+          topP: 0.1,
+          topK: 1,
+          repetitionPenalty: 1.0,
           numPredict: 800,
           think: false,
         });
@@ -308,7 +311,10 @@ export class LexaAgent {
             model: this.vllmModel,
             systemPrompt: this.pickSystemPrompt(query_.profile),
             prompt,
-            temperature: 0.2,
+            temperature: 0,
+            topP: 0.1,
+            topK: 1,
+            repetitionPenalty: 1.0,
             numPredict: 800,
             think: false,
           })) {
