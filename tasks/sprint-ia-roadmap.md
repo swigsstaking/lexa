@@ -129,12 +129,89 @@ Pipeline RAG opérationnel :
 
 ---
 
-## Critères de succès
+## Décisions utilisateur (validées 2026-04-22)
 
-1. **Précision** : ≥ 99 % des questions bench `run_quality.py --repeat 5` réussies ET stables
-2. **Edge-cases** : ≥ 95 % des 300 cas experts réussis (incluant détection d'incohérences style `pp-vd-009`)
-3. **Latence** : inchangée ou meilleure (LoRA ne dégrade pas)
-4. **VRAM** : checkpoint LoRA léger (< 1 GB adapter), rechargeable sans recharger le base model
+| Question | Décision |
+|---|---|
+| Budget temps | **6 semaines** OK |
+| Expert fiscal externe humain | **Non** — l'IA doit être « expert fiscal généré et formé pour le marché suisse », pas de fiduciaire partenaire. Bootstrap auto Claude + revue auto Claude + petit échantillon humain par le user seul. |
+| Cantons | **Les 7 en même temps** (VS, GE, VD, FR, NE, JU, BJ) — quota strict par canton (15 %/canton minimum) |
+| Infra training | **DGX Spark directement**, blocage du service pendant 4-8h accepté — MAIS sauvegarde intégrale de la config actuelle obligatoire avant (cf section Rollback ci-dessous) |
+| Actualité données | **Toutes les lois/barèmes/circulaires doivent être à jour de la date de training** (2026-04-22 pour le premier run). Pas de donnée périmée acceptée. |
+
+**Principe directeur** : la qualité fiscale suisse est le pilier du produit. Zero compromis sur la précision légale même si ça coûte des semaines de training supplémentaires.
+
+---
+
+## Protocole bench intelligence & qualité (avant/après LoRA)
+
+Un bench comparatif exécuté sur 3 configs :
+
+| Config | Description |
+|---|---|
+| **A — Baseline** | Qwen3.5-35B-A3B-NVFP4 vanilla + RAG + greedy (état prod actuel 2026-04-22) |
+| **B — LoRA v1** | A + adapter LoRA entraîné sur 1500-3000 exemples |
+| **C — LoRA v2 (si CPT)** | A + CPT sur corpus fiscal brut + LoRA re-entraîné |
+
+### Dataset de bench (distinct du dataset de training)
+
+**120 questions `run_quality.py` actuelles** + **200 nouvelles questions de test** couvrant :
+- 40 questions « intelligence pure » (raisonnement fiscal multi-étapes, sans réponse directe dans le RAG)
+- 40 questions « edge-cases » (dates invalides, montants absurdes, frontaliers multi-juridictions, changements en cours d'année)
+- 40 questions « qualité citations » (vérifier que le modèle cite le BON article, pas juste « LIFD »)
+- 40 questions « calculs précis » (résultat numérique attendu au CHF près)
+- 40 questions « actualité 2026 » (plafond 3a CHF 7 260, seuils TDFN 5 024 000/108 000, taux TVA 8.1/3.8/2.6%)
+
+### Métriques mesurées
+
+| Métrique | Cible config A (baseline) | Cible config B (LoRA v1) | Cible config C (LoRA v2 CPT) |
+|---|---|---|---|
+| **Précision factuelle** (contains + regex) | ~97.5 % actuel | ≥ 99 % | ≥ 99.5 % |
+| **Stabilité** (sim=1.00 entre 5 runs) | 100 % actuel | 100 % maintenu | 100 % maintenu |
+| **Qualité citations** (bon article précis) | à mesurer | +15 pts vs A | +20 pts vs A |
+| **Précision calculs** (±0.5 % CHF) | à mesurer | +10 pts vs A | +15 pts vs A |
+| **Détection edge-cases** (incohérence repérée) | ~60 % estimé | ≥ 85 % | ≥ 95 % |
+| **Actualité 2026** (chiffres à jour) | ~80 % estimé | ≥ 95 % | ≥ 99 % |
+| **Latence TTFT** (time-to-first-token) | ~1.5 s actuel | ≤ 2.0 s (LoRA overhead ≤ 30 %) | ≤ 2.5 s |
+| **Latence end-to-end** (réponse complète) | ~5-15 s | inchangée ou meilleure | inchangée ou meilleure |
+| **Throughput tokens/s** | ~25 t/s actuel | ≥ 20 t/s (pénalité LoRA acceptée) | ≥ 18 t/s |
+| **VRAM** | 45 % GB10 actuel | +1 GB adapter | +1 GB adapter |
+
+### Harness de bench
+
+Réutilise `tasks/phase2-bench/quality-tests/run_quality.py` enrichi de :
+- nouveaux datasets `intelligence-pure.json`, `citations-quality.json`, `calculs-precis.json`, `actualite-2026.json`
+- pondération par métrique (pas juste pass/fail)
+- rapport comparatif A/B/C côte-à-côte en markdown
+
+---
+
+## Plan de rollback (obligatoire avant training)
+
+Avant de lancer tout training qui modifie les poids/checkpoints :
+
+1. **Snapshot docker images** :
+   ```bash
+   docker commit lexa-vllm-classifier lexa-vllm-classifier:backup-20260422
+   docker commit lexa-vllm-vl         lexa-vllm-vl:backup-20260422
+   ```
+
+2. **Snapshot Qdrant `swiss_law`** (9761 pts actuels + barèmes) :
+   ```bash
+   curl -X POST "http://192.168.110.103:6333/collections/swiss_law/snapshots"
+   # → sauvegardé dans /qdrant/storage/snapshots/swiss_law/
+   ```
+
+3. **Backup cache HF modèles** :
+   ```bash
+   tar czf /backup/hf-cache-20260422.tar.gz /home/swigs/.cache/huggingface/
+   ```
+
+4. **Freeze git main** : tag `v1.0-pre-lora` sur le commit actuel avant de démarrer le sprint.
+
+5. **Rollback automatisé** : script `./tasks/sprint-ia-roadmap/rollback.sh` qui restore les 4 items ci-dessus en 10 min max si besoin.
+
+Le sprint ne démarre pas sans ces 5 items validés.
 
 ---
 
@@ -142,14 +219,7 @@ Pipeline RAG opérationnel :
 
 - **Sur-apprentissage sur les exemples** : si le dataset a des biais, LoRA amplifie. Solution : split train/val, revue diverse.
 - **Hallucination augmentée** : LoRA peut rendre le modèle plus confiant même quand le RAG ne supporte pas. Solution : garde-fous de citations (rejeter si pas d'article cité).
-- **Biais cantonal** : si 70 % des exemples sont VS, le modèle sur-performe VS. Solution : quota strict par canton.
-- **Quality du bootstrap auto** : Claude peut lui-même se tromper sur les règles fiscales CH. Solution : review manuelle échantillonnage 10 %.
-
----
-
-## Prochaines décisions utilisateur
-
-- [ ] Budget temps : 6 semaines OK ou priorité à raccourcir ?
-- [ ] Faire appel à un expert fiscal externe pour la revue edge-cases ? (sinon faire soi-même)
-- [ ] Cible de cantons : 7 complets ou prioriser VS/GE/VD d'abord ?
-- [ ] Infra training : utiliser DGX Spark directement ou louer temporairement un H100 ?
+- **Biais cantonal** : si 70 % des exemples sont VS, le modèle sur-performe VS. Solution : quota strict par canton (≥ 15 % chacun).
+- **Quality du bootstrap auto** : Claude peut lui-même se tromper sur les règles fiscales CH. Solution : review échantillonnage 10 % par le user + cross-check contre Qdrant (article cité doit exister dans swiss_law).
+- **Dégradation latence** : LoRA peut ajouter 10-30 % de latence. Solution : merger l'adapter dans les poids en production (perte du mode multi-LoRA mais gain latence).
+- **Rollback manqué** : si training cassé sans backup → retour arrière impossible. Solution : Section rollback ci-dessus OBLIGATOIRE.
