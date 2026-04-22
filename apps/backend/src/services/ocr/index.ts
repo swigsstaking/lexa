@@ -1,10 +1,16 @@
 /**
- * Client OCR Ollama — qwen3-vl-ocr pour le pipeline pp-import (P1.B.B1).
+ * Client OCR — pipeline pp-import (P1.B.B1).
  *
- * Paramètres obligatoires (spec §6.2 + mémoire feedback_ia_perf_measurement.md) :
- *   think: false, num_predict: 8192, temperature: 0
+ * Backend vision par ordre de priorité :
+ *   1. vLLM Qwen3-VL-8B-FP8 sur .103:8101 (OpenAI-compat, ~4-5s/doc en p95)
+ *   2. Ollama qwen3-vl-ocr en fallback (~19s/doc, KV-cache forcé à 8192 pour
+ *      cohabiter avec vLLM sur la même GPU)
  *
- * Pre-processing image : resize ≤900px + JPEG Q80 avant envoi Ollama (latence ÷4).
+ * Bench 2026-04-22 (20 docs synthétiques) :
+ *   vLLM  100 % accuracy, avg 4.8s, p95 5.2s
+ *   Ollama 100 % accuracy, avg 19.0s, p95 28.8s
+ *
+ * Pre-processing image : resize ≤900px + JPEG Q80 (latence ÷ 4).
  */
 
 import axios from "axios";
@@ -19,26 +25,29 @@ import {
 } from "./prompts.js";
 
 const OLLAMA_URL = config.OLLAMA_URL;
-const VISION_MODEL = config.MODEL_OCR; // "qwen3-vl-ocr"
+const OLLAMA_MODEL = config.MODEL_OCR; // "qwen3-vl-ocr"
 
-// Params communs (spec §7 critère 7)
-// num_predict 4096 : 99 % des documents fiscaux tiennent en <2000 tokens.
-// Réduit de 8192 pour limiter la latence sur scans haute résolution.
+// vLLM vision — Qwen3-VL-8B-Instruct-FP8 servi par avarok/dgx-vllm-nvfp4-kernel
+const VLLM_VISION_URL = process.env.VLLM_VISION_URL ?? "http://192.168.110.103:8101";
+const VLLM_VISION_MODEL = process.env.VLLM_VISION_MODEL ?? "Qwen/Qwen3-VL-8B-Instruct-FP8";
+const USE_VLLM_OCR = process.env.USE_VLLM_OCR !== "false"; // par défaut ON depuis 2026-04-22
+
+// Params communs pour les 2 backends
+const MAX_TOKENS = 4096;
+
+// Ollama options (fallback) — num_ctx forcé à 8192 car le modelfile qwen3-vl-ocr
+// a par défaut 262144 ctx qui alloue 24 GB de KV-cache → OOM si vLLM déjà up.
 const OLLAMA_OPTIONS = {
   temperature: 0,
-  num_predict: 4096,
+  num_predict: MAX_TOKENS,
+  num_ctx: 8192,
 } as const;
 
 // ── Pre-processing image ──────────────────────────────────────────────────────
 
-// 900px : compromis qualité/latence. 768 testé = extraction vide sur scans fins.
 const MAX_DIMENSION = 900;
 const JPEG_QUALITY = 80;
 
-/**
- * Redimensionne l'image si > 900px et encode en JPEG Q80.
- * Réduit la latence Ollama d'un facteur ~4 (spec §8 critère 8).
- */
 async function preprocessImage(buffer: Buffer): Promise<Buffer> {
   try {
     const img = await loadImage(buffer);
@@ -59,7 +68,6 @@ async function preprocessImage(buffer: Buffer): Promise<Buffer> {
 
     return canvas.toBuffer("image/jpeg", JPEG_QUALITY);
   } catch (err) {
-    // Si le pre-processing échoue (ex: format non supporté), on retourne le buffer original
     console.warn("[ocr] preprocessImage failed (non-fatal), using original:", (err as Error).message);
     return buffer;
   }
@@ -80,24 +88,55 @@ export type OcrExtractionResult = {
   durationMs: number;
 };
 
-// ── Helper Ollama chat ────────────────────────────────────────────────────────
+// ── Helpers HTTP ──────────────────────────────────────────────────────────────
+
+async function callVllmVision(
+  imageBase64: string,
+  prompt: string,
+  timeoutMs = 60_000,
+): Promise<string> {
+  const started = Date.now();
+  const { data } = await axios.post(
+    `${VLLM_VISION_URL}/v1/chat/completions`,
+    {
+      model: VLLM_VISION_MODEL,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            {
+              type: "image_url",
+              image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
+            },
+          ],
+        },
+      ],
+      temperature: 0,
+      max_tokens: MAX_TOKENS,
+    },
+    { timeout: timeoutMs },
+  );
+
+  const content = (data?.choices?.[0]?.message?.content ?? "") as string;
+  const elapsed = Date.now() - started;
+  console.log(`[ocr] vLLM ${VLLM_VISION_MODEL} — ${elapsed}ms, ${data?.usage?.completion_tokens ?? 0} tokens`);
+  if (!content.trim()) {
+    console.warn(`[ocr] callVllmVision empty content — usage=${JSON.stringify(data?.usage)}`);
+  }
+  return content;
+}
 
 async function callOllamaVision(
   imageBase64: string,
   prompt: string,
-  timeoutMs = 150_000,
+  timeoutMs = 180_000,
 ): Promise<string> {
   const { data } = await axios.post(
     `${OLLAMA_URL}/api/chat`,
     {
-      model: VISION_MODEL,
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-          images: [imageBase64],
-        },
-      ],
+      model: OLLAMA_MODEL,
+      messages: [{ role: "user", content: prompt, images: [imageBase64] }],
       stream: false,
       think: false,
       keep_alive: "30m",
@@ -109,10 +148,27 @@ async function callOllamaVision(
   const content = (data.message?.content ?? "") as string;
   if (!content.trim()) {
     console.warn(
-      `[ocr] callOllamaVision empty content — eval_count=${data.eval_count} prompt_eval_count=${data.prompt_eval_count} done_reason=${data.done_reason}`,
+      `[ocr] callOllamaVision empty content — eval_count=${data.eval_count} done_reason=${data.done_reason}`,
     );
   }
   return content;
+}
+
+/**
+ * Appelle vLLM en priorité ; fallback Ollama si vLLM down ou erreur.
+ * Le feature flag USE_VLLM_OCR=false force Ollama (legacy).
+ */
+async function callVision(imageBase64: string, prompt: string): Promise<string> {
+  if (USE_VLLM_OCR) {
+    try {
+      return await callVllmVision(imageBase64, prompt);
+    } catch (err) {
+      const msg = (err as Error).message ?? String(err);
+      console.warn(`[ocr] vLLM vision failed (${msg}), fallback to Ollama`);
+      // fallthrough to Ollama
+    }
+  }
+  return callOllamaVision(imageBase64, prompt);
 }
 
 function cleanJsonResponse(raw: string): string {
@@ -124,15 +180,11 @@ function cleanJsonResponse(raw: string): string {
 
 // ── Classification vision ─────────────────────────────────────────────────────
 
-/**
- * Classifie un document pour la catégorie "auto" (drag & drop universel).
- * Utilise qwen3-vl-ocr avec le prompt CLASSIFIER_PROMPT.
- */
 export async function classifyDocument(imageBuffer: Buffer): Promise<ClassifyResult> {
   const preprocessed = await preprocessImage(imageBuffer);
   const base64 = preprocessed.toString("base64");
 
-  const raw = await callOllamaVision(base64, CLASSIFIER_PROMPT);
+  const raw = await callVision(base64, CLASSIFIER_PROMPT);
   const cleaned = cleanJsonResponse(raw);
 
   try {
@@ -148,10 +200,6 @@ export async function classifyDocument(imageBuffer: Buffer): Promise<ClassifyRes
 
 // ── Extraction OCR par catégorie ──────────────────────────────────────────────
 
-/**
- * Extrait les champs structurés d'un document selon sa catégorie.
- * Pre-processing image appliqué avant envoi Ollama.
- */
 export async function extractByCategory(
   imageBuffer: Buffer,
   category: ImportCategory,
@@ -162,7 +210,7 @@ export async function extractByCategory(
   const base64 = preprocessed.toString("base64");
 
   const prompt = getPromptForCategory(category);
-  const raw = await callOllamaVision(base64, prompt, 150_000);
+  const raw = await callVision(base64, prompt);
   const cleaned = cleanJsonResponse(raw);
 
   let rawExtraction: Record<string, unknown> = {};
@@ -170,7 +218,6 @@ export async function extractByCategory(
 
   try {
     const parsed = JSON.parse(cleaned) as Record<string, unknown>;
-    // Extraire le champ "confidence" s'il est présent dans la réponse
     if (typeof parsed.confidence === "number") {
       confidence = parsed.confidence as number;
       delete parsed.confidence;
