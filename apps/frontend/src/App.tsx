@@ -35,8 +35,8 @@ const PmWizardCanton = lazy(() =>
     default: m.PmWizardCanton,
   }))
 );
-const Documents = lazy(() =>
-  import('@/routes/Documents').then((m) => ({ default: m.Documents }))
+const DocumentsRouter = lazy(() =>
+  import('@/routes/DocumentsRouter').then((m) => ({ default: m.DocumentsRouter }))
 );
 const CloseYear = lazy(() =>
   import('@/routes/close/CloseYear').then((m) => ({ default: m.CloseYear }))
@@ -212,7 +212,7 @@ export default function App() {
           path="/documents"
           element={
             <RequireAuth>
-              <Documents />
+              <DocumentsRouter />
             </RequireAuth>
           }
         />
