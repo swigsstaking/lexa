@@ -518,7 +518,7 @@ export function LexaCmdK({
                   fontWeight: 500,
                   cursor: 'pointer',
                   background: 'transparent',
-                  color: '#9A9A93',
+                  color: 'rgb(var(--subtle))',
                   flexShrink: 0,
                 }}
               >
@@ -529,7 +529,7 @@ export function LexaCmdK({
               style={{
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: 10,
-                color: '#9A9A93',
+                color: 'rgb(var(--subtle))',
               }}
             >
               esc
@@ -542,7 +542,7 @@ export function LexaCmdK({
             {chatMode && (
               <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {messages.length === 0 && !loading && (
-                  <div style={{ textAlign: 'center', padding: '32px 0', color: '#9A9A93', fontSize: 13 }}>
+                  <div style={{ textAlign: 'center', padding: '32px 0', color: 'rgb(var(--subtle))', fontSize: 13 }}>
                     <div style={{ fontSize: 22, marginBottom: 8 }}>✦</div>
                     <div>Pose une question à Lexa…</div>
                     <div style={{ fontSize: 11, marginTop: 4 }}>Agent actif : <strong>{agent}</strong></div>
@@ -572,18 +572,18 @@ export function LexaCmdK({
                       {m.content}
                       {m.answer?.citations && m.answer.citations.length > 0 && (
                         <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid #D9D9D0' }}>
-                          <div style={{ fontSize: 10, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: '#9A9A93', fontWeight: 600, marginBottom: 4 }}>
+                          <div style={{ fontSize: 10, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: 'rgb(var(--subtle))', fontWeight: 600, marginBottom: 4 }}>
                             Sources
                           </div>
                           {m.answer.citations.slice(0, 3).map((c, i) => (
-                            <div key={i} style={{ fontSize: 11, color: '#6B6B66', marginBottom: 2 }}>
+                            <div key={i} style={{ fontSize: 11, color: 'rgb(var(--muted))', marginBottom: 2 }}>
                               · {[c.law, c.article].filter(Boolean).join(' ') || c.title || c.source || 'source'}
                             </div>
                           ))}
                         </div>
                       )}
                       {m.answer?.durationMs && (
-                        <div style={{ fontSize: 10, color: '#9A9A93', marginTop: 6, fontFamily: 'JetBrains Mono, monospace' }}>
+                        <div style={{ fontSize: 10, color: 'rgb(var(--subtle))', marginTop: 6, fontFamily: 'JetBrains Mono, monospace' }}>
                           {(m.answer.durationMs / 1000).toFixed(1)}s
                         </div>
                       )}
@@ -603,7 +603,7 @@ export function LexaCmdK({
                         alignItems: 'center',
                         gap: 8,
                         fontSize: 13,
-                        color: '#6B6B66',
+                        color: 'rgb(var(--muted))',
                       }}
                     >
                       <span style={{ display: 'inline-flex', gap: 3 }}>
@@ -673,7 +673,7 @@ export function LexaCmdK({
                         fontSize: 10,
                         textTransform: 'uppercase' as const,
                         letterSpacing: '0.08em',
-                        color: '#9A9A93',
+                        color: 'rgb(var(--subtle))',
                         fontWeight: 600,
                       }}
                     >
@@ -714,9 +714,9 @@ export function LexaCmdK({
                           <div style={{ fontWeight: 500, color: '#0A0A0A', fontSize: 13 }}>
                             {s.title}
                           </div>
-                          <div style={{ color: '#6B6B66', fontSize: 12 }}>{s.sub}</div>
+                          <div style={{ color: 'rgb(var(--muted))', fontSize: 12 }}>{s.sub}</div>
                         </div>
-                        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#9A9A93' }}>
+                        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'rgb(var(--subtle))' }}>
                           {s.k}
                         </span>
                       </div>
@@ -733,7 +733,7 @@ export function LexaCmdK({
                         fontSize: 10,
                         textTransform: 'uppercase' as const,
                         letterSpacing: '0.08em',
-                        color: '#9A9A93',
+                        color: 'rgb(var(--subtle))',
                         fontWeight: 600,
                       }}
                     >
@@ -781,7 +781,7 @@ export function LexaCmdK({
                           <div style={{ fontWeight: 500, color: '#0A0A0A', fontSize: 13 }}>
                             {a.name}
                           </div>
-                          <div style={{ color: '#6B6B66', fontSize: 12 }}>
+                          <div style={{ color: 'rgb(var(--muted))', fontSize: 12 }}>
                             Solde {fmtMoney(a.balance)} CHF
                           </div>
                         </div>
@@ -800,7 +800,7 @@ export function LexaCmdK({
               borderTop: '1px solid #E8E8E1',
               display: 'flex',
               justifyContent: 'space-between',
-              color: '#9A9A93',
+              color: 'rgb(var(--subtle))',
               fontSize: 11,
               background: '#F3F3EE',
               flexShrink: 0,
@@ -899,7 +899,7 @@ export function LexaCmdKTrigger({ onOpen }: LexaCmdKTriggerProps) {
           background: 'rgba(255,255,255,0.12)',
           padding: '2px 6px',
           borderRadius: 5,
-          color: '#A8A8A0',
+          color: 'var(--chrome-ink-2)',
           letterSpacing: '0.02em',
         }}
       >

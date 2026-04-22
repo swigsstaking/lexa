@@ -278,7 +278,7 @@ export function PmWorkspace() {
                     fontSize: 11,
                     fontWeight: 500,
                     background: 'transparent',
-                    color: '#A8A8A0',
+                    color: 'var(--chrome-ink-2)',
                     fontFamily: 'Inter, ui-sans-serif, sans-serif',
                     transition: 'background 80ms',
                     textAlign: 'left',

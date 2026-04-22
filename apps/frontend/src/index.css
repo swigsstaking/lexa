@@ -23,8 +23,8 @@
   --border-strong: 207 200 184; /* #CFC8B8 line-2 */
   /* Text */
   --ink: 26 24 20;         /* #1A1814 ink-1 */
-  --muted: 107 103 96;     /* #6B6760 ink-3 */
-  --subtle: 154 149 139;   /* #9A958B ink-4 */
+  --muted: 107 103 96;     /* #6B6760 ink-3 — ratio 5.03:1 sur cream */
+  --subtle: 114 109 99;    /* #726D63 ink-4 — ratio 4.60:1 WCAG AA */
   /* Accent rouge-tomate Lexa — PREMIER orange V1 scaffold #D4342C */
   --accent: 212 52 44;      /* #D4342C rouge-tomate Lexa V1 */
   --accent-fg: 255 255 255; /* blanc à l'intérieur des boutons */
@@ -52,7 +52,7 @@
   --ink-1: #1A1814;
   --ink-2: #3B3834;
   --ink-3: #6B6760;
-  --ink-4: #9A958B;
+  --ink-4: #726D63;
 
   /* Chrome = dark inset card (LexaInsight etc.) — stays dark in light mode by design */
   --chrome-bg: #0A0A0A;
@@ -82,8 +82,8 @@
   --border-strong: 65 63 56; /* #413F38 */
   /* Text */
   --ink: 250 249 245;      /* #FAF9F5 cream-white */
-  --muted: 168 165 158;    /* #A8A59E */
-  --subtle: 110 108 103;   /* #6E6C67 */
+  --muted: 168 165 158;    /* #A8A59E — ratio élevé sur dark */
+  --subtle: 136 133 121;   /* #888579 — ratio 5.22:1 WCAG AA */
   /* Accent rouge-tomate Lexa — légèrement plus vif en dark pour contraste */
   --accent: 232 84 76;      /* #E8544C rouge-tomate clair dark */
   --accent-fg: 255 255 255; /* blanc en dark */
@@ -111,7 +111,7 @@
   --ink-1: #FAF9F5;
   --ink-2: #D4D1CA;
   --ink-3: #A8A59E;
-  --ink-4: #6E6C67;
+  --ink-4: #888579;
 
   /* Chrome dark = same as surface in dark mode */
   --chrome-bg: #0A0A0A;
