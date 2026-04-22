@@ -324,7 +324,7 @@ export function ProSyncSettings() {
                 setSyncError(null);
                 syncMutation.mutate();
               }}
-              disabled={syncMutation.isPending || (!hubUserId && !hasMapping && !hubUserIdInput.trim())}
+              disabled={syncMutation.isPending}
               className="btn-primary flex items-center gap-2"
             >
               {syncMutation.isPending ? (

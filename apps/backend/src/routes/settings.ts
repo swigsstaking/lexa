@@ -174,42 +174,46 @@ settingsRouter.post("/integrations/pro/sync", async (req, res) => {
   const tenantId = req.tenantId!;
 
   // V1.1 SSO — PRIORITÉ : hubUserId vérifié depuis le JWT (cryptographiquement sûr)
-  // FALLBACK beta : hubUserId fourni dans le body (mode legacy, warn + log)
+  // FALLBACK 1 : users.external_sso_id (populé lors d'un login Hub passé)
+  // FALLBACK 2 : hubUserId fourni dans le body (mode beta legacy, warn + log)
   const jwtHubUserId = (req.user as { hubUserId?: string } | undefined)?.hubUserId;
   const bodyHubUserId = (req.body?.hubUserId as string | undefined)?.trim();
+  const userSub = (req.user as { sub?: string } | undefined)?.sub;
 
-  let hubUserIdSource: "jwt" | "body" | "mapping" | null = null;
+  let hubUserIdSource: "jwt" | "external_sso_id" | "body" | "mapping" | null = null;
   let resolvedHubUserId: string | undefined;
 
   if (jwtHubUserId) {
     resolvedHubUserId = jwtHubUserId;
     hubUserIdSource = "jwt";
-  } else if (bodyHubUserId) {
+  } else if (userSub) {
+    const { rows: ssoRows } = await query<{ external_sso_id: string | null }>(
+      `SELECT external_sso_id FROM users WHERE id = $1 LIMIT 1`,
+      [userSub],
+    );
+    const ssoId = ssoRows[0]?.external_sso_id?.trim();
+    if (ssoId) {
+      resolvedHubUserId = ssoId;
+      hubUserIdSource = "external_sso_id";
+    }
+  }
+  if (!resolvedHubUserId && bodyHubUserId) {
     resolvedHubUserId = bodyHubUserId;
     hubUserIdSource = "body";
     console.warn(
-      `[pro-sync] unsafe mode: user=${(req.user as { sub?: string } | undefined)?.sub} provided hubUserId=${bodyHubUserId} without SSO link. Beta-only, remove before GA.`,
+      `[pro-sync] unsafe mode: user=${userSub} provided hubUserId=${bodyHubUserId} without SSO link. Beta-only, remove before GA.`,
     );
   }
 
-  // Récupérer le mapping existant en base
+  // Récupérer le mapping existant en base (source de vérité post-succès)
   const { rows } = await query<{ pro_hub_user_id: string }>(
     `SELECT pro_hub_user_id FROM pro_lexa_tenant_map WHERE lexa_tenant_id = $1 LIMIT 1`,
     [tenantId],
   );
-  let hubUserId = rows[0]?.pro_hub_user_id;
-
-  // Si pas de mapping persisté et qu'on a un hubUserId résolu, créer le mapping
-  if (!hubUserId && resolvedHubUserId) {
-    await query(
-      `INSERT INTO pro_lexa_tenant_map (pro_hub_user_id, lexa_tenant_id) VALUES ($1, $2)
-       ON CONFLICT (pro_hub_user_id) DO UPDATE SET lexa_tenant_id = EXCLUDED.lexa_tenant_id`,
-      [resolvedHubUserId, tenantId],
-    );
-    hubUserId = resolvedHubUserId;
-  } else if (hubUserId) {
-    hubUserIdSource = "mapping";
-  }
+  const mappedHubUserId = rows[0]?.pro_hub_user_id;
+  // Ordre de priorité : mapping persisté > JWT/SSO > external_sso_id > body (beta)
+  const hubUserId = mappedHubUserId ?? resolvedHubUserId;
+  if (mappedHubUserId) hubUserIdSource = "mapping";
 
   if (!hubUserId) {
     return res.status(400).json({
@@ -238,11 +242,29 @@ settingsRouter.post("/integrations/pro/sync", async (req, res) => {
     proData = r.data as typeof proData;
   } catch (err) {
     const e = err as { response?: { status?: number; data?: unknown }; message?: string };
+    const proStatus = e.response?.status;
+    if (proStatus === 404) {
+      return res.status(404).json({
+        error: "hub_user_not_found_in_pro",
+        message:
+          "Aucun compte Swigs Pro trouvé pour votre identifiant Hub. Vérifiez que vous utilisez bien le même compte sur Pro et Lexa, ou connectez-vous via Swigs Hub SSO.",
+        hubUserIdSource,
+      });
+    }
     return res.status(502).json({
       error: "pro export failed",
-      proStatus: e.response?.status,
+      proStatus,
       message: e.message,
     });
+  }
+
+  // Persister le mapping SEULEMENT après succès export — évite les mappings pourris
+  if (!mappedHubUserId && resolvedHubUserId) {
+    await query(
+      `INSERT INTO pro_lexa_tenant_map (pro_hub_user_id, lexa_tenant_id) VALUES ($1, $2)
+       ON CONFLICT (pro_hub_user_id) DO UPDATE SET lexa_tenant_id = EXCLUDED.lexa_tenant_id`,
+      [resolvedHubUserId, tenantId],
+    );
   }
 
   // Ingérer via les handlers existants (idempotent grâce à la dedup proInvoiceId)
